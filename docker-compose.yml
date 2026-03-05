@@ -1,0 +1,14 @@
+services:
+  nginx:
+  
+  frontend: 
+
+  database:
+  
+  backend:
+  
+
+volumes:
+
+
+networks:
