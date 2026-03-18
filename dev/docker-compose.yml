@@ -65,7 +65,12 @@ volumes:
       device: ${PWD}/data/backend
       o: bind
 
-  # database:
+  database:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/data/database
+      o: bind
 
 
 networks:
