@@ -1,0 +1,6 @@
+# files to exclude from image
+
+.git
+.gitignore
+.env
+.vscode/
