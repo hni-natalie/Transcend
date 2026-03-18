@@ -1,7 +1,7 @@
 services:
 
   nginx:
-    build: ./nginx
+    build: ./${SERV_DIR}/nginx
     container_name: t_nginx
     ports:
       - "443:443"
@@ -15,37 +15,31 @@ services:
       - app-network
 
   frontend: 
-    build: ./frontend
+    build: ./${SERV_DIR}/frontend
     container_name: t_frontend
     expose:
       - "${FRONTEND_PORT}"  # Expose internally, not to host
     env_file:
       - .env
-    # environment:
-    #   - PORT=${FRONTEND_PORT}
-    #   - VITE_API_URL=/api
     healthcheck:
         test: ["CMD", "test", "-f", "/tmp/frontend-ready"]
-        # test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://172.18.0.2:${FRONTEND_PORT}"]
         interval: 5s
         timeout: 3s
         retries: 10
         start_period: 30s  # Give init.sh time to run
     volumes:
       - frontend_app:/app:nocopy
-      # - /app/node_modules # prevent node_module being overwritten by host
     networks:
       - app-network
   
   # backend:
   #   build:
-  #     context: ./dev/backend
-  #     dockerfile: Dockerfile
+  #     context: ./${SERV_DIR}/backend
   #     container_name: t_backend
   #     expose:
-  #     - "${BACKENDEND_PORT}"  # Expose internally, not to host
+  #     - "${BACKEND_PORT}"  # Expose internally, not to host
   #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:${BACKENDEND_PORT}/health"]
+  #     test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT}/health"]
   #     interval: 30s
   #     timeout: 10s
   #     retries: 3

@@ -1,0 +1,37 @@
+# -----------------------------------------
+# Stage 1: Initialize React app
+# -----------------------------------------
+
+FROM node:20-alpine AS build-react
+
+# set wp working directory
+WORKDIR /app
+
+# Create Vite React app directly in container
+RUN npm create vite@latest . -- --template react
+
+# Install dependencies
+RUN npm install
+
+
+# -----------------------------------------
+# Stage 2: Production image
+# -----------------------------------------
+FROM node:20-alpine
+
+# set wp working directory
+WORKDIR /app
+
+# Copy the created app from stage 1
+COPY --from=build-react /app /app
+
+# For development with hot reload
+ENV CHOKIDAR_USEPOLLING=true
+ENV WATCHPACK_POLLING=true
+
+# NETWORKING
+EXPOSE 5173
+
+# --host makes it accessible outside of container,
+# else it only listens on localhost 127.0.0.1
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
