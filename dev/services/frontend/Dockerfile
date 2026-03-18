@@ -4,15 +4,11 @@
 
 FROM node:20-alpine
 
-# set wp working directory
+# set working directory
 WORKDIR /app
 
-# Create Vite React app directly in container
-# RUN npm create vite@latest frontend -- --template react && \
-		# npm install three @react-three/fiber @react-three/drei
-
-# Install dependencies
-# RUN npm install
+# RUN addgroup -g 1000 -S frontend && \
+#     adduser -S frontend -u 1000 -G frontend -s /bin/sh
 
 # For development with hot reload
 ENV CHOKIDAR_USEPOLLING=true

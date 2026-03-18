@@ -40,5 +40,4 @@ touch /tmp/backend-ready
 echo "✅ Backend ready flag created at /tmp/backend-ready"
 
 echo "Starting backend ..."
-exec node src/index.js
-# exec npm run dev -- --host "0.0.0.0" --strict-port
+exec su nodejs -c "node src/index.js"

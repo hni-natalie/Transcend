@@ -21,4 +21,7 @@ touch /tmp/frontend-ready
 echo "✅ Frontend ready flag created at /tmp/frontend-ready"
 
 echo "Starting frontend ..."
-exec npm run dev -- --host "0.0.0.0" --strict-port
+exec npm run dev -- --host 0.0.0.0 --strict-port
+
+# exec with group user when production
+# exec su frontend -c "npm run dev -- --host 0.0.0.0 --strict-port"
