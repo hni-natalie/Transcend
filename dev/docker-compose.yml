@@ -27,25 +27,32 @@ services:
         timeout: 3s
         retries: 10
         start_period: 30s  # Give init.sh time to run
+    depends_on:
+      backend:
+        condition: service_healthy
     volumes:
       - frontend_app:/app:nocopy
     networks:
       - app-network
   
-  # backend:
-  #   build:
-  #     context: ./${SERV_DIR}/backend
-  #     container_name: t_backend
-  #     expose:
-  #     - "${BACKEND_PORT}"  # Expose internally, not to host
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT}/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 40s  # Give your app time to start
-  #   networks:
-  #     - app-network
+  backend:
+    build: ./${SERV_DIR}/backend
+    container_name: t_backend
+    expose:
+      - "${BACKEND_PORT}"  # Expose internally, not to host
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/backend-ready"]
+      # test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s  # Give your app time to start
+    volumes:
+      - backend_app:/app:nocopy
+    networks:
+      - app-network
 
   # database:
 
