@@ -1,4 +1,5 @@
 .env
 dev/frontend/tmp_*
-dev/frontend/node_modules
+node_modules
 initvm.sh
+.DS_Store
