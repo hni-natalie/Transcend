@@ -2,20 +2,38 @@
 # Stage 1: Initialize React app
 # -----------------------------------------
 
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
 # set working directory
-WORKDIR /app
+WORKDIR /build
 
-# RUN addgroup -g 1000 -S frontend && \
-#     adduser -S frontend -u 1000 -G frontend -s /bin/sh
+COPY --chmod=750 ./tools/build.sh /build.sh
+RUN /build.sh
+# ENTRYPOINT [ "/build.sh" ]
+
+
+# -----------------------------------------
+# Stage 2: Copy over files & start
+# -----------------------------------------
+FROM node:20-alpine
+
+WORKDIR /app_build
+# WORKDIR /app
+
+RUN addgroup -g 501 -S frontend && \
+    adduser -S frontend -u 501 -G frontend -s /bin/sh
+
+COPY --from=builder --chown=frontend:frontend /build /app_build
 
 # For development with hot reload
 ENV CHOKIDAR_USEPOLLING=true
 ENV WATCHPACK_POLLING=true
 
-COPY ./tools/init.sh /init.sh
-RUN chmod +x /init.sh
+USER frontend
+
+WORKDIR /app
+
+COPY --chmod=755 ./tools/init.sh /init.sh
 
 # NETWORKING
 EXPOSE 5173

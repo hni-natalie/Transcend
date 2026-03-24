@@ -1,2 +1,4 @@
 .env
 dev/frontend/tmp_*
+dev/frontend/node_modules
+initvm.sh

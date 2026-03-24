@@ -6,8 +6,7 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 -G nodejs -s /bin/sh
 
-COPY ./tools/init.sh /init.sh
-RUN chmod +x /init.sh
+COPY --chmod=750 ./tools/init.sh /init.sh
 
 # NETWORKING
 EXPOSE 3000

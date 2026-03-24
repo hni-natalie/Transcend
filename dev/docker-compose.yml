@@ -16,6 +16,7 @@ services:
 
   frontend: 
     build: ./${SERV_DIR}/frontend
+    init: true
     container_name: t_frontend
     expose:
       - "${FRONTEND_PORT}"  # Expose internally, not to host
@@ -32,6 +33,7 @@ services:
         condition: service_healthy
     volumes:
       - frontend_app:/app:nocopy
+    # restart: unless-stopped
     networks:
       - app-network
   
@@ -44,13 +46,13 @@ services:
       - .env
     healthcheck:
       test: ["CMD", "test", "-f", "/tmp/backend-ready"]
-      # test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT}/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s  # Give your app time to start
+      start_period: 30s  # Give your app time to start
     volumes:
       - backend_app:/app:nocopy
+    # restart: unless-stopped
     networks:
       - app-network
 
@@ -62,21 +64,21 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ${PWD}/data/frontend
+      device: ${PWD}/dev/data/frontend
       o: bind
 
   backend_app:
     driver: local
     driver_opts:
       type: none
-      device: ${PWD}/data/backend
+      device: ${PWD}/dev/data/backend
       o: bind
 
   database:
     driver: local
     driver_opts:
       type: none
-      device: ${PWD}/data/database
+      device: ${PWD}/dev/data/database
       o: bind
 
 
