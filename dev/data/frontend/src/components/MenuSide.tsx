@@ -31,15 +31,15 @@ function MenuSide({conf} : {conf:MenuConfig}) : ReactElement {
 
 	return (
 	<>
-	<div className="bg-brand-black h-full flex flex-col gap-6 p-8 pt-12 pb-12 text-sm">
+	<div className={`bg-brand-black h-full flex flex-col gap-6 pt-12 pb-12 text-sm ${status === 'expanded' ? 'p-8' : 'p-4'} `}>
 
 		<div className={`w-full flex ${status === 'expanded' ? 'justify-end' : 'justify-center'} `}>
 		<div className='text-brand-lime w-8 h-8 cursor-pointer'>
-			<CollapseIcon className={`transition-transform duration-1000  ${status === 'expanded' ? '-rotate-180' : ''}`} onClick={toggleExpand}/>
+			<CollapseIcon onClick={toggleExpand} className={`transition-transform duration-1000  ${status === 'expanded' ? '-rotate-180' : ''} `}/>
 		</div>
 		</div>
 
-		<h1 className='bg-teal-90 brand-logo-lean text-2xl text-center font-bold'>{status === 'expanded' ? 'WorkFrom,' : 'WF'}</h1>
+		<h1 className='bg-teal-90 brand-logo-lean text-2xl text-center font-bold'>{status === 'expanded' ? 'WorkFrom,' : 'WF,'}</h1>
 		<div style={{ visibility: status === 'expanded' ? 'visible' : 'hidden' }}>
 			<p>{status === 'expanded' ? 'Location MY' : 'T'}</p>
 			<p>{status === 'expanded' ? 'HH:MM' : 'T'}</p>
