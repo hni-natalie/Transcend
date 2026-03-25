@@ -24,7 +24,7 @@ export const menuConfig: MenuConfig = [
 	title: 'Spaces',
 	href: R.SPACES,
 	icon: (
-<svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="15" height="17" viewBox="0 0 15 17" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M12.0556 0.5C12.8533 0.5 13.5 1.1998 13.5 2.06305L13.5 4.73125C13.5 5.5945 12.8533 6.2943 12.0556 6.2943H9.88889C9.09115 6.2943 8.44445 5.5945 8.44445 4.73125L8.44444 2.06305C8.44444 1.1998 9.09114 0.5 9.88889 0.5L12.0556 0.5Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
 <path d="M1.94444 0.5C1.1467 0.5 0.499999 1.1998 0.499999 2.06305L0.500006 4.73125C0.500006 5.5945 1.14671 6.2943 1.94445 6.2943H4.11112C4.90886 6.2943 5.55556 5.5945 5.55556 4.73125L5.55555 2.06305C5.55555 1.1998 4.90885 0.5 4.11111 0.5L1.94444 0.5Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
 <path d="M12.0556 8.96858C12.8533 8.96858 13.5 9.66838 13.5 10.5316V13.1998C13.5 14.0631 12.8533 14.7629 12.0556 14.7629H9.88889C9.09115 14.7629 8.44445 14.0631 8.44445 13.1998L8.44445 10.5316C8.44445 9.66838 9.09115 8.96858 9.88889 8.96858H12.0556Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
