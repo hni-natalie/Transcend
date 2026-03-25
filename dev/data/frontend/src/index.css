@@ -2,10 +2,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --color-brand-lime: #D0F05C;
+  --color-brand-black: #0d0d0d;
+  --color-brand-black-sub: #1A1A1A;
+  --color-brand-white: #ffffff;
+  --color-brand-gray: #86868b;
+
+  --color-danger-base: #FF5F5F;
+}
+
 :root {
   /* brand colors */
   --brand-lime: #D0F05C;
   --brand-black: #0d0d0d;
+  --brand-black-sub: #1A1A1A;
   --brand-white: #ffffff;
   --brand-gray: #86868b;
 
@@ -61,4 +72,10 @@ button {
 
 input {
   font-family: inherit; /* inputs use Plus Jakarta Sans */
+}
+
+.brand-logo-lean {
+  font-family: 'Space Mono', monospace;
+  color: #D0F05C;
+  cursor: pointer;
 }

@@ -1,4 +1,7 @@
-NAME = transcend 
+# ------------------------------------------
+# Readme
+# first time install: make init && make up
+# ------------------------------------------
 
 # Color
 RED		= \033[0;91m
@@ -19,6 +22,9 @@ fe:
 
 stop:
 	@docker compose -f $(COMPOSE_FILE) stop
+
+start:
+	@docker compose -f $(COMPOSE_FILE) start
 
 down:
 	@docker compose -f $(COMPOSE_FILE) down

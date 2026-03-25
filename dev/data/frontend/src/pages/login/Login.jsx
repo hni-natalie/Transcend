@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import authService from '../../services/authService';
 
-const Login = ({ onBack }) => {
+const Login = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const onBack = () => { navigate('/'); }
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();

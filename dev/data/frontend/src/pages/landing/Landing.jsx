@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTE_PATH as R } from '../../config/routes.manifest';
 import './Landing.css';
 
-const Landing = ({ onNavigate }) => {
+
+const Landing = () => {
+  const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const locations = ["china", "austria", "malaysia", "here"];
-
+  
+  const onNavigate = () => { navigate(R.LOGIN); }
 
 useEffect(() => {
   // if last word ("here"), dont start timer 

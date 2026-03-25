@@ -9,7 +9,7 @@ if [ ! -f "package.json" ]; then
 
     echo "> Install ThreeJS & TailwindCSS ..."
     npm install three @react-three/fiber @react-three/drei
-    npm install tailwindcss @tailwindcss/vite
+    npm install tailwindcss @tailwindcss/vite postcss autoprefixer
     
     # add import tailwind at vite.config.js & src/index.css
     sed -i '1s/^/@import "tailwindcss";\n/' src/index.css
