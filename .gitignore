@@ -3,3 +3,4 @@ dev/frontend/tmp_*
 node_modules
 initvm.sh
 .DS_Store
+.vscode

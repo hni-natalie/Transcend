@@ -42,6 +42,8 @@ services:
     container_name: t_backend
     expose:
       - "${BACKEND_PORT}"  # Expose internally, not to host
+    ports:
+      - "3000:3000" # For testing (RMB TO REMOVE)
     env_file:
       - .env
     healthcheck:
@@ -53,10 +55,41 @@ services:
     volumes:
       - backend_app:/app:nocopy
     # restart: unless-stopped
+    secrets:
+      - db_user
     networks:
       - app-network
 
-  # database:
+  database:
+    build: ./${SERV_DIR}/database
+    container_name: t_database
+    expose:
+      - "${DATABASE_PORT}"  # Expose internally, not to host
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/database-ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s  # Give your app time to start
+    volumes:
+      - database:/app:nocopy
+    secrets:
+      - db_user
+      - db_root
+    networks:
+      - app-network
+
+  adminer:
+    build: ./${SERV_DIR}/adminer
+    container_name: t_adminer
+    expose:
+      - "${ADMINER_PORT}"
+    depends_on:
+      - database
+    networks:
+      - app-network
 
 
 volumes:
@@ -85,3 +118,10 @@ volumes:
 networks:
   app-network:
     driver: bridge
+
+
+secrets:
+  db_root:
+    file: ./secrets/database_root.txt
+  db_user:
+    file: ./secrets/database_user.txt
