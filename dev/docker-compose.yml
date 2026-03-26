@@ -10,7 +10,7 @@ services:
     depends_on:
       frontend:
         condition: service_healthy
-    restart: unless-stopped
+    # restart: unless-stopped
     networks:
       - app-network
 
@@ -23,6 +23,7 @@ services:
     env_file:
       - .env
     healthcheck:
+        # test: ["CMD", "curl", "-f", "http://localhost:${FRONTEND_PORT}"]
         test: ["CMD", "test", "-f", "/tmp/frontend-ready"]
         interval: 5s
         timeout: 3s
@@ -39,6 +40,7 @@ services:
   
   backend:
     build: ./${SERV_DIR}/backend
+    init: true
     container_name: t_backend
     expose:
       - "${BACKEND_PORT}"  # Expose internally, not to host

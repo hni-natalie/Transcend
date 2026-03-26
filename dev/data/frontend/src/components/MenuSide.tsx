@@ -1,7 +1,7 @@
 import { ReactElement, useState } from 'react'
 import { UserChipItem } from "../types/user.types"
 import { MenuItem, MenuConfig } from "../types/menu.types"
-import { CollapseIcon } from '../config/menu.icons.conf';
+import { IconCollapse } from '../config/menu.icons.conf';
 
 import ChipUser from "./ChipUser"
 
@@ -35,7 +35,7 @@ function MenuSide({conf} : {conf:MenuConfig}) : ReactElement {
 
 		<div className={`w-full flex ${status === 'expanded' ? 'justify-end' : 'justify-center'} `}>
 		<div className='text-brand-lime w-8 h-8 cursor-pointer'>
-			<CollapseIcon onClick={toggleExpand} className={`transition-transform duration-1000  ${status === 'expanded' ? '-rotate-180' : ''} `}/>
+			<IconCollapse onClick={toggleExpand} className={`transition-transform duration-1000  ${status === 'expanded' ? '-rotate-180' : ''} `}/>
 		</div>
 		</div>
 

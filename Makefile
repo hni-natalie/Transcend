@@ -17,6 +17,9 @@ init:
 up:
 	@docker compose -f $(COMPOSE_FILE) up
 
+nginx:
+	@docker compose -f $(COMPOSE_FILE) up nginx
+
 fe:
 	@docker compose -f $(COMPOSE_FILE) up --build frontend
 

@@ -16,7 +16,7 @@ RUN mkdir -p /etc/nginx/ssl \
 	# Alpine needs this for nginx pid
 
 # Copy config files
-COPY ./conf/nginx.conf /etc/nginx/nginx.conf.template
+COPY ./conf/nginx.prod.conf /etc/nginx/nginx.conf.template
 COPY --chmod=755 ./tools/init.sh /init.sh
 
 EXPOSE 443

@@ -14,26 +14,30 @@ PORT=443
 run_test() {
 	case $1 in
 	1)
-		echo -e "Test HTTPS connection\n$BORDER"
+		echo -e "Test HTTPS frontend connection\n$BORDER"
 		curl -k -I "https://$SERVER_NAME:$PORT"
 		;;
 	2)
+		echo -e "Test HTTPS backend connection\n$BORDER"
+		curl -kI "https://$SERVER_NAME:$PORT/api/health"
+		;;
+	3)
 		echo -e "Test HTTP connection (should fail)\n$BORDER"
 		curl -k -I "http://$SERVER_NAME"
 		;;
-	3)
+	4)
 		echo -e "Test certificates by sending request using openssl\n$BORDER"
 		openssl s_client -connect "$SERVER_NAME:$PORT" -showcerts < /dev/null
 		;;
-	4)
+	5)
 		echo -e "Test TLS v1.2 connection\n$BORDER"
 		curl -vkI --tlsv1.2 --tls-max 1.2 https://$SERVER_NAME:$PORT/ 2>&1
 		;;
-	5)
+	6)
 		echo -e "Test TLS v1.3 connection\n$BORDER"
 		curl -vkI --tlsv1.3 --tls-max 1.3 https://$SERVER_NAME:$PORT/ 2>&1
 		;;
-	6)
+	7)
 		echo -e "Test TLS v1.1 connection (should fail)\n$BORDER"
 		curl -vkI --tlsv1.1 --tls-max 1.1 https://$SERVER_NAME:$PORT/ 2>&1
 		;;
