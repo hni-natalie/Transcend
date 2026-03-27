@@ -17,9 +17,6 @@ up:
 fe:
 	@docker compose -f $(COMPOSE_FILE) up --build frontend
 
-backend:
-	@docker compose -f $(COMPOSE_FILE) up --build backend database
-
 stop:
 	@docker compose -f $(COMPOSE_FILE) stop
 
