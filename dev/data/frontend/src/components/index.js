@@ -1,6 +1,7 @@
 export { default as MenuSide } from './MenuSide.tsx'
 export { default as ChipUser } from './ChipUser.tsx'
 export { default as FormAddUser } from './FormAddUser.tsx'
+export { default as FormAddWorkspace } from './FormAddWorkspace.tsx'
 export { default as InputText } from './InputText.jsx'
 export { default as InputDropdown } from './InputDropdown.tsx'
 export { default as UploadPhoto } from './UploadPhoto.tsx'

@@ -59,7 +59,7 @@ export default function FormAddUser() {
 			<form onSubmit={handleSubmit} className='flex flex-col w-full h-full gap-y-4'>
 				<h1>User Account</h1>
 
-		    <div className='flex flex-col gap-y-8 overflow-y-auto'>
+		    <div className='flex flex-col p-0.5 gap-y-8 overflow-y-auto h-full'>
 					<UploadPhoto onChange={handleChange} />
 
 					<InputText title='First Name' placeholder='Enter First Name' name='firstName' value={formData.firstName} onChange={handleChange} required={true} />
@@ -71,7 +71,7 @@ export default function FormAddUser() {
 				</div>
 
 				<div className='flex justify-center'>
-					<button type="submit" className='text-xs font-bold text-brand-lime border border-brand-lime p-1 px-8 rounded-lg bg-brand-gray-800'>Submit</button>
+					<button type="submit" className='text-xs font-bold text-brand-lime border border-brand-lime p-1 px-8 rounded-lg bg-brand-gray-800 cursor-pointer'>Submit</button>
 				</div>
 			</form>
 

@@ -1,4 +1,4 @@
-import { MenuSide, FormAddUser } from '../components';
+import { MenuSide, FormAddUser, FormAddWorkspace } from '../components';
 import { menuConfig } from '../config/menu.conf';
 
 function DashboardPage () {
@@ -10,10 +10,11 @@ function DashboardPage () {
 
 				<div className='bg-brand-black flex w-full p-8 gap-8'>
 					<FormAddUser />
+					<FormAddWorkspace />
 
-					<div className='p-8 bg-gray-800 w-full'>
+					{/* <div className='p-8 bg-gray-800 w-full'>
 						<h1>example container</h1>
-					</div>
+					</div> */}
 
 				</div>
 
