@@ -80,12 +80,3 @@ export const IconSettings: React.FC<IconProps> = ({ className, onClick }) => (
     <path d="M11.0833 9.5C11.0833 10.3745 10.3745 11.0833 9.5 11.0833C8.62555 11.0833 7.91667 10.3745 7.91667 9.5C7.91667 8.62555 8.62555 7.91667 9.5 7.91667C10.3745 7.91667 11.0833 8.62555 11.0833 9.5Z" stroke="currentColor"/>
   </svg>
 );
-
-
-// // Define icon map type
-// export type IconName = 'expand' | 'collapse';
-
-// export const icons: Record<IconName, React.FC<IconProps>> = {
-//   expand: IconExpand,
-//   collapse: IconCollapse,
-// };

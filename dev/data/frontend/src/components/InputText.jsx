@@ -31,7 +31,7 @@ export default function InputText({
       {title && (
         <label className="text-white/60 font-medium input-label">
           {title}
-          {required && <span className="required-star">*</span>}
+          {required && <span className="text-xs text-brand-lime"> *</span>}
         </label>
       )}
       <input

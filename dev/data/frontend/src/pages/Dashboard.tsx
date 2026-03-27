@@ -8,14 +8,15 @@ function DashboardPage () {
 			<div className='flex h-full gap-x-0.5'>
 				<MenuSide conf={menuConfig} />
 
-				<div className='bg-brand-black w-full p-8'>
+				<div className='bg-brand-black flex w-full p-8 gap-8'>
 					<FormAddUser />
-					{/* <h1>body container</h1> */}
+
+					<div className='p-8 bg-gray-800 w-full'>
+						<h1>example container</h1>
+					</div>
+
 				</div>
 
-				<div className='p-8'>
-					<h1>another container</h1>
-				</div>
 			</div>
 
 		</div>

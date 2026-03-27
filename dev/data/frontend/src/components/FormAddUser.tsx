@@ -1,73 +1,78 @@
 // adds new user
-import InputText from './InputText'
-import InputDropdown from './InputDropdown'
+import { InputText, InputDropdown, UploadPhoto } from './index'
 import { countryOptions } from '../list/country.list'
 import { useState, ChangeEvent } from 'react';
 
 
 const deptOptions = [
-  'Engineering',
-  'Marketing',
-  'Sales',
-  'Human Resources',
-  'Finance'
+	'Engineering',
+	'Marketing',
+	'Sales',
+	'Human Resources',
+	'Finance'
 ];
 
 const roleOptions = [
-  'Administrator',
-  'Manager',
-  'Team Member',
-  'Team Leader'
+	'Administrator',
+	'Manager',
+	'Team Member',
+	'Team Leader'
 ];
 
 
 export default function FormAddUser() {
 	// Updates form value
-  // const [value, setValue] = useState('');
-  // const handleChange = (e) => {
-  //   setValue(e.target.value);
-  // };
+	// const [value, setValue] = useState('');
+	// const handleChange = (e) => {
+	//   setValue(e.target.value);
+	// };
 
 	const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    dept: '',
-    role: '',
-    location: ''
-  });
+		firstName: '',
+		lastName: '',
+		email: '',
+		dept: '',
+		role: '',
+		location: '',
+		photo: ''
+	});
 
-  // Single handler for all inputs
+	// Single handler for all inputs
 	const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+		const { name, value } = e.target;
+		setFormData(prev => ({
+			...prev,
+			[name]: value
+		}));
+	};
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log('Form submitted with data:', formData);
-    // Send to API, validate, etc.
-    alert(`Submitted: ${JSON.stringify(formData, null, 2)}`);
-  };
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		console.log('Form submitted with data:', formData);
+		// Send to API, validate, etc.
+		alert(`Submitted: ${JSON.stringify(formData, null, 2)}`);
+	};
 
 	return (
-		<div className='flex flex-col'>
-			<h1>User Account</h1>
+		<div className='flex w-full bg-brand-black-sub p-8 py-4 rounded-2xl border border-brand-gray-500'>
 
-			<form onSubmit={handleSubmit} className='flex flex-col gap-y-8'>
-				<button> Upload Photo </button>
+			<form onSubmit={handleSubmit} className='flex flex-col w-full h-full gap-y-4'>
+				<h1>User Account</h1>
 
-				<InputText title='First Name' placeholder='Enter First Name' name='firstName' value={formData.firstName} onChange={handleChange} required={true} />
-				<InputText title='Last Name' placeholder='Enter Last Name' name='lastName' value={formData.lastName} onChange={handleChange} required={true} />
-				<InputText title='Email' placeholder='Enter Email' name='email' value={formData.email} onChange={handleChange} required={true} />
-				<InputDropdown title='Department' name='dept' choices={deptOptions} value={formData.dept} onChange={handleChange} />
-				<InputDropdown title='Role' name='role' choices={roleOptions} value={formData.role} onChange={handleChange} required={true} />
-				<InputDropdown title='Location' name='location' choices={countryOptions} value={formData.location} onChange={handleChange} />
+		    <div className='flex flex-col gap-y-8 overflow-y-auto'>
+					<UploadPhoto onChange={handleChange} />
 
-	      <button type="submit">Submit</button>
+					<InputText title='First Name' placeholder='Enter First Name' name='firstName' value={formData.firstName} onChange={handleChange} required={true} />
+					<InputText title='Last Name' placeholder='Enter Last Name' name='lastName' value={formData.lastName} onChange={handleChange} required={true} />
+					<InputText title='Email' placeholder='Enter Email' name='email' value={formData.email} onChange={handleChange} required={true} />
+					<InputDropdown title='Department' name='dept' choices={deptOptions} value={formData.dept} onChange={handleChange} />
+					<InputDropdown title='Role' name='role' choices={roleOptions} value={formData.role} onChange={handleChange} required={true} />
+					<InputDropdown title='Location' name='location' choices={countryOptions} value={formData.location} onChange={handleChange} />
+				</div>
+
+				<div className='flex justify-center'>
+					<button type="submit" className='text-xs font-bold text-brand-lime border border-brand-lime p-1 px-8 rounded-lg bg-brand-gray-800'>Submit</button>
+				</div>
 			</form>
 
 		</div>

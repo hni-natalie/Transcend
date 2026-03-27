@@ -31,7 +31,7 @@ function MenuSide({conf} : {conf:MenuConfig}) : ReactElement {
 
 	return (
 	<>
-	<div className={`bg-brand-black h-full flex flex-col gap-6 pt-12 pb-12 text-sm ${status === 'expanded' ? 'p-8' : 'p-4'} `}>
+	<div className={`transition-all duration-500 bg-brand-black h-full flex flex-col gap-6 pt-12 pb-12 text-sm ${status === 'expanded' ? 'p-8' : 'p-4'} `}>
 
 		<div className={`w-full flex ${status === 'expanded' ? 'justify-end' : 'justify-center'} `}>
 		<div className='text-brand-lime w-8 h-8 cursor-pointer'>
@@ -58,7 +58,7 @@ function MenuSide({conf} : {conf:MenuConfig}) : ReactElement {
 					<button
 						onClick={() => handleMenuClick(item)}
 						className={`
-							flex w-full py-2 gap-x-2 rounded-sm text-white text-m font-medium
+							flex w-full py-2 gap-x-2 rounded-sm text-white text-md font-medium
 							transition-all duration-200 
 							space-x-1 hover:text-brand-lime
 

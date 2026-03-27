@@ -31,12 +31,15 @@ export default function InputDropdown({
       {title && (
         <label className="text-white/60 font-medium dropdown-label">
           {title}
-          {required && <span className="required-star">*</span>}
+          {required && <span className="text-xs text-brand-lime"> *</span>}
         </label>
       )}
+      <div className='border border-brand-gray-500 focus-within:outline-none focus-within:ring-1 focus-within:ring-brand-lime text-sm bg-brand-gray-800 p-1 pr-2 rounded-lg' >
       <select
         name={name}
-        className={`dropdown-field appearance-none border border-brand-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-lime text-sm bg-brand-gray-800 p-1 px-2 rounded-lg ${inputStyle} ${error ? 'input-error' : ''}`}
+        className={`dropdown-field w-full
+                   ${!value ? 'text-white/50' : 'text-white'} ${inputStyle} ${error ? 'input-error' : ''}`}
+        style={{ outline : 'none' }}
         value={value}
         onChange={onChange}
         required={required}
@@ -49,6 +52,7 @@ export default function InputDropdown({
           </option>
         ))}
       </select>
+      </div>
       {error && <span className="error-message">{error}</span>}
     </div>
   );
