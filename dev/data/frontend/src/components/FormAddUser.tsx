@@ -21,11 +21,6 @@ const roleOptions = [
 
 
 export default function FormAddUser() {
-	// Updates form value
-	// const [value, setValue] = useState('');
-	// const handleChange = (e) => {
-	//   setValue(e.target.value);
-	// };
 
 	const [formData, setFormData] = useState({
 		firstName: '',

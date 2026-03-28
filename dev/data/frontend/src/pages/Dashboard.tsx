@@ -1,7 +1,7 @@
 import { MenuSide, FormAddUser, FormAddWorkspace } from '../components';
 import { menuConfig } from '../config/menu.conf';
 
-function DashboardPage () {
+export default function PageDashboard () {
 	return (
 		<div className='bg-brand-black-sub h-screen'>
 
@@ -23,5 +23,3 @@ function DashboardPage () {
 		</div>
 	)
 }
-
-export default DashboardPage;

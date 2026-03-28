@@ -17,11 +17,8 @@ init:
 up:
 	@docker compose -f $(COMPOSE_FILE) up
 
-nginx:
-	@docker compose -f $(COMPOSE_FILE) up nginx
-
-fe:
-	@docker compose -f $(COMPOSE_FILE) up --build frontend
+down:
+	@docker compose -f $(COMPOSE_FILE) down
 
 stop:
 	@docker compose -f $(COMPOSE_FILE) stop
@@ -29,7 +26,16 @@ stop:
 start:
 	@docker compose -f $(COMPOSE_FILE) start
 
-down:
-	@docker compose -f $(COMPOSE_FILE) down
+restart:
+	@docker compose -f $(COMPOSE_FILE) restart
+
+
+nginx:
+	@docker compose -f $(COMPOSE_FILE) up nginx
+
+fe:
+	@docker compose -f $(COMPOSE_FILE) up --build frontend
+
+
 
 .PHONY: all init up down
