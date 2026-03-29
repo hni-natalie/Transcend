@@ -74,7 +74,7 @@ services:
       retries: 3
       start_period: 30s  # Give your app time to start
     volumes:
-      - database:/app:nocopy
+      - database:/var/lib/mysql
     secrets:
       - db_user
       - db_root
@@ -107,13 +107,11 @@ volumes:
       device: ${PWD}/dev/data/backend
       o: bind
 
+  # driver_opts is not needed for database volume 
+  # Avoid Incorrect information in file: '.frm' error
   database:
     driver: local
-    driver_opts:
-      type: none
-      device: ${PWD}/dev/data/database
-      o: bind
-
+    
 
 networks:
   app-network:

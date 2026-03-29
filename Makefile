@@ -12,9 +12,9 @@ init:
 	@sh init.sh
 
 up:
-	@docker compose -f $(COMPOSE_FILE) up --build
+	@docker compose -f $(COMPOSE_FILE) up 
 
-fe:
+fe: 
 	@docker compose -f $(COMPOSE_FILE) up --build frontend
 
 stop:
