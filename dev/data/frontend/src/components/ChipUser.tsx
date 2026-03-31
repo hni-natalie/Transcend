@@ -1,3 +1,4 @@
+import React from 'react';
 import { UserChipItem } from "../types/user.types"
 
 function generateSizeClasses(diameter : number) {

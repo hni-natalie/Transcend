@@ -1,3 +1,4 @@
+import React from 'react';
 import { MenuConfig } from '../types/menu.types';
 import { IconDashboard, IconUsers, IconSpaces, IconActivity, IconSettings } from '../config/menu.icons.conf';
 import { ROUTE_PATH as R } from './routes.manifest';

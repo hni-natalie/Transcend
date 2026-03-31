@@ -1,4 +1,5 @@
 // adds new user
+import React from 'react';
 import { InputText, InputDropdown, UploadPhoto } from './index'
 import { countryOptions } from '../list/country.list'
 import { useState, ChangeEvent } from 'react';
