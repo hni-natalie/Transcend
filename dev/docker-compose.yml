@@ -77,6 +77,7 @@ services:
       start_period: 30s  # Give your app time to start
     volumes:
       - database:/var/lib/mysql
+      - ./data/database/migrations:/migrations
     secrets:
       - db_user
       - db_root
@@ -88,6 +89,8 @@ services:
     container_name: t_adminer
     expose:
       - "${ADMINER_PORT}"
+    ports:
+      - "${ADMINER_PORT}:${ADMINER_PORT}"
     depends_on:
       - database
     networks:
@@ -113,7 +116,6 @@ volumes:
   # Avoid Incorrect information in file: '.frm' error
   database:
     driver: local
-    
 
 networks:
   app-network:
