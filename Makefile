@@ -15,9 +15,9 @@ init:
 	@sh init.sh
 
 up:
-	@docker compose -f $(COMPOSE_FILE) up
+	@docker compose -f $(COMPOSE_FILE) up 
 
-down:
+down: 
 	@docker compose -f $(COMPOSE_FILE) down
 
 stop:
@@ -35,6 +35,7 @@ nginx:
 
 fe:
 	@docker compose -f $(COMPOSE_FILE) up --build frontend
+
 
 
 

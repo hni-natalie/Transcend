@@ -3,7 +3,8 @@ FROM node:20-alpine
 # set working directory
 WORKDIR /app
 
-RUN addgroup -g 1001 -S nodejs && \
+RUN apk add --no-cache mariadb-client && \
+    addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 -G nodejs -s /bin/sh
 
 COPY --chmod=750 ./tools/init.sh /init.sh

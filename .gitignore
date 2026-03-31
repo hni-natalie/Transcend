@@ -4,3 +4,4 @@ node_modules
 initvm.sh
 .DS_Store
 structure.txt
+.vscode

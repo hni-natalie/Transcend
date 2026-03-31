@@ -1,6 +1,13 @@
 #!/bin/sh
 set -e
 
+DB_USER_PASS=$(cat /run/secrets/db_user)
+
+until mariadb --ssl=0 -h database -P 3306 -u${DB_USER} -p${DB_USER_PASS} -e "SELECT 1;"; do
+    echo "Waiting for Mariadb..."
+    sleep 1
+done
+
 # Initial setup
 if [ ! -f "package.json" ]; then
     echo "Creating new Express project..."
@@ -18,21 +25,8 @@ fi
 
 # Check for src/index.js
 if [ ! -f "src/index.js" ]; then
-    echo "⚠️  No src/index.js found. Creating basic Express server..."
-    mkdir -p src
-    cat > src/index.js << 'EOF'
-const express = require('express');
-const app = express();
-const port = process.env.BACKEND_PORT || 3000;
-
-app.get('/', (req, res) => {
-  res.json({ message: 'Hello from Express + Docker!' });
-});
-
-app.listen(port, () => {
-  console.log(`Server running on port ${port} !`);
-});
-EOF
+    echo "❌ ERROR: src/index.js not found!"
+    exit 1
 fi
 
 echo "Creating health check flag..."
