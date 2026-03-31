@@ -1,4 +1,6 @@
+import React from 'react';
 import { Landing, Login, Dashboard, Spaces } from '../pages';
+import Users from '../pages/admin/Users';
 import { ROUTE_PATH as R } from './routes.manifest';
 
 export const routes = [
@@ -24,6 +26,7 @@ export const routes = [
 },
 {
 	path: R.USERS,
+	element: <Users />,
 	title: 'Users'
 },
 {
@@ -33,10 +36,12 @@ export const routes = [
 },
 {
 	path: R.ACTIVITY,
+	element: <div />,
 	title: 'Activity'
 },
 {
 	path: R.SETTING,
+	element: <div />,
 	title: 'Settings'
 },
 ]
