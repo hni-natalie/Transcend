@@ -1,4 +1,5 @@
 .env
+dev/secrets
 dev/frontend/tmp_*
 node_modules
 initvm.sh
