@@ -36,6 +36,9 @@ nginx:
 fe:
 	@docker compose -f $(COMPOSE_FILE) up --build frontend
 
+be:
+	@docker compose -f $(COMPOSE_FILE) up --build backend
+
 
 
 .PHONY: all init up down

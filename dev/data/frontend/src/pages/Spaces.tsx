@@ -53,11 +53,18 @@ import * as THREE from 'three';
 // 	return null
 // }
 
+// get count from backend to decide how many blocks to generate
+function getDeptCount() {
+	let count;
+	// call backend API
+	count = 8;
+	return (count);
+}
 
 // Main Scene
 export default function SpaceScene() {
   const [characterPos, setCharacterPos] = useState(new THREE.Vector3(0, 0, 0));
-
+	const count = getDeptCount()
   // const cameraRef = useRef<THREE.PerspectiveCamera>(null)
   
   // useFrame(() => {
@@ -95,7 +102,7 @@ export default function SpaceScene() {
 				<planeGeometry args={[100, 100]} />
 				<meshStandardMaterial color="#404040" />
 			</mesh> */}
-			<GenerateDept count={8} characterPos={characterPos} />
+			<GenerateDept count={count} characterPos={characterPos} />
 			
 			<Character onChange={setCharacterPos}/>
 			
