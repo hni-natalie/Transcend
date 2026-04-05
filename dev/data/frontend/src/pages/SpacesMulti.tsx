@@ -62,32 +62,17 @@ function getDeptCount() {
 	return (count);
 }
 
-// function randomHexColor() {
-//   const letters = '0123456789ABCDEF';
-//   let color = '#';
-//   for (let i = 0; i < 6; i++) {
-//     color += letters[Math.floor(Math.random() * 16)];
-//   }
-//   return color;
-// };
-
-// function randomHslColor() {
-//   return `hsl(${Math.random() * 360}, 80%, 80%)`;
-// };
 
 // Main Scene
+
 export default function SpaceMultiScene() {
 	/* ------------- players  ------------- */
 	const spawnedRef = useRef(new Set()); // Track spawned characters
-  // const [characterPos, setCharacterPos] = useState(new THREE.Vector3(0, 0, 0));	/* characters */
-  const [localPlayerId, setLocalPlayerId] = useState<String>(null);
-  // const remotePlayersRef = useRef({});
-  const playerRefs = useRef<Map<string, THREE.Mesh>>(new Map());
 	/* ------------- general  ------------- */
 	const count = getDeptCount()
 	const listenerRef = useRef<THREE.AudioListener>(new THREE.AudioListener());
 	/* ------------- sockets  ------------- */
-	const { enableSocket, socket, players, setPlayerRef, isConnected } = useSocket();
+	const { enableSocket, players, localPlayerId, isConnected, localPlayerPos } = useSocket();
   useEffect(() => { enableSocket(); }, []);
 	
 	// const socketUrl = import.meta.env.VITE_DOMAIN_URL
@@ -115,9 +100,14 @@ export default function SpaceMultiScene() {
   // }, []);
 
   useEffect(() => {
-    if (!socket || !isConnected) return;
+    if (!isConnected) return;
+			console.log('Local player: ', localPlayerId, 'pos: ', localPlayerPos);
+  }, [localPlayerPos, isConnected]);
 
-		setLocalPlayerId(socket.id);
+	// initialize setup
+  useEffect(() => {
+    if (!isConnected) return;
+		
     // Spawn new characters when players join
     players.forEach(( user:Player )  => {
       if (!spawnedRef.current.has(user.id)) {
@@ -125,25 +115,8 @@ export default function SpaceMultiScene() {
         spawnedRef.current.add(user.id);
       }
     });
-  }, [players, socket, isConnected]);
+  }, [players, isConnected]);
 
-  // SYNC remote player positions when state changes
-	// useEffect(() => {
-	// 	console.log('update remote players!')
-	// 	players.forEach(( player:Player ) => {
-	// 		if (player.id !== localPlayerId && remotePlayersRef.current[player.id]) {
-	// 			console.log('update remote ****!')
-
-	// 			remotePlayersRef.current[player.id].position.set(
-	// 				player.position[0], 
-	// 				player.position[1], 
-	// 				player.position[2]
-	// 			);
-	// 		}
-	// 	});
-	// }, [players]);
-
-	
   // Clean up player on disconnect
   useEffect(() => {
     if (!isConnected) {
@@ -151,7 +124,6 @@ export default function SpaceMultiScene() {
       spawnedRef.current.clear();
     }
   }, [isConnected]);
-	let i = 0;
 
 	return (
 		<div className='bg-brand-black-sub h-screen flex gap-0.5'>
@@ -176,8 +148,8 @@ export default function SpaceMultiScene() {
 				<planeGeometry args={[100, 100]} />
 				<meshStandardMaterial color="#404040" />
 			</mesh> */}
-			<GenerateDept count={count}/>
-			{/* <GenerateDept count={count} characterPos={characterPos} /> */}
+			{/* <GenerateDept count={count}/> */}
+			<GenerateDept count={count} characterPos={localPlayerPos} />
 			{/* <Character onChange={setCharacterPos}/> */}
       {players.map(( user:Player ) => (
         <Character

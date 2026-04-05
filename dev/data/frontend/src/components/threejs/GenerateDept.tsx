@@ -1,11 +1,11 @@
-import { useThree, useFrame } from '@react-three/fiber';
-import { useMemo, useState, useRef } from 'react';
-import * as THREE from 'three';
-
 /*
  generate adaptive planes to represent diff departments
  based on input count
 */
+
+import { useThree, useFrame } from '@react-three/fiber';
+import { useMemo, useState, useRef, useEffect } from 'react';
+import * as THREE from 'three';
 
 interface GenerateDeptProps {
 	count?: number;
@@ -16,9 +16,14 @@ interface GenerateDeptProps {
 export default function GenerateDept({ count=5, padding=3, characterPos } : GenerateDeptProps) {
   const { viewport } = useThree();
   const [activePlane, setActivePlane] = useState(null);
+  const characterPosRef = useRef(characterPos);
   const planeRefs = useRef(new Map());
 	let currentActivePlane = null;
 
+  useEffect(() => {
+    characterPosRef.current = characterPos;
+    // console.log('Character posRef:', characterPosRef.current)
+  }, [characterPos]);
   
 	// Function to set ref
   const setPlaneRef = ( index:number ) => ( el:number ) => {
@@ -28,18 +33,17 @@ export default function GenerateDept({ count=5, padding=3, characterPos } : Gene
       planeRefs.current.delete(index);
     }
   };
-
 	// Collision detection
   useFrame(() => {
-    if (!characterPos) return;
+    if (!characterPosRef.current) return;
     
     for (const [index, plane] of planeRefs.current.entries()) {
       const halfWidth = plane.geometry.parameters.width / 2;
       const halfHeight = plane.geometry.parameters.height / 2;
       
       const isWithinBounds = 
-        Math.abs(characterPos.x - plane.position.x) < halfWidth &&
-        Math.abs(characterPos.z - plane.position.z) < halfHeight;
+        Math.abs(characterPosRef.current.x - plane.position.x) < halfWidth &&
+        Math.abs(characterPosRef.current.z - plane.position.z) < halfHeight;
       
       if (isWithinBounds) {
         if (activePlane !== index) {
@@ -101,7 +105,6 @@ export default function GenerateDept({ count=5, padding=3, characterPos } : Gene
           >
             <planeGeometry args={[planeWidth, planeHeight]} />
             <meshStandardMaterial
-              // color={`hsl(${hue}, 50%, 30%)`}
 	            color={activePlane === i ? `hsl(${hue}, 50%, 60%)` : `hsl(${hue}, 20%, 50%)`}
               side={THREE.DoubleSide}
               roughness={0.4}

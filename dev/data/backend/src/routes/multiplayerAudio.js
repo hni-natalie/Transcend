@@ -1,12 +1,11 @@
-// import { Server } from 'socket.io';
-// import { Request, Response } from 'express';
 
-/* **************************************************************** */
 // interface Player {
 //   id: string;
 //   position: { x:number; y:number; z:number };
 //   rotation: number;
+//   color: string;
 // }
+/* **************************************************************** */
 
 const { randomHslColor } = require('../utils/color.js');
 const router = require('express').Router();
@@ -26,11 +25,6 @@ const setupPlayerSocket = (io) => {
     rotation: 0,
     color: randomHslColor()
   });
-  
-  // socket.emit('init', {
-  //   myId: socket.id,
-  //   players: Array.from(players.values())
-  // });
 
   // Send current players to new connection
   socket.emit('existing-players', Array.from(players.values()));
