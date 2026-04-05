@@ -17,6 +17,9 @@ init:
 up:
 	@docker compose -f $(COMPOSE_FILE) up
 
+log:
+	@docker compose -f $(COMPOSE_FILE) logs -f
+
 down:
 	@docker compose -f $(COMPOSE_FILE) down
 

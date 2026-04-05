@@ -12,7 +12,7 @@ import tailwindcss from '@tailwindcss/vite'
 // })
 
 export default defineConfig(({ mode }) => {
-  const envDir = path.resolve(__dirname, '../..') // or '../../'
+  const envDir = path.resolve(__dirname, '../..')
 
   console.log(`Loading ${mode} environment variables`)
   
@@ -21,10 +21,6 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
     ],
-    envDir: envDir, // Look for .env files 2 levels above
-    // define: {
-    //   'import.meta.env.VITE_DOMAIN_URL': JSON.stringify(env.VITE_DOMAIN_URL),
-    //   'import.meta.env.VITE_SOCKET_PATH': JSON.stringify(env.VITE_SOCKET_PATH),
-    // }
+    envDir: envDir
   }
 })

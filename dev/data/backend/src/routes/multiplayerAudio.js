@@ -39,7 +39,7 @@ const setupPlayerSocket = (io) => {
       player.position = data.position;
       player.rotation = data.rotation;
       socket.broadcast.emit('player-moved', data);
-      console.log('Broadcast movement to all players')
+      // console.log('Broadcast movement to all players')
     }
   });
   
