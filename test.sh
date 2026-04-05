@@ -2,45 +2,59 @@
 
 # ------------------------------------------
 # Readme
-# ------------------------------------------
 # run specific test (eg test1)	./test.sh 1
 # else run all:									./test.sh
+# ------------------------------------------
 
 
 BORDER='-----------------------'
-SERVER_NAME='localhost'
+DOMAIN_NAME='localhost'
 PORT=443
 
 run_test() {
 	case $1 in
 	1)
 		echo -e "Test HTTPS frontend connection\n$BORDER"
-		curl -k -I "https://$SERVER_NAME:$PORT"
+		curl -k -I "https://$DOMAIN_NAME:$PORT"
 		;;
 	2)
 		echo -e "Test HTTPS backend connection\n$BORDER"
-		curl -kI "https://$SERVER_NAME:$PORT/api/health"
+		curl -kI "https://$DOMAIN_NAME:$PORT/api/health"
 		;;
 	3)
 		echo -e "Test HTTP connection (should fail)\n$BORDER"
-		curl -k -I "http://$SERVER_NAME"
+		curl -k -I "http://$DOMAIN_NAME"
 		;;
 	4)
 		echo -e "Test certificates by sending request using openssl\n$BORDER"
-		openssl s_client -connect "$SERVER_NAME:$PORT" -showcerts < /dev/null
+		openssl s_client -connect "$DOMAIN_NAME:$PORT" -showcerts < /dev/null
 		;;
 	5)
 		echo -e "Test TLS v1.2 connection\n$BORDER"
-		curl -vkI --tlsv1.2 --tls-max 1.2 https://$SERVER_NAME:$PORT/ 2>&1
+		curl -vkI --tlsv1.2 --tls-max 1.2 https://$DOMAIN_NAME:$PORT/ 2>&1
 		;;
 	6)
 		echo -e "Test TLS v1.3 connection\n$BORDER"
-		curl -vkI --tlsv1.3 --tls-max 1.3 https://$SERVER_NAME:$PORT/ 2>&1
+		curl -vkI --tlsv1.3 --tls-max 1.3 https://$DOMAIN_NAME:$PORT/ 2>&1
 		;;
 	7)
 		echo -e "Test TLS v1.1 connection (should fail)\n$BORDER"
-		curl -vkI --tlsv1.1 --tls-max 1.1 https://$SERVER_NAME:$PORT/ 2>&1
+		curl -vkI --tlsv1.1 --tls-max 1.1 https://$DOMAIN_NAME:$PORT/ 2>&1
 		;;
+	8)
+		echo -e "Test HTTPS backend connection\n$BORDER"
+		curl -k "https://$DOMAIN_NAME:$PORT/api/player"
+		;;
+	9)
+		echo -e "Test backend socket.io connection\n$BORDER"
+		curl -k "https://$DOMAIN_NAME:$PORT/api/socket.io/?EIO=4&transport=polling"
+		;;
+	10)
+		echo -e "Test backend socket.io connection\n$BORDER"
+		# curl -k "https://$DOMAIN_NAME:$PORT/api/socket.io/"
+		curl -k "https://$DOMAIN_NAME:$PORT/api/socket.io/?EIO=4&transport=websocket"
+		;;
+
 	100)
 		echo -e "Clearing all dockers\n$BORDER"
 		docker stop $(docker ps -qa) 2>/dev/null

@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { routes } from './config/routes.conf';
+import SocketProvider from './context/ContextSocket';
 import './App.css'
 
 function AppRoutes() {
@@ -32,7 +33,9 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <AppRoutes />
+      <SocketProvider>
+        <AppRoutes />
+      </SocketProvider>
     </Router>
   );
 }

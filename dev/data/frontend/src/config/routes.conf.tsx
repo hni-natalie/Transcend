@@ -1,7 +1,12 @@
-import { Landing, Login, Dashboard, Spaces } from '../pages';
+import { Landing, Login, Dashboard, Spaces, SpacesMulti } from '../pages';
 import { ROUTE_PATH as R } from './routes.manifest';
 
 export const routes = [
+{
+	path: '/test',
+	element: <SpacesMulti />,
+	title: 'Spaces'
+},
 {
 	path: "/",
 	element: <Landing />,

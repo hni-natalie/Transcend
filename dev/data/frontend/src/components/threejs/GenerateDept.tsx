@@ -102,7 +102,7 @@ export default function GenerateDept({ count=5, padding=3, characterPos } : Gene
             <planeGeometry args={[planeWidth, planeHeight]} />
             <meshStandardMaterial
               // color={`hsl(${hue}, 50%, 30%)`}
-	            color={activePlane === i ? `hsl(${hue}, 70%, 50%)` : `hsl(${hue}, 50%, 30%)`}
+	            color={activePlane === i ? `hsl(${hue}, 50%, 60%)` : `hsl(${hue}, 20%, 50%)`}
               side={THREE.DoubleSide}
               roughness={0.4}
               metalness={0.1}

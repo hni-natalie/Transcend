@@ -40,4 +40,6 @@ touch /tmp/backend-ready
 echo "✅ Backend ready flag created at /tmp/backend-ready"
 
 echo "Starting backend ..."
+# exec su nodejs -c "npm run build"
+# exec su nodejs -c "npm run start"
 exec su nodejs -c "node src/index.js"
