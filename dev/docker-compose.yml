@@ -55,6 +55,9 @@ services:
     volumes:
       - backend_app:/app:nocopy
     # restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
     secrets:
       - db_user
     networks:

@@ -12,10 +12,13 @@ init:
 	@sh init.sh
 
 up:
-	@docker compose -f $(COMPOSE_FILE) up 
+	@docker compose -f $(COMPOSE_FILE) up --build
 
 fe: 
 	@docker compose -f $(COMPOSE_FILE) up --build frontend
+
+database: 
+	@docker compose -f $(COMPOSE_FILE) up --build database
 
 stop:
 	@docker compose -f $(COMPOSE_FILE) stop

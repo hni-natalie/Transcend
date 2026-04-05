@@ -1,43 +1,53 @@
 #!/bin/bash
 set -e
 
-# Retrieve sensitive data 
 DB_ROOT_PASS=$(cat /run/secrets/db_root)
 DB_USER_PASS=$(cat /run/secrets/db_user)
 
 if [ ! -e /var/lib/mysql/.firstmount ]; then
-    echo "Initializing MariDB database..."
-    
+    echo "Initializing MariaDB database..."
+
     mariadb-install-db \
-			--user=mysql \
-	        --basedir=/usr \
-	        --datadir=/var/lib/mysql \
-	        --auth-root-authentication-method=socket \
-	        --skip-test-db \
-	        >/dev/null 2>&1
+        --user=mysql \
+        --basedir=/usr \
+        --datadir=/var/lib/mysql \
+        --skip-test-db \
+        >/dev/null 2>&1
 
-    mariadbd-safe --user=mysql &
+    # Write all SQL to a temp init file - runs before any auth is enforced
+    cat > /tmp/init.sql <<EOF
+ALTER USER 'root'@'localhost' IDENTIFIED VIA mysql_native_password USING PASSWORD('${DB_ROOT_PASS}');
+CREATE DATABASE IF NOT EXISTS ${DB_NAME};
+CREATE USER IF NOT EXISTS '${DB_USER}'@'%' IDENTIFIED BY '${DB_USER_PASS}';
+GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'%';
+FLUSH PRIVILEGES;
+USE ${DB_NAME};
+$(cat /docker-entrypoint-initdb.d/init.sql)
+$(cat /docker-entrypoint-initdb.d/seed.sql)
+EOF
 
-    until mariadb -u root -e "SELECT 1;" >/dev/null 2>&1; do
+    # Start with init file - SQL runs at startup before accepting connections
+    mariadbd-safe --user=mysql --init-file=/tmp/init.sql &
+
+    until [ -S /var/run/mysqld/mysqld.sock ]; do
+        echo "Waiting for socket..."
+        sleep 1
+    done
+
+    until mariadb -u root -p"${DB_ROOT_PASS}" --socket=/var/run/mysqld/mysqld.sock -e "SELECT 1;" 2>/dev/null; do
         echo "MariaDB not started yet..."
         sleep 1
     done
 
-	mariadb -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME}"
-	mariadb -e "CREATE USER '${DB_USER}'@'%' IDENTIFIED BY '${DB_USER_PASS}';"
-	mariadb -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'%';"
-	mariadb -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASS}';"
-	mariadb -u root -p${DB_ROOT_PASS} -e "FLUSH PRIVILEGES;"
-	mariadb-admin -u root -p${DB_ROOT_PASS} shutdown
+    echo "Init done, shutting down..."
+    mariadb-admin -u root -p"${DB_ROOT_PASS}" --socket=/var/run/mysqld/mysqld.sock shutdown
 
+    rm -f /tmp/init.sql
     touch /var/lib/mysql/.firstmount
-
-	echo "Mariadb Successful"
-fi 
+    echo "MariaDB initialized successfully"
+fi
 
 echo "Creating health check flag..."
 touch /tmp/database-ready
-echo "✅ Database ready flag created at /tmp/database-ready"
-
-echo "starting database ..."
+echo "Starting database..."
 exec mariadbd-safe --user=mysql
