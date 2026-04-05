@@ -1,12 +1,16 @@
 #!/bin/sh
 set -e
 
-DB_USER_PASS=$(cat /run/secrets/db_user)
+DB_USER=$(cat /run/secrets/db_user)
+: "${DB_NAME:?DB_NAME must be set (e.g. in .env)}"
 
-until mariadb --ssl=0 -h database -P 3306 -u${DB_USER} -p${DB_USER_PASS} -e "SELECT 1;"; do
-    echo "Waiting for Mariadb..."
+# Wait for Postgres (rebuild backend image after switching from MariaDB: docker compose build backend)
+until pg_isready -h database -p "${DATABASE_PORT:-5432}" -U "$DB_USER" -d "$DB_NAME"; do
+    echo "Waiting for Postgres..."
     sleep 1
 done
+
+echo "✅ Postgres is ready"
 
 # Initial setup
 if [ ! -f "package.json" ]; then
@@ -16,11 +20,11 @@ if [ ! -f "package.json" ]; then
 fi
 
 # Always install dependencies if node_modules missing or incomplete
-if [ ! -d "node_modules" ] || [ ! -d "node_modules/vite" ]; then
+if [ ! -d "node_modules" ] || [ ! -d "node_modules/express" ]; then
     echo "Project exists, installing dependencies..."
     npm install
 else
-    echo "Project already exists, skipping ..."
+    echo "Project already exists, skipping..."
 fi
 
 # Check for src/index.js
@@ -33,5 +37,5 @@ echo "Creating health check flag..."
 touch /tmp/backend-ready
 echo "✅ Backend ready flag created at /tmp/backend-ready"
 
-echo "Starting backend ..."
+echo "Starting backend..."
 exec su nodejs -c "node src/index.js"

@@ -9,4 +9,3 @@ CREATE TABLE IF NOT EXISTS user (
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (role_id) REFERENCES role(role_id)
 );
-

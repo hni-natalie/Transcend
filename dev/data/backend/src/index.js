@@ -16,14 +16,23 @@ app.get('/', (req, res) => {
 
 app.get('/health', async (req, res) => {
 	try {
-		const conn = await pool.getConnection();
-		await conn.query('SELECT 1');
-		conn.release();
-		res.json({ status: 'healthy', database: 'connected' });
-	} catch (err) {
-		res.status(500).json({ status: 'healthy', database: 'disconnected', error: err.message });
-	}
-});
+		await pool.query('SELECT 1')   // no connection needed, pool handles it
+		res.json({ status: 'healthy', database: 'connected' })
+		} catch (err) {
+		res.status(500).json({ status: 'unhealthy', database: 'disconnected', error: err.message })
+		}
+	})
+
+// app.get('/health', async (req, res) => {
+// 	try {
+// 		const conn = await pool.getConnection();
+// 		await conn.query('SELECT 1');
+// 		conn.release();
+// 		res.json({ status: 'healthy', database: 'connected' });
+// 	} catch (err) {
+// 		res.status(500).json({ status: 'healthy', database: 'disconnected', error: err.message });
+// 	}
+// });
 
 app.listen(port, async () => {
     console.log(`Server running on port ${port}`);

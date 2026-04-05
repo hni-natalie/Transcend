@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import authService from '../../services/authService';
+import { ROUTE_PATH as R } from '../../config/routes.manifest'
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,18 +14,24 @@ const Login = () => {
   const onBack = () => { navigate('/'); }
 
   const handleEmailLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      const data = await authService.login(email, password);
-      console.log('Logged in!', data);
-      // redirect to dashboard here
-    } catch (err) {
-      setError('Invalid email or password.');
-    } finally {
-      setLoading(false);
-    }
+	e.preventDefault();
+	setError('');
+	setLoading(true);
+	try {
+	  const data = await authService.login(email, password);
+	  console.log('Logged in!', data);
+	  
+	  if (data.user.role_id === 1) {
+		navigate(R.ADMIN_DASHBOARD)
+	  } else {
+		navigate(R.USER_DASHBOARD)
+	  }
+  
+	} catch (err) {
+	  setError('Invalid email or password.');
+	} finally {
+	  setLoading(false);
+	}
   };
 
   const handleGoogleLogin = () => {

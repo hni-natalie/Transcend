@@ -15,10 +15,10 @@ init:
 	@sh init.sh
 
 up:
-	@docker compose -f $(COMPOSE_FILE) up 
+	@docker compose -f $(COMPOSE_FILE) up
 
 down: 
-	@docker compose -f $(COMPOSE_FILE) down
+	@docker compose -f $(COMPOSE_FILE) down 
 
 stop:
 	@docker compose -f $(COMPOSE_FILE) stop

@@ -10,42 +10,39 @@ services:
     depends_on:
       frontend:
         condition: service_healthy
-    # restart: unless-stopped
     networks:
       - app-network
 
-  frontend: 
+  frontend:
     build: ./${SERV_DIR}/frontend
     init: true
     container_name: t_frontend
     expose:
-      - "${FRONTEND_PORT}"  # Expose internally, not to host
+      - "${FRONTEND_PORT}"
     env_file:
       - .env
     healthcheck:
-        # test: ["CMD", "curl", "-f", "http://localhost:${FRONTEND_PORT}"]
-        test: ["CMD", "test", "-f", "/tmp/frontend-ready"]
-        interval: 5s
-        timeout: 3s
-        retries: 10
-        start_period: 30s  # Give init.sh time to run
+      test: ["CMD", "test", "-f", "/tmp/frontend-ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
     depends_on:
       backend:
         condition: service_healthy
     volumes:
       - frontend_app:/app:nocopy
-    # restart: unless-stopped
     networks:
       - app-network
-  
+
   backend:
     build: ./${SERV_DIR}/backend
     init: true
     container_name: t_backend
     expose:
-      - "${BACKEND_PORT}"  # Expose internally, not to host
+      - "${BACKEND_PORT}"
     ports:
-      - "3000:3000" # For testing (RMB TO REMOVE)
+      - "3000:3000"           # RMB TO REMOVE before production
     env_file:
       - .env
     healthcheck:
@@ -53,33 +50,39 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s  # Give your app time to start
+      start_period: 30s
+    depends_on:
+      database:
+        condition: service_healthy
     volumes:
       - backend_app:/app:nocopy
-    # restart: unless-stopped
     secrets:
       - db_user
-      - jwt_secret
+      - db_root
       - app_root
+      - jwt_secret
     networks:
       - app-network
 
   database:
-    build: ./${SERV_DIR}/database
+    image: pgvector/pgvector:pg16
     container_name: t_database
     expose:
-      - "${DATABASE_PORT}"  # Expose internally, not to host
-    env_file:
-      - .env
+      - "${DATABASE_PORT}"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_root
     healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/database-ready"]
+      # Without -U, pg_isready uses OS user "root" (no such PostgreSQL role). Values come from project .env at compose parse time.
+      test: ["CMD-SHELL", "pg_isready -U \"${DB_USER}\" -d \"${DB_NAME}\""]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s  # Give your app time to start
+      start_period: 30s
     volumes:
-      - database:/var/lib/mysql
-      - ./data/database/migrations:/migrations
+      - database:/var/lib/postgresql/data
+      - ./services/database/init:/docker-entrypoint-initdb.d
     secrets:
       - db_user
       - db_root
@@ -87,17 +90,17 @@ services:
       - app-network
 
   adminer:
-    build: ./${SERV_DIR}/adminer
+    image: adminer:latest
     container_name: t_adminer
     expose:
       - "${ADMINER_PORT}"
     ports:
       - "${ADMINER_PORT}:${ADMINER_PORT}"
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     networks:
       - app-network
-
 
 volumes:
   frontend_app:
@@ -114,15 +117,12 @@ volumes:
       device: ${PWD}/dev/data/backend
       o: bind
 
-  # driver_opts is not needed for database volume 
-  # Avoid Incorrect information in file: '.frm' error
   database:
     driver: local
 
 networks:
   app-network:
     driver: bridge
-
 
 secrets:
   db_root:

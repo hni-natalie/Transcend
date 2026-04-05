@@ -6,27 +6,27 @@ import { ROUTE_PATH as R } from './routes.manifest';
 export const menuConfig: MenuConfig = [
 {
 	title: 'Dashboard',
-	href: R.DASHBOARD,
+	href: R.ADMIN_DASHBOARD,
 	icon: <IconDashboard/>
 },
 {
 	title: 'Users',
-	href: R.USERS,
+	href: R.ADMIN_USERS,
 	icon: <IconUsers />
 },
 {
 	title: 'Spaces',
-	href: R.SPACES,
+	href: R.ADMIN_SPACES,
 	icon: <IconSpaces />
 },
 {
 	title: 'Activity',
-	href: R.ACTIVITY,
+	href: R.ADMIN_ACTIVITY,
 	icon: <IconActivity />
 },
 {
 	title: 'Settings',
-	href: R.SETTING,
+	href: R.ADMIN_SETTINGS,
 	icon: <IconSettings />
 }
 
