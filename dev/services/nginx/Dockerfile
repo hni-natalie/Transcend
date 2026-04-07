@@ -19,6 +19,9 @@ RUN mkdir -p /etc/nginx/ssl \
 COPY ./conf/nginx.prod.conf /etc/nginx/nginx.conf.template
 COPY --chmod=755 ./tools/init.sh /init.sh
 
-EXPOSE 443
+# 443  : for https
+# 7881 : for livekit tcp_port
+# 7882 : for livekit udp_port
+EXPOSE 443 7881 7882
 
 ENTRYPOINT ["/init.sh"]

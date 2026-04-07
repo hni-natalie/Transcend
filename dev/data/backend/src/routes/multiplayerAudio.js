@@ -23,7 +23,9 @@ const setupPlayerSocket = (io) => {
     name: 'GetUsersNameAPI',
     position: { x:0, y:0, z:0 }, //use Object
     rotation: 0,
-    color: randomHslColor()
+    color: randomHslColor(),
+    audioEnabled: true,
+    speaking: false,
   });
 
   // Send current players to new connection
@@ -42,38 +44,54 @@ const setupPlayerSocket = (io) => {
       // console.log('Broadcast movement to all players')
     }
   });
+
+	// Get all players
+	// socket.on('getPlayers', () => {
+	// 	socket.emit('playersList', Array.from(players.values()));
+	// });
   
   // ========== WebRTC Signaling ==========
   // Handle call initiation
-  socket.on('call-user', (data) => {
-    console.log(`Call from ${socket.id} to ${data.to}`);
-    io.to(data.to).emit('incoming-call', {
-      from: socket.id,
-      offer: data.offer
-    });
-  });
+  // socket.on('call-user', (data) => {
+  //   console.log(`Call from ${socket.id} to ${data.to}`);
+  //   io.to(data.to).emit('incoming-call', {
+  //     from: socket.id,
+  //     offer: data.offer
+  //   });
+  // });
   
-  // Handle call acceptance
-  socket.on('accept-call', (data) => {
-    console.log(`Call accepted from ${socket.id} to ${data.to}`);
-    io.to(data.to).emit('call-accepted', {
-      from: socket.id,
-      answer: data.answer
-    });
-  });
+  /**********************************************************
+   * voice modules
+   ********************************************************** */
+  // receive voice from peers
+  // socket.on('voice-offer', (data) => {
+  //   socket.to(data.targetId).emit('voice-offer', data.offer);
+  // });
+  // // broadcast voice to peers
+  // socket.on('voice-answer', (data) => {
+  //   socket.to(data.targetId).emit('voice-answer', data.offer);
+  // });
+  // // broadcast voice to peers
+  // socket.on('voice-ice-candidate', (data) => {
+  //   socket.to(data.targetId).emit('voice-ice-candidate', data.offer);
+  // });
   
-  // Handle ICE candidates for NAT traversal
-  socket.on('ice-candidate', (data) => {
-    io.to(data.to).emit('ice-candidate', {
-      from: socket.id,
-      candidate: data.candidate
-    });
-  });
+  // // Handle call acceptance
+  // socket.on('accept-call', (data) => {
+  //   console.log(`Call accepted from ${socket.id} to ${data.to}`);
+  //   io.to(data.to).emit('call-accepted', {
+  //     from: socket.id,
+  //     answer: data.answer
+  //   });
+  // });
   
-	// Get all players
-	socket.on('getPlayers', () => {
-		socket.emit('playersList', Array.from(players.values()));
-	});
+  // // Handle ICE candidates for NAT traversal
+  // socket.on('ice-candidate', (data) => {
+  //   io.to(data.to).emit('ice-candidate', {
+  //     from: socket.id,
+  //     candidate: data.candidate
+  //   });
+  // });
 	
   // Handle disconnection
   socket.on('disconnect', () => {

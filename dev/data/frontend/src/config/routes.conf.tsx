@@ -1,9 +1,10 @@
-import { Landing, Login, Dashboard, Spaces, SpacesMulti } from '../pages';
+import { Landing, Login, Dashboard, Spaces, SpacesMulti, RoomPage } from '../pages';
 import { ROUTE_PATH as R } from './routes.manifest';
 
 export const routes = [
 {
 	path: '/test',
+	// element: <RoomPage />,
 	element: <SpacesMulti />,
 	title: 'Spaces'
 },

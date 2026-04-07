@@ -26,35 +26,44 @@ run_test() {
 		curl -k -I "http://$DOMAIN_NAME"
 		;;
 	4)
-		echo -e "Test certificates by sending request using openssl\n$BORDER"
-		openssl s_client -connect "$DOMAIN_NAME:$PORT" -showcerts < /dev/null
-		;;
-	5)
-		echo -e "Test TLS v1.2 connection\n$BORDER"
-		curl -vkI --tlsv1.2 --tls-max 1.2 https://$DOMAIN_NAME:$PORT/ 2>&1
-		;;
-	6)
-		echo -e "Test TLS v1.3 connection\n$BORDER"
-		curl -vkI --tlsv1.3 --tls-max 1.3 https://$DOMAIN_NAME:$PORT/ 2>&1
-		;;
-	7)
-		echo -e "Test TLS v1.1 connection (should fail)\n$BORDER"
-		curl -vkI --tlsv1.1 --tls-max 1.1 https://$DOMAIN_NAME:$PORT/ 2>&1
-		;;
-	8)
 		echo -e "Test HTTPS backend connection\n$BORDER"
 		curl -k "https://$DOMAIN_NAME:$PORT/api/player"
 		;;
-	9)
+	5)
 		echo -e "Test backend socket.io connection\n$BORDER"
 		curl -k "https://$DOMAIN_NAME:$PORT/api/socket.io/?EIO=4&transport=polling"
 		;;
-	10)
-		echo -e "Test backend socket.io connection\n$BORDER"
-		# curl -k "https://$DOMAIN_NAME:$PORT/api/socket.io/"
-		curl -k "https://$DOMAIN_NAME:$PORT/api/socket.io/?EIO=4&transport=websocket"
+	6)
+		echo -e "Test HTTPS livekit connection from Livekit\n$BORDER"
+		curl -kI "https://$DOMAIN_NAME:$PORT/api/livekit/"
 		;;
-
+	7)
+		echo -e "Test GET livekit token from Backend Express\n$BORDER"
+		curl -k "https://$DOMAIN_NAME:$PORT/api/lk/token?roomName=myRoom&participantName=John"
+		;;
+	8)
+		echo -e "Test GET livekit rtc from Livekit\n$BORDER"
+		curl -k "https://$DOMAIN_NAME:$PORT/api/livekit/rtc/validate"
+		;;
+	# -------------------------------------------------------------------
+	# test certificates ...
+	# -------------------------------------------------------------------
+	51)
+		echo -e "Test certificates by sending request using openssl\n$BORDER"
+		openssl s_client -connect "$DOMAIN_NAME:$PORT" -showcerts < /dev/null
+		;;
+	52)
+		echo -e "Test TLS v1.2 connection\n$BORDER"
+		curl -vkI --tlsv1.2 --tls-max 1.2 https://$DOMAIN_NAME:$PORT/ 2>&1
+		;;
+	53)
+		echo -e "Test TLS v1.3 connection\n$BORDER"
+		curl -vkI --tlsv1.3 --tls-max 1.3 https://$DOMAIN_NAME:$PORT/ 2>&1
+		;;
+	54)
+		echo -e "Test TLS v1.1 connection (should fail)\n$BORDER"
+		curl -vkI --tlsv1.1 --tls-max 1.1 https://$DOMAIN_NAME:$PORT/ 2>&1
+		;;
 	100)
 		echo -e "Clearing all dockers\n$BORDER"
 		docker stop $(docker ps -qa) 2>/dev/null

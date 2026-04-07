@@ -17,6 +17,9 @@ init:
 up:
 	@docker compose -f $(COMPOSE_FILE) up
 
+up-b:
+	@docker compose -f $(COMPOSE_FILE) up --build
+
 log:
 	@docker compose -f $(COMPOSE_FILE) logs -f
 
@@ -35,6 +38,15 @@ restart:
 
 nginx:
 	@docker compose -f $(COMPOSE_FILE) up --build nginx
+
+redis:
+	@docker compose -f $(COMPOSE_FILE) up --build redis
+
+livekit:
+	@docker compose -f $(COMPOSE_FILE) up --build livekit
+
+t:
+	@docker compose -f $(COMPOSE_FILE) run --rm --entrypoint /bin/sh backend
 
 fe:
 	@docker compose -f $(COMPOSE_FILE) up --build frontend

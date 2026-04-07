@@ -14,7 +14,8 @@ export type Player = {
   id: string;
   name?: string;
   position: Position;
-  // position: { x:number ; y:number ; z:number };
   rotation: number;
   color: string;
+  audioEnabled: boolean;
+  speaking: boolean;
 }

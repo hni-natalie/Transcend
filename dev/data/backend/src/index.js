@@ -1,8 +1,10 @@
-const express = require('express');
+const express    = require('express');
 const http       = require('http');
 const { Server } = require('socket.io');
 const dotenv     = require('dotenv');
 const path       = require('path');
+const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL } = require('./utils/secrets');
+
 
 dotenv.config({ path: path.join(__dirname, '../../../.env') });
 const app    = express();
@@ -23,11 +25,13 @@ multiplayer.setupPlayerSocket(io)
  * import routes
  * *************************************************/
 const routesInit = require('./routes/init')
+const routesLivekit = require('./routes/livekit')
 
 /* *************************************************
  * all used routes
  * *************************************************/
 app.use('/', routesInit)
+app.use('/lk', routesLivekit)
 app.use('/player', multiplayer.router)
 
 // start server

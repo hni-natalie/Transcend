@@ -21,6 +21,11 @@ if [ ! -d "$PWD/dev/data/database" ]; then
     chmod 755 "$PWD/dev/data/database"
 fi
 
+if [ ! -d "$PWD/dev/data/redis" ]; then
+    mkdir -p "$PWD/dev/data/redis"
+    chmod 755 "$PWD/dev/data/redis"
+fi
+
 echo "${GREY}Data directories created!${RST}"
 
 echo "${GREY}Copying .env.example ...${RST}"

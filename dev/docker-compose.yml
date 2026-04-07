@@ -52,13 +52,55 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s  # Give your app time to start
+    secrets:
+      - livekit_api_key
+      - livekit_api_secret
+    depends_on:
+      - livekit
     volumes:
       - backend_app:/app:nocopy
     # restart: unless-stopped
     networks:
       - app-network
 
-  # database:
+  livekit:
+    build: ./${SERV_DIR}/livekit
+    init: true
+    container_name: t_livekit
+    ports:
+      - "7881:7881"
+      - "7882:7882/udp"
+      # - "50000-50010:50010-50010/udp"
+      - "${LIVEKIT_UDP_START}-${LIVEKIT_UDP_END}:${LIVEKIT_UDP_START}-${LIVEKIT_UDP_END}/udp"
+    env_file:
+      - .env
+    secrets:
+      - livekit_api_key
+      - livekit_api_secret
+      - redis_pwd
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  redis:
+    build: ./${SERV_DIR}/redis
+    init: true
+    container_name: t_redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - app-network
+    secrets:
+      - redis_pwd
+    volumes:
+      - redis:/data:nocopy
+
 
 
 volumes:
@@ -83,7 +125,23 @@ volumes:
       device: ${PWD}/dev/data/database
       o: bind
 
+  redis:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/dev/data/redis
+      o: bind
+
 
 networks:
   app-network:
     driver: bridge
+
+
+secrets:
+  livekit_api_key:
+    file: ./secrets/livekit_api_key.txt
+  livekit_api_secret:
+    file: ./secrets/livekit_api_secret.txt
+  redis_pwd:
+    file: ./secrets/redis_password.txt
