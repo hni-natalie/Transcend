@@ -4,16 +4,23 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"prisma:generate": "prisma generate",
+		"prisma:migrate": "prisma migrate dev",
+		"prisma:studio": "prisma studio"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
+	"devDependencies": {
+		"prisma": "^5.0.0"
+	},
 	"dependencies": {
 		"express": "^5.2.1",
 		"pg": "^8.13.3",
 		"bcrypt": "^5.1.1",
 		"jsonwebtoken": "^9.0.2",
-		"google-auth-library": "^9.0.0"
+		"google-auth-library": "^9.0.0",
+		"@prisma/client": "^5.0.0"
 	}
 }

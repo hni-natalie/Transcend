@@ -15,7 +15,9 @@ fi
 # In Docker dev, `dev/data/frontend` is bind-mounted from the host, so `node_modules`
 # may exist but be for a different platform/arch (missing rolldown native optional deps).
 ROLLODOWN_BINDING_DIR="node_modules/@rolldown/binding-linux-arm64-musl"
-if [ ! -d "node_modules" ] || [ ! -d "node_modules/vite" ] || [ ! -d "$ROLLODOWN_BINDING_DIR" ]; then
+VITE_BIN="node_modules/.bin/vite"
+VITE_PACKAGE_JSON="node_modules/vite/package.json"
+if [ ! -d "node_modules" ] || [ ! -x "$VITE_BIN" ] || [ ! -f "$VITE_PACKAGE_JSON" ] || [ ! -d "$ROLLODOWN_BINDING_DIR" ]; then
     echo "> Installing dependencies (including optional/native deps if needed)..."
     rm -rf node_modules package-lock.json || true
     npm install --include=optional || npm install

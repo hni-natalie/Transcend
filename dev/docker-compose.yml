@@ -65,7 +65,7 @@ services:
       - app-network
 
   database:
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:0.8.0-pg16
     container_name: t_database
     expose:
       - "${DATABASE_PORT}"
@@ -90,12 +90,10 @@ services:
       - app-network
 
   adminer:
-    image: adminer:latest
+    image: adminer:4.8.1
     container_name: t_adminer
     expose:
       - "${ADMINER_PORT}"
-    ports:
-      - "${ADMINER_PORT}:${ADMINER_PORT}"
     depends_on:
       database:
         condition: service_healthy
