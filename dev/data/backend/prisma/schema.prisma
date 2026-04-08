@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  dpId                             String   @id @default(dbgenerated("uuid_generate_v4()")) @map("dp_id") @db.Uuid
+  dpName                           String   @unique @map("dp_name") @db.VarChar(255)
+  dpLead                           String?  @map("dp_lead") @db.Uuid
+  createdAt                        DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  users_departments_dp_leadTousers users?   @relation("departments_dp_leadTousers", fields: [dpLead], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_department_lead")
+  users_users_dp_idTodepartments   users[]  @relation("users_dp_idTodepartments")
+
+  @@map("departments")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model roles {
+  role_id    String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  role_name  String   @unique @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  users      users[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  user_id                                String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_email                             String       @unique @db.VarChar(255)
+  user_password                          String?      @db.VarChar(255)
+  user_name                              String       @db.VarChar(255)
+  user_status                            String       @default("offline") @db.VarChar(20)
+  role_id                                String       @db.Uuid
+  dp_id                                  String       @db.Uuid
+  auth_provider                          String?      @default("email") @db.VarChar(20)
+  google_id                              String?      @unique @db.VarChar(255)
+  email_verified                         Boolean?     @default(false)
+  created_at                             DateTime     @default(now()) @db.Timestamp(6)
+  updated_at                             DateTime     @default(now()) @db.Timestamp(6)
+  departments_departments_dp_leadTousers Department[] @relation("departments_dp_leadTousers")
+  departments_users_dp_idTodepartments   Department   @relation("users_dp_idTodepartments", fields: [dp_id], references: [dpId], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_department")
+  roles                                  roles        @relation(fields: [role_id], references: [role_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_role")
+}

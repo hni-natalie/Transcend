@@ -1,7 +1,8 @@
 #!/bin/sh
 set -e
 
-DB_USER=$(cat /run/secrets/db_user)
+# DB_USER=$(cat /run/secrets/db_user)
+# Use DB_USER from the environment
 : "${DB_NAME:?DB_NAME must be set (e.g. in .env)}"
 
 until pg_isready -h database -p "${DATABASE_PORT:-5432}" -U "$DB_USER" -d "$DB_NAME"; do
@@ -36,6 +37,10 @@ fi
 echo "Creating health check flag..."
 touch /tmp/backend-ready
 echo "✅ Backend ready flag created at /tmp/backend-ready"
+
+# ensures prisma client is generated for docker(linux os)
+echo "Generating Prisma Client for Docker..."
+npx prisma generate
 
 echo "Starting backend..."
 exec su nodejs -c "node src/index.js"

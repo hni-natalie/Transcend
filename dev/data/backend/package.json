@@ -6,8 +6,15 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"prisma:generate": "prisma generate",
+		"prisma:pull": "prisma db pull",
+		"prisma:push": "prisma db push",
 		"prisma:migrate": "prisma migrate dev",
-		"prisma:studio": "prisma studio"
+		"prisma:studio": "prisma studio",
+		"prisma:format": "prisma format",
+		"prisma:seed": "prisma db seed"
+	},
+	"prisma": {
+		"seed": "node prisma/seed.js"
 	},
 	"keywords": [],
 	"author": "",

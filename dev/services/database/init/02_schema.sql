@@ -20,7 +20,7 @@ CREATE TABLE users (
     user_email        VARCHAR(255) NOT NULL UNIQUE,
     user_password     VARCHAR(255),
     user_name         VARCHAR(255) NOT NULL,
-    user_status       VARCHAR(20) NOT NULL DEFAULT 'inactive',
+    user_status       VARCHAR(20) NOT NULL DEFAULT 'offline',
     role_id           UUID NOT NULL,
     dp_id             UUID NOT NULL,
     

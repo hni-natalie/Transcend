@@ -43,6 +43,7 @@ services:
       - "${BACKEND_PORT}"
     ports:
       - "3000:3000"           # RMB TO REMOVE before production
+      - "5555:5555"           # uncomment for dev
     env_file:
       - .env
     healthcheck:
@@ -69,6 +70,8 @@ services:
     container_name: t_database
     expose:
       - "${DATABASE_PORT}"
+    ports:
+      - "5432:5432"           # uncomment for dev
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -131,3 +134,5 @@ secrets:
     file: ./secrets/jwt_secret.txt
   app_root:
     file: ./secrets/app_admin_password.txt
+  app_user:
+    file: ./secrets/app_user_password.txt
