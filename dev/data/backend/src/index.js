@@ -14,7 +14,7 @@ const io     = new Server(server, {
   cors: {
     origin: process.env.VITE_DOMAIN_URL || "https://localhost"
   },
-  path: process.env.VITE_SOCKET_PATH, // /socket.io
+  path: process.env.VITE_SOCKET_PATH || "/socket.io",
 });
 console.log('Socket.IO created with path:', io.path());
 const multiplayer = require('./routes/multiplayerAudio')

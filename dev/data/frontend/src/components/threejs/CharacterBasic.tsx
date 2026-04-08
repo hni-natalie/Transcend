@@ -14,7 +14,8 @@ export default function Character({ id, position, color="#D0F05C", isLocalPlayer
 	const listenerRef = useRef<THREE.AudioListener>(new THREE.AudioListener());
 	const characterRef = useRef<THREE.Mesh>(null);
 	const [keys, setKeys] = useState({
-		w: false, s: false, a: false, d: false
+		w: false, s: false, a: false, d: false,
+	  ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false
 	});
 	const speed = 5; //movement speed
 	
@@ -43,15 +44,17 @@ export default function Character({ id, position, color="#D0F05C", isLocalPlayer
 		if (!isLocalPlayer) return ;
 
 		const handleKeyDown = (e: KeyboardEvent) => {
-			const key = e.key.toLowerCase();
-			if (keys.hasOwnProperty(key)) {
-				setKeys(prev => ({ ...prev, [key]: true }));
+			const key = e.key;
+			const normalizedKey = key.length === 1 ? key.toLowerCase() : key;
+			if (keys.hasOwnProperty(normalizedKey)) {
+				setKeys(prev => ({ ...prev, [normalizedKey]: true }));
 			}
 		};
 		const handleKeyUp = (e: KeyboardEvent) => {
-			const key = e.key.toLowerCase();
-			if (keys.hasOwnProperty(key)) {
-				setKeys(prev => ({ ...prev, [key]: false }));
+			const key = e.key;
+			const normalizedKey = key.length === 1 ? key.toLowerCase() : key;
+			if (keys.hasOwnProperty(normalizedKey)) {
+				setKeys(prev => ({ ...prev, [normalizedKey]: false }));
 			}
 		};
 		window.addEventListener('keydown', handleKeyDown);
@@ -75,10 +78,10 @@ export default function Character({ id, position, color="#D0F05C", isLocalPlayer
 		const moveDistance = speed * delta;
 
 		// Calculate movement direction
-		if (keys.w) movement.z -= 1;  // Forward
-		if (keys.s) movement.z += 1;  // Backward
-		if (keys.a) movement.x -= 1;  // Left
-		if (keys.d) movement.x += 1;  // Right
+		if (keys.w || keys.ArrowUp)    movement.z -= 1;  // Forward
+		if (keys.s || keys.ArrowDown)  movement.z += 1;  // Backward
+		if (keys.a || keys.ArrowLeft)  movement.x -= 1;  // Left
+		if (keys.d || keys.ArrowRight) movement.x += 1;  // Right
 
 		// Normalize diagonal movement
 		if (movement.length() > 0) movement.normalize();

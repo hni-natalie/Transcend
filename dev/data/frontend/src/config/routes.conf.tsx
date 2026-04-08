@@ -3,9 +3,15 @@ import { ROUTE_PATH as R } from './routes.manifest';
 
 export const routes = [
 {
+	// testing
 	path: '/test',
-	// element: <RoomPage />,
 	element: <SpacesMulti />,
+	title: 'Spaces'
+},
+{
+	// testing
+	path: '/room',
+	element: <RoomPage />,
 	title: 'Spaces'
 },
 {

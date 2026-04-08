@@ -6,12 +6,14 @@
 import { useEffect, useState } from 'react';
 import livekitService from '../services/livekitService';
 
-export const useLiveKit = (roomName, participantName) => {
+export default function useLiveKit( roomName:string , participantName:string ) {
   const [isConnected, setIsConnected] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
+  // Check if connection status when hook mounts
   useEffect(() => {
-    // Check if already connected when hook mounts
     const status = livekitService.getConnectionStatus();
+    // console.log('Livekit service status:', status);
     setIsConnected(status.isConnected);
     
     const handleConnected = () => setIsConnected(true);
@@ -28,15 +30,22 @@ export const useLiveKit = (roomName, participantName) => {
 
   const connect = async () => {
     // Service handles token caching internally
-    return await livekitService.connectToRoom(roomName, participantName);
+    const result = await livekitService.connectToRoom(roomName, participantName);
+    setIsMuted(livekitService.audioManager.getMuteState());
+    return result
   };
 
   const disconnect = () => {
     livekitService.disconnectFromRoom();
   };
 
-  return { connect, disconnect, isConnected };
-};
+  const toggleMute = () => {
+    const status = livekitService.audioManager.toggleMute();
+    setIsMuted(status)
+  }
+
+  return { connect, disconnect, isConnected, isMuted, toggleMute };
+}
 
 /*
 	usecase:
