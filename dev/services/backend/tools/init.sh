@@ -20,13 +20,18 @@ if [ ! -f "package.json" ]; then
 fi
 
 # Always install dependencies if node_modules missing or incomplete
-if [ ! -d "node_modules" ]; then
-    echo "Installing dependencies..."
-    npm install
-else
-    echo "Ensuring dependencies are up to date..."
-    npm install
-fi
+npm install
+
+# if [ ! -d "node_modules" ] || [ ! -d "node_modules/vite" ]; then
+#     echo "Project exists, installing dependencies..."
+#     npm install
+# else
+#     echo "Project already exists, skipping ..."
+# fi
+
+# Ensures prisma client is generated for docker(linux os)
+echo "Generating Prisma Client for Docker..."
+npx prisma generate
 
 # Check for src/index.js
 if [ ! -f "src/index.js" ]; then
@@ -38,9 +43,7 @@ echo "Creating health check flag..."
 touch /tmp/backend-ready
 echo "✅ Backend ready flag created at /tmp/backend-ready"
 
-# ensures prisma client is generated for docker(linux os)
-echo "Generating Prisma Client for Docker..."
-npx prisma generate
 
 echo "Starting backend..."
 exec su nodejs -c "node src/index.js"
+
