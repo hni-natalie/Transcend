@@ -7,40 +7,174 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ENUMS
+enum UserStatus {
+  offline
+  online
+  busy
+  in_meeting
+}
+
+enum AccessLevel {
+  shared
+  department
+}
+
+enum AttendanceStatus {
+  absent
+  present
+}
+
+// ROLES
+model Role {
+  roleId    String   @id @default(uuid())
+  roleName  String   @unique
+  createdAt DateTime @default(now())
+
+  users User[]
+}
+
+// DEPARTMENTS
 model Department {
-  dpId                             String   @id @default(dbgenerated("uuid_generate_v4()")) @map("dp_id") @db.Uuid
-  dpName                           String   @unique @map("dp_name") @db.VarChar(255)
-  dpLead                           String?  @map("dp_lead") @db.Uuid
-  createdAt                        DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  users_departments_dp_leadTousers users?   @relation("departments_dp_leadTousers", fields: [dpLead], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_department_lead")
-  users_users_dp_idTodepartments   users[]  @relation("users_dp_idTodepartments")
+  dpId      String   @id @default(uuid())
+  dpName    String   @unique
+  dpLead    String?
+  createdAt DateTime @default(now())
 
-  @@map("departments")
+  lead  User?  @relation("DepartmentLead", fields: [dpLead], references: [userId])
+  users User[] @relation("UserDepartment")
+
+  // spaces Space[]
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model roles {
-  role_id    String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  role_name  String   @unique @db.VarChar(255)
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  users      users[]
+// USERS
+model User {
+  userId        String     @id @default(uuid())
+  userEmail     String     @unique
+  userPassword  String?
+  userName      String
+  userStatus    UserStatus @default(offline)
+  roleId        String
+  dpId          String
+  avatarUrl     String?
+  authProvider  String?    @default("email")
+  googleId      String?    @unique
+  emailVerified Boolean?   @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  role       Role       @relation(fields: [roleId], references: [roleId])
+  department Department @relation("UserDepartment", fields: [dpId], references: [dpId])
+  leadOf     Department[] @relation("DepartmentLead")
+
+  // tasks Task[]
+
+  // keySpaces Space[] @relation("SpaceKeyPerson")
+
+  // organisedEvents     EventOrganiser[]
+  // participatingEvents EventParticipant[]
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model users {
-  user_id                                String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  user_email                             String       @unique @db.VarChar(255)
-  user_password                          String?      @db.VarChar(255)
-  user_name                              String       @db.VarChar(255)
-  user_status                            String       @default("offline") @db.VarChar(20)
-  role_id                                String       @db.Uuid
-  dp_id                                  String       @db.Uuid
-  auth_provider                          String?      @default("email") @db.VarChar(20)
-  google_id                              String?      @unique @db.VarChar(255)
-  email_verified                         Boolean?     @default(false)
-  created_at                             DateTime     @default(now()) @db.Timestamp(6)
-  updated_at                             DateTime     @default(now()) @db.Timestamp(6)
-  departments_departments_dp_leadTousers Department[] @relation("departments_dp_leadTousers")
-  departments_users_dp_idTodepartments   Department   @relation("users_dp_idTodepartments", fields: [dp_id], references: [dpId], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_department")
-  roles                                  roles        @relation(fields: [role_id], references: [role_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_role")
-}
+// // WORKSPACES
+// model Workspace {
+//   workspaceId String   @id @default(uuid())
+//   name        String
+//   subdomain   String   @unique
+//   url         String
+//   logoUrl     String?
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+
+//   spaces Space[]
+// }
+
+// // SPACES
+// model Space {
+//   spaceId      String       @id @default(uuid())
+//   spaceName    String
+//   workspaceId  String
+//   accessLevel  AccessLevel  @default(shared)
+//   departmentId String?
+//   keyPersonId  String?
+//   width        Int          @default(50)
+//   height       Int          @default(50)
+//   isPublicView Boolean?     @default(true)
+//   isPublicBook Boolean?     @default(true)
+//   capacity     Int?         @default(0)
+//   sortOrder    Int?         @default(0)
+//   isActive     Boolean?     @default(true)
+//   createdAt    DateTime     @default(now())
+//   updatedAt    DateTime     @updatedAt
+
+//   workspace  Workspace  @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+//   department Department? @relation(fields: [departmentId], references: [dpId])
+//   keyPerson  User?       @relation("SpaceKeyPerson", fields: [keyPersonId], references: [userId], onDelete: SetNull)
+
+//   scheduledEvents ScheduledEvent[]
+// }
+
+// // TASKS
+// model Task {
+//   id           String   @id @default(uuid())
+//   notionPageId String   @unique
+//   userId       String
+//   cachedTitle  String?
+//   cachedStatus String?
+//   lastSynced   DateTime @default(now())
+//   createdAt    DateTime @default(now())
+
+//   user User @relation(fields: [userId], references: [userId])
+// }
+
+// // EVENTS
+// model ScheduledEvent {
+//   meetId    String   @id @default(uuid())
+//   spaceId   String
+//   meetTitle String
+//   meetDesc  String
+//   meetStart DateTime
+//   meetEnd   DateTime
+//   createdAt DateTime @default(now())
+
+//   space        Space             @relation(fields: [spaceId], references: [spaceId])
+//   organisers   EventOrganiser[]
+//   participants EventParticipant[]
+// }
+
+// model EventOrganiser {
+//   organiserId String   @id @default(uuid())
+//   meetId      String
+//   userId      String
+//   createdAt   DateTime @default(now())
+
+//   meet ScheduledEvent @relation(fields: [meetId], references: [meetId])
+//   user User           @relation(fields: [userId], references: [userId])
+// }
+
+// model EventParticipant {
+//   participantId    String           @id @default(uuid())
+//   meetId           String
+//   userId           String
+//   attendanceStatus AttendanceStatus @default(present)
+//   createdAt        DateTime         @default(now())
+
+//   meet ScheduledEvent @relation(fields: [meetId], references: [meetId])
+//   user User           @relation(fields: [userId], references: [userId])
+// }
+
+// // RAG (pgvector later)
+// model FAQ {
+//   id        String   @id @default(uuid())
+//   question  String
+//   answer    String
+//   vector    Bytes?
+//   createdAt DateTime @default(now())
+// }
+
+// model Document {
+//   id        String   @id @default(uuid())
+//   title     String
+//   content   String
+//   vector    Bytes?
+//   createdAt DateTime @default(now())
+// } 

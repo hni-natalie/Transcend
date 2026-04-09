@@ -1,122 +1,132 @@
 const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
+
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('Starting seed (upsert mode - safe for production)...');
+    console.log('Starting seed...');
 
-    // Create or get roles (upsert)
-    const adminRole = await prisma.roles.upsert({
-        where: { role_name: 'Admin' },
+    // Roles
+    const adminRole = await prisma.role.upsert({
+        where: { roleName: 'Admin' },
         update: {},
-        create: { role_name: 'Admin' }
+        create: { roleName: 'Admin' },
     });
 
-    const userRole = await prisma.roles.upsert({
-        where: { role_name: 'User' },
+    const userRole = await prisma.role.upsert({
+        where: { roleName: 'User' },
         update: {},
-        create: { role_name: 'User' }
+        create: { roleName: 'User' },
     });
 
-    // Create or get departments (upsert)
-    const hrDept = await prisma.Department.upsert({
+    // Departments
+    const hrDept = await prisma.department.upsert({
         where: { dpName: 'Human Resources' },
         update: {},
-        create: { dpName: 'Human Resources' }
+        create: { dpName: 'Human Resources' },
     });
-    
-    const acDept = await prisma.Department.upsert({
+
+    const acDept = await prisma.department.upsert({
         where: { dpName: 'Accounts' },
         update: {},
-        create: { dpName: 'Accounts' }
+        create: { dpName: 'Accounts' },
     });
-    
-    const mkDept = await prisma.Department.upsert({
+
+    const mkDept = await prisma.department.upsert({
         where: { dpName: 'Marketing' },
         update: {},
-        create: { dpName: 'Marketing' }
+        create: { dpName: 'Marketing' },
     });
 
-    // Create or update admin user (upsert)
+    // Admin user
     const adminPassword = fs.readFileSync('/run/secrets/app_root', 'utf8').trim();
     const adminHash = await bcrypt.hash(adminPassword, 10);
-    
-    const admin = await prisma.users.upsert({
-        where: { user_email: 'superuser@workfrom.com' },
+
+    const admin = await prisma.user.upsert({
+        where: { userEmail: 'superuser@workfrom.com' },
         update: {
-            user_password: adminHash,  // Update if password changed
-            user_name: 'Administrator',
-            user_status: 'online',
+        userPassword: adminHash,
+        userName: 'Administrator',
+        userStatus: 'online',
         },
         create: {
-            user_email: 'superuser@workfrom.com',
-            user_password: adminHash,
-            user_name: 'Administrator',
-            user_status: 'online',
-            role_id: adminRole.role_id,
-            dp_id: hrDept.dpId,
-            auth_provider: 'email',
-            email_verified: true,
-        }
+        userEmail: 'superuser@workfrom.com',
+        userPassword: adminHash,
+        userName: 'Administrator',
+        userStatus: 'online',
+        roleId: adminRole.roleId,
+        dpId: hrDept.dpId,
+        authProvider: 'email',
+        emailVerified: true,
+        },
     });
 
-    // Create or update accounts user
+    // Account user
     const userPassword = fs.readFileSync('/run/secrets/app_user', 'utf8').trim();
     const userHash = await bcrypt.hash(userPassword, 10);
-    
-    const acUser = await prisma.users.upsert({
-        where: { user_email: 'user1@workfrom.com' },
+
+    const acUser = await prisma.user.upsert({
+        where: { userEmail: 'user1@workfrom.com' },
         update: {
-            user_password: userHash,
-            user_name: 'John Doe',
+        userPassword: userHash,
+        userName: 'John Doe',
         },
         create: {
-            user_email: 'user1@workfrom.com',
-            user_password: userHash,
-            user_name: 'John Doe',
-            user_status: 'offline',
-            role_id: userRole.role_id,
-            dp_id: acDept.dpId,
-            auth_provider: 'email',
-            email_verified: true,
-        }
+        userEmail: 'user1@workfrom.com',
+        userPassword: userHash,
+        userName: 'John Doe',
+        userStatus: 'offline',
+        roleId: userRole.roleId,
+        dpId: acDept.dpId,
+        authProvider: 'email',
+        emailVerified: true,
+        },
     });
 
-    // Create or update marketing user
-    const mkUser = await prisma.users.upsert({
-        where: { user_email: 'user2@workfrom.com' },
+    // Marketing user
+    const mkUser = await prisma.user.upsert({
+        where: { userEmail: 'user2@workfrom.com' },
         update: {
-            user_password: userHash,
-            user_name: 'Mary Jane',
+        userPassword: userHash,
+        userName: 'Mary Jane',
         },
         create: {
-            user_email: 'user2@workfrom.com',
-            user_password: userHash,
-            user_name: 'Mary Jane',
-            user_status: 'busy',
-            role_id: userRole.role_id,
-            dp_id: mkDept.dpId,
-            auth_provider: 'email',
-            email_verified: false,
-        }
+        userEmail: 'user2@workfrom.com',
+        userPassword: userHash,
+        userName: 'Mary Jane',
+        userStatus: 'busy',
+        roleId: userRole.roleId,
+        dpId: mkDept.dpId,
+        authProvider: 'email',
+        emailVerified: false,
+        },
     });
 
-    // Update department leads (always update to ensure correct)
-    await prisma.Department.update({
+    // Assign department leads
+    await prisma.department.update({
         where: { dpId: hrDept.dpId },
-        data: { dpLead: admin.user_id }
-    });
-    
-    await prisma.Department.update({
-        where: { dpId: acDept.dpId },
-        data: { dpLead: acUser.user_id }
-    });
-    
-    await prisma.Department.update({
-        where: { dpId: mkDept.dpId },
-        data: { dpLead: mkUser.user_id }
+        data: { dpLead: admin.userId },
     });
 
-    console.log('Seed completed (idempotent - safe to run multiple times)!');
-}
+    await prisma.department.update({
+        where: { dpId: acDept.dpId },
+        data: { dpLead: acUser.userId },
+    });
+
+    await prisma.department.update({
+        where: { dpId: mkDept.dpId },
+        data: { dpLead: mkUser.userId },
+    });
+
+    console.log('Seed completed successfully!');
+    }
+
+    main()
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });
