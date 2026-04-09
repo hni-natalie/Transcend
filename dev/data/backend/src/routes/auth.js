@@ -1,7 +1,7 @@
 const fs = require('fs');
 const express = require('express');
 const router = express.Router();
-const prisma = require('../prisma');
+const prisma = require('../../prisma/client');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const auth = require('../middleware/auth.middleware');
@@ -10,144 +10,147 @@ const JWT_SECRET = fs.readFileSync('/run/secrets/jwt_secret', 'utf8').trim();
 
 // POST /auth/login — email login
 router.post('/login', async (req, res) => {
-    const { user_email, user_password } = req.body;
+    const { userEmail, userPassword } = req.body;
 
     try {
-        // find user by email using prisma
-        const user = await prisma.users.findUnique({
-            where: { user_email: user_email }
+        // Find user by email
+        const user = await prisma.user.findUnique({
+            where: { userEmail },
+            include: { role: true }
         });
 
         if (!user) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        if (!user.user_password) {
-            return res.status(401).json({ error: 'Please login with Google' });
+        if (!user.userPassword) {
+        return res.status(401).json({ error: 'Please login with Google' });
         }
 
-        const match = await bcrypt.compare(user_password, user.user_password);
+        const match = await bcrypt.compare(userPassword, user.userPassword);
         if (!match) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         const token = jwt.sign(
-            { user_id: user.user_id, role_id: user.role_id },
-            JWT_SECRET,
-            { expiresIn: '24h' }
+        { userId: user.userId, roleId: user.roleId },
+        JWT_SECRET,
+        { expiresIn: '24h' }
         );
 
         res.json({
-            token,
-            user: {
-                user_id: user.user_id,
-                user_name: user.user_name,
-                user_email: user.user_email,
-                role_id: user.role_id,
-                user_status: user.user_status,
-                avatar_url: user.avatar_url
-            }
+        token,
+        user: {
+            userId: user.userId,
+            userName: user.userName,
+            userEmail: user.userEmail,
+            roleId: user.roleId,
+            roleName: user.role.roleName,
+            userStatus: user.userStatus,
+            avatarUrl: user.avatarUrl || null,
+        },
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+    });
 
-// POST /auth/google — OAuth login
-router.post('/google', async (req, res) => {
-    const { oauth_id, user_email, user_name, avatar_url } = req.body;
+    // POST /auth/google — OAuth login
+    router.post('/google', async (req, res) => {
+    const { oauthId, userEmail, userName, avatarUrl } = req.body;
 
     try {
-        // find existing user by oauth_id / email
-        let user = await prisma.users.findFirst({
-            where: {
-                OR: [
-                    { google_id: oauth_id },
-                    { user_email: user_email }
-                ]
-            }
+        // Find existing user by Google ID or email
+        let user = await prisma.user.findFirst({
+        where: {
+            OR: [
+            { googleId: oauthId },
+            { userEmail },
+            ],
+        },
+        include: { role: true }
         });
 
         if (!user) {
-            // Create new user with Google OAuth
-            // First, get the default role_id (assuming role_name 'User' exists)
-            const defaultRole = await prisma.roles.findUnique({
-                where: { role_name: 'User' }
-            });
-            
-            // Also need a default department (adjust this as needed)
-            const defaultDept = await prisma.departments.findFirst();
-            
-            if (!defaultRole || !defaultDept) {
-                return res.status(500).json({ error: 'Default role or department not found' });
-            }
+        // Get default role and department
+        const defaultRole = await prisma.role.findUnique({ where: { roleName: 'User' } });
+        const defaultDept = await prisma.department.findFirst();
 
-            user = await prisma.users.create({
-                data: {
-                    user_name: user_name,
-                    user_email: user_email,
-                    google_id: oauth_id,
-                    auth_provider: 'google',
-                    role_id: defaultRole.role_id,
-                    dp_id: defaultDept.dp_id,
-                    avatar_url: avatar_url,
-                    email_verified: true,
-                    user_status: 'offline'
-                }
-            });
-        } else if (!user.google_id) {
-            // Update existing user to link Google account
-            user = await prisma.users.update({
-                where: { user_id: user.user_id },
-                data: {
-                    google_id: oauth_id,
-                    auth_provider: 'google',
-                    avatar_url: avatar_url
-                }
-            });
+        if (!defaultRole || !defaultDept) {
+            return res.status(500).json({ error: 'Default role or department not found' });
+        }
+
+        // Create new Google user
+        user = await prisma.user.create({
+            data: {
+            userName,
+            userEmail,
+            googleId: oauthId,
+            authProvider: 'google',
+            roleId: defaultRole.roleId,
+            dpId: defaultDept.dpId,
+            avatarUrl,
+            emailVerified: true,
+            userStatus: 'offline',
+            },
+            include: { role: true }
+        });
+        } else if (!user.googleId) {
+        // Link Google to existing user
+        user = await prisma.user.update({
+            where: { userId: user.userId },
+            data: {
+            googleId: oauthId,
+            authProvider: 'google',
+            avatarUrl,
+            },
+            include: { role: true }
+        });
         }
 
         const token = jwt.sign(
-            { user_id: user.user_id, role_id: user.role_id },
-            JWT_SECRET,
-            { expiresIn: '24h' }
+        { userId: user.userId, roleId: user.roleId },
+        JWT_SECRET,
+        { expiresIn: '24h' }
         );
 
         res.json({
-            token,
-            user: {
-                user_id: user.user_id,
-                user_name: user.user_name,
-                user_email: user.user_email,
-                role_id: user.role_id,
-                avatar_url: user.avatar_url
-            }
+        token,
+        user: {
+            userId: user.userId,
+            userName: user.userName,
+            userEmail: user.userEmail,
+            roleId: user.roleId,
+            roleName: user.role.roleName,
+            avatarUrl: user.avatarUrl || null,
+        },
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+    });
 
-// GET /auth/me — get current user from token
-router.get('/me', auth, async (req, res) => {
+    // GET /auth/me — get current user from token
+    router.get('/me', auth, async (req, res) => {
     try {
-        const user = await prisma.users.findUnique({
-            where: { user_id: req.user.user_id },
-            select: {
-                user_id: true,
-                user_name: true,
-                user_email: true,
-                role_id: true,
-                user_status: true,
-                avatar_url: true
-            }
+        const user = await prisma.user.findUnique({
+        where: { userId: req.user.userId },
+        include: { role: { select: { roleName: true } } }
         });
 
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+        if (!user) return res.status(404).json({ error: 'User not found' });
 
-        res.json({ data: user });
+        res.json({
+        data: {
+            userId: user.userId,
+            userName: user.userName,
+            userEmail: user.userEmail,
+            roleId: user.roleId,
+            roleName: user.role.roleName,
+            userStatus: user.userStatus,
+            avatarUrl: user.avatarUrl || null
+        }
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
