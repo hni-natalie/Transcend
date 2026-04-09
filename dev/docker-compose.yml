@@ -61,6 +61,7 @@ services:
       - db_user
       - db_root
       - app_root
+      - app_user
       - jwt_secret
     networks:
       - app-network
