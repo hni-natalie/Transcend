@@ -10,8 +10,8 @@ const authService = {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-			user_email: email,
-			user_password: password
+			userEmail: email,
+			userPassword: password
 			})
 		})
 	
