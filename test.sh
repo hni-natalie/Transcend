@@ -39,7 +39,7 @@ run_test() {
 		;;
 	7)
 		echo -e "Test GET livekit token from Backend Express\n$BORDER"
-		curl -k "https://$DOMAIN_NAME:$PORT/api/lk/token?roomName=myRoom&participantName=John"
+		curl -k "https://$DOMAIN_NAME:$PORT/api/lk/token?roomName=myroom&participantName=John"
 		;;
 	8)
 		echo -e "Test GET livekit rtc from Livekit\n$BORDER"

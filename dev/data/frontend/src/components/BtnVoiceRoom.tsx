@@ -4,30 +4,47 @@
 
 import { useState, useEffect } from "react";
 import useLiveKit from '../utils/useLivekit'
-import { useSocket } from '../context/ContextSocket';
+// import { useSocket } from '../context/ContextSocket';
 import { IconMute, IconSpeak } from '../config/menu.icons.conf';
 import Loading from "./BtnLoading";
 
-export default function ButtonVoiceRoom( { allowLeave=true } ) {
-  const { enableSocket, localPlayerId } = useSocket();
-  useEffect(() => { enableSocket(); }, []);
-  const { connect, disconnect, isConnected, isMuted, toggleMute } = useLiveKit('myroom', localPlayerId);
+export default function ButtonVoiceRoom( { roomName='myroom', allowLeave=true } ) {
+  const { connect, disconnect, isConnected, isMuted, toggleMute } = useLiveKit(roomName);
   const [joinCount, setJoinCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   
   useEffect(() => {
-    console.log('Connection status: ', isConnected);
+    console.log('FE lk Connection status: ', isConnected);
   }, [isConnected]);
 
   const handleJoin = async () => {
     setLoading(true)
-    const result = await connect();
-    if (result.success) {
-      console.log('Successfully joined room');
+    // const result = await connect();
+    // if (result.success) {
+    //   console.log('Successfully joined room');
+    //   setJoinCount(prev => prev + 1);
+    // } else 
+    //   console.error('Connection failed:', result.error);
+    // setLoading(false)
+
+    const onSuccess = (event: any) => {
+      console.log('Connection complete!', event.detail);
       setJoinCount(prev => prev + 1);
-    } else 
-      console.error('Connection failed:', result.error);
-    setLoading(false)
+      setLoading(false);
+      window.removeEventListener('livekit-connect-success', onSuccess);
+    };
+    
+    const onError = (event: any) => {
+      console.error('Connection failed!', event.detail);
+      setLoading(false);
+      window.removeEventListener('livekit-connect-error', onError);
+    };
+    
+    window.addEventListener('livekit-connect-success', onSuccess);
+    window.addEventListener('livekit-connect-error', onError);
+
+    // joinRoom(roomName);
+    connect();
   };
 
   const handleLeave = () => {
@@ -42,7 +59,7 @@ export default function ButtonVoiceRoom( { allowLeave=true } ) {
           <button onClick={handleJoin} className="btn-lime-outline">
             {loading 
             ? <Loading isLoading={loading}/>
-            : `Join Voice Chat : ${joinCount}`}
+            : `Join ${roomName} Voice Chat : ${joinCount}`}
           </button>
         </div>
       ) : (

@@ -3,6 +3,33 @@ const { AccessToken } = require('livekit-server-sdk');
 const router          = require('express').Router();
 
 
+async function generateRoomToken(roomName, participantName) {
+    if (!roomName || !participantName) {
+        return res.status(400).json({ error: 'Missing roomName or participantName' });
+    }
+    const at = new AccessToken(
+        LIVEKIT_API_KEY,
+        LIVEKIT_API_SECRET,
+        {
+            identity: participantName,
+            // Token expires in 6 hours by default
+            ttl: '6h',
+        }
+    );
+    
+    // Add grants (permissions)
+    at.addGrant({
+        roomJoin: true,
+        room: roomName,
+        canPublish: true,      // Allow publishing audio/video
+        canSubscribe: true,    // Allow viewing others
+        canPublishData: true,  // Allow sending chat/data
+    });
+    const token = await at.toJwt();
+    console.log('Generating token... ', token);
+    return ( token );
+}
+
 // > GET : frontend calls this to get a token
 router.get('/token', async (req, res) => {
     const { roomName, participantName } = req.query;
@@ -14,26 +41,27 @@ router.get('/token', async (req, res) => {
     
     try {
         // Create access token
-        const at = new AccessToken(
-            LIVEKIT_API_KEY,
-            LIVEKIT_API_SECRET,
-            {
-                identity: participantName,
-                // Token expires in 6 hours by default
-                ttl: '6h',
-            }
-        );
+        // const at = new AccessToken(
+        //     LIVEKIT_API_KEY,
+        //     LIVEKIT_API_SECRET,
+        //     {
+        //         identity: participantName,
+        //         // Token expires in 6 hours by default
+        //         ttl: '6h',
+        //     }
+        // );
         
-        // Add grants (permissions)
-        at.addGrant({
-            roomJoin: true,
-            room: roomName,
-            canPublish: true,      // Allow publishing audio/video
-            canSubscribe: true,    // Allow viewing others
-            canPublishData: true,  // Allow sending chat/data
-        });
+        // // Add grants (permissions)
+        // at.addGrant({
+        //     roomJoin: true,
+        //     room: roomName,
+        //     canPublish: true,      // Allow publishing audio/video
+        //     canSubscribe: true,    // Allow viewing others
+        //     canPublishData: true,  // Allow sending chat/data
+        // });
         
-        const token = await at.toJwt();
+        // const token = await at.toJwt();
+        const token = await generateRoomToken(roomName, participantName);
         res.json({ token });
     } catch (error) {
         console.error('Token generation failed:', error);
@@ -41,4 +69,7 @@ router.get('/token', async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = {
+    router,
+    generateRoomToken
+};

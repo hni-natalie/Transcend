@@ -52,7 +52,7 @@ fe:
 	@docker compose -f $(COMPOSE_FILE) up --build frontend
 
 be:
-	@docker compose -f $(COMPOSE_FILE) up --build backend
+	@docker compose -f $(COMPOSE_FILE) up backend
 
 
 

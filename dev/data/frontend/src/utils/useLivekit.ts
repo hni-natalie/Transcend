@@ -5,12 +5,17 @@
 
 import { useEffect, useState } from 'react';
 import livekitService from '../services/livekitService';
+import { useSocket } from '../context/ContextSocket';
 
-export default function useLiveKit( roomName:string , participantName:string ) {
+
+// export default function useLiveKit( roomName:string , participantName:string ) {
+export default function useLiveKit( roomName:string ) {
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-
+  const { enableSocket, joinRoom, leaveRoom } = useSocket();
+  useEffect(() => { enableSocket(); }, []);
   // Check if connection status when hook mounts
+
   useEffect(() => {
     const status = livekitService.getConnectionStatus();
     // console.log('Livekit service status:', status);
@@ -29,14 +34,18 @@ export default function useLiveKit( roomName:string , participantName:string ) {
   }, []);
 
   const connect = async () => {
-    // Service handles token caching internally
-    const result = await livekitService.connectToRoom(roomName, participantName);
+  //   // Service handles token caching internally
+  //   // const result = await livekitService.connectToRoom(roomName);
+  //   const result = joinRoom(roomName);
+    // setIsMuted(livekitService.audioManager.getMuteState());
+    //   return result
+    joinRoom(roomName);
     setIsMuted(livekitService.audioManager.getMuteState());
-    return result
   };
 
   const disconnect = () => {
     livekitService.disconnectFromRoom();
+    leaveRoom(roomName);
   };
 
   const toggleMute = () => {

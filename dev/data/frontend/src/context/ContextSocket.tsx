@@ -4,7 +4,7 @@
 */
 
 import { io, Socket } from 'socket.io-client';
-import { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Player, Position } from '../types/user.types';
 
 const SocketContext     = createContext(null);
@@ -18,6 +18,10 @@ export default function SocketProvider ({ children }) {
   const [localPlayerPos, setLocalPlayerPos] = useState< Position | null >(null);
   const [localPlayerId, setLocalPlayerId] = useState<String>(null);
   const [messages, setMessages] = useState([]);
+  
+  const [currentRoom, setCurrentRoom] = useState<String>(null);
+  const [roomParticipants, setRoomParticipants] = useState([]);
+  // const [liveKitToken, setLiveKitToken] = useState<String>(null);
 
   useEffect(() => {
     if (shouldConnect && !socket) {
@@ -57,8 +61,47 @@ export default function SocketProvider ({ children }) {
       ));
       console.log(`Player ${data.id} moved to:`, data.position);
     });
-  }
 
+    /* Events: Room */
+    /*
+     handles data after backend successfully creates room token
+    */
+    socket.on('room-joined', (data) => {
+      console.log('Room joined successfully:', data);
+      setCurrentRoom(data.roomName);
+      // setLiveKitToken(data.token);
+      setRoomParticipants(data.participants || []);
+      
+      // Emit event for LiveKit service to connect
+      window.dispatchEvent(new CustomEvent('livekit-connect', { 
+        detail: data 
+      }));
+    });
+  
+    socket.on('player-joined-room', (data) => {
+      console.log(`User ${data.name} joined ${data.roomName}`);
+      setRoomParticipants(prev => {
+        // Avoid duplicates
+        if (prev.some(p => p.id === data.id)) return prev;
+        return [...prev, { id: data.id, name: data.name }];
+      });
+    });
+  
+    // User left room
+    socket.on('player-left-room', (data) => {
+      console.log(`User ${data.userName} left`);
+      setRoomParticipants(prev => prev.filter(p => p.id !== data.id));
+    });
+  
+    // Room full error
+    socket.on('room-full', (data) => {
+      console.warn(`Room ${data.roomName} is full (max: ${data.maxSize})`);
+      // You might want to show a notification to user
+      window.dispatchEvent(new CustomEvent('room-error', { 
+        detail: { type: 'full', message: `Room ${data.roomName} is full` }
+      }));
+    });
+  
   /* Events: Chat */
     // socket.on('chat-message', (messageData) => {
     //   setMessages(prev => [...prev, {
@@ -70,6 +113,8 @@ export default function SocketProvider ({ children }) {
     // socket.on('previous-messages', (previousMessages) => {
     //   setMessages(previousMessages);
     // });
+  }
+
 
     return () => {
       if (socket && !shouldConnect) {
@@ -77,6 +122,10 @@ export default function SocketProvider ({ children }) {
         socket.off('player-joined');
         socket.off('player-left');
         socket.off('player-moved');
+        socket.off('room-joined');
+        socket.off('player-joined-room');
+        socket.off('player-left-room');
+        socket.off('room-full');
         socket.off('connect_error');
         socket.off('connect');
         socket.disconnect();
@@ -97,6 +146,30 @@ export default function SocketProvider ({ children }) {
     const player = players.find(p => p.id === playerId);
     return player?.position;
   };
+  /*
+    Function to join a room
+    emits to backend to create room token, then done
+    backend will return token & details in signal room-joined
+  */
+  const joinRoom = useCallback(( roomName:string ) => {
+    if (socket && isConnected) {
+      console.log(`Requesting to join room: ${roomName}`);
+      socket.emit('join-room', { roomName });
+    } else {
+      console.error('Socket not connected, cannot join room');
+    }
+  }, [socket, isConnected]);
+
+  // Function to leave current room
+  const leaveRoom = useCallback(( roomName:string ) => {
+    if (socket && isConnected && currentRoom) {
+      console.log(`Leaving room: ${currentRoom}`);
+      socket.emit('leave-room', { roomName });
+      setCurrentRoom(null);
+      setRoomParticipants([]);
+      // setLiveKitToken(null);
+    }
+  }, [socket, isConnected, currentRoom]);
   // const sendMessage = (text, senderName) => {
   //   if (socket && text.trim()) {
   //     const messageData = {
@@ -136,6 +209,10 @@ export default function SocketProvider ({ children }) {
     localPlayerPos,
     setLocalPlayerPos,
     
+    /* Room methods */
+    joinRoom,
+    leaveRoom,
+
     /* Chat methods */
     // messages,
     // sendMessage,
@@ -149,3 +226,8 @@ export default function SocketProvider ({ children }) {
     </SocketContext.Provider>
   );
 }
+
+/*
+ use case:
+  const { enableSocket, localPlayerId } = useSocket();
+*/

@@ -25,7 +25,7 @@ multiplayer.setupPlayerSocket(io)
  * import routes
  * *************************************************/
 const routesInit = require('./routes/init')
-const routesLivekit = require('./routes/livekit')
+const routesLivekit = require('./routes/livekit').router
 
 /* *************************************************
  * all used routes

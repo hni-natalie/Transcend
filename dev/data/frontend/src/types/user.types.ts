@@ -13,6 +13,7 @@ export type Position = {
 export type Player = {
   id: string;
   name?: string;
+  roomName?: string;
   position: Position;
   rotation: number;
   color: string;
