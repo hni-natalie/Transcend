@@ -26,7 +26,6 @@ async function generateRoomToken(roomName, participantName) {
         canPublishData: true,  // Allow sending chat/data
     });
     const token = await at.toJwt();
-    console.log('Generating token... ', token);
     return ( token );
 }
 
@@ -38,29 +37,8 @@ router.get('/token', async (req, res) => {
     if (!roomName || !participantName) {
         return res.status(400).json({ error: 'Missing roomName or participantName' });
     }
-    
     try {
         // Create access token
-        // const at = new AccessToken(
-        //     LIVEKIT_API_KEY,
-        //     LIVEKIT_API_SECRET,
-        //     {
-        //         identity: participantName,
-        //         // Token expires in 6 hours by default
-        //         ttl: '6h',
-        //     }
-        // );
-        
-        // // Add grants (permissions)
-        // at.addGrant({
-        //     roomJoin: true,
-        //     room: roomName,
-        //     canPublish: true,      // Allow publishing audio/video
-        //     canSubscribe: true,    // Allow viewing others
-        //     canPublishData: true,  // Allow sending chat/data
-        // });
-        
-        // const token = await at.toJwt();
         const token = await generateRoomToken(roomName, participantName);
         res.json({ token });
     } catch (error) {

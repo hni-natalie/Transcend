@@ -21,7 +21,6 @@ export default function SocketProvider ({ children }) {
   
   const [currentRoom, setCurrentRoom] = useState<String>(null);
   const [roomParticipants, setRoomParticipants] = useState([]);
-  // const [liveKitToken, setLiveKitToken] = useState<String>(null);
 
   useEffect(() => {
     if (shouldConnect && !socket) {
@@ -69,7 +68,6 @@ export default function SocketProvider ({ children }) {
     socket.on('room-joined', (data) => {
       console.log('Room joined successfully:', data);
       setCurrentRoom(data.roomName);
-      // setLiveKitToken(data.token);
       setRoomParticipants(data.participants || []);
       
       // Emit event for LiveKit service to connect
@@ -79,17 +77,17 @@ export default function SocketProvider ({ children }) {
     });
   
     socket.on('player-joined-room', (data) => {
-      console.log(`User ${data.name} joined ${data.roomName}`);
+      console.log(`User ${data.playerName}, id:${data.id} joined ${data.roomName}`);
       setRoomParticipants(prev => {
-        // Avoid duplicates
+        // check if player exist, else append new array
         if (prev.some(p => p.id === data.id)) return prev;
-        return [...prev, { id: data.id, name: data.name }];
+        return [...prev, { id: data.id, name: data.playerName }];
       });
     });
   
     // User left room
     socket.on('player-left-room', (data) => {
-      console.log(`User ${data.userName} left`);
+      console.log(`User ${data.playerName} id:${data.id} left ${data.roomName}`);
       setRoomParticipants(prev => prev.filter(p => p.id !== data.id));
     });
   
@@ -167,9 +165,9 @@ export default function SocketProvider ({ children }) {
       socket.emit('leave-room', { roomName });
       setCurrentRoom(null);
       setRoomParticipants([]);
-      // setLiveKitToken(null);
     }
   }, [socket, isConnected, currentRoom]);
+
   // const sendMessage = (text, senderName) => {
   //   if (socket && text.trim()) {
   //     const messageData = {

@@ -14,10 +14,8 @@ class LiveKitService {
   constructor() {
     this.init();
     this.room = null;
-    // this.rooms = new Map();
-    
-    this.cachedToken = null;
-    this.tokenExpiry = null;
+    // this.cachedToken = null;
+    // this.tokenExpiry = null;
     this.audioManager = new AudioManager();
     this.listeners = new Map();
   }
@@ -26,7 +24,7 @@ class LiveKitService {
     // Listen for LiveKit connection events from ContextSocket
     window.addEventListener('livekit-connect', async (event) => {
       try {
-        console.log('Hello from livekit-connect service');
+        // console.log('Hello from livekit-connect service');
         // console.log('detail:', event.detail);
         await this.connectToRoom(event.detail);
         console.log('livekit-connect: Successfully joined room');
@@ -52,24 +50,7 @@ class LiveKitService {
   async connectToRoom({ token }) {
 		// debug
 		console.log('VITE_LIVEKIT_URL: ', import.meta.env.VITE_LIVEKIT_URL)
-
-    // Only get token if needed
-    // this should emit using ContextSocket
-    // let token = this.cachedToken;
-    // this.cachedToken = token;
-
     try {
-
-      // this is done in backend + frontend socket alrd
-      // if (!token || this.tokenExpiry < Date.now()) {
-      //   const response = await fetch(`/api/lk/token?roomName=${roomName}&participantName=${participantName}`);
-      //   const data = await response.json();
-      //   token = data.token;
-      //   this.cachedToken = token;
-      //   // Date.now returns time in millisecs, then +6hrs in millisecs
-      //   this.tokenExpiry = Date.now() + 6 * 60 * 60 * 1000;
-      // }
-      
       // Reuse existing room if possible
       if (this.room && this.room.state === 'connected') {
         console.log('Reusing existing connection');
@@ -105,6 +86,7 @@ class LiveKitService {
     }
   }
 
+  // returns the mute setting: 0,1
   toggleMute() {
     if (this.audioManager) {
       return this.audioManager.toggleMute();

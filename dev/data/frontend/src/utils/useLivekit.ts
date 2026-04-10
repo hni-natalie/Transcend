@@ -14,11 +14,10 @@ export default function useLiveKit( roomName:string ) {
   const [isMuted, setIsMuted] = useState(false);
   const { enableSocket, joinRoom, leaveRoom } = useSocket();
   useEffect(() => { enableSocket(); }, []);
-  // Check if connection status when hook mounts
-
+  
+  // Set up handlers when hook mounts
   useEffect(() => {
     const status = livekitService.getConnectionStatus();
-    // console.log('Livekit service status:', status);
     setIsConnected(status.isConnected);
     
     const handleConnected = () => setIsConnected(true);
@@ -33,19 +32,18 @@ export default function useLiveKit( roomName:string ) {
     };
   }, []);
 
-  const connect = async () => {
-  //   // Service handles token caching internally
-  //   // const result = await livekitService.connectToRoom(roomName);
-  //   const result = joinRoom(roomName);
-    // setIsMuted(livekitService.audioManager.getMuteState());
-    //   return result
+  /* 
+    calls socket.emit join-room to backend, backend creates room token
+    then route back to connectToRoom in livekitService, create Room() in frontend
+  */
+  const connect = () => {
     joinRoom(roomName);
     setIsMuted(livekitService.audioManager.getMuteState());
   };
 
   const disconnect = () => {
-    livekitService.disconnectFromRoom();
     leaveRoom(roomName);
+    livekitService.disconnectFromRoom();
   };
 
   const toggleMute = () => {

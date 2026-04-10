@@ -10,7 +10,7 @@
 const { randomHslColor } = require('../utils/color.js');
 const router = require('express').Router();
 const players = new Map();
-const rooms = new Map(); // Map<roomName, RoomData>
+const rooms = new Map(); // Map<roomName, roomData>
 
 const { generateRoomToken } = require('./livekit')
 // socket io setup
@@ -23,8 +23,8 @@ const setupPlayerSocket = (io) => {
     id: socket.id,
     // name: 'GetUsersNameAPI',
     name: new Date().toISOString(),
-    roomName: null,            // default is lobby
-    position: { x:0, y:0, z:0 },  //use Object
+    roomName: null,
+    position: { x:0, y:0, z:0 },
     rotation: 0,
     color: randomHslColor(),
     audioEnabled: true,
@@ -34,7 +34,7 @@ const setupPlayerSocket = (io) => {
   // Send current players to new connection
   socket.emit('existing-players', Array.from(players.values()));
   
-  // Broadcast new player to everyone else
+  // Broadcast entire new player object to everyone else
   // frontend sets up receiver & do next steps: eg print names
   socket.broadcast.emit('player-joined', players.get(socket.id));
   
@@ -55,8 +55,10 @@ const setupPlayerSocket = (io) => {
   // Event handler for joining rooms
   socket.on('join-room', async ({ roomName }) => {
     const player = players.get(socket.id);
-    if (!player) return ;
-    
+    if (!player) {
+      console.log('Backend[join-room]: player not found on map')
+      return ;
+    } 
     let roomData = rooms.get(roomName);
     
     // should validate room name & user access permission
@@ -76,7 +78,7 @@ const setupPlayerSocket = (io) => {
       return;
     }
     
-    // if ok, add roomName to player
+    // check if player exists
     // const playerExists = roomData.users.some(u => u.id === socket.id);
     // if (playerExists) {
     //   console.log('player is in ', roomData.name, 'exiting ...' );
@@ -99,6 +101,7 @@ const setupPlayerSocket = (io) => {
     
     // Notify others in SAME room
     socket.to(roomName).emit('player-joined-room', {
+      id: player.id,
       roomName,
       playerName: player.name,
       participantCount: roomData.users.length
@@ -173,7 +176,11 @@ const setupPlayerSocket = (io) => {
       player.roomName = null;
       
       // Notify room members
-      socket.to(roomName).emit('player-left-room', { roomName });
+      socket.to(roomName).emit('player-left-room', { 
+        id: player.id,
+        roomName,
+        playerName: player.name,
+      });
       
       // Clean up empty rooms
       if (roomData.users.length === 0) {
