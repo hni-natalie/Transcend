@@ -7,16 +7,15 @@
  future need to separate messaging & audio room (prob)
 */
 
-import { Room } from 'livekit-client';
+import { Room, RoomEvent, Track } from 'livekit-client';
 import { AudioManager } from '../utils/useAudio';
 
 class LiveKitService {
   constructor() {
     this.init();
     this.room = null;
-    // this.cachedToken = null;
-    // this.tokenExpiry = null;
-    this.audioManager = new AudioManager();
+    this.audioElements = new Map();         // map for all audio tracks in room
+    this.audioManager = new AudioManager(); // manage own audio mic, mute state
     this.listeners = new Map();
   }
 
@@ -30,7 +29,6 @@ class LiveKitService {
         console.log('livekit-connect: Successfully joined room');
         window.dispatchEvent(new CustomEvent('livekit-connect-success', {
           detail: { success: true }
-          // detail: { success: true, data: event.detail }
         }));
 
       } catch (error) {
@@ -42,7 +40,7 @@ class LiveKitService {
     });
     
     window.addEventListener('room-error', (event) => {
-      this.dispatchEvent(new CustomEvent('error', { detail: event.detail }));
+      console.log('Error! ', event.detail);
     });
   }
 
@@ -56,9 +54,56 @@ class LiveKitService {
         console.log('Reusing existing connection');
       } else {
         this.room = new Room();
-        // send a audio stream to init connection
-        await this.audioManager.initMicrophone();
+
+        /* *************************************************************
+         * Set up Listeners
+         * *************************************************************/
+        // Set up audio element for remote tracks
+        this.room.on(RoomEvent.TrackSubscribed, (track, publication, remoteParticipants) => {
+          console.log(`Track subscribed from ${remoteParticipants.identity}`);
+          
+          if (track.kind === Track.Kind.Audio) {
+            console.log(`Check audio participant ${remoteParticipants.identity}`);
+            const audioElement = track.attach();
+            audioElement.autoplay = true;
+            audioElement.volume = 1.0;
+            // store this element to mute individual participants later
+            this.audioElements.set(remoteParticipants.identity, audioElement);
+          }
+        });
+        
+        this.room.on(RoomEvent.TrackUnsubscribed, (track, remoteParticipants) => {
+          if (track.kind === Track.Kind.Audio) {
+            const audioElement = this.audioElements.get(remoteParticipants.identity);
+            if (audioElement) {
+              audioElement.remove();
+              audioElements.delete(remoteParticipants.identity);
+            }
+            track.detach(); // Clean up audio elements
+            console.log('cleaning up audio ...')
+          }
+        });
+
+        this.room.on(RoomEvent.TrackMuted, (publication, participant) => {
+          console.log(`${participant.identity} muted their ${publication.kind} track`);
+          // Update UI to show muted state
+        });
+
+        this.room.on(RoomEvent.TrackUnmuted, (publication, participant) => {
+          console.log(`${participant.identity} unmuted their ${publication.kind} track`);
+          // Update UI to show unmuted state
+        });
+
+        // Run once when room connected Check existing participants
+        this.room.once(RoomEvent.Connected, () => {
+          console.log('Room connected, participants in room:', this.room.remoteParticipants);
+        });
+
+        /* *************************************************************
+         * Connect to room
+         * *************************************************************/
         await this.room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
+        await this.audioManager.initMicrophone(this.room);
       }
       this.emit('connected', { room: this.room });
       return { success: true, room: this.room };

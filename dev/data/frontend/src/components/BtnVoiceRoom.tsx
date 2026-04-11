@@ -43,7 +43,6 @@ export default function ButtonVoiceRoom( { roomName='myroom', allowLeave=true } 
     window.addEventListener('livekit-connect-success', onSuccess);
     window.addEventListener('livekit-connect-error', onError);
 
-    // joinRoom(roomName);
     connect();
   };
 

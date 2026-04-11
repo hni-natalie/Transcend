@@ -1,3 +1,7 @@
+/*
+ Handles socket io connection & generates livekit room token
+ when socket receives signal
+*/
 
 // interface Player {
 //   id: string;
@@ -7,12 +11,13 @@
 // }
 /* **************************************************************** */
 
-const { randomHslColor } = require('../utils/color.js');
-const router = require('express').Router();
-const players = new Map();
-const rooms = new Map(); // Map<roomName, roomData>
-
 const { generateRoomToken } = require('./livekit')
+const { randomHslColor }    = require('../utils/color.js');
+const router  = require('express').Router();
+const players = new Map();
+const rooms   = new Map(); // Map<roomName, roomData>
+
+
 // socket io setup
 const setupPlayerSocket = (io) => {
 	io.on('connection', (socket) => {
@@ -21,8 +26,7 @@ const setupPlayerSocket = (io) => {
   // Initialize player
   players.set(socket.id, {
     id: socket.id,
-    // name: 'GetUsersNameAPI',
-    name: new Date().toISOString(),
+    name: socket.id, // 'GetUsersNameAPI'
     roomName: null,
     position: { x:0, y:0, z:0 },
     rotation: 0,
@@ -35,7 +39,7 @@ const setupPlayerSocket = (io) => {
   socket.emit('existing-players', Array.from(players.values()));
   
   // Broadcast entire new player object to everyone else
-  // frontend sets up receiver & do next steps: eg print names
+  // frontend sets up listener & do next steps: eg print names
   socket.broadcast.emit('player-joined', players.get(socket.id));
   
   // Handle position updates
@@ -73,8 +77,8 @@ const setupPlayerSocket = (io) => {
       rooms.set(roomName, roomData);
     }
     // Room-size constrains
-    if (roomData.users.length >= 20) {
-      socket.emit('room-full', { roomName });
+    if (roomData.users.length > 3) {
+      socket.emit('room-full', { roomName, maxSize:3 });
       return;
     }
     
@@ -199,13 +203,16 @@ const setupPlayerSocket = (io) => {
 });
 }
 
-// setup routes
+/* *****************************************************************
+ * Setup Routes
+ * ****************************************************************/
 router.get('/', (req, res) => {
 	res.json({
 		count: players.size,
 		players: Array.from(players.values())
 	});
 });
+
 
 module.exports = {
 	players,

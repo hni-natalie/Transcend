@@ -1,6 +1,7 @@
-const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET } = require('../utils/secrets');
-const { AccessToken } = require('livekit-server-sdk');
-const router          = require('express').Router();
+const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL } = require('../utils/secrets');
+const { AccessToken, RoomServiceClient } = require('livekit-server-sdk');
+const router        = require('express').Router();
+const roomService   = new RoomServiceClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
 
 
 async function generateRoomToken(roomName, participantName) {
@@ -12,8 +13,7 @@ async function generateRoomToken(roomName, participantName) {
         LIVEKIT_API_SECRET,
         {
             identity: participantName,
-            // Token expires in 6 hours by default
-            ttl: '6h',
+            ttl: '6h', // token expiration
         }
     );
     
@@ -28,6 +28,10 @@ async function generateRoomToken(roomName, participantName) {
     const token = await at.toJwt();
     return ( token );
 }
+
+/* *****************************************************************
+ * Setup Routes
+ * ****************************************************************/
 
 // > GET : frontend calls this to get a token
 router.get('/token', async (req, res) => {
@@ -46,6 +50,23 @@ router.get('/token', async (req, res) => {
         res.status(500).json({ error: 'Failed to generate token' });
     }
 });
+
+// roomName:string, participantIdentity:string, mute:boolean
+router.post('/mute-user', async (req, res) => {
+  const { roomName, participantIdentity, mute } = req.body;
+  
+  // Reusing the same 'roomService' instance
+  await roomService.mutePublishedTrack(roomName, participantIdentity, 'audio', mute);
+  res.json({ success: true });
+});
+
+// create room with custom settings
+router.post('/create-room', async (req, res) => {
+  const { roomName, maxParticipants } = req.body;
+  const room = await roomService.createRoom({ name:roomName, maxParticipants:maxParticipants });
+  res.json({ room });
+});
+
 
 module.exports = {
     router,

@@ -27,5 +27,5 @@ function readSecret(secretName) {
 module.exports = {
     LIVEKIT_API_KEY: readSecret('livekit_api_key'),
     LIVEKIT_API_SECRET: readSecret('livekit_api_secret'),
-    LIVEKIT_URL: process.env.VITE_LIVEKIT_URL
+    LIVEKIT_URL: process.env.VITE_LIVEKIT_URL,
 };

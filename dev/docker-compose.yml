@@ -1,5 +1,17 @@
 services:
 
+  # cloudflared:
+  #   build: ./${SERV_DIR}/cloudflared
+  #   container_name: t_cloudflared
+  #   secrets:
+  #     - cloudflared_key
+  #   depends_on:
+  #     nginx:
+  #       condition: service_healthy
+  #   # restart: unless-stopped
+  #   networks:
+  #     - app-network
+
   nginx:
     build: ./${SERV_DIR}/nginx
     container_name: t_nginx
@@ -7,6 +19,12 @@ services:
       - "443:443"
     env_file:
       - .env
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "-q", "--spider", "https://localhost/"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s  # Give init.sh time to run
     depends_on:
       frontend:
         condition: service_healthy
@@ -55,51 +73,53 @@ services:
     secrets:
       - livekit_api_key
       - livekit_api_secret
-    depends_on:
-      - livekit
+    # depends_on:
+    #   - livekit
     volumes:
       - backend_app:/app:nocopy
     # restart: unless-stopped
     networks:
       - app-network
 
-  livekit:
-    build: ./${SERV_DIR}/livekit
-    init: true
-    container_name: t_livekit
-    ports:
-      - "7881:7881"
-      - "7882:7882/udp"
-      # - "50000-50010:50010-50010/udp"
-      - "${LIVEKIT_UDP_START}-${LIVEKIT_UDP_END}:${LIVEKIT_UDP_START}-${LIVEKIT_UDP_END}/udp"
-    env_file:
-      - .env
-    secrets:
-      - livekit_api_key
-      - livekit_api_secret
-      - redis_pwd
-    depends_on:
-      redis:
-        condition: service_healthy
-    networks:
-      - app-network
+  # livekit:
+  #   build: ./${SERV_DIR}/livekit
+  #   init: true
+  #   container_name: t_livekit
+  #   ports:
+  #     - "7881:7881"
+  #     - "7882:7882/udp"
+  #     # - "50000-50010:50010-50010/udp"
+  #     - "${LIVEKIT_UDP_START}-${LIVEKIT_UDP_END}:${LIVEKIT_UDP_START}-${LIVEKIT_UDP_END}/udp"
+  #   env_file:
+  #     - .env
+  #   secrets:
+  #     - livekit_api_key
+  #     - livekit_api_secret
+  #     - redis_pwd
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   # restart: unless-stopped
+  #   networks:
+  #     - app-network
 
-  redis:
-    build: ./${SERV_DIR}/redis
-    init: true
-    container_name: t_redis
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 3s
-      timeout: 3s
-      retries: 10
-      start_period: 5s
-    networks:
-      - app-network
-    secrets:
-      - redis_pwd
-    volumes:
-      - redis:/data:nocopy
+  # redis:
+  #   build: ./${SERV_DIR}/redis
+  #   init: true
+  #   container_name: t_redis
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 3s
+  #     timeout: 3s
+  #     retries: 10
+  #     start_period: 5s
+  #   volumes:
+  #     - redis:/data:nocopy
+  #   secrets:
+  #     - redis_pwd
+  #   # restart: unless-stopped
+  #   networks:
+  #     - app-network
 
 
 
@@ -145,3 +165,5 @@ secrets:
     file: ./secrets/livekit_api_secret.txt
   redis_pwd:
     file: ./secrets/redis_password.txt
+  cloudflared_key:
+    file: ./secrets/cloudflared_tunnel.txt

@@ -6,9 +6,9 @@
 # else run all:									./test.sh
 # ------------------------------------------
 
+source ./dev/.env
 
 BORDER='-----------------------'
-DOMAIN_NAME='localhost'
 PORT=443
 
 run_test() {
