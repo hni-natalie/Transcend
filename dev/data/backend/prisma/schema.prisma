@@ -25,29 +25,57 @@ enum AttendanceStatus {
   present
 }
 
+enum TaskStatus {
+  not_started
+  in_progress
+  done
+}
+
+enum TaskPriority {
+  low
+  medium
+  high
+}
+
+enum MeetingRole {
+  organiser
+  participant
+}
+
+enum DocumentType {
+  faq
+  meeting_summary
+}
+
 // ROLES
 model Role {
   roleId    String   @id @default(uuid())
   roleName  String   @unique
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   users User[]
 }
 
 // DEPARTMENTS
 model Department {
-  dpId      String   @id @default(uuid())
-  dpName    String   @unique
-  dpLead    String?
-  createdAt DateTime @default(now())
+  dpId        String   @id @default(uuid())
+  dpName      String   @unique
+  dpLead      String?
+  workspaceId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  lead  User?  @relation("DepartmentLead", fields: [dpLead], references: [userId])
+  lead  User?  @relation("DepartmentLead", fields: [dpLead], references: [userId], onDelete: SetNull)
   users User[] @relation("UserDepartment")
 
-  // spaces Space[]
+  workspace   Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+  spaces      Space[]
 }
 
 // USERS
+// password ? cz with google no need password
+// for spaces, handle the logic in be; if dpLead == spaceDpLead
 model User {
   userId        String     @id @default(uuid())
   userEmail     String     @unique
@@ -55,7 +83,8 @@ model User {
   userName      String
   userStatus    UserStatus @default(offline)
   roleId        String
-  dpId          String
+  workspaceId   String?
+  dpId          String?
   avatarUrl     String?
   authProvider  String?    @default("email")
   googleId      String?    @unique
@@ -63,118 +92,163 @@ model User {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
-  role       Role       @relation(fields: [roleId], references: [roleId])
-  department Department @relation("UserDepartment", fields: [dpId], references: [dpId])
-  leadOf     Department[] @relation("DepartmentLead")
+  role       Role         @relation(fields: [roleId], references: [roleId])
+  workspace  Workspace?   @relation(fields: [workspaceId], references: [workspaceId])
+  department Department?  @relation("UserDepartment", fields: [dpId], references: [dpId])
+  leadOf     Department?  @relation("DepartmentLead")
 
-  // tasks Task[]
+  tasks Task[]
 
-  // keySpaces Space[] @relation("SpaceKeyPerson")
-
-  // organisedEvents     EventOrganiser[]
-  // participatingEvents EventParticipant[]
+  meetingParticipations MeetingParticipant[]
 }
 
-// // WORKSPACES
-// model Workspace {
-//   workspaceId String   @id @default(uuid())
-//   name        String
-//   subdomain   String   @unique
-//   url         String
-//   logoUrl     String?
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
+// WORKSPACES
+// tied to everything as a boundary (in case to scale to multi-tenant)
+model Workspace {
+  workspaceId String   @id @default(uuid())
+  name        String
+  logoUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-//   spaces Space[]
-// }
+  users       User[]
+  departments Department[]
+  spaces      Space[]
+  documents   Document[]
+}
 
-// // SPACES
-// model Space {
-//   spaceId      String       @id @default(uuid())
-//   spaceName    String
-//   workspaceId  String
-//   accessLevel  AccessLevel  @default(shared)
-//   departmentId String?
-//   keyPersonId  String?
-//   width        Int          @default(50)
-//   height       Int          @default(50)
-//   isPublicView Boolean?     @default(true)
-//   isPublicBook Boolean?     @default(true)
-//   capacity     Int?         @default(0)
-//   sortOrder    Int?         @default(0)
-//   isActive     Boolean?     @default(true)
-//   createdAt    DateTime     @default(now())
-//   updatedAt    DateTime     @updatedAt
+// SPACES
+// for permission; add in be (canUserAccessSpace(user, space))
+model Space {
+  spaceId      String       @id @default(uuid())
+  spaceName    String
+  workspaceId  String
+  accessLevel  AccessLevel  @default(shared)
+  departmentId String?
+  keyPersonId  String?
+  isPublicBook Boolean?     @default(true)
+  userCapacity Int?         @default(0)
+  // sortOrder    Int?         @default(0)    // drag / reorder spaces
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-//   workspace  Workspace  @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
-//   department Department? @relation(fields: [departmentId], references: [dpId])
-//   keyPerson  User?       @relation("SpaceKeyPerson", fields: [keyPersonId], references: [userId], onDelete: SetNull)
+  workspace  Workspace   @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId], references: [dpId])
+  keyPerson  User?       @relation("SpaceKeyPerson", fields: [keyPersonId], references: [userId], onDelete: SetNull)
 
-//   scheduledEvents ScheduledEvent[]
-// }
+  meetings    Meeting[]
+}
 
-// // TASKS
-// model Task {
-//   id           String   @id @default(uuid())
-//   notionPageId String   @unique
-//   userId       String
-//   cachedTitle  String?
-//   cachedStatus String?
-//   lastSynced   DateTime @default(now())
-//   createdAt    DateTime @default(now())
+// TASKS
+// @@ is fetch task by workspace/id
+// add be contraint: if taskstatus == done, add completed date
+model Task {
+  taskId          String      @id @default(uuid())
+  taskTitle       String
+  taskDesc        String?
+  taskStatus      TaskStatus  @default(not_started)
+  dueDate         DateTime?
+  completedDate   DateTime?
+  workspaceId     String
+  createdByUserId String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?
 
-//   user User @relation(fields: [userId], references: [userId])
-// }
+  createdBy       User         @relation(fields: [createdByUserId], references: [userId], onDelete: Cascade)
+  workspace       Workspace    @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
 
-// // EVENTS
-// model ScheduledEvent {
-//   meetId    String   @id @default(uuid())
-//   spaceId   String
-//   meetTitle String
-//   meetDesc  String
-//   meetStart DateTime
-//   meetEnd   DateTime
-//   createdAt DateTime @default(now())
+  assignedTo      TaskAssignment[]
 
-//   space        Space             @relation(fields: [spaceId], references: [spaceId])
-//   organisers   EventOrganiser[]
-//   participants EventParticipant[]
-// }
+  @@index([workspaceId, taskStatus])
+  @@index([workspaceId, createdByUserId])
+  @@index([createdByUserId])
+  @@index([deletedAt])
+}
 
-// model EventOrganiser {
-//   organiserId String   @id @default(uuid())
-//   meetId      String
-//   userId      String
-//   createdAt   DateTime @default(now())
+model TaskAssignment {
+  assignedId      String @id @default(uuid())
 
-//   meet ScheduledEvent @relation(fields: [meetId], references: [meetId])
-//   user User           @relation(fields: [userId], references: [userId])
-// }
+  taskId          String
+  userId          String
+  taskPriority    TaskPriority @default(medium)
+  assignedDate    DateTime @default(now())
 
-// model EventParticipant {
-//   participantId    String           @id @default(uuid())
-//   meetId           String
-//   userId           String
-//   attendanceStatus AttendanceStatus @default(present)
-//   createdAt        DateTime         @default(now())
+  task      Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [userId])
 
-//   meet ScheduledEvent @relation(fields: [meetId], references: [meetId])
-//   user User           @relation(fields: [userId], references: [userId])
-// }
+  @@unique([taskId, userId])
+  @@index([userId])
+  @@index([taskId])
+  @@index([taskPriority])
+}
 
-// // RAG (pgvector later)
-// model FAQ {
-//   id        String   @id @default(uuid())
-//   question  String
-//   answer    String
-//   vector    Bytes?
-//   createdAt DateTime @default(now())
-// }
+// EVENTS
+model Meeting {
+  meetId          String   @id @default(uuid())
+  workspaceId     String
+  spaceId         String
+  createdByUserId String
+  meetTitle       String
+  meetDesc        String
+  meetStart       DateTime
+  meetEnd         DateTime
+  createdAt       DateTime @default(now())
+  
+  workspace Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+  space     Space     @relation(fields: [spaceId], references: [spaceId])
+  createdBy User      @relation(fields: [createdByUserId], references: [userId])
 
-// model Document {
-//   id        String   @id @default(uuid())
-//   title     String
-//   content   String
-//   vector    Bytes?
-//   createdAt DateTime @default(now())
-// } 
+  participants  MeetingParticipant[]
+
+  @@index([workspaceId])
+  @@index([spaceId])
+  @@index([workspaceId, meetStart])
+}
+
+model MeetingParticipant {
+  id           String   @id @default(uuid())
+  meetId       String
+  userId       String
+  role         MeetingRole
+  attendance   AttendanceStatus @default(present)
+  createdAt    DateTime @default(now())
+
+  meet      Meeting   @relation(fields: [meetId], references: [meetId])
+  user      User      @relation(fields: [userId], references: [userId])
+
+  @@unique([meetId, userId])
+  @@index([meetId, role])
+  @@index([meetId])
+  @@index([userId])
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  title       String
+  fileURL     String?    // actual PDF
+  content     String?    // extracted text for RAG / search
+  type        DocumentType
+  workspaceId String
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [workspaceId])
+  chunks      DocumentChunk[]
+
+  @@index([workspaceId])
+}
+
+// chunkindex to make sure content is in order for RAG search
+model DocumentChunk {
+  id          String   @id @default(uuid())
+  content     String
+  embedding   Unsupported("vector(1536)")?
+  chunkIndex  Int
+  documentId  String
+  createdAt   DateTime @default(now())
+
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@unique([documentId, chunkIndex])
+}
