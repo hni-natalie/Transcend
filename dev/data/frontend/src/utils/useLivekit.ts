@@ -10,18 +10,22 @@ import { useSocket } from '../context/ContextSocket';
 
 // export default function useLiveKit( roomName:string , participantName:string ) {
 export default function useLiveKit( roomName:string ) {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnectedRoom, setIsConnectedRoom] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const { enableSocket, joinRoom, leaveRoom } = useSocket();
   useEffect(() => { enableSocket(); }, []);
+
+  const [joinCount, setJoinCount] = useState<number>(0);
+  const [isLoading, setisLoading] = useState<boolean>(false);
+
   
   // Set up handlers when hook mounts
   useEffect(() => {
     const status = livekitService.getConnectionStatus();
-    setIsConnected(status.isConnected);
+    setIsConnectedRoom(status.isConnected);
     
-    const handleConnected = () => setIsConnected(true);
-    const handleDisconnected = () => setIsConnected(false);
+    const handleConnected = () => setIsConnectedRoom(true);
+    const handleDisconnected = () => setIsConnectedRoom(false);
     
     livekitService.on('connected', handleConnected);
     livekitService.on('disconnected', handleDisconnected);
@@ -37,13 +41,31 @@ export default function useLiveKit( roomName:string ) {
     then route back to connectToRoom in livekitService, create Room() in frontend
   */
   const connect = () => {
+    setisLoading(true)
+
+    const onSuccess = (event: any) => {
+      console.log('Connection complete!', event.detail);
+      setJoinCount(prev => prev + 1);
+      setisLoading(false);
+      window.removeEventListener('livekit-connect-success', onSuccess);
+    };
+    
+    const onError = (event: any) => {
+      console.error('Connection failed!', event.detail);
+      setisLoading(false);
+      window.removeEventListener('livekit-connect-error', onError);
+    };
+    
+    window.addEventListener('livekit-connect-success', onSuccess);
+    window.addEventListener('livekit-connect-error', onError);
+
     joinRoom(roomName);
     setIsMuted(livekitService.audioManager.getMuteState());
   };
 
   const disconnect = () => {
-    leaveRoom(roomName);
-    livekitService.disconnectFromRoom();
+    leaveRoom(roomName); // emit leave-room signal to backend
+    livekitService.disconnectFromRoom(); // frontend cleanup
   };
 
   const toggleMute = () => {
@@ -51,7 +73,7 @@ export default function useLiveKit( roomName:string ) {
     setIsMuted(status)
   }
 
-  return { connect, disconnect, isConnected, isMuted, toggleMute };
+  return { connect, disconnect, isConnectedRoom, isMuted, toggleMute, isLoading, joinCount };
 }
 
 /*

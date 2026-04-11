@@ -11,11 +11,12 @@
 // }
 /* **************************************************************** */
 
-const { generateRoomToken } = require('./livekit')
+const { generateRoomToken } = require('./livekit.js')
 const { randomHslColor }    = require('../utils/color.js');
-const router  = require('express').Router();
-const players = new Map();
-const rooms   = new Map(); // Map<roomName, roomData>
+const router      = require('express').Router();
+const players     = new Map();
+// const roomPlayers = new Map();  // key: `${roomName}-${id}` (for heartbeats)
+const rooms       = new Map();      // Map<roomName, roomData>
 
 
 // socket io setup
@@ -28,6 +29,7 @@ const setupPlayerSocket = (io) => {
     id: socket.id,
     name: socket.id, // 'GetUsersNameAPI'
     roomName: null,
+    // roomIdle: null,
     position: { x:0, y:0, z:0 },
     rotation: 0,
     color: randomHslColor(),
@@ -45,14 +47,15 @@ const setupPlayerSocket = (io) => {
   // Handle position updates
   socket.on('player-move', (data) => {
     const player = players.get(socket.id);
-    if (player && player.roomName) {
+    // if (player && player.roomName) {
+    if (player) {
       player.position = data.position;
       player.rotation = data.rotation;
 
       // pending, might need to remove this
       socket.broadcast.emit('player-moved', data);
       // emit position in room name
-      socket.to(player.roomName).emit('user-moved', data);
+      // socket.to(player.roomName).emit('user-moved', data);
     }
   });
 
@@ -79,6 +82,7 @@ const setupPlayerSocket = (io) => {
     // Room-size constrains
     if (roomData.users.length > 3) {
       socket.emit('room-full', { roomName, maxSize:3 });
+      console.log('Room Full: current users: ', roomData.users)
       return;
     }
     
@@ -89,8 +93,8 @@ const setupPlayerSocket = (io) => {
     //   return ;
     // }
 
-    player.roomName = roomData.name;
-    roomData.users.push({ id:socket.id, name:player.name});
+    player.roomName = roomName;
+    roomData.users.push({ id:player.id, name:player.name});
     socket.join(roomName);
     
     // Generate room-specific token
@@ -110,8 +114,12 @@ const setupPlayerSocket = (io) => {
       playerName: player.name,
       participantCount: roomData.users.length
     });
-    
-    console.log(`${player.name} joined room: ${roomName}`);
+    // roomPlayers.set(player.id, {
+    //   id: player.id,
+    //   roomName,
+    //   lastHeartbeat: Date.now()
+    // });
+    console.log(`${player.name} joined room: ${player.roomName}`);
   });
 
 	// Get all players
@@ -165,17 +173,81 @@ const setupPlayerSocket = (io) => {
   // Handle leaving specific room
   socket.on('leave-room', ({ roomName }) => {
     const player = players.get(socket.id);
+    if (!player) { console.log('player not found'); return; }
+    handleLeaveRoom(socket, player, roomName);
+  });
+	
+  // socket.on('heartbeat', (data) => {
+  //   const { roomName, id } = data;
+  //   setHeartbeat(roomName, id);
+  // });
+
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    console.log(`Player disconnected: ${socket.id}`);
+    const player = players.get(socket.id);
+    if (player.roomName)
+      handleLeaveRoom(socket, player, player.roomName)
+    players.delete(socket.id);
+    socket.broadcast.emit('player-left', { id:socket.id });
+  });
+
+  /* *****************************************************************
+   * Setup Socket Functions
+   * ****************************************************************/
+  // cleanup inactive players
+  // setInterval(() => {
+  
+  //     const now = Date.now();
+  //     let removedCount = 0;
+  //     console.log('patrolling .... ')
+  //     // console.log('players: ', players.entries());
+      
+  //     for (const [id, roomPlayer] of roomPlayers.entries()) {
+  //       if (now - roomPlayer.lastHeartbeat > 60000) { // 60 seconds timeout
+  //         console.log(`Removing inactive player: ${id}, last heartbeat: ${new Date(roomPlayer.lastHeartbeat).toISOString()}`);
+          
+  //         // Leave the room
+  //         console.log('Removing player in room...', id, ': ', roomPlayer.roomName)
+  //         handleLeaveRoom(socket, roomPlayer, roomPlayer.roomName)
+
+  //         // Delete room players
+  //         roomPlayers.delete(id);
+  //         removedCount++;
+  //       }
+  //     }
+      
+  //     if (removedCount > 0) {
+  //       console.log(`Removed ${removedCount} inactive players. Total active: ${roomPlayers.size}`);
+  //     }
+  // }, 10000); // Check every 30 seconds
+
+  // function setHeartbeat(roomName, id) {
+  //   const key = `${roomName}-${id}`;
+  //   console.log('heartbeat key:', key)
+  //   roomPlayers.set(id, {
+  //     ...roomPlayers.get(id),
+  //     // roomName,
+  //     lastHeartbeat: Date.now()
+  //   });
+  // }
+
+  function handleLeaveRoom(socket, player, roomName) {
     if (!player) return ;
 
     const roomData = rooms.get(roomName);
     if (roomData) {
-      const playerExists = roomData.users.some(u => u.id === socket.id);
+      const playerExists = roomData.users.some(u => u.id === player.id); //#####
       if (!playerExists) {
         console.log('player not found in ', roomData.name, 'skipping ...' );
         return ;
       }
-      console.log('Backend: leave-room')
-      roomData.users = roomData.users.filter(u => u.id !== socket.id);
+      // console.log('Backend: leave-room, playerid: ', player.id, 'socket.id: ', player.id);
+      console.log('Backend: leave-room, user count bf: ', roomData.users.length)
+      roomData.users = roomData.users.filter(u => u.id !== player.id); //#####
+      console.log('Backend: leave-room, user count af: ', roomData.users.length)
+      console.log('Backend: leave-room, users now: ', roomData.users)
+
       socket.leave(roomName);
       player.roomName = null;
       
@@ -192,16 +264,12 @@ const setupPlayerSocket = (io) => {
         console.log(`Room ${roomName} closed.`);
       }
     }
-  });
-	
-  // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log(`Player disconnected: ${socket.id}`);
-    players.delete(socket.id);
-    socket.broadcast.emit('player-left', { id:socket.id });
-  });
+  }
+// within socket
 });
+// within io
 }
+
 
 /* *****************************************************************
  * Setup Routes
@@ -212,7 +280,6 @@ router.get('/', (req, res) => {
 		players: Array.from(players.values())
 	});
 });
-
 
 module.exports = {
 	players,

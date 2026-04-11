@@ -75,10 +75,10 @@ export class AudioManager {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
     }
-    // if (this.audioContext) {
-    //   this.audioContext.close();
-    //   this.audioContext = null;
-    // }
+    if (this.localPublication) {
+      this.localPublication.track.stop();
+      this.localPublication = null;
+    }
     
     this.isMuted = false;
   }

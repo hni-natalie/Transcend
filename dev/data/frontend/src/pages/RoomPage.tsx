@@ -21,7 +21,7 @@ export default function RoomPage() {
     <div>
       <p>Welcome to voice chat</p>
       <ButtonVoiceRoom />
-      <ButtonVoiceRoom roomName="playroom"/>
+      {/* <ButtonVoiceRoom roomName="playroom"/> */}
       {error && (<div className='text-danger-base'>{error}</div>)}
 
     </div>

@@ -4,60 +4,72 @@
 
 import { useState, useEffect } from "react";
 import useLiveKit from '../utils/useLivekit'
-// import { useSocket } from '../context/ContextSocket';
 import { IconMute, IconSpeak } from '../config/menu.icons.conf';
+import { useSocket } from '../context/ContextSocket';
 import Loading from "./BtnLoading";
 
 export default function ButtonVoiceRoom( { roomName='myroom', allowLeave=true } ) {
-  const { connect, disconnect, isConnected, isMuted, toggleMute } = useLiveKit(roomName);
-  const [joinCount, setJoinCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
+  const { connect, disconnect, isConnectedRoom, isLoading, isMuted, toggleMute, joinCount } = useLiveKit(roomName);
+  const { enableSocket, isConnected, localPlayerId, socket } = useSocket();
+  useEffect(() => { enableSocket(); }, []);
   
+
   useEffect(() => {
-    console.log('FE lk Connection status: ', isConnected);
-  }, [isConnected]);
+    console.log('FE lk Connection status: ', isConnectedRoom);
+  }, [isConnectedRoom]);
 
   const handleJoin = async () => {
-    setLoading(true)
-    // const result = await connect();
-    // if (result.success) {
-    //   console.log('Successfully joined room');
-    //   setJoinCount(prev => prev + 1);
-    // } else 
-    //   console.error('Connection failed:', result.error);
-    // setLoading(false)
-
-    const onSuccess = (event: any) => {
-      console.log('Connection complete!', event.detail);
-      setJoinCount(prev => prev + 1);
-      setLoading(false);
-      window.removeEventListener('livekit-connect-success', onSuccess);
-    };
-    
-    const onError = (event: any) => {
-      console.error('Connection failed!', event.detail);
-      setLoading(false);
-      window.removeEventListener('livekit-connect-error', onError);
-    };
-    
-    window.addEventListener('livekit-connect-success', onSuccess);
-    window.addEventListener('livekit-connect-error', onError);
-
     connect();
   };
 
   const handleLeave = () => {
+    console.log('ppppikaa!')
     disconnect();
   };
 
+  useEffect(() => {
+    if (isConnected)
+      console.log('local player id: ', localPlayerId)
+  },[isConnected])
+
+  // Clean up when component unmounts
+  useEffect(() => {
+  return () => {
+    handleLeave();
+  };
+  }, []);
+
+  // cleanup when page refresh/close
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleLeave);
+    return () => {
+      window.removeEventListener('beforeunload', handleLeave);
+    };
+  }, []);
+
+  // useEffect(() => {
+  //   if (!isConnectedRoom) return ;
+  //   const heartbeatInterval = setInterval(() => {
+  //     if (socket && roomName && localPlayerId) {
+  //       socket.emit('heartbeat', { 
+  //       roomName, 
+  //       id: localPlayerId,
+  //       timestamp: Date.now() 
+  //       });
+  //     }
+  //   }, 30000); // Every 30 seconds
+    
+  //   return () => clearInterval(heartbeatInterval);
+  // }, [isConnectedRoom]);
+
   return (
     <nav className="flex justify-center">
-      {!isConnected ? (
+      {!isConnectedRoom ? (
         <div>
           {/* <button onClick={handleJoin} className="bg-teal-600 cursor-pointer rounded-xl p-4"> */}
           <button onClick={handleJoin} className="btn-lime-outline">
-            {loading 
-            ? <Loading isLoading={loading}/>
+            {isLoading 
+            ? <Loading isLoading={isLoading}/>
             : `Join ${roomName} Voice Chat : ${joinCount}`}
           </button>
         </div>

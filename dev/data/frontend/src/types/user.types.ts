@@ -15,8 +15,8 @@ export type Player = {
   name?: string;
   roomName?: string;
   position: Position;
-  rotation: number;
+  rotation?: number;
   color: string;
-  audioEnabled: boolean;
-  speaking: boolean;
+  audioEnabled?: boolean;
+  speaking?: boolean;
 }

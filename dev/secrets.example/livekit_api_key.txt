@@ -1,1 +1,1 @@
-your_api_key
+<get-acc-from-cloud.livekit.io-then-paste-your_api_key>

@@ -17,7 +17,7 @@ const io     = new Server(server, {
   path: process.env.VITE_SOCKET_PATH || "/socket.io",
 });
 console.log('Socket.IO created with path:', io.path());
-const multiplayer = require('./routes/multiplayerAudio')
+const multiplayer = require('./routes/multiplayerSocket')
 multiplayer.setupPlayerSocket(io)
 
 
@@ -30,6 +30,7 @@ const routesLivekit = require('./routes/livekit').router
 /* *************************************************
  * all used routes
  * *************************************************/
+app.use(express.json());  // For parsing JSON
 app.use('/', routesInit)
 app.use('/lk', routesLivekit)
 app.use('/player', multiplayer.router)

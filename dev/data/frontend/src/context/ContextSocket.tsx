@@ -58,7 +58,7 @@ export default function SocketProvider ({ children }) {
           ? {...p, position: data.position}
           : p
       ));
-      console.log(`Player ${data.id} moved to:`, data.position);
+      // console.log(`Player ${data.id} moved to:`, data.position);
     });
 
     /* Events: Room */
