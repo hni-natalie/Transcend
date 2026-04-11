@@ -35,8 +35,6 @@ restart:
 
 nginx:
 	@docker compose -f $(COMPOSE_FILE) up --build nginx
-nginx-d:
-	@docker compose -f $(COMPOSE_FILE) down nginx
 
 redis:
 	@docker compose -f $(COMPOSE_FILE) up --build redis
@@ -44,27 +42,11 @@ redis:
 livekit:
 	@docker compose -f $(COMPOSE_FILE) up --build livekit
 
-t:
-# 	@docker compose -f $(COMPOSE_FILE) run --rm --entrypoint /bin/sh backend
-	@docker compose -f $(COMPOSE_FILE) run --rm -p 0.0.0.0:443:443 nginx
-# 	@docker compose -f "./dev/docker-compose-ddns.yml" run --rm --entrypoint /bin/sh ddns
-
 fe:
 	@docker compose -f $(COMPOSE_FILE) up --build frontend
 
 be:
 	@docker compose -f $(COMPOSE_FILE) up backend
-
-cf:
-	@docker compose -f $(COMPOSE_FILE) up --build cloudflared
-
-ddns:
-	@docker compose -f "./dev/docker-compose-ddns.yml" up --build
-ddns-log:
-	@docker compose -f "./dev/docker-compose-ddns.yml" logs -f
-
-ddns-stop:
-	@docker compose -f "./dev/docker-compose-ddns.yml" stop
 
 
 .PHONY: all init up down

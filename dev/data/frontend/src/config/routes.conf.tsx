@@ -4,9 +4,9 @@ import { ROUTE_PATH as R } from './routes.manifest';
 export const routes = [
 {
 	// testing
-	path: '/test',
-	element: <SpacesMulti />,
-	title: 'Spaces'
+	path: '/office',
+	element: <SpacesMulti roomName="Office" />,
+	title: 'Office'
 },
 {
 	// testing

@@ -55,12 +55,12 @@ export default function ButtonVoiceRoom( { roomName='myroom', allowLeave=true } 
           <button onClick={handleJoin} className="btn-lime-outline">
             {isLoading 
             ? <Loading isLoading={isLoading}/>
-            : `Join ${roomName} Voice Chat : ${joinCount}`}
+            : `Connect ${roomName} Audio `}
           </button>
         </div>
       ) : (
         <div className="flex gap-4 items-center">
-          {allowLeave && (<button onClick={handleLeave} className="btn-lime-outline">Leave Voice Chat</button>)}
+          {allowLeave && (<button onClick={handleLeave} className="btn-lime-outline">Disconnect Audio</button>)}
           {/* button with mute/unmute icon */}
           <button onClick={toggleMute} className={`${isMuted ? 'btn-outline' : 'btn-lime-outline'} rounded-full transition-colors duration-500 p-1`}>{ isMuted ? <IconMute className="w-4 h-4 text-brand-gray-500"/> : <IconSpeak className="w-4 h-4"/> }</button>
         </div>
