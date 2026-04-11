@@ -47,21 +47,6 @@ export default function ButtonVoiceRoom( { roomName='myroom', allowLeave=true } 
     };
   }, []);
 
-  // useEffect(() => {
-  //   if (!isConnectedRoom) return ;
-  //   const heartbeatInterval = setInterval(() => {
-  //     if (socket && roomName && localPlayerId) {
-  //       socket.emit('heartbeat', { 
-  //       roomName, 
-  //       id: localPlayerId,
-  //       timestamp: Date.now() 
-  //       });
-  //     }
-  //   }, 30000); // Every 30 seconds
-    
-  //   return () => clearInterval(heartbeatInterval);
-  // }, [isConnectedRoom]);
-
   return (
     <nav className="flex justify-center">
       {!isConnectedRoom ? (
