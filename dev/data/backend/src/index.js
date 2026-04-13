@@ -1,13 +1,29 @@
 const express = require('express');
-const { PrismaClient } = require('../prisma/client');
+const prisma = require('../prisma/client')
 
 const app = express();
 const port = process.env.BACKEND_PORT;
 
 app.use(express.json());
 
-const authRoutes = require('./routes/auth');
-app.use('/auth', authRoutes);
+// routes
+const authRoutes = require('./routes/auth.routes');
+app.use('/api/auth', authRoutes);
+
+const userRoutes = require('./routes/user.routes');
+app.use('/api/users', userRoutes);
+
+// const departmentRoutes = require('./routes/department.routes');
+// app.use('/api/departments', departmentRoutes);
+
+// const spaceRoutes = require('./routes/space.routes');
+// app.use('/api/spaces', spaceRoutes);
+
+// const taskRoutes = require('./routes/task.routes');
+// app.use('/api/tasks', taskRoutes);
+
+// const meetingRoutes = require('./routes/meeting.routes');
+// app.use('/api/meetings', meetingRoutes);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from Express + Docker!' });
