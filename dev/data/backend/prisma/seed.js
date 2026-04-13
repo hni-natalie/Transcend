@@ -8,14 +8,15 @@ async function main() {
     console.log('Starting seed...');
 
     // WORKSPACE
-    const workspace = await prisma.workspace.upsert({
-        where: { name: 'Default Workspace' },
-        update: {},
-        create: {
-        name: 'Default Workspace',
-        logoUrl: null,
-        },
+    let workspace = await prisma.workspace.findFirst({
+        where: { name: 'Default Workspace' }
     });
+
+    if (!workspace) {
+        workspace = await prisma.workspace.create({
+            data: { name: 'Default Workspace', logoUrl: null },
+        });
+    }
 
     // ROLES
     const adminRole = await prisma.role.upsert({

@@ -61,7 +61,7 @@ model Role {
 model Department {
   dpId        String   @id @default(uuid())
   dpName      String   @unique
-  dpLead      String?
+  dpLead      String?  @unique
   workspaceId String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -92,12 +92,15 @@ model User {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
-  role       Role         @relation(fields: [roleId], references: [roleId])
-  workspace  Workspace?   @relation(fields: [workspaceId], references: [workspaceId])
-  department Department?  @relation("UserDepartment", fields: [dpId], references: [dpId])
-  leadOf     Department?  @relation("DepartmentLead")
+  role            Role         @relation(fields: [roleId], references: [roleId])
+  workspace       Workspace?   @relation(fields: [workspaceId], references: [workspaceId])
+  department      Department?  @relation("UserDepartment", fields: [dpId], references: [dpId])
+  leadDepartment  Department?  @relation("DepartmentLead")
+  spacesKeyPerson Space?       @relation("SpaceKeyPerson")
+  createdMeetings Meeting[]    @relation("MeetingCreatedBy")
 
-  tasks Task[]
+  tasks           Task[]
+  assignedTasks   TaskAssignment[]
 
   meetingParticipations MeetingParticipant[]
 }
@@ -114,6 +117,8 @@ model Workspace {
   users       User[]
   departments Department[]
   spaces      Space[]
+  tasks       Task[]
+  meetings    Meeting[]
   documents   Document[]
 }
 
@@ -125,7 +130,7 @@ model Space {
   workspaceId  String
   accessLevel  AccessLevel  @default(shared)
   departmentId String?
-  keyPersonId  String?
+  keyPersonId  String?      @unique
   isPublicBook Boolean?     @default(true)
   userCapacity Int?         @default(0)
   // sortOrder    Int?         @default(0)    // drag / reorder spaces
@@ -190,16 +195,17 @@ model Meeting {
   spaceId         String
   createdByUserId String
   meetTitle       String
-  meetDesc        String
+  meetDesc        String?
   meetStart       DateTime
   meetEnd         DateTime
   createdAt       DateTime @default(now())
-  
+  updatedAt       DateTime @updatedAt
+
   workspace Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
   space     Space     @relation(fields: [spaceId], references: [spaceId])
-  createdBy User      @relation(fields: [createdByUserId], references: [userId])
+  createdBy User      @relation("MeetingCreatedBy", fields: [createdByUserId], references: [userId])
 
-  participants  MeetingParticipant[]
+  participants MeetingParticipant[]
 
   @@index([workspaceId])
   @@index([spaceId])
