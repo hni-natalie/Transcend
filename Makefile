@@ -32,7 +32,7 @@ up:
 	@$(COMPOSE) up --build 
 
 down: 
-	@$(COMPOSE) down -v
+	@$(COMPOSE) down
 
 stop:
 	@$(COMPOSE) stop
