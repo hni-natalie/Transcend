@@ -2,7 +2,7 @@ const prisma = require('../../prisma/client');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
-class UserService {
+const userService = {
     async getAllUsers(filters = {}) {
         const { search, roleId, workspaceId, status } = filters;
         
@@ -25,18 +25,12 @@ class UserService {
                 userName: true,
                 userStatus: true,
                 createdAt: true,
-                role: {
-                    select: { roleName: true }
-                },
-                workspace: {
-                    select: { name: true }
-                },
-                department: {
-                    select: { dpName: true }
-                }
+                role: { select: { roleName: true } },
+                workspace: { select: { workspaceName: true } },
+                department: { select: { dpName: true } }
             }
         });
-    }
+    },
     
     async getUserById(userId) {
         const user = await prisma.user.findUnique({
@@ -46,52 +40,109 @@ class UserService {
                 userEmail: true,
                 userName: true,
                 userStatus: true,
-                userPassword: false, // Exclude password
                 createdAt: true,
                 updatedAt: true,
                 avatarUrl: true,
-                role: {
-                    select: { roleId: true, roleName: true }
-                },
-                workspace: {
-                    select: { workspaceId: true, name: true }
-                },
-                department: {
-                    select: { dpId: true, dpName: true }
-                }
+                role: { select: { roleId: true, roleName: true } },
+                workspace: { select: { workspaceId: true, workspaceName: true } },
+                department: { select: { dpId: true, dpName: true } }
             }
         });
         
-        if (!user) {
-            throw new Error('User not found');
+        if (!user) throw new Error('User not found');
+        return user;
+    },
+    
+    async updateUserProfile(userId, profileData) {
+        const allowedFields = ['avatarUrl', 'city', 'country', 'timezone'];
+        
+        const updateData = {};
+        allowedFields.forEach(field => {
+            if (profileData[field] !== undefined) {
+                updateData[field] = profileData[field];
+            }
+        });
+        
+        if (Object.keys(updateData).length === 0) {
+            throw new Error('No valid fields to update. Allowed: avatarUrl, city, country, timezone');
         }
         
-        return user;
-    }
+        const user = await prisma.user.findUnique({ where: { userId } });
+        if (!user) throw new Error('User not found');
+        
+        return await prisma.user.update({
+            where: { userId },
+            data: updateData,
+            select: {
+                userId: true,
+                userEmail: true,
+                userName: true,
+                userStatus: true,
+                avatarUrl: true,
+                city: true,
+                country: true,
+                timezone: true,
+                createdAt: true,
+                updatedAt: true,
+                role: { select: { roleId: true, roleName: true } },
+                department: { select: { dpId: true, dpName: true } }
+            }
+        });
+    },
+    
+    async updateUserByAdmin(userId, updateData) {
+        const { name, email, roleId, dpId, status } = updateData;
+        
+        const user = await prisma.user.findUnique({ where: { userId } });
+        if (!user) throw new Error('User not found');
+        
+        return await prisma.user.update({
+            where: { userId },
+            data: {
+                userName: name,
+                userEmail: email,
+                roleId,
+                dpId,
+                userStatus: status
+            },
+            select: {
+                userId: true,
+                userEmail: true,
+                userName: true,
+                userStatus: true,
+                avatarUrl: true,
+                city: true,
+                country: true,
+                timezone: true,
+                role: { select: { roleId: true, roleName: true } },
+                department: { select: { dpId: true, dpName: true } }
+            }
+        });
+    },
     
     async createUser(userData) {
         const { email, password, name, roleId, workspaceId, dpId } = userData;
         
-        // Check if user exists
         const existingUser = await prisma.user.findUnique({
             where: { userEmail: email }
         });
         
-        if (existingUser) {
-            throw new Error('Email already exists');
-        }
+        if (existingUser) throw new Error('Email already exists');
         
-        // Generate temp password if not provided
         let hashedPassword;
+        let plainTextPassword = null;
+        
         if (password) {
+            // admin provided a password
             hashedPassword = await bcrypt.hash(password, 10);
+            plainTextPassword = password;
         } else {
-            const tempPassword = crypto.randomBytes(8).toString('hex');
-            hashedPassword = await bcrypt.hash(tempPassword, 10);
-            // TODO: Send temp password via email
+            // generate temporary password
+            plainTextPassword = crypto.randomBytes(6).toString('hex'); // 12 chars, e.g., "a3f5e7h9j2k4"
+            hashedPassword = await bcrypt.hash(plainTextPassword, 10);
         }
         
-        return await prisma.user.create({
+        const user = await prisma.user.create({
             data: {
                 userEmail: email,
                 userPassword: hashedPassword,
@@ -111,27 +162,41 @@ class UserService {
                 createdAt: true
             }
         });
-    }
-    
-    async updateUser(userId, updateData) {
-        const { name, roleId, dpId, status } = updateData;
         
-        // Check if user exists
+        // return the user + plain text password (for admin to share)
+        return {
+            ...user,
+            temporaryPassword: plainTextPassword
+        };
+    },
+    
+    async changePassword(userId, oldPassword, newPassword) {
+        // get user with password
         const user = await prisma.user.findUnique({
             where: { userId }
         });
         
-        if (!user) {
-            throw new Error('User not found');
+        if (!user) throw new Error('User not found');
+        if (!user.userPassword) throw new Error('No password set for this account');
+        
+        // verify old password
+        const isPasswordValid = await bcrypt.compare(oldPassword, user.userPassword);
+        if (!isPasswordValid) throw new Error('Current password is incorrect');
+        
+        // validate new password
+        if (!newPassword || newPassword.length < 6) {
+            throw new Error('New password must be at least 6 characters');
         }
         
+        // hash new password
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        
+        // update user
         return await prisma.user.update({
             where: { userId },
             data: {
-                userName: name,
-                roleId,
-                dpId,
-                userStatus: status
+                userPassword: hashedNewPassword,
+                emailVerified: true // mark email as verified after password change
             },
             select: {
                 userId: true,
@@ -140,27 +205,20 @@ class UserService {
                 userStatus: true
             }
         });
-    }
+    },
     
     async deleteUser(userId) {
-        const user = await prisma.user.findUnique({
-            where: { userId }
-        });
+        const user = await prisma.user.findUnique({ where: { userId } });
+        if (!user) throw new Error('User not found');
         
-        if (!user) {
-            throw new Error('User not found');
-        }
-        
-        return await prisma.user.delete({
-            where: { userId }
-        });
-    }
+        return await prisma.user.delete({ where: { userId } });
+    },
     
     async getUserByEmail(email) {
         return await prisma.user.findUnique({
             where: { userEmail: email }
         });
     }
-}
+};
 
-module.exports = new UserService();
+module.exports = userService;
