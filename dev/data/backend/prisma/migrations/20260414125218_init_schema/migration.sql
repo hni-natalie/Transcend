@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- CreateEnum
 CREATE TYPE "UserStatus" AS ENUM ('offline', 'online', 'busy', 'in_meeting');
 
@@ -52,6 +54,9 @@ CREATE TABLE "User" (
     "workspaceId" TEXT,
     "dpId" TEXT,
     "avatarUrl" TEXT,
+    "city" TEXT,
+    "country" TEXT,
+    "timezone" TEXT,
     "authProvider" TEXT DEFAULT 'email',
     "googleId" TEXT,
     "emailVerified" BOOLEAN DEFAULT false,
@@ -64,7 +69,7 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "Workspace" (
     "workspaceId" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "workspaceName" TEXT NOT NULL,
     "logoUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

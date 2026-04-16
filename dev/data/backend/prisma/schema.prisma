@@ -2,9 +2,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// url : Pooled connection (for app queries via Supavisor session pooler)
+// directUrl : Direct connection (for Prisma migrations - db push, generate, seed, etc)
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ENUMS
@@ -77,30 +80,33 @@ model Department {
 // password ? cz with google no need password
 // for spaces, handle the logic in be; if dpLead == spaceDpLead
 model User {
-  userId        String     @id @default(uuid())
-  userEmail     String     @unique
-  userPassword  String?
-  userName      String
-  userStatus    UserStatus @default(offline)
-  roleId        String
-  workspaceId   String?
-  dpId          String?
-  avatarUrl     String?
-  authProvider  String?    @default("email")
-  googleId      String?    @unique
-  emailVerified Boolean?   @default(false)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  userId                String     @id @default(uuid())
+  userEmail             String     @unique
+  userPassword          String?
+  userName              String
+  userStatus            UserStatus @default(offline)
+  roleId                String
+  workspaceId           String?
+  dpId                  String?
+  avatarUrl             String?
+  city                  String?
+  country               String?
+  timezone              String?
+  authProvider          String?    @default("email")
+  googleId              String?    @unique
+  emailVerified         Boolean?   @default(false)
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
 
-  role            Role         @relation(fields: [roleId], references: [roleId])
-  workspace       Workspace?   @relation(fields: [workspaceId], references: [workspaceId])
-  department      Department?  @relation("UserDepartment", fields: [dpId], references: [dpId])
-  leadDepartment  Department?  @relation("DepartmentLead")
-  spacesKeyPerson Space?       @relation("SpaceKeyPerson")
-  createdMeetings Meeting[]    @relation("MeetingCreatedBy")
+  role                  Role         @relation(fields: [roleId], references: [roleId])
+  workspace             Workspace?   @relation(fields: [workspaceId], references: [workspaceId])
+  department            Department?  @relation("UserDepartment", fields: [dpId], references: [dpId])
+  leadDepartment        Department?  @relation("DepartmentLead")
+  spacesKeyPerson       Space?       @relation("SpaceKeyPerson")
+  createdMeetings       Meeting[]    @relation("MeetingCreatedBy")
 
-  tasks           Task[]
-  assignedTasks   TaskAssignment[]
+  tasks                 Task[]
+  assignedTasks         TaskAssignment[]
 
   meetingParticipations MeetingParticipant[]
 }
@@ -108,40 +114,40 @@ model User {
 // WORKSPACES
 // tied to everything as a boundary (in case to scale to multi-tenant)
 model Workspace {
-  workspaceId String   @id @default(uuid())
-  name        String
-  logoUrl     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  workspaceId   String   @id @default(uuid())
+  workspaceName String
+  logoUrl       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  users       User[]
-  departments Department[]
-  spaces      Space[]
-  tasks       Task[]
-  meetings    Meeting[]
-  documents   Document[]
+  users         User[]
+  departments   Department[]
+  spaces        Space[]
+  tasks         Task[]
+  meetings      Meeting[]
+  documents     Document[]
 }
 
 // SPACES
 // for permission; add in be (canUserAccessSpace(user, space))
 model Space {
-  spaceId      String       @id @default(uuid())
-  spaceName    String
-  workspaceId  String
-  accessLevel  AccessLevel  @default(shared)
-  departmentId String?
-  keyPersonId  String?      @unique
-  isPublicBook Boolean?     @default(true)
-  userCapacity Int?         @default(0)
+  spaceId       String       @id @default(uuid())
+  spaceName     String
+  workspaceId   String
+  accessLevel   AccessLevel  @default(shared)
+  departmentId  String?
+  keyPersonId   String?      @unique
+  isPublicBook  Boolean?     @default(true)
+  userCapacity  Int?         @default(0)
   // sortOrder    Int?         @default(0)    // drag / reorder spaces
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  workspace  Workspace   @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
-  department Department? @relation(fields: [departmentId], references: [dpId])
-  keyPerson  User?       @relation("SpaceKeyPerson", fields: [keyPersonId], references: [userId], onDelete: SetNull)
+  workspace     Workspace   @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+  department    Department? @relation(fields: [departmentId], references: [dpId])
+  keyPerson     User?       @relation("SpaceKeyPerson", fields: [keyPersonId], references: [userId], onDelete: SetNull)
 
-  meetings    Meeting[]
+  meetings      Meeting[]
 }
 
 // TASKS
@@ -179,8 +185,8 @@ model TaskAssignment {
   taskPriority    TaskPriority @default(medium)
   assignedDate    DateTime @default(now())
 
-  task      Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
-  user      User @relation(fields: [userId], references: [userId])
+  task            Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  user            User @relation(fields: [userId], references: [userId])
 
   @@unique([taskId, userId])
   @@index([userId])
@@ -201,11 +207,11 @@ model Meeting {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
-  space     Space     @relation(fields: [spaceId], references: [spaceId])
-  createdBy User      @relation("MeetingCreatedBy", fields: [createdByUserId], references: [userId])
+  workspace       Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+  space           Space     @relation(fields: [spaceId], references: [spaceId])
+  createdBy       User      @relation("MeetingCreatedBy", fields: [createdByUserId], references: [userId])
 
-  participants MeetingParticipant[]
+  participants    MeetingParticipant[]
 
   @@index([workspaceId])
   @@index([spaceId])
@@ -213,15 +219,15 @@ model Meeting {
 }
 
 model MeetingParticipant {
-  id           String   @id @default(uuid())
-  meetId       String
-  userId       String
-  role         MeetingRole
-  attendance   AttendanceStatus @default(present)
-  createdAt    DateTime @default(now())
+  id            String   @id @default(uuid())
+  meetId        String
+  userId        String
+  role          MeetingRole
+  attendance    AttendanceStatus @default(present)
+  createdAt     DateTime @default(now())
 
-  meet      Meeting   @relation(fields: [meetId], references: [meetId])
-  user      User      @relation(fields: [userId], references: [userId])
+  meet          Meeting   @relation(fields: [meetId], references: [meetId])
+  user          User      @relation(fields: [userId], references: [userId])
 
   @@unique([meetId, userId])
   @@index([meetId, role])
