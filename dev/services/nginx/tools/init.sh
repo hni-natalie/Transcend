@@ -22,7 +22,7 @@ else
 fi
 
 echo "> Initializing env in nginx.conf ..."
-envsubst '${DOMAIN_NAME} ${FRONTEND_PORT} ${BACKEND_PORT} ${ADMINER_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+envsubst '${DOMAIN_NAME} ${FRONTEND_PORT} ${BACKEND_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 echo "> nginx.conf initialization done!"
 
 echo "> Testing nginx config..."

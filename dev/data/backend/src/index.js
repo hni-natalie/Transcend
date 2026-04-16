@@ -10,11 +10,14 @@ app.use(express.json());
 const authRoutes = require('./routes/auth.routes');
 app.use('/api/auth', authRoutes);
 
+const roleRoutes = require('./routes/role.routes');
+app.use('/api/roles', roleRoutes);
+
 const userRoutes = require('./routes/user.routes');
 app.use('/api/users', userRoutes);
 
-// const departmentRoutes = require('./routes/department.routes');
-// app.use('/api/departments', departmentRoutes);
+const departmentRoutes = require('./routes/department.routes');
+app.use('/api/departments', departmentRoutes);
 
 // const spaceRoutes = require('./routes/space.routes');
 // app.use('/api/spaces', spaceRoutes);
@@ -48,7 +51,7 @@ app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
 
-// Graceful shutdown - close Prisma connection when app stops
+// Graceful shutdown - close prisma connection when app stops
 process.on('beforeExit', async () => {
     await prisma.$disconnect();
 });

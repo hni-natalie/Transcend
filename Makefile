@@ -19,7 +19,7 @@ init:
 	@sh init.sh
 
 help:
-	@echo "$(GREEN)42 Transcendence Commands:$(RST)"
+	@echo "$(GREEN)Commands:$(RST)"
 	@echo "  make up          - Start all services"
 	@echo "  make down        - Stop all services"
 	@echo "  make fe    	  - Rebuild frontend (code)"
@@ -64,7 +64,10 @@ be:
 be-re:
 	@$(COMPOSE) up --build --no-cache backend
 
-db:
-	@$(COMPOSE) up -d database
+vm-start:
+	@colima start --profile transcendence
 
-.PHONY: init help up down stop start restart log ps nginx fe fe-re be be-re db 
+vm-stop:
+	@colima stop --profile transcendence
+
+.PHONY: init help up down stop start restart log ps nginx fe fe-re be be-re vm-start vm-stop

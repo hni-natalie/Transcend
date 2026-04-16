@@ -52,55 +52,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    depends_on:
-      database:
-        condition: service_healthy
     volumes:
       - backend_app:/app:nocopy
     secrets:
-      - db_user
-      - db_root
-      - app_root
-      - app_user
       - jwt_secret
-    networks:
-      - app-network
-
-  database:
-    image: pgvector/pgvector:0.8.0-pg16
-    container_name: t_database
-    expose:
-      - "${DATABASE_PORT}"
-    ports:
-      - "5432:5432"           # uncomment for dev
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD_FILE: /run/secrets/db_root
-    healthcheck:
-      # Without -U, pg_isready uses OS user "root" (no such PostgreSQL role). Values come from project .env at compose parse time.
-      test: ["CMD-SHELL", "pg_isready -U \"${DB_USER}\" -d \"${DB_NAME}\""]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    volumes:
-      - database:/var/lib/postgresql/data
-      - ./services/database/init:/docker-entrypoint-initdb.d
-    secrets:
-      - db_user
-      - db_root
-    networks:
-      - app-network
-
-  adminer:
-    image: adminer:4.8.1
-    container_name: t_adminer
-    expose:
-      - "${ADMINER_PORT}"
-    depends_on:
-      database:
-        condition: service_healthy
+      - app_root
     networks:
       - app-network
 
@@ -119,21 +75,12 @@ volumes:
       device: ${PWD}/dev/data/backend
       o: bind
 
-  database:
-    driver: local
-
 networks:
   app-network:
     driver: bridge
 
 secrets:
-  db_root:
-    file: ./secrets/database_root.txt
-  db_user:
-    file: ./secrets/database_user.txt
   jwt_secret:
     file: ./secrets/jwt_secret.txt
   app_root:
     file: ./secrets/app_admin_password.txt
-  app_user:
-    file: ./secrets/app_user_password.txt
