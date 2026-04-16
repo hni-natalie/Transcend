@@ -54,8 +54,8 @@ module.exports = { authMiddleware, requireRole, requireAdmin, requireManager, re
 // PERMISSION: View spaces (anyone logged in)
 router.get('/spaces', authMiddleware, spaceController.getAllSpaces);
 
-// PERMISSION: Create booking (anyone logged in)
-router.post('/bookings', authMiddleware, bookingController.create);
+// PERMISSION: Create task (anyone logged in)
+router.post('/tasks', authMiddleware, taskController.create);
 
 // PERMISSION: Edit space (requires Manager or Admin)
 router.put('/spaces/:id', authMiddleware, requireRole(['Admin', 'Manager']), spaceController.update);

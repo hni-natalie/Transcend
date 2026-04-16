@@ -1,6 +1,5 @@
-const express = require("express");
+const router = require('express').Router();
 const passport = require("passport");
-const router = express.Router();
 
 // redirect user to google login
 // get user profile and email from google
