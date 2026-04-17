@@ -16,10 +16,10 @@ if [ ! -d "$PWD/dev/data/backend" ]; then
     chmod 755 "$PWD/dev/data/backend"
 fi
 
-if [ ! -d "$PWD/dev/data/database" ]; then
-    mkdir -p "$PWD/dev/data/database"
-    chmod 755 "$PWD/dev/data/database"
-fi
+# if [ ! -d "$PWD/dev/data/database" ]; then
+#     mkdir -p "$PWD/dev/data/database"
+#     chmod 755 "$PWD/dev/data/database"
+# fi
 
 echo "${GREY}Data directories created!${RST}"
 

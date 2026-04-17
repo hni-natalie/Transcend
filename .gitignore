@@ -1,8 +1,12 @@
+.DS_Store
+.vscode
 .env
 dev/secrets
 dev/frontend/tmp_*
 node_modules
 initvm.sh
-.DS_Store
+**/supabase/.temp
+database.types.ts
 structure.txt
-.vscode
+package.json
+package-lock.json
