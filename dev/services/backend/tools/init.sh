@@ -20,11 +20,12 @@ npm install
 echo "Generating Prisma Client..."
 npx prisma generate
 
-# Run migrations (idempotent - safe to run multiple times)
-echo "Running database migrations..."
-npx prisma migrate deploy
+# REMOVED since we're using db push instead
+# # Run migrations (idempotent - safe to run multiple times)
+# echo "Running database migrations..."
+# npx prisma migrate deploy
 
-# Seed database (only runs if database is empty or seed file exists)
+# Seed database (runs if database is empty or seed file exists)
 # if seed file exist, run it to see if there's any update since we use upsert
 if npx prisma db seed --help > /dev/null 2>&1; then
     echo "Seeding database..."

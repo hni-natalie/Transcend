@@ -3,14 +3,6 @@
 	"version": "1.0.0",
 	"description": "",
 	"main": "index.js",
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"prisma:generate": "prisma generate",
-		"prisma:pull": "prisma db pull",
-		"prisma:studio": "prisma studio",
-		"prisma:format": "prisma format",
-		"prisma:seed": "node prisma/seed.js"
-	},
 	"prisma": {
 		"seed": "node prisma/seed.js"
 	},
@@ -18,14 +10,16 @@
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
-		"prisma": "^5.1.1"
+		"prisma": "^6.7.0"
 	},
 	"dependencies": {
-		"@prisma/client": "^5.1.1",
+		"@prisma/client": "^6.7.0",
 		"express": "^5.2.1",
 		"pg": "^8.13.3",
 		"bcrypt": "^6.0.0",
 		"jsonwebtoken": "^9.0.3",
-		"google-auth-library": "^10.6.2"
+		"google-auth-library": "^10.6.2",
+		"multer": "^1.4.5-lts.1",
+		"@supabase/supabase-js": "^2.49.1"
 	}
 }
