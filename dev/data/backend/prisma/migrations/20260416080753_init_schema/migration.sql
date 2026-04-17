@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS vector;
-
 -- CreateEnum
 CREATE TYPE "UserStatus" AS ENUM ('offline', 'online', 'busy', 'in_meeting');
 
