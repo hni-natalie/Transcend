@@ -28,6 +28,9 @@ app.use('/api/departments', departmentRoutes);
 // const meetingRoutes = require('./routes/meeting.routes');
 // app.use('/api/meetings', meetingRoutes);
 
+const uploadRoutes = require('./routes/upload.routes');
+app.use('/api/uploads', uploadRoutes);
+
 app.get('/', (req, res) => {
     res.json({ message: 'Hello from Express + Docker!' });
 });

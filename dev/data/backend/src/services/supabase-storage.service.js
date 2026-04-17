@@ -4,7 +4,7 @@ const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY,  // use SERVICE_ROLE for backend-only uploads
     {
-        auth: { persistSession: false }     // no auth state needed
+        auth: { persistSession: false }     // no auth state needed yet
     }
 )
 
