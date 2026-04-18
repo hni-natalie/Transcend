@@ -1,3 +1,7 @@
+/* 
+ * This file defines the authentication routes for Google OAuth login.
+*/
+
 
 const express = require("express");
 const passport = require("passport");
@@ -14,14 +18,14 @@ router.get("/google",
 router.get("/google/callback",
 	passport.authenticate("google",
 		{
-			failureRedirect:"auth/google/failure",
+			failureRedirect:"/auth/google/failure",
 			session: true,
 		}),
 	async (req, res) => 
 	{
 		const user = req.user;
 		req.session.user = user;
-		if (user.role == "admin")
+		if (user.role === "admin")
 		{
 			return res.redirect('http://localhost:3000/admin'); // to be changed 
 		}
@@ -29,7 +33,13 @@ router.get("/google/callback",
 	}
 );
 
-// check if user is logged in and getting user info
+// auth failed route
+router.get("/google/failure", (req, res) =>
+{
+	res.status(401).json({message: "Google authentication failed"});
+});
+
+// get current user info
 router.get("/me", (req, res) =>
 {
 	if (!req.session.user)
@@ -48,4 +58,6 @@ router.post("/logout", (req, res) =>
 		res.json({message: "Logged out"});
 	});
 });
+
+module.exports = router;
 
