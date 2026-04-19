@@ -83,7 +83,7 @@ const setupPlayerSocket = (io) => {
       console.log('Room Full: current users: ', roomData.users)
       return;
     }
-    
+
     // check if player exists
     // const playerExists = roomData.users.some(u => u.id === socket.id);
     // if (playerExists) {

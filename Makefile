@@ -36,12 +36,6 @@ restart:
 nginx:
 	@docker compose -f $(COMPOSE_FILE) up --build nginx
 
-redis:
-	@docker compose -f $(COMPOSE_FILE) up --build redis
-
-livekit:
-	@docker compose -f $(COMPOSE_FILE) up --build livekit
-
 fe:
 	@docker compose -f $(COMPOSE_FILE) up --build frontend
 

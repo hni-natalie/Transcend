@@ -51,7 +51,6 @@ export default function ButtonVoiceRoom( { roomName='myroom', allowLeave=true } 
     <nav className="flex justify-center">
       {!isConnectedRoom ? (
         <div>
-          {/* <button onClick={handleJoin} className="bg-teal-600 cursor-pointer rounded-xl p-4"> */}
           <button onClick={handleJoin} className="btn-lime-outline">
             {isLoading 
             ? <Loading isLoading={isLoading}/>
