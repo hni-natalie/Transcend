@@ -5,3 +5,5 @@ initvm.sh
 .DS_Store
 ref.*
 dev/secrets
+
+_bin

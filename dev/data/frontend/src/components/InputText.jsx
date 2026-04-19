@@ -37,7 +37,7 @@ export default function InputText({
       <input
         type={type}
         name={name}
-        className={`input-field border border-brand-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-lime text-sm bg-brand-gray-800 p-1 px-2 rounded-lg ${inputStyle} ${error ? 'input-error' : ''}`}
+        className={`input-field border border-brand-gray-500 bg-brand-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-lime text-sm p-1 px-2 rounded-lg ${inputStyle} ${error ? 'input-error' : ''}`}
         placeholder={placeholder}
         value={value}
         onChange={onChange}

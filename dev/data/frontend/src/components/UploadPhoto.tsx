@@ -9,7 +9,7 @@ interface UploadPhotoProps {
 
 export default function UploadPhoto ({
 	onChange,
-	value ='',
+	value = '',
 	name = 'photo'
 } : UploadPhotoProps ) {
 

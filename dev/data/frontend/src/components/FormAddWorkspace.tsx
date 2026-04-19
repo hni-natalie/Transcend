@@ -1,5 +1,5 @@
 // adds new user
-import { InputText, InputDropdown, UploadPhoto } from './index'
+import { InputText, InputDropdown, UploadPhoto, UploadFile } from './index'
 import { countryOptions } from '../list/country.list'
 import { useState, ChangeEvent } from 'react';
 
@@ -8,13 +8,14 @@ const permissionOptions = [
 ];
 
 
-export default function FormAddUser() {
+export default function FormAddWorkspace() {
 
 	const [formData, setFormData] = useState({
 		spaceName: '',
 		url: '',
 		permissions: '',
-		photo: ''
+		photo: '',
+		file: ''
 	});
 
 	// Single handler for all inputs
@@ -29,7 +30,7 @@ export default function FormAddUser() {
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		console.log('Form submitted with data:', formData);
-		// Send to API, validate, etc.
+		// Send to backend API, validate, etc.
 		alert(`Submitted: ${JSON.stringify(formData, null, 2)}`);
 	};
 
@@ -45,6 +46,7 @@ export default function FormAddUser() {
 					<InputText title='Name' placeholder='Enter Workspace Name' name='spaceName' value={formData.spaceName} onChange={handleChange} required={true} />
 					<InputText title='URL' placeholder='Enter Workspace URL' name='url' value={formData.url} onChange={handleChange} required={true} />
 					<InputDropdown title='Permissions' name='permissions' choices={permissionOptions} value={formData.permissions} onChange={handleChange} />
+					<UploadFile onChange={handleChange}/>
 				</div>
 
 				<div className='flex justify-center'>
