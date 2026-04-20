@@ -56,13 +56,13 @@ fe:
 	@$(COMPOSE) up --build frontend
 
 fe-re:
-	@$(COMPOSE) up --build --no-cache frontend
+	@$(COMPOSE) build --no-cache frontend && $(COMPOSE) up frontend
 
 be:
 	@$(COMPOSE) up --build backend
 
 be-re:
-	@$(COMPOSE) up --build --no-cache backend
+	@$(COMPOSE) build --no-cache backend && $(COMPOSE) up backend
 
 vm-start:
 	@colima start --profile transcendence

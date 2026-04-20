@@ -38,6 +38,13 @@ run_test() {
 		curl -k "https://$DOMAIN_NAME:$PORT/api/lk/token?roomName=myroom&participantName=John"
 		;;
 	# -------------------------------------------------------------------
+	# test db ...
+	# -------------------------------------------------------------------
+	21)
+		echo -e "Test database connection\n$BORDER"
+		curl -k "https://$DOMAIN_NAME:$PORT/api/roles"
+		;;
+	# -------------------------------------------------------------------
 	# test certificates ...
 	# -------------------------------------------------------------------
 	51)

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Colors
 GREY='\033[90m'
@@ -16,25 +16,24 @@ if [ ! -d "$PWD/dev/data/backend" ]; then
     chmod 755 "$PWD/dev/data/backend"
 fi
 
-# if [ ! -d "$PWD/dev/data/database" ]; then
-#     mkdir -p "$PWD/dev/data/database"
-#     chmod 755 "$PWD/dev/data/database"
-# fi
-
-if [ ! -d "$PWD/dev/data/redis" ]; then
-    mkdir -p "$PWD/dev/data/redis"
-    chmod 755 "$PWD/dev/data/redis"
-fi
-
 echo "${GREY}Data directories created!${RST}"
 
 echo "${GREY}Copying .env.example ...${RST}"
-read -p "This will copy .env.example to .env Continue? (y/n): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+printf "This will copy .env.example to .env. Continue? (y/n): "
+read -r REPLY
+if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
     cp ./dev/.env.example ./dev/.env
 else
     echo "${GREY}.env not copied.${RST}"
+fi
+
+echo "${GREY}Copying secrets.example ...${RST}"
+printf "This will copy secrets.example to secrets, Continue? (y/n): "
+read -r REPLY
+if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
+    cp -r ./dev/secrets.example ./dev/secrets
+else
+    echo "${GREY}secrets not copied.${RST}"
 fi
 
 echo "${GREY}Initialization completed!${RST}"
