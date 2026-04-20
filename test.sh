@@ -35,7 +35,7 @@ run_test() {
 		;;
 	6)
 		echo -e "Test GET livekit token from Backend Express\n$BORDER"
-		curl -kI "https://$DOMAIN_NAME:$PORT/api/lk/token?roomName=myroom&participantName=John"
+		curl -k "https://$DOMAIN_NAME:$PORT/api/lk/token?roomName=myroom&participantName=John"
 		;;
 	# -------------------------------------------------------------------
 	# test certificates ...
