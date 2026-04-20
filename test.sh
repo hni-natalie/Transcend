@@ -34,16 +34,8 @@ run_test() {
 		curl -k "https://$DOMAIN_NAME:$PORT/api/socket.io/?EIO=4&transport=polling"
 		;;
 	6)
-		echo -e "Test HTTPS livekit connection from Livekit\n$BORDER"
-		curl -kI "https://$DOMAIN_NAME:$PORT/api/livekit/"
-		;;
-	7)
 		echo -e "Test GET livekit token from Backend Express\n$BORDER"
-		curl -k "https://$DOMAIN_NAME:$PORT/api/lk/token?roomName=myroom&participantName=John"
-		;;
-	8)
-		echo -e "Test GET livekit rtc from Livekit\n$BORDER"
-		curl -k "https://$DOMAIN_NAME:$PORT/api/livekit/rtc/validate"
+		curl -kI "https://$DOMAIN_NAME:$PORT/api/lk/token?roomName=myroom&participantName=John"
 		;;
 	# -------------------------------------------------------------------
 	# test certificates ...
@@ -74,7 +66,7 @@ run_test() {
 		;;
 	*)
 		echo "Running all tests ..."
-		for i in {1..6}; do
+		for i in {1..7}; do
 			run_test $i
 		done
 		;;

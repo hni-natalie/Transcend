@@ -1,3 +1,4 @@
+import React from 'react';
 import { ReactElement, useState } from 'react'
 import { UserChipItem } from "../types/user.types"
 import { MenuItem, MenuConfig } from "../types/menu.types"

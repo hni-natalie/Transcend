@@ -19,7 +19,7 @@ const rooms       = new Map();      // Map<roomName, roomPlayers>
 
 
 // socket io setup
-const setupPlayerSocket = (io) => {
+const socketService = (io) => {
 	io.on('connection', (socket) => {
   console.log(`Player connected lobby: ${socket.id}`);
   
@@ -46,7 +46,6 @@ const setupPlayerSocket = (io) => {
   
   // Handle position updates
   socket.on('player-move', (data) => {
-    // if (player) {
     if (player && player.roomName) {
       player.position = data.position;
       player.rotation = data.rotation;
@@ -85,13 +84,6 @@ const setupPlayerSocket = (io) => {
       return;
     }
 
-    // check if player exists
-    // const playerExists = roomData.users.some(u => u.id === socket.id);
-    // if (playerExists) {
-    //   console.log('player is in ', roomData.name, 'exiting ...' );
-    //   return ;
-    // }
-
     player.roomName = roomName;
     roomData.users.push(player); // append entire player obj
     socket.join(roomName);
@@ -100,7 +92,7 @@ const setupPlayerSocket = (io) => {
     const token = await generateRoomToken(roomName, player.name);
     // Send room-joined event with room context
     socket.emit('room-joined', {
-      roomName,        // Important: identifies WHICH room
+      roomName,
       token,
       player,
       participants: roomData.users, // all participants
@@ -125,7 +117,6 @@ const setupPlayerSocket = (io) => {
 
   // Handle leaving specific room
   socket.on('leave-room', ({ roomName }) => {
-    // const player = players.get(socket.id);
     if (!player) { console.log('player not found'); return; }
     handleLeaveRoom(socket, player, roomName);
   });
@@ -193,6 +184,6 @@ router.get('/', (req, res) => {
 
 module.exports = {
 	players,
-	setupPlayerSocket,
+	socketService,
 	router
 };

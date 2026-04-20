@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useRef, ChangeEvent } from 'react'
 
 interface UploadPhotoProps {
@@ -13,56 +14,56 @@ export default function UploadPhoto ({
 	name = 'photo'
 } : UploadPhotoProps ) {
 
-  const [preview, setPreview] = useState<string>(value);
-  const [hasPhoto, setHasPhoto] = useState<boolean>(!!value);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+	const [preview, setPreview] = useState<string>(value);
+	const [hasPhoto, setHasPhoto] = useState<boolean>(!!value);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    
-    if (file && file.type.startsWith('image/')) {
-      // Check file size (optional - limit to 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size should be less than 5MB');
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        return;
-      }
+	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		
+		if (file && file.type.startsWith('image/')) {
+		// Check file size (optional - limit to 5MB)
+		if (file.size > 5 * 1024 * 1024) {
+			alert('File size should be less than 5MB');
+			if (fileInputRef.current) {
+			fileInputRef.current.value = '';
+			}
+			return;
+		}
 
-      const reader = new FileReader();
-      
-      reader.onload = (event: ProgressEvent<FileReader>) => {
-        const photoDataUrl = event.target?.result as string;
-        setPreview(photoDataUrl);
-        setHasPhoto(true);
-        
-        // Pass the data URL to the form
-        if (onChange) {
-          // Create a synthetic event object that matches your handleChange expectations
-          const syntheticEvent = {
-            target: {
-              name: name,
-              value: photoDataUrl
-            }
-          };
-          onChange(syntheticEvent as any);
-        }
-      };
-      
-      reader.readAsDataURL(file);
-    } else if (file) {
-      alert('Please select a valid image file (JPEG, PNG, etc.)');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
+		const reader = new FileReader();
+		
+		reader.onload = (event: ProgressEvent<FileReader>) => {
+			const photoDataUrl = event.target?.result as string;
+			setPreview(photoDataUrl);
+			setHasPhoto(true);
+			
+			// Pass the data URL to the form
+			if (onChange) {
+			// Create a synthetic event object that matches your handleChange expectations
+			const syntheticEvent = {
+				target: {
+				name: name,
+				value: photoDataUrl
+				}
+			};
+			onChange(syntheticEvent as any);
+			}
+		};
+		
+		reader.readAsDataURL(file);
+		} else if (file) {
+		alert('Please select a valid image file (JPEG, PNG, etc.)');
+		if (fileInputRef.current) {
+			fileInputRef.current.value = '';
+		}
+		}
+	};
 
-  const handleClick = () => {
-    fileInputRef.current?.click();
-		console.log('cliekd')
-  };
+	const handleClick = () => {
+		fileInputRef.current?.click();
+			console.log('cliekd')
+	};
 
 
 	return (

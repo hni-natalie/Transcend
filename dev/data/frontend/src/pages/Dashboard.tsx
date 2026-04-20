@@ -1,3 +1,4 @@
+import React from 'react';
 import { MenuSide, FormAddUser, FormAddWorkspace } from '../components';
 import { menuConfig } from '../config/menu.conf';
 
@@ -15,11 +16,8 @@ export default function PageDashboard () {
 					{/* <div className='p-8 bg-gray-800 w-full'>
 						<h1>example container</h1>
 					</div> */}
-
 				</div>
-
 			</div>
-
 		</div>
 	)
 }

@@ -1,54 +1,97 @@
+import React from 'react';
 import { Landing, Login, Dashboard, Spaces, SpacesMulti, RoomPage } from '../pages';
+import Users from '../pages/admin/Users';
 import { ROUTE_PATH as R } from './routes.manifest';
 
 export const routes = [
-{
-	// testing
-	path: '/office',
-	element: <SpacesMulti roomName="Office" />,
-	title: 'Office'
-},
-{
-	// testing
-	path: '/room',
-	element: <RoomPage />,
-	title: 'Spaces'
-},
-{
-	path: "/",
-	element: <Landing />,
-	title: 'WorkFrom,'
-},
-{
-	path: R.HOME,
-	element: <Landing />,
-	title: 'WorkFrom,'
-},
-{
-	path: R.LOGIN,
-	element: <Login />,
-	title: 'Login'
-},
-{
-	path: R.DASHBOARD,
-	element: <Dashboard />,
-	title: 'Dashboard'
-},
-{
-	path: R.USERS,
-	title: 'Users'
-},
-{
-	path: R.SPACES,
-	element: <Spaces />,
-	title: 'Spaces'
-},
-{
-	path: R.ACTIVITY,
-	title: 'Activity'
-},
-{
-	path: R.SETTING,
-	title: 'Settings'
-},
+	{
+		// testing
+		path: '/office',
+		element: <SpacesMulti roomName="Office" />,
+		title: 'Office'
+	},
+	{
+		// testing
+		path: '/room',
+		element: <RoomPage />,
+		title: 'Spaces'
+	},
+	{
+		// testing
+		path: '/office',
+		element: <SpacesMulti roomName="Office" />,
+		title: 'Office'
+	},
+	{
+		// testing
+		path: '/room',
+		element: <RoomPage />,
+		title: 'Spaces'
+	},
+  	// Main
+	{
+		path: R.HOME,
+		element: <Landing />,
+		title: 'WorkFrom,'
+	},
+	{
+		path: R.LOGIN,
+		element: <Login />,
+		title: 'Login'
+	},
+
+	// Admin
+	{
+		path: R.ADMIN_DASHBOARD,
+		element: <Dashboard />,
+		title: 'Dashboard'
+	},
+	{
+		path: R.ADMIN_USERS,
+		element: <Users />,
+		title: 'Users'
+	},
+	{
+		path: R.ADMIN_SPACES,
+		element: <Spaces />,
+		title: 'Spaces'
+	},
+	{
+		path: R.ADMIN_ACTIVITY,
+		element: <div />,
+		title: 'Activity'
+	},
+	{
+		path: R.ADMIN_SETTINGS,
+		element: <div />,
+		title: 'Settings'
+	},
+
+
+	// User 
+	// {
+	// 	path: R.USER_DASHBOARD,
+	// 	element: <div>User Dashboard</div>,
+	// 	title: 'Dashboard'
+	// },
+	// {
+	// 	path: R.USER_OFFICE,
+	// 	element: <div>Virtual Office</div>,
+	// 	title: 'Virtual Office'
+	// },
+	// {
+	// 	path: R.USER_CHATS,
+	// 	element: <div>Chats</div>,
+	// 	title: 'Chats'
+	// },
+	// {
+	// 	path: R.USER_TASKS,
+	// 	element: <div>Tasks</div>,
+	// 	title: 'Tasks'
+	// },
+	// {
+	// 	path: R.USER_SETTINGS,
+	// 	element: <div>Settings</div>,
+	// 	title: 'Settings'
+	// },
 ]

@@ -18,7 +18,6 @@ RUN /build.sh
 FROM node:20-alpine
 
 WORKDIR /app_build
-# WORKDIR /app
 
 RUN addgroup -g 501 -S frontend && \
     adduser -S frontend -u 501 -G frontend -s /bin/sh

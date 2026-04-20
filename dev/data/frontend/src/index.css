@@ -26,10 +26,13 @@
 :root {
   /* brand colors */
   --brand-lime: #D0F05C;
+  --brand-lime-bg: #333628;
   --brand-black: #0d0d0d;
   --brand-black-sub: #1A1A1A;
+  --brand-black-2: #2E2E2E;
   --brand-white: #ffffff;
   --brand-gray: #86868b;
+  --border-gray: #2C2C2B;
 
   /* font variables */
   --font-main: 'Plus Jakarta Sans', sans-serif;
