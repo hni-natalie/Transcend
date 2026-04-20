@@ -20,7 +20,7 @@ export default function SocketProvider ({ children }) {
   const [messages, setMessages] = useState([]);
   
   const [currentRoom, setCurrentRoom] = useState<String>(null);
-  const [roomParticipants, setRoomParticipants] = useState([]);
+  const [roomPlayers, setRoomPlayers] = useState< Player[] >([]);
 
   useEffect(() => {
     if (shouldConnect && !socket) {
@@ -43,6 +43,7 @@ export default function SocketProvider ({ children }) {
     /* Events: Player */
     socket.on('existing-players', (players) => {
       setPlayers(players);
+      console.log('[existing-players] currently online: ', players);
     });
     socket.on('player-joined', (data) => {
       setPlayers(prev => [...prev, data]);
@@ -52,8 +53,10 @@ export default function SocketProvider ({ children }) {
       setPlayers(prev => prev.filter(p => p.id !== data.id));
       console.log(`Player ${data.id || data.name} left`);
     });
+
     socket.on('player-moved', (data) => {
-      setPlayers(prev => prev.map(p => 
+      // setPlayers(prev => prev.map(p => 
+      setRoomPlayers(prev => prev.map(p => 
         p.id === data.id 
           ? {...p, position: data.position}
           : p
@@ -62,14 +65,19 @@ export default function SocketProvider ({ children }) {
     });
 
     /* Events: Room */
-    /*
-     handles data after backend successfully creates room token
-    */
+    // socket.on('existing-room-players', (players) => {
+    //   setRoomPlayers(players);
+    //   console.log('[existing-room]curr room players: ', roomPlayers);
+    // });
+
+    /* handles data after backend successfully creates room token */
     socket.on('room-joined', (data) => {
       console.log('Room joined successfully:', data);
       setCurrentRoom(data.roomName);
-      setRoomParticipants(data.participants || []);
-      
+      // set all room players
+      setRoomPlayers(prev => [...prev, data.player]);
+      console.log('[room-joined]curr room players: ', data.participants);
+
       // Emit event for LiveKit service to connect
       window.dispatchEvent(new CustomEvent('livekit-connect', { 
         detail: data 
@@ -77,18 +85,19 @@ export default function SocketProvider ({ children }) {
     });
   
     socket.on('player-joined-room', (data) => {
-      console.log(`User ${data.playerName}, id:${data.id} joined ${data.roomName}`);
-      setRoomParticipants(prev => {
-        // check if player exist, else append new array
-        if (prev.some(p => p.id === data.id)) return prev;
-        return [...prev, { id: data.id, name: data.playerName }];
-      });
+      setRoomPlayers(prev => [...prev, data.player]);
+      console.log(`User ${data.player.name}, id:${data.player.id} joined ${data.roomName}`);
     });
+
+    socket.once('players-in-room', (data) => {
+      console.log(`Received players:`, data);
+      setRoomPlayers(prev => [...prev, ...data]);
+    })
   
     // User left room
     socket.on('player-left-room', (data) => {
       console.log(`User ${data.playerName} id:${data.id} left ${data.roomName}`);
-      setRoomParticipants(prev => prev.filter(p => p.id !== data.id));
+      setRoomPlayers(prev => prev.filter(p => p.id !== data.id));
     });
   
     // Room full error
@@ -161,12 +170,17 @@ export default function SocketProvider ({ children }) {
   // Function to leave current room
   const leaveRoom = useCallback(( roomName:string ) => {
     if (socket && isConnected && currentRoom) {
-      console.log(`Leaving room: ${currentRoom}`);
+      // console.log(`Leaving room: ${currentRoom}`);
       socket.emit('leave-room', { roomName });
       setCurrentRoom(null);
-      setRoomParticipants([]);
+      setRoomPlayers(prev => prev.filter(p => p.id !== socket.id));
     }
   }, [socket, isConnected, currentRoom]);
+
+  const fetchRoomPlayers = ( roomName:string ) => {
+    socket.emit('existing-room-players', { roomName });
+  }
+
 
   // const sendMessage = (text, senderName) => {
   //   if (socket && text.trim()) {
@@ -199,8 +213,10 @@ export default function SocketProvider ({ children }) {
     
     /* Player methods */
     players,
+    roomPlayers,
     localPlayerId,
     setPlayers,
+    setRoomPlayers,
     getPlayerCount,
     getPlayerById,
     getPlayerPosById,
@@ -210,6 +226,7 @@ export default function SocketProvider ({ children }) {
     /* Room methods */
     joinRoom,
     leaveRoom,
+    fetchRoomPlayers,
 
     /* Chat methods */
     // messages,

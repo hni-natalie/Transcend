@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useLoader } from 'react';
 import * as THREE from 'three';
 import { useSocket } from '../../context/ContextSocket';
 import { Player } from '../../types/user.types';
@@ -101,10 +101,10 @@ export default function Character({ id, position, color="#D0F05C", isLocalPlayer
 	
 	return (
 		// we need rotation as plane default pos = facing z pos
-		// <mesh ref={ref} position={pos} rotation={[-Math.PI / 2, 0, 0]} >
 		<mesh ref={characterRef} position={[position.x, position.y, position.z]} rotation={[-Math.PI / 2, 0, 0]} >
 			<circleGeometry args={[0.8, 24]} />
 			<meshStandardMaterial color={color} side={THREE.DoubleSide} />
+			{/* <meshStandardMaterial map={color} side={THREE.DoubleSide} /> */}
 		</mesh>
 	);
 }

@@ -5,20 +5,23 @@
 
 import { useThree, useFrame } from '@react-three/fiber';
 import { useMemo, useState, useRef, useEffect } from 'react';
+import useLiveKit from '../../utils/useLivekit'
 import * as THREE from 'three';
 
 interface GenerateDeptProps {
 	count?: number;
 	padding?: number;
 	characterPos?: THREE.Vector3;
+  room: string;
 }
 
-export default function GenerateDept({ count=5, padding=3, characterPos } : GenerateDeptProps) {
+export default function GenerateDept({ count=5, padding=3, characterPos, room } : GenerateDeptProps) {
   const { viewport } = useThree();
-  const [activePlane, setActivePlane] = useState(null);
+  // const [activePlane, setActivePlane] = useState(null);
+  const { activePlane, setActivePlane, isConnectedRoom } = useLiveKit(room);
+
   const characterPosRef = useRef(characterPos);
   const planeRefs = useRef(new Map());
-	let currentActivePlane = null;
 
   useEffect(() => {
     characterPosRef.current = characterPos;
@@ -35,7 +38,7 @@ export default function GenerateDept({ count=5, padding=3, characterPos } : Gene
   };
 	// Collision detection
   useFrame(() => {
-    if (!characterPosRef.current) return;
+    if (!characterPosRef.current || !isConnectedRoom) return;
     
     for (const [index, plane] of planeRefs.current.entries()) {
       const halfWidth = plane.geometry.parameters.width / 2;
@@ -51,10 +54,6 @@ export default function GenerateDept({ count=5, padding=3, characterPos } : Gene
         }
         return;
       }
-    }
-    // Update state and trigger callback if changed
-    if (currentActivePlane !== activePlane) {
-      setActivePlane(currentActivePlane);
     }
   });
 

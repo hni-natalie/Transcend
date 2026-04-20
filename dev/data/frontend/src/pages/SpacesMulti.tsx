@@ -73,15 +73,13 @@ interface SpaceProps {
 }
 
 export default function SpaceMultiScene({ roomName } : SpaceProps ) {
-	/* ------------- players  ------------- */
-	const spawnedRef = useRef(new Set()); // Track spawned characters
 	/* ------------- general  ------------- */
 	const count = getDeptCount()
   const [error, setError] = useState<string>('');
 	const listenerRef = useRef<THREE.AudioListener>(new THREE.AudioListener());
 	/* ------------- sockets  ------------- */
-	const { enableSocket, players, localPlayerId, isConnected, localPlayerPos } = useSocket();
-	const { connect, disconnect, isConnectedRoom, isLoading, isMuted, toggleMute } = useLiveKit(roomName);
+	const { enableSocket, players, fetchRoomPlayers, roomPlayers, localPlayerId, isConnected, localPlayerPos } = useSocket();
+	const { connect, disconnect, isConnectedRoom } = useLiveKit(roomName);
 
 	// run once on mount
   useEffect(() => { enableSocket(); }, []);
@@ -92,6 +90,28 @@ export default function SpaceMultiScene({ roomName } : SpaceProps ) {
 			setError('Audio features are not supported in this browser');
 		}
 	}, []);
+
+	// debug
+	// useEffect(() => {
+	// 	console.log('✅ roomPlayers CHANGED:', roomPlayers);
+	// 	roomPlayers.forEach( (player:Player) => {
+	// 		console.log('Player id:', player.id);
+	// 		console.log('Player color:', player.color);
+	// 		console.log('Player position:', player.position);
+	// 	});
+	// 	console.log('localid: ', localPlayerId);
+	// 	console.log('Length:', roomPlayers?.length);
+	// }, [roomPlayers]);  // This runs whenever roomPlayers updates
+
+	useEffect(() => {
+		if (!isConnected) return ;
+		fetchRoomPlayers(roomName);
+	}, [isConnected])
+
+	// useEffect(() => {
+	// 	if (!isConnectedRoom)
+	// 		setActivePlane(null);
+	// }, [isConnectedRoom])
 
 	// auto connect voice
   // useEffect(() => {
@@ -137,29 +157,6 @@ export default function SpaceMultiScene({ roomName } : SpaceProps ) {
 	// 		console.log('Local player: ', localPlayerId, 'pos: ', localPlayerPos);
   // }, [localPlayerPos, isConnected]);
 
-	// initialize setup
-  useEffect(() => {
-    if (!isConnected) { console.log('Room not connected!'); return; }
-		
-    // add new joining players to spawned record
-    players.forEach(( user:Player )  => {
-      if (!spawnedRef.current.has(user.id)) {
-        console.log(`Spawning character for player: ${user.id}`);
-        spawnedRef.current.add(user.id);
-      }
-    });
-  }, [players, isConnected]);
-
-  // Clean up player on disconnect
-  useEffect(() => {
-		if (!isConnected) {
-      // setCharacters([]);
-      spawnedRef.current.clear();
-    }
-		if (!isConnectedRoom)
-			console.log('cleanup player room')
-  }, [isConnected, isConnectedRoom]);
-
 	return (
 	<div className='bg-brand-black-sub h-screen flex gap-0.5'>
 		<MenuSide conf={menuConfig} />
@@ -184,26 +181,25 @@ export default function SpaceMultiScene({ roomName } : SpaceProps ) {
 					<meshStandardMaterial color="#404040" />
 				</mesh> */}
 				{/* <GenerateDept count={count}/> */}
-				<GenerateDept count={count} characterPos={localPlayerPos} />
+				<GenerateDept count={count} characterPos={localPlayerPos} room={roomName} />
 
 				{/* {isConnectedRoom && */}
-				{/* might need roomPlayers.map */}
-				{(players.map(( user:Player ) => (
+				{(roomPlayers.map(( user:Player ) => (
 					<Character
 						key={user.id}
 						id={user.id}
 						color={user.color}
 						position={user.position}
-						// stream={user.stream}
-						// isPlaying={true}
 						isLocalPlayer={user.id === localPlayerId}
 					/>
 				)))}
 				
 				{/* Grid helper for reference */}
-				<gridHelper args={[20, 20]} />
+				{/* <gridHelper args={[20, 20]} /> */}
 			</Canvas>
-			<ButtonVoiceRoom roomName={roomName}/>
+			<div className='flex absolute top-4 left-0 right-4 justify-end' >
+				<ButtonVoiceRoom roomName={roomName} joinText={`Join ${roomName} Room`}/>
+			</div>
 			{error && (<div className='text-danger-base'>{error}</div>)}
 		</div>
 

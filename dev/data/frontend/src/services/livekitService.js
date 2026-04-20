@@ -47,7 +47,7 @@ class LiveKitService {
   // just unpack 'token'
   async connectToRoom({ token }) {
 		// debug
-		console.log('VITE_LIVEKIT_URL: ', import.meta.env.VITE_LIVEKIT_URL)
+		// console.log('VITE_LIVEKIT_URL: ', import.meta.env.VITE_LIVEKIT_URL)
     try {
       // Reuse existing room if possible
       if (this.room && this.room.state === 'connected') {
@@ -63,7 +63,7 @@ class LiveKitService {
           console.log(`Track subscribed from ${remoteParticipants.identity}`);
           
           if (track.kind === Track.Kind.Audio) {
-            console.log(`Check audio participant ${remoteParticipants.identity}`);
+            // console.log(`Check audio participant ${remoteParticipants.identity}`);
             const audioElement = track.attach();
             audioElement.autoplay = true;
             audioElement.volume = 1.0;
@@ -80,7 +80,7 @@ class LiveKitService {
               audioElements.delete(remoteParticipants.identity);
             }
             track.detach(); // Clean up audio elements
-            console.log('cleaning up audio ...')
+            // console.log('cleaning up audio ...')
           }
         });
 

@@ -11,6 +11,7 @@ import { useSocket } from '../context/ContextSocket';
 // export default function useLiveKit( roomName:string , participantName:string ) {
 export default function useLiveKit( roomName:string ) {
   const [isConnectedRoom, setIsConnectedRoom] = useState(false);
+  const [activePlane, setActivePlane] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
   const { enableSocket, joinRoom, leaveRoom } = useSocket();
   useEffect(() => { enableSocket(); }, []);
@@ -25,7 +26,10 @@ export default function useLiveKit( roomName:string ) {
     setIsConnectedRoom(status.isConnected);
     
     const handleConnected = () => setIsConnectedRoom(true);
-    const handleDisconnected = () => setIsConnectedRoom(false);
+    const handleDisconnected = () => {
+      setActivePlane(null);
+      setIsConnectedRoom(false);
+    };
     
     livekitService.on('connected', handleConnected);
     livekitService.on('disconnected', handleDisconnected);
@@ -73,7 +77,7 @@ export default function useLiveKit( roomName:string ) {
     setIsMuted(status)
   }
 
-  return { connect, disconnect, isConnectedRoom, isMuted, toggleMute, isLoading, joinCount };
+  return { connect, disconnect, isConnectedRoom, isMuted, toggleMute, isLoading, joinCount, activePlane, setActivePlane };
 }
 
 /*

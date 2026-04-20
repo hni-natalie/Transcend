@@ -8,22 +8,21 @@ import { IconMute, IconSpeak } from '../config/menu.icons.conf';
 import { useSocket } from '../context/ContextSocket';
 import Loading from "./BtnLoading";
 
-export default function ButtonVoiceRoom( { roomName='myroom', allowLeave=true } ) {
+export default function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room', roomName='myroom', allowLeave=true } ) {
   const { connect, disconnect, isConnectedRoom, isLoading, isMuted, toggleMute, joinCount } = useLiveKit(roomName);
   const { enableSocket, isConnected, localPlayerId, socket } = useSocket();
   useEffect(() => { enableSocket(); }, []);
   
-
-  useEffect(() => {
-    console.log('FE lk Connection status: ', isConnectedRoom);
-  }, [isConnectedRoom]);
+  // debug
+  // useEffect(() => {
+  //   console.log('FE lk Connection status: ', isConnectedRoom);
+  // }, [isConnectedRoom]);
 
   const handleJoin = async () => {
     connect();
   };
 
   const handleLeave = () => {
-    console.log('ppppikaa!')
     disconnect();
   };
 
@@ -48,19 +47,19 @@ export default function ButtonVoiceRoom( { roomName='myroom', allowLeave=true } 
   }, []);
 
   return (
-    <nav className="flex justify-center">
+    <nav className="flex justify-center items-center">
       {!isConnectedRoom ? (
         <div>
           <button onClick={handleJoin} className="btn-lime-outline">
             {isLoading 
             ? <Loading isLoading={isLoading}/>
-            : `Connect ${roomName} Audio `}
+            : joinText}
           </button>
         </div>
       ) : (
-        <div className="flex gap-4 items-center">
-          {allowLeave && (<button onClick={handleLeave} className="btn-lime-outline">Disconnect Audio</button>)}
+        <div className="flex gap-4">
           {/* button with mute/unmute icon */}
+          {allowLeave && (<button onClick={handleLeave} className="btn-lime-outline">{leaveText}</button>)}
           <button onClick={toggleMute} className={`${isMuted ? 'btn-outline' : 'btn-lime-outline'} rounded-full transition-colors duration-500 p-1`}>{ isMuted ? <IconMute className="w-4 h-4 text-brand-gray-500"/> : <IconSpeak className="w-4 h-4"/> }</button>
         </div>
       )}
