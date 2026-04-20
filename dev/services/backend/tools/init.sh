@@ -17,12 +17,8 @@ echo "Installing npm dependencies..."
 npm install
 
 # Generate Prisma Client
-if [ ! -f "node_modules/.prisma/client/index.js" ]; then
-    echo "Generating Prisma Client..."
-    npx prisma generate
-else
-    echo "Prisma client exists! skipping ..."
-fi
+echo "Generating Prisma Client..."
+npx prisma generate
 
 # REMOVED since we're using db push instead
 # # Run migrations (idempotent - safe to run multiple times)
