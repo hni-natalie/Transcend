@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { useRef, useState, useEffect, useLoader } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useSocket } from '../../context/ContextSocket';
 import { Player } from '../../types/user.types';
