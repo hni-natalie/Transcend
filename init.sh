@@ -36,4 +36,13 @@ else
     echo "${GREY}secrets not copied.${RST}"
 fi
 
+echo "${GREY}Copying backend .env.example ...${RST}"
+printf "This will copy .env.example to .env, Continue? (y/n): "
+read -r REPLY
+if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
+    cp ./dev/data/backend/.env.example ./dev/data/backend/.env
+else
+    echo "${GREY}backend env not initialized.${RST}"
+fi
+
 echo "${GREY}Initialization completed!${RST}"

@@ -26,6 +26,7 @@ help:
 	@echo "  make be          - Rebuild backend (code)"
 	@echo "  make fe-re       - Rebuild frontend (dependency)"
 	@echo "  make be-re       - Rebuild backend (dependency)"
+	@echo "  make build-re    - Rebuild all dependencies"
 	@echo "  make logs        - View all logs"
 
 up:
