@@ -16,7 +16,7 @@ const io     = new Server(server, {
   path: process.env.VITE_SOCKET_PATH || "/socket.io",
 });
 console.log('Socket.IO created with path:', io.path());
-const multiplayer = require('./routes/multiplayerSocket')
+const multiplayer = require('./services/socket.service')
 multiplayer.socketService(io)
 
 /* *************************************************
@@ -26,6 +26,7 @@ const routesInit       = require('./routes/init')
 const routesLivekit    = require('./routes/livekit').router
 const authRoutes       = require('./routes/auth.routes');
 const roleRoutes       = require('./routes/role.routes');
+const roomRoutes       = require('./routes/room.routes');
 const userRoutes       = require('./routes/user.routes');
 const departmentRoutes = require('./routes/department.routes');
 const uploadRoutes     = require('./routes/upload.routes');
@@ -39,7 +40,7 @@ const uploadRoutes     = require('./routes/upload.routes');
 app.use(express.json());  // For parsing JSON
 app.use('/api', routesInit)
 app.use('/api/lk', routesLivekit)
-app.use('/api/player', multiplayer.router)
+app.use('/api/player', roomRoutes)
 app.use('/api/auth', authRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/users', userRoutes);

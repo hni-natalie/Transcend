@@ -1,4 +1,4 @@
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useLoader } from '@react-three/fiber';
 import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useSocket } from '../../context/ContextSocket';
@@ -9,18 +9,26 @@ interface CharacterProps extends Player {
 	// listenerRef: React.RefObject< THREE.AudioListener >;
 }
 
+const fetchUserPhoto = async () => {
+	// const response = await fetch('/api/user/photo')
+	// const data = await response.json()
+	// return (data.photoUrl)
+	return ('https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg');
+}
+
 // 2D Circle Character Component + Movement handling
-export default function Character({ id, position, color="#D0F05C", isLocalPlayer } : CharacterProps) {
+export default function Character({ id, position, color="#D0F05C", isLocalPlayer, photo } : CharacterProps) {
 	const listenerRef = useRef<THREE.AudioListener>(new THREE.AudioListener());
 	const characterRef = useRef<THREE.Mesh>(null);
+	const { enableSocket, isConnected, socket, setLocalPlayerPos, localPlayerPos } = useSocket();
+	useEffect(() => { enableSocket(); }, []);
+
 	const [keys, setKeys] = useState({
 		w: false, s: false, a: false, d: false,
 	  ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false
 	});
 	const speed = 5; //movement speed
-	
-	const { enableSocket, socket, setLocalPlayerPos, localPlayerPos } = useSocket();
-	useEffect(() => { enableSocket(); }, []);
+	const texture = (useLoader(THREE.TextureLoader, photo) as THREE.Texture) 
 
   // console.log(`Init: Player ${id} received position prop:`, position);
 
@@ -38,6 +46,14 @@ export default function Character({ id, position, color="#D0F05C", isLocalPlayer
   //     }
   //   };
   // }, [characterRef]);
+	
+	// useEffect(() => {
+	// 	if (!imageUrl) return ;
+	// 	console.log('img url: ', imageUrl);
+	// 	// const texture = (useLoader(THREE.TextureLoader, imageUrl) as THREE.Texture) 
+	// 	texture = (useLoader(THREE.TextureLoader, "https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg") as THREE.Texture) 
+	// 	// setTexture(new_texture);
+	// }, [imageUrl])
 
 	// Handle keyboard input
 	useEffect(() => {
@@ -103,8 +119,11 @@ export default function Character({ id, position, color="#D0F05C", isLocalPlayer
 		// we need rotation as plane default pos = facing z pos
 		<mesh ref={characterRef} position={[position.x, position.y, position.z]} rotation={[-Math.PI / 2, 0, 0]} >
 			<circleGeometry args={[0.8, 24]} />
-			<meshStandardMaterial color={color} side={THREE.DoubleSide} />
-			{/* <meshStandardMaterial map={color} side={THREE.DoubleSide} /> */}
+			{texture ? (
+			<meshStandardMaterial map={texture} color="#FFFFFF" side={THREE.DoubleSide} />
+			) : (
+				<meshStandardMaterial color={color} side={THREE.DoubleSide} /> 
+			)}
 		</mesh>
 	);
 }

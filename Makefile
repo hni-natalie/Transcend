@@ -57,13 +57,13 @@ nginx:
 	@$(COMPOSE) up --build nginx
 
 fe:
-	@$(COMPOSE) up --build frontend
+	@$(COMPOSE) up frontend
 
 fe-re:
 	@$(COMPOSE) build --no-cache frontend && $(COMPOSE) up frontend
 
 be:
-	@$(COMPOSE) up --build backend
+	@$(COMPOSE) up backend
 
 be-re:
 	@$(COMPOSE) build --no-cache backend && $(COMPOSE) up backend

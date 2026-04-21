@@ -65,9 +65,7 @@ function getDeptCount() {
 	return (count);
 }
 
-
 // Main Scene
-
 interface SpaceProps {
   roomName: string;
 }
@@ -108,11 +106,6 @@ export default function SpaceMultiScene({ roomName } : SpaceProps ) {
 		fetchRoomPlayers(roomName);
 	}, [isConnected])
 
-	// useEffect(() => {
-	// 	if (!isConnectedRoom)
-	// 		setActivePlane(null);
-	// }, [isConnectedRoom])
-
 	// auto connect voice
   // useEffect(() => {
 	// 	if (!isConnectedRoom) {
@@ -151,12 +144,6 @@ export default function SpaceMultiScene({ roomName } : SpaceProps ) {
   //   addRemotePlayer();
   // }, []);
 
-	// debug: detect local location
-  // useEffect(() => {
-  //   if (!isConnected) return;
-	// 		console.log('Local player: ', localPlayerId, 'pos: ', localPlayerPos);
-  // }, [localPlayerPos, isConnected]);
-
 	return (
 	<div className='bg-brand-black-sub h-screen flex gap-0.5'>
 		<MenuSide conf={menuConfig} />
@@ -184,12 +171,14 @@ export default function SpaceMultiScene({ roomName } : SpaceProps ) {
 				<GenerateDept count={count} characterPos={localPlayerPos} room={roomName} />
 
 				{/* {isConnectedRoom && */}
+				{/* {(players.map(( user:Player ) => ( */}
 				{(roomPlayers.map(( user:Player ) => (
 					<Character
 						key={user.id}
 						id={user.id}
 						color={user.color}
 						position={user.position}
+						photo={user.photo}
 						isLocalPlayer={user.id === localPlayerId}
 					/>
 				)))}

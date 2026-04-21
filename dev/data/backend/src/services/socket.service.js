@@ -11,27 +11,26 @@
 // }
 /* **************************************************************** */
 
-const { generateRoomToken } = require('./livekit.js')
+const { generateRoomToken } = require('../routes/livekit.js')
 const { randomHslColor }    = require('../utils/color.js');
-const router      = require('express').Router();
 const players     = new Map();
 const rooms       = new Map();      // Map<roomName, roomPlayers>
-
 
 // socket io setup
 const socketService = (io) => {
 	io.on('connection', (socket) => {
   console.log(`Player connected lobby: ${socket.id}`);
   
-  // Initialize player
+  // Initialize player, should this be in db?
   players.set(socket.id, {
     id: socket.id,
     name: socket.id, // 'GetUsersNameAPI'
     roomName: null,
     position: { x:0, y:0, z:0 },
     rotation: { x:-Math.PI/2, y:0, z:0 },
-    color: randomHslColor(), // 'GetUserPhotoAPI'
-    // texture: 'GetUserPhotoAPI'
+    color: randomHslColor(),
+    // photo: 'GetUserPhotoAPI'
+    photo: "https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg",
     audioEnabled: true,
     speaking: false,
   });
@@ -171,19 +170,7 @@ const socketService = (io) => {
 // within io
 }
 
-
-/* *****************************************************************
- * Setup Routes
- * ****************************************************************/
-router.get('/', (req, res) => {
-	res.json({
-		count: players.size,
-		players: Array.from(players.values())
-	});
-});
-
 module.exports = {
 	players,
 	socketService,
-	router
 };

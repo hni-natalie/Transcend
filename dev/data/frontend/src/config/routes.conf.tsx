@@ -16,19 +16,8 @@ export const routes = [
 		element: <RoomPage />,
 		title: 'Spaces'
 	},
-	{
-		// testing
-		path: '/office',
-		element: <SpacesMulti roomName="Office" />,
-		title: 'Office'
-	},
-	{
-		// testing
-		path: '/room',
-		element: <RoomPage />,
-		title: 'Spaces'
-	},
-  	// Main
+
+	// Main
 	{
 		path: R.HOME,
 		element: <Landing />,
@@ -53,7 +42,7 @@ export const routes = [
 	},
 	{
 		path: R.ADMIN_SPACES,
-		element: <Spaces />,
+		element: <SpacesMulti roomName="Admin Office" />,
 		title: 'Spaces'
 	},
 	{

@@ -40,6 +40,7 @@ export type Player = {
   position: Position;
   rotation?: number;
   color: string;
+	photo: string;
   audioEnabled?: boolean;
   speaking?: boolean;
 }
