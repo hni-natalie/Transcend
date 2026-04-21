@@ -16,10 +16,10 @@
 
 @layer components {
   .btn-lime-outline {
-    @apply text-xs font-bold bg-brand-gray-800 text-brand-lime border border-brand-lime p-1 px-8 rounded-lg cursor-pointer;
+    @apply text-xs font-bold bg-brand-gray-800 text-brand-lime border border-brand-lime p-1 px-8 rounded-lg cursor-pointer focus:outline-none;
   }
   .btn-outline {
-    @apply text-xs font-bold bg-brand-gray-800 border border-brand-gray-500 p-1 px-8 rounded-lg cursor-pointer;
+    @apply text-xs font-bold bg-brand-gray-800 border border-brand-gray-500 p-1 px-8 rounded-lg cursor-pointer focus:outline-none;
   }
 }
 

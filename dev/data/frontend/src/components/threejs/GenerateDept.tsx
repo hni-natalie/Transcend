@@ -54,6 +54,8 @@ export default function GenerateDept({ count=5, padding=3, characterPos, room } 
         }
         return;
       }
+      else if (!isWithinBounds && activePlane === index)
+        setActivePlane(null);
     }
   });
 

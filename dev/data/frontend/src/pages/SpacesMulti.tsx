@@ -1,5 +1,5 @@
 import { MenuSide, ButtonVoiceRoom } from '../components';
-import { GenerateDept, Character, CharacterVoice } from '../components/threejs';
+import { GenerateDept, Character } from '../components/threejs';
 import { menuConfig } from '../config/menu.conf';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef, useState, useEffect } from 'react';
