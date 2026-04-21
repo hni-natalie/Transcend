@@ -1,6 +1,6 @@
 export { default as Landing } from './landing/Landing.jsx'
 export { default as Login } from './login/Login.jsx'
 export { default as Dashboard } from './Dashboard.tsx'
-export { default as Spaces } from './Spaces.tsx'
+// export { default as Spaces } from './Spaces.tsx'
 export { default as SpacesMulti } from './SpacesMulti.tsx'
 export { default as RoomPage } from './RoomPage'

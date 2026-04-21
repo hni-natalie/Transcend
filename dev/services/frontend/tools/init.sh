@@ -7,7 +7,7 @@ set -e
 if [ ! -f "package.json" ]; then
     echo "> Initializing App project from build ..."
     cp -r /app_build/* /app/
-    echo "> File copied successfully!"
+    echo "> Files copied successfully!"
 fi
 
 # Install dependencies if node_modules missing or incomplete.
