@@ -91,20 +91,27 @@ const userService = {
     },
     
     async updateUserByAdmin(userId, updateData) {
-        const { name, email, roleId, dpId, status } = updateData;
+        const { name, email, roleId, dpId, status, userPassword } = updateData;
         
         const user = await prisma.user.findUnique({ where: { userId } });
         if (!user) throw new Error('User not found');
+
+        const data = {
+            userName: name,
+            userEmail: email,
+            roleId,
+            dpId,
+            userStatus: status
+        };
+
+        if (userPassword) {
+            data.userPassword = await bcrypt.hash(userPassword, 10);
+            data.emailVerified = true;
+        }
         
         return await prisma.user.update({
             where: { userId },
-            data: {
-                userName: name,
-                userEmail: email,
-                roleId,
-                dpId,
-                userStatus: status
-            },
+            data,
             select: {
                 userId: true,
                 userEmail: true,
