@@ -1,12 +1,12 @@
-const spaceService = require('../services/space.service');
+const taskService = require('../services/task.service');
 
 const taskController = {
 
 	async getAllTasks(req, res) {
 		try {
 			const { userId } = req.user;
-			const tasks = await spaceService.getAllTasks({ userId });
-			res.json(tasks);
+			const tasks = await taskService.getAllTasks({ userId });
+			return res.json(tasks);
 		} catch (error) {
 			console.error('Error fetching tasks:', error);
 			res.status(500).json({ error: 'Failed to fetch tasks' });
@@ -15,7 +15,7 @@ const taskController = {
 
 	async getTaskById(req, res) {
 		try {
-			const id = req.params.id || req.user?.userId;
+			const { id } = req.params;
 			if (!id) {
 				return res.status(400).json({error: "Task ID required"});
 			}
@@ -33,7 +33,7 @@ const taskController = {
 
 	async createTask(req, res) {
 		try {
-			const { taskTitle, taskPriority, workSpaceId } = req.body;
+			const { taskTitle, taskPriority, workSpaceId, taskDesc } = req.body;
 			
 			if (!taskTitle || !taskPriority || !workSpaceId) {
 				return res.status(400).json({ error: 'taskTitle, taskPriority, and workSpaceId are required' });
@@ -43,6 +43,7 @@ const taskController = {
 				taskTitle,
 				taskPriority,
 				workSpaceId,
+				taskDesc,
 				userId: req.user.userId
 			});
 			return res.status(201).json(newTask);
@@ -55,10 +56,10 @@ const taskController = {
 	
 	async updateTask(req, res) {
 		try {
-			const { taskId } = req.params;
+			const { id } = req.params;
 			const userId = req.user.userId;
 
-			const updatedTask = await taskService.updateTask(taskId, userId, req.body);
+			const updatedTask = await taskService.updateTask(id, userId, req.body);
 
 			return res.json(updatedTask);
 
@@ -74,10 +75,10 @@ const taskController = {
 
 	async deleteTask(req, res) {
 		try {
-			const { taskId } = req.params;
+			const { id } = req.params;
 			const userId = req.user.userId;
 			
-			await taskService.deleteTask(taskId, userId);
+			await taskService.deleteTask(id, userId);
 			return res.json({ message: 'Task deleted successfully' });
 		} catch (error) {
 			if (error.message === 'Task not found') {

@@ -5,57 +5,72 @@ const taskService = {
 	async getAllTasks(filters = {}) {
 		const { userId } = filters;
 
-		const where = {};
-		if (userId) where.userId = userId;
+		// list tasks where  task is created by user or assigned to user
+		const where = userId ? {
+			OR: [
+				{ createdByUserId: userId },
+				{ assignedTo: { some: { userId: userId } } }
+			]
+		} : {};
 
 		return await prisma.task.findMany({
 			where,
 			select:{
 				taskId: true,
 				taskTitle: true,
-				taskDescription: true,
+				taskDesc: true,
 				taskStatus: true,
-				taskPriority: true,
 				createdAt: true,
 				updatedAt: true,
+				assignedTo: {
+					select: {
+						taskPriority: true
+					}
+				}
 			},
 
 			orderBy: [
-				{ createdAt: 'desc' },
-				{ taskPriority: 'asc' }
+				{ createdAt: 'desc' }
 			]
 		});
 	},
 
 	async getTaskById(taskId) {
-		const task = await prisma.task.findUnique({
-			where: { taskId },
+		return await prisma.task.findUnique({
+			where: { taskId: taskId },
 			select: {
 				taskId: true,
 				taskTitle: true,
-				taskDescription: true,
+				taskDesc: true,
 				taskStatus: true,
-				taskPriority: true,
 				createdAt: true,
-				updatedAt: true,
+				assignedTo: {
+					select: { taskPriority: true }
+				}
 			}
-		})
+		});
 	},
 
 	async createTask(taskData) {
-		const { taskTitle, taskPriority, workSpaceId, userId } = taskData;
+		const { taskTitle, taskPriority, workSpaceId, userId, taskDesc } = taskData;
 
 		return await prisma.task.create({
 			data: {
 				taskTitle,
-				taskStatus : "not started",
-				workSpaceId,
-				createbyUserId: userId,
+				taskDesc,
+				taskStatus: "not_started", 
+				workspace: {
+					connect: { workspaceId: workSpaceId }
+				},
+				createdBy: {
+					connect: { userId: userId }
+				},
 
+				// 4. Create the Junction table record
 				assignedTo: {
 					create: {
-						userId,
-						taskPriority
+						userId: userId,
+						taskPriority: taskPriority // Ensure this matches your Enum (e.g., "low", "medium", "high")
 					}
 				}
 			}
@@ -73,7 +88,7 @@ const taskService = {
 			where: { taskId },
 			data: {
 				taskTitle,
-				taskDescription: taskDesc,
+				taskDesc: taskDesc,
 				taskStatus,
 				dueDate,
 			}
@@ -100,3 +115,4 @@ const taskService = {
 	}
 }
 
+module.exports = taskService;

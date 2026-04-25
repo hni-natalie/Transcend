@@ -136,6 +136,8 @@ const userController = {
         } catch (error) {
             if (error.message === 'User not found') {
                 res.status(404).json({ error: error.message });
+            } else if (error.message.includes('password')) {
+                res.status(400).json({ error: error.message });
             } else {
                 res.status(500).json({ error: error.message });
             }
