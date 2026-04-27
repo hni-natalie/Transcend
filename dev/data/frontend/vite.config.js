@@ -13,6 +13,16 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
     ],
-    envDir: envDir
+    envDir: envDir,
+    resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@features': path.resolve(__dirname, './src/features'),
+      '@shared': path.resolve(__dirname, './src/shared'),
+      '@pages': path.resolve(__dirname, './src/pages'),
+      '@config': path.resolve(__dirname, './src/config'),
+      '@context': path.resolve(__dirname, './src/context'),
+    },
+  },
   }
 })
