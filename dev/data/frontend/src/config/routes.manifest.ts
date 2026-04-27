@@ -12,12 +12,12 @@ export const ROUTE_PATH = {
 	ADMIN_SETTINGS: '/admin/settings',
 
 	// User routes
-	// USER_DASHBOARD: '/user/dashboard',
-	// USER_OFFICE: '/user/office',
-	// USER_CHATS: '/user/chats',
-	// USER_TASKS: '/user/tasks',
-	// USER_CALENDAR: '/user/calendar',
-	// USER_SETTINGS: '/user/settings',
+	USER_DASHBOARD: '/user/dashboard',
+	USER_OFFICE: '/user/office',
+	USER_TASKS: '/user/tasks',
+	USER_MEETINGS: '/user/meetings',
+	USER_MESSAGES: '/user/messages',
+	USER_SETTINGS: '/user/settings',
 	} as const;
 
 export type RoutePath = typeof ROUTE_PATH[keyof typeof ROUTE_PATH];
