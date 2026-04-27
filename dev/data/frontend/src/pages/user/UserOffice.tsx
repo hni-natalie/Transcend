@@ -1,15 +1,12 @@
-import { MenuSide, ButtonVoiceRoom } from '../components';
-import { GenerateDept, Character } from '../components/threejs';
-import { menuConfig } from '../config/menu.conf';
-import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef, useState, useEffect } from 'react';
-import { PerspectiveCamera, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { Player } from '../types/user.types';
-import { useSocket } from '../context/ContextSocket';
-import { isAudioSupported } from '../utils/useAudio';
-import useLiveKit from '../utils/useLivekit'
-
+import { Canvas, useFrame } from '@react-three/fiber';
+import { PerspectiveCamera, OrbitControls } from '@react-three/drei';
+import { menuConfig } from '@/config/menu.config';
+import { useSocket } from '@context/ContextSocket';
+import { MenuSide, Player } from '@shared';;
+import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
+import { GenerateDept, Character } from '@features/office';
 
 // Sound component with depth-based volume
 // function SoundSource({ position, url, isPlaying = true }) {
@@ -70,7 +67,7 @@ interface SpaceProps {
   roomName: string;
 }
 
-export default function SpaceMultiScene({ roomName } : SpaceProps ) {
+export function Office({ roomName } : SpaceProps ) {
 	/* ------------- general  ------------- */
 	const count = getDeptCount()
   const [error, setError] = useState<string>('');

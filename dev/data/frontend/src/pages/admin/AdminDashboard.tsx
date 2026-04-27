@@ -1,8 +1,8 @@
-import React from 'react';
-import { MenuSide, FormAddUser, FormAddWorkspace } from '../components';
-import { menuConfig } from '../config/menu.conf';
+import { MenuSide } from '@shared';
+import { FormAddUser, FormAddWorkspace } from '@features/admin';
+import { menuConfig } from '@config/menu.config';
 
-export default function PageDashboard () {
+export const AdminDashboard = () => {
 	return (
 		<div className='bg-brand-black-sub h-screen'>
 

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { isAudioSupported } from '../utils/useAudio';
-import { ButtonVoiceRoom } from '../components';
-import { useSocket } from '../context/ContextSocket';
+import { isAudioSupported } from '../../features/livekit/services/audioManager';
+import { ButtonVoiceRoom } from '@features/livekit';
+import { useSocket } from '../../../context/ContextSocket';
 
-export default function RoomPage() {
+export function UserOfficeRoom() {
   // const { enableSocket } = useSocket();
   // useEffect(() => { enableSocket(); }, []);
 

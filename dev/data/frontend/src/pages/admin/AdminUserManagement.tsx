@@ -1,9 +1,7 @@
 import React from 'react';
-import { MenuSide } from '../../components';
-import { menuConfig } from '../../config/menu.conf';
-import { UserList } from '../../components/UserList';
-import { IconUsers } from '../../config/menu.icons.conf';
-import { MockUsers } from '../../mocks/users';
+import { menuConfig } from '@/config/menu.config';
+import { UserList } from '@features/users';
+import { MenuSide, IconUsers, MockUsers } from '@shared';
 
 // mock search for now
 const Search = (props: React.SVGProps<SVGSVGElement>) => (
@@ -13,7 +11,7 @@ const Search = (props: React.SVGProps<SVGSVGElement>) => (
 	</svg>
 	);
 
-	export default function Users() {
+	export const AdminUserManagement = () => {
 	// pagination state
 	const [currentPage, setCurrentPage] = React.useState(1);
 	const [perPage, setPerPage] = React.useState(10);
