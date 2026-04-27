@@ -5,12 +5,12 @@
 
 import { io, Socket } from 'socket.io-client';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { Player, Position } from '../types/user.types';
+import { Player, Position } from '@shared';
 
 const SocketContext     = createContext(null);
 export const useSocket  = () => useContext(SocketContext);
 
-export default function SocketProvider ({ children }) {
+export function SocketProvider ({ children }) {
   const [shouldConnect, setShouldConnect] = useState(false);
   const [isConnected, setIsConnected] = useState<Boolean>(false);
   const [socket, setSocket] = useState< Socket|null >(null);
