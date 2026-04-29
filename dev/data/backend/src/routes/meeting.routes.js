@@ -7,15 +7,15 @@ router.use(authMiddleware);
 
 router.get('/', meetingController.getAllMeetings);
 router.get('/:meetingId', meetingController.getMeetingById);
-router.get('/:userId', meetingController.getMeetingByUserId);
+router.get('/organiser/:userId', meetingController.getMeetingByUserId);
+router.get('/participant/:userId', meetingController.getMeetingByParticipantId);
 
 router.post('/', meetingController.createMeeting);
-router.post('/participant', meetingController.addParticipant);
 
 router.put('/', meetingController.updateMeeting);
 router.put('/participant', meetingController.updateParticipant);
 
 router.delete('/:meetId', meetingController.deleteMeeting);
-router.delete('/participant/:meetId/:targetUserId', meetingController.removeParticipant);
+router.delete('/participant', meetingController.removeParticipant);
 
 module.exports = router;

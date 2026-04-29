@@ -28,6 +28,7 @@ const meetingController = {
         }
     },
 
+    // Meeting Created by User 
     async getMeetingByUserId(req, res) {
         try {
             const { userId } = req.params;
@@ -36,6 +37,25 @@ const meetingController = {
                 return res.status(400).json({ success: false, message: 'User ID is required' });
 
             const meeting = await meetingService.getMeetingByUserId(userId);
+
+            if (!meeting) 
+                return res.status(404).json({ success: false, message: 'Meeting not found' });
+
+            return res.status(200).json({ success: true, data: meeting });
+        } catch (error) {
+            return res.status(500).json({ success: false, message: error.message });
+        }
+    },
+
+    // Meeting that User Joined
+    async getMeetingByParticipantId(req, res) {
+        try {
+            const { userId } = req.params;
+
+            if (!userId)
+                return res.status(400).json({ success: false, message: 'User ID is required' });
+
+            const meeting = await meetingService.getMeetingByParticipantId(userId);
 
             if (!meeting) 
                 return res.status(404).json({ success: false, message: 'Meeting not found' });
@@ -84,7 +104,8 @@ const meetingController = {
                 meetTitle,
                 meetDesc,
                 meetStart,
-                meetEnd
+                meetEnd,
+                addParticipants = []
             } = req.body;
 
             const userId = req.user.userId;
@@ -96,36 +117,12 @@ const meetingController = {
                     meetTitle,
                     meetDesc,
                     meetStart,
-                    meetEnd
+                    meetEnd,
+                    addParticipants
                 }
             );
 
             return res.status(200).json({ success: true, data: meeting });
-        } catch (error) {
-            return res.status(500).json({ success: false, message: error.message });
-        }
-    },
-
-    async addParticipant(req, res) {
-        try {
-            const {
-                meetId,
-                newUserId,
-                role
-            } = req.body;
-
-            const userId = req.user.userId;
-
-            const result = await meetingService.addParticipant(
-                meetId,
-                userId,
-                {
-                    userId: newUserId,
-                    role
-                }
-            );
-
-            return res.status(201).json({ success: true, data: result });
         } catch (error) {
             return res.status(500).json({ success: false, message: error.message });
         }
@@ -136,7 +133,8 @@ const meetingController = {
             const {
                 meetId,
                 targetUserId,
-                role
+                role,
+                attendance 
             } = req.body;
 
             const userId = req.user.userId;
@@ -146,7 +144,8 @@ const meetingController = {
                 userId,
                 {
                     userId: targetUserId,
-                    role
+                    role,
+                    attendance
                 }
             );
 
@@ -158,7 +157,7 @@ const meetingController = {
 
     async removeParticipant(req, res) {
         try {
-            const { meetId, targetUserId } = req.params;
+            const { meetId, targetUserId } = req.body;
             const userId = req.user.userId;
 
             const result = await meetingService.removeParticipant(
