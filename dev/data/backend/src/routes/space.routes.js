@@ -1,8 +1,15 @@
-// const router = require('express').Router();
-// const { authMiddleware, requireAdmin } = require('../middleware/auth.middleware');
-// const spaceController = require('../controllers/space.controller'); 
+const router = require('express').Router();
+const { authMiddleware, requireAdmin } = require('../middleware/auth.middleware');
+const spaceController = require('../controllers/space.controller'); 
 
-// // all routes require authentication (must be logged in)
-// router.use(authMiddleware);
+// all routes require authentication (must be logged in)
+router.use(authMiddleware);
 
-// module.exports = router;
+router.get('/', spaceController.getAllSpaces);
+router.get('/:spaceId', spaceController.getSpaceById);
+
+router.post('/', requireAdmin, spaceController.createSpace);
+router.put('/', requireAdmin, spaceController.updateSpace);
+router.delete('/:spaceId', requireAdmin, spaceController.deleteSpace);
+
+module.exports = router;

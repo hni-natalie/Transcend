@@ -32,6 +32,9 @@ help:
 up:
 	@$(COMPOSE) up
 
+up-build:
+	@$(COMPOSE) up --build
+
 down: 
 	@$(COMPOSE) down
 
@@ -43,9 +46,6 @@ start:
 
 restart:
 	@$(COMPOSE) restart
-
-build-re:
-	@$(COMPOSE) build --no-cache
 
 logs:
 	@$(COMPOSE) logs -f
