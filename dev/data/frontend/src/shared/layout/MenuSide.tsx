@@ -1,84 +1,136 @@
-import React from 'react';
-import { ReactElement, useState } from 'react'
-import { MenuItem, MenuConfig, UserChipItem, IconCollapse } from "@shared"
-import { UserChip } from "@features/users";
+import React, { ReactElement, useEffect, useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { adminMenuConfig, userMenuConfig } from '@config/menu.config';
+import { UserChip } from '@features/users';
+import { IconCollapse } from '@shared/ui/Icons';
+import { MenuConfig } from '@shared/types/menu.types';
+import { UserChipItem } from '@shared/types/user.types';
 
-// tmp, this function should call API from backend
+// TODO: add logout inline with user chip (hover avatar > logout icon?)
+// mock user for now
 function getUserData(): UserChipItem {
-return {
-	name: "Mary Doe",
-	role: "Software Engineer",
-	photo: "https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg"
-};
+  return {
+    name: "Mary Doe",
+    role: "Human Resource",
+    photo: "https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg"
+  };
 }
 
-const handleMenuClick = (item: MenuItem) => {
-	// Only navigate if the item doesn't have subItems
-	if (!item.subItems && item.href !== '#') {
-		window.location.href = item.href;
-	}
+const getMenuForPath = (pathname: string): MenuConfig => {
+  return pathname.startsWith('/admin') ? adminMenuConfig : userMenuConfig;
 };
 
-export function MenuSide({conf} : {conf:MenuConfig}) : ReactElement {
-	const user: UserChipItem = getUserData();
+export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
+  const location = useLocation();
+  const user: UserChipItem = getUserData();
+  const menuItems = conf ?? getMenuForPath(location.pathname);
+  const [now, setNow] = useState(() => new Date());
+  
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isHovering, setIsHovering] = useState(false);
+  
+  const toggleExpand = () => setIsExpanded(prev => !prev);
+  const expandStatus = isExpanded ? 'expanded' : 'collapsed';
 
-	const [status, setStatus] = useState('expanded');
-	const toggleExpand = () => { 
-		setStatus(prevStatus => prevStatus === 'expanded' ? 'none' : 'expanded');
-	};
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(new Date()), 60000);
+    return () => window.clearInterval(interval);
+  }, []);
 
-	return (
-	<>
-	<div className={`transition-all duration-500 bg-brand-black h-full flex flex-col gap-6 pt-12 pb-12 text-sm ${status === 'expanded' ? 'p-8' : 'p-4'} `}>
+  const timeLabel = new Intl.DateTimeFormat([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(now);
 
-		<div className={`w-full flex ${status === 'expanded' ? 'justify-end' : 'justify-center'} `}>
-		<div className='text-brand-lime w-8 h-8 cursor-pointer'>
-			<IconCollapse onClick={toggleExpand} className={`transition-transform duration-1000  ${status === 'expanded' ? '-rotate-180' : ''} `}/>
-		</div>
-		</div>
+  return (
+    <aside className={`flex flex-col h-screen sticky top-0 border-r border-white/10 bg-black py-6 transition-none z-50 ${isExpanded ? 'w-[220px]' : 'w-[60px]'}`}>
+      
+      {/* Header */}
+	  <div 
+		className="relative flex flex-col pl-7 mb-4" 
+		onMouseEnter={() => setIsHovering(true)}
+		onMouseLeave={() => setIsHovering(false)}
+	  >
+  {/* Master Row: justify-between keeps button right, but logo container is static */}
+  <div className="flex items-center justify-between h-10 w-full pr-4">
+    
+    {/* LOGO CONTAINER: This is the anchor. No margins, no width, just a start point. */}
+    <div className="flex items-center justify-start" onClick={toggleExpand}>
+      {isExpanded ? (
+        <span className="brand-logo-lean text-2xl font-bold leading-none whitespace-nowrap cursor-default">
+          WorkFrom,
+        </span>
+      ) : (
+        <div className="cursor-pointer flex items-center justify-start h-8">
+          {isHovering ? (
+            /* Using a span wrapper for the icon to match the text anchor */
+            <span className="flex items-center justify-center text-white">
+				<span style={{ transform: 'rotate(0deg)', display: 'inline-flex' }}>
+					<IconCollapse className="h-7 w-7" />
+				</span>
+               {/* <IconCollapse className="h-7 w-7 text-accent-lime rotate-180" /> */}
+            </span>
+          ) : (
+            <span className="brand-logo-lean text-2xl font-bold leading-none text-accent-lime">
+              WF
+            </span>
+          )}
+        </div>
+      )}
+    </div>
 
-		<h1 className='bg-teal-90 brand-logo-lean text-2xl text-center font-bold'>{status === 'expanded' ? 'WorkFrom,' : 'WF,'}</h1>
-		<div style={{ visibility: status === 'expanded' ? 'visible' : 'hidden' }}>
-			<p>{status === 'expanded' ? 'Location MY' : 'T'}</p>
-			<p>{status === 'expanded' ? 'HH:MM' : 'T'}</p>
-		</div>
+    {/* COLLAPSE BUTTON: Only shows when expanded */}
+    {isExpanded && (
+      <button
+        onClick={toggleExpand}
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-white hover:bg-white/10 transition-none"
+      >
+		<span style={{ transform: 'rotate(180deg)', display: 'inline-flex' }}>
+			<IconCollapse className="h-7 w-7" />
+		</span>
+        {/* <IconCollapse className="h-7 w-7 rotate-0" /> */}
+      </button>
+    )}
+  </div>
 
-		<nav className='flex h-full mt-2'>
-		<ul className={`flex flex-col w-full
-				${status === 'expanded' ? '' : 'items-center'}`}
-		>
-			{
-				conf.map((item : any) => (
-				<li
-					key={item.title}
-					className='flex cursor-pointer'
-				>
-					<button
-						onClick={() => handleMenuClick(item)}
-						className={`
-							flex w-full py-2 gap-x-2 rounded-sm text-white text-md font-medium
-							transition-all duration-200 
-							space-x-1 hover:text-brand-lime
+        {/* Location and Time */}
+        <div className="h-6 flex items-center mt-1">
+          <div className={`flex items-center gap-2 transition-none ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <p className="text-[10px] uppercase tracking-widest text-white/40">Location</p>
+            <span className="text-[10px] text-white/20">|</span>
+            <p className="font-mono text-[10px] text-white/60">{timeLabel}</p>
+          </div>
+        </div>
+      </div>
 
-							${item.subItems 
-								? 'cursor-default' 
-								: 'cursor-pointer'
-							}
-						`}
-					>
-						<span className='w-5 h-5'>{item.icon}</span>
-						{status === 'expanded' && (
-							<span>{item.title}</span>
-						)}
-					</button>
-				</li>
-				))
-			}
-		</ul>
-		</nav>
+      {/* Navigation */}
+      <nav className="mt-6 flex-1 overflow-x-hidden">
+        <ul className="flex flex-col gap-1">
+          {menuItems.map((item) => (
+            <li key={item.title}>
+              <NavLink
+                to={item.href}
+                className={({ isActive }) => `
+                  flex items-center h-10 pl-7.5 transition-none group
+                  ${isActive ? 'bg-accent-lime/10 text-accent-lime' : 'text-white/50 hover:bg-white/5 hover:text-white'}
+                `}
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                  {item.icon}
+                </span>
+                {isExpanded && <span className="ml-3 text-base font-medium whitespace-nowrap">{item.title}</span>}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
-		<UserChip {...user} expandStatus={status} />
-	</div>
-	</>
-	)
-};
+      {/* 4. Footer */}
+      <div className="mt-auto pl-4.5 pb-2">
+         <div className="flex items-center justify-start h-10">
+           <UserChip {...user} expandStatus={expandStatus} />
+        </div>
+      </div>
+    </aside>
+  );
+}

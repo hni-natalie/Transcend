@@ -27,19 +27,17 @@ export function InputDropdown({
 } : InputDropdownProps) {
 
   return (
-    <div className="dropdown-group flex flex-col gap-y-1">
+    <div className="flex flex-col gap-y-1">
       {title && (
-        <label className="text-white/60 font-medium dropdown-label">
+        <label className="input-label">
           {title}
-          {required && <span className="text-xs text-brand-lime"> *</span>}
+          {required && <span className="text-xs text-accent-lime"> *</span>}
         </label>
       )}
-      <div className='border border-brand-gray-500 focus-within:outline-none focus-within:ring-1 focus-within:ring-brand-lime text-sm bg-brand-gray-800 p-1 pr-2 rounded-lg' >
-      <select
+      <div className={`input-base p-0 pr-2 ${error ? 'input-error' : ''}`}>
+        <select
         name={name}
-        className={`dropdown-field w-full
-                   ${!value ? 'text-white/50' : 'text-white'} ${inputStyle} ${error ? 'input-error' : ''}`}
-        style={{ outline : 'none' }}
+        className={`select-base ${!value ? 'text-white/50' : 'text-white'} ${inputStyle}`}
         value={value}
         onChange={onChange}
         required={required}

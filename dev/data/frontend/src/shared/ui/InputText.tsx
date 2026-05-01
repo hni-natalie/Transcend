@@ -23,27 +23,28 @@ export function InputText({
   error = '',
   disabled = false,
   name = '',
-	inputStyle = ''
+  inputStyle = ''
 }) {
-
   return (
-    <div className="input-group flex flex-col gap-y-1">
+    <div className="flex flex-col gap-y-1">
       {title && (
-        <label className="text-white/60 font-medium input-label">
+        <label className="input-label">
           {title}
-          {required && <span className="text-xs text-brand-lime"> *</span>}
+          {required && <span className="text-xs text-accent-lime"> *</span>}
         </label>
       )}
+
       <input
         type={type}
         name={name}
-        className={`input-field border border-brand-gray-500 bg-brand-gray-800 focus:outline-none focus:ring-1 focus:ring-brand-lime text-sm p-1 px-2 rounded-lg ${inputStyle} ${error ? 'input-error' : ''}`}
+        className={`input-base ${error ? 'input-error' : ''} ${inputStyle}`}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
         required={required}
         disabled={disabled}
       />
+
       {error && <span className="error-message">{error}</span>}
     </div>
   );
