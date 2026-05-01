@@ -1,18 +1,21 @@
 // PUBLIC
 export { Landing } from './public/Landing'
 export { Login } from './public/Login'
+export { Terms } from './public/Terms'
+export { Privacy } from './public/Privacy'
 
 // ADMIN
 export { AdminDashboard } from './admin/AdminDashboard'
-export { AdminUserManagement } from './admin/AdminUserManagement'
-// export { default as AdminActivity } from './admin/Activity'			// maybe just for attendance logs
-// export { default as AdminSettings } from './admin/AdminSettings'	// admin's profile / account
+export { UserManagement } from './admin/AdminUserManagement'
+export { SpaceManagement} from './admin/AdminSpaceManagement'
+export { ActivityLog } from './admin/AdminActivity'	
+export { AdminSettings } from './admin/AdminSettings'
 
 // USER
-// export { default as UserDashboard } from './user/UserDashboard'
+export { UserDashboard } from './user/UserDashboard'
 export { Office } from './user/UserOffice'
-export { Room } from './user/office/Room'
-// export { default as Tasks } from './user/Tasks'
-// export { default as Meetings } from './user/Meetings'
-// export { default as Messages } from './user/Messages'
-// export { default as UserSettings } from './admin/UserSettings'
+export { OfficeRoom } from './user/UserOfficeRoom'
+export { Tasks } from './user/UserTasks'
+export { Meetings } from './user/UserMeetings'
+export { Messages } from './user/UserMessages'
+export { UserSettings } from './user/UserSettings'

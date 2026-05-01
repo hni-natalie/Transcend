@@ -1,17 +1,20 @@
 // config/routes.manifest.ts - Single source of truth
 
 export const ROUTE_PATH = {
+	// public
 	HOME: '/',
 	LOGIN: '/login',
+	TERMS: '/terms',
+	PRIVACY: '/privacy',
 
-	// Admin routes
+	// admin
 	ADMIN_DASHBOARD: '/admin/dashboard',
 	ADMIN_USERS: '/admin/users',
 	ADMIN_SPACES: '/admin/spaces',
 	ADMIN_ACTIVITY: '/admin/activity',
 	ADMIN_SETTINGS: '/admin/settings',
 
-	// User routes
+	// user
 	USER_DASHBOARD: '/user/dashboard',
 	USER_OFFICE: '/user/office',
 	USER_TASKS: '/user/tasks',

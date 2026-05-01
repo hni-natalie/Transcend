@@ -1,6 +1,9 @@
 import React from 'react';
-import { Landing, Login, AdminDashboard, AdminUserManagement, Office, Room } from '@pages';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
+import { Landing, Login, Terms, Privacy,
+		AdminDashboard, UserManagement, SpaceManagement, ActivityLog, AdminSettings,
+		UserDashboard, Office, OfficeRoom, Tasks, Meetings, Messages, UserSettings 
+		} from '@pages';
 
 export const routes = [
 	{
@@ -12,7 +15,7 @@ export const routes = [
 	{
 		// testing
 		path: '/room',
-		element: <Room />,
+		element: <OfficeRoom />,
 		title: 'Spaces'
 	},
 
@@ -27,6 +30,16 @@ export const routes = [
 		element: <Login />,
 		title: 'Login · WorkFrom,'
 	},
+	{
+        path: R.TERMS,
+        element: <Terms />,
+        title: 'Terms & Conditions · WorkFrom,'
+    },
+    {
+        path: R.PRIVACY,
+        element: <Privacy />,
+        title: 'Privacy Policy · WorkFrom,'
+    },
 
 	// Admin
 	{
@@ -36,22 +49,22 @@ export const routes = [
 	},
 	{
 		path: R.ADMIN_USERS,
-		element: <AdminUserManagement />,
+		element: <UserManagement />,
 		title: 'User Management · Admin · WorkFrom,'
 	},
 	{
 		path: R.ADMIN_SPACES,
-		element: <Office roomName="Admin Office" />,
+		element: <SpaceManagement />,
 		title: 'Spaces · Admin · WorkFrom,'
 	},
 	{
 		path: R.ADMIN_ACTIVITY,
-		element: <div />,
+		element: <ActivityLog />,
 		title: 'Activity · Admin · WorkFrom,'
 	},
 	{
 		path: R.ADMIN_SETTINGS,
-		element: <div />,
+		element: <AdminSettings />,
 		title: 'Settings · Admin · WorkFrom,'
 	},
 
@@ -59,32 +72,32 @@ export const routes = [
 	// User 
 	{
 		path: R.USER_DASHBOARD,
-		element: <div />,
+		element: <UserDashboard />,
 		title: 'Dashboard · User · WorkFrom,'
 	},
 	{
 		path: R.USER_OFFICE,
-		element: <div />,
+		element: <Office roomName="Office" />,
 		title: 'Virtual Office · User · WorkFrom,'
 	},
 	{
 		path: R.USER_TASKS,
-		element: <div />,
+		element: <Tasks />,
 		title: 'Tasks · User · WorkFrom,'
 	},
 	{
 		path: R.USER_MEETINGS,
-		element: <div />,
+		element: <Meetings />,
 		title: 'Meetings · User · WorkFrom,'
 	},
 	{
 		path: R.USER_MESSAGES,
-		element: <div />,
+		element: <Messages />,
 		title: 'Messages · User · WorkFrom,'
 	},
 	{
 		path: R.USER_SETTINGS,
-		element: <div />,
+		element: <UserSettings />,
 		title: 'Settings · User · WorkFrom,'
 	},
 ]
