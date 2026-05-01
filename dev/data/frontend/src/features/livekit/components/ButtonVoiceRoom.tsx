@@ -60,7 +60,7 @@ export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room',
         <div className="flex gap-4">
           {/* button with mute/unmute icon */}
           {allowLeave && (<button onClick={handleLeave} className="btn-lime-outline">{leaveText}</button>)}
-          <button onClick={toggleMute} className={`${isMuted ? 'btn-outline' : 'btn-lime-outline'} rounded-full transition-colors duration-500 p-1`}>{ isMuted ? <IconMute className="w-4 h-4 text-brand-gray-500"/> : <IconSpeak className="w-4 h-4"/> }</button>
+          <button onClick={toggleMute} className={`${isMuted ? 'btn-outline' : 'btn-lime-outline'} rounded-full transition-colors duration-500 p-1`}>{ isMuted ? <IconMute className="w-4 h-4 text-border-2"/> : <IconSpeak className="w-4 h-4"/> }</button>
         </div>
       )}
     </nav>

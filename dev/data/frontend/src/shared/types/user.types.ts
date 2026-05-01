@@ -7,10 +7,10 @@ export type UserChipItem = {
 
 /* user account (for admin users table) */
 export interface UserAccount {
-	id: string;
-	username: string; // eg - HR001
-	firstName: string;
-	lastName: string;
+	id: string;			// need truncation? since its uuid
+	username: string;
+	// firstName: string;
+	// lastName: string;
 	email: string;
 	department: string;
 	role: string;

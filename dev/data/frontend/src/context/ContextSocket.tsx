@@ -5,7 +5,7 @@
 
 import { io, Socket } from 'socket.io-client';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { Player, Position } from '@shared';
+import { Player, Position } from '@shared/types/user.types';
 
 const SocketContext     = createContext(null);
 export const useSocket  = () => useContext(SocketContext);
