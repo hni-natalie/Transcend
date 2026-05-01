@@ -1,0 +1,16 @@
+.DS_Store
+.vscode
+.env
+dev/secrets
+node_modules
+**/supabase/.temp
+database.types.ts
+structure.txt
+package.json
+package-lock.json
+
+_bin
+dev/frontend/tmp_*
+ref.*
+initvm.sh
+test.sh

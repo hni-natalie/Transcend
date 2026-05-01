@@ -17,7 +17,10 @@ Before running this project, ensure the following is installed:
 
 
 ## Resources 
-
+- [Realtime communication with Socket.io](https://videosdk.live/developer-hub/socketio/expressjs-socketio)
+- [Comparison of database](https://medium.com/@peymaan.abedinpour/mariadb-vs-mysql-vs-postgresql-vs-sqlite-a-comprehensive-comparison-for-web-applications-0523cc3bc9d8)
+- [nginx websocket proxying](https://nginx.org/en/docs/http/websocket.html?_x_tr_sch=http)
+- [Realtime audio streaming with livekit](https://github.com/livekit/livekit)
 
 ## Team Information
 | Team Member | Role |
