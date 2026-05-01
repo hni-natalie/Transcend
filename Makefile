@@ -47,6 +47,9 @@ start:
 restart:
 	@$(COMPOSE) restart
 
+build-re:
+	@$(COMPOSE) build --no-cache
+
 logs:
 	@$(COMPOSE) logs -f
 
