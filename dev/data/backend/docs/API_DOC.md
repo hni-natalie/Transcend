@@ -54,3 +54,25 @@ Most endpoints require a JWT token in the Authorization header:
 | GET | `/departments` | List departments | Any authenticated |
 | GET | `/departments/:id` | Get department | Any authenticated |
 | POST | `/departments` | Create department | Admin only |
+
+### Spaces 
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | `/spaces` | List spaces | Any authenticated |
+| GET | `/spaces/:spaceId` | Get space | Any authenticated |
+| POST | `/spaces` | Create space | Admin only |
+| PUT | `/spaces` | Edit space | Admin only |
+| DELETE | `/spaces/:spaceId` | Delete space | Admin only |
+
+### Meetings 
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | `/meetings` | List departments | Any authenticated |
+| GET | `/meetings/:id` | Get department| Any authenticated |
+| GET | `/meetings/organiser/:userId` | Get department that created by specific user | Any authenticated |
+| GET | `/meetings/participant/:userId` | Get department that inivited by specific user | Any authenticated |
+| POST | `/meetings/` | Create department | Any authenticated |
+| PUT | `/meetings/` | Edit meeting | Any authenticated |
+| PUT | `/meetings/participant/` | Edit meeting participant | Any authenticated |
+| DELETE | `/meetings/:meetId` | Delete meeting | Any authenticated |
+| DELETE | `/meetings/participant` | Delete participant from meeting | Any authenticated |
