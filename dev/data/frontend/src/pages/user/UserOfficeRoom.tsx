@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { isAudioSupported } from '../../features/livekit/services/audioManager';
-import { ButtonVoiceRoom } from '@features/livekit';
-import { useSocket } from '../../../context/ContextSocket';
+import { isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
+import { useSocket } from '@context/ContextSocket';
 
-export function UserOfficeRoom() {
+export function OfficeRoom() {
   // const { enableSocket } = useSocket();
   // useEffect(() => { enableSocket(); }, []);
 
@@ -22,7 +21,7 @@ export function UserOfficeRoom() {
       <p>Welcome to voice chat</p>
       <ButtonVoiceRoom />
       {/* <ButtonVoiceRoom roomName="playroom"/> */}
-      {error && (<div className='text-danger-base'>{error}</div>)}
+      {error && (<div className='text-danger'>{error}</div>)}
 
     </div>
   )

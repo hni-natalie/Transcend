@@ -2,9 +2,9 @@ import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { PerspectiveCamera, OrbitControls } from '@react-three/drei';
-import { menuConfig } from '@/config/menu.config';
+import { useLocation } from 'react-router-dom';
 import { useSocket } from '@context/ContextSocket';
-import { MenuSide, Player } from '@shared';;
+import { PageHeader, IconOffice, Player } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
 import { GenerateDept, Character } from '@features/office';
 
@@ -72,6 +72,7 @@ export function Office({ roomName } : SpaceProps ) {
 	const count = getDeptCount()
   const [error, setError] = useState<string>('');
 	const listenerRef = useRef<THREE.AudioListener>(new THREE.AudioListener());
+  const location = useLocation();
 	/* ------------- sockets  ------------- */
 	const { enableSocket, players, fetchRoomPlayers, roomPlayers, localPlayerId, isConnected, localPlayerPos } = useSocket();
 	const { connect, disconnect, isConnectedRoom } = useLiveKit(roomName);
@@ -141,11 +142,60 @@ export function Office({ roomName } : SpaceProps ) {
   //   addRemotePlayer();
   // }, []);
 
-	return (
-	<div className='bg-brand-black-sub h-screen flex gap-0.5'>
-		<MenuSide conf={menuConfig} />
+// return (
+//     <>
+//       <Canvas className='w-full h-full'>
+//         <PerspectiveCamera 
+//           makeDefault
+//           position={[0, 30, 0]}
+//           rotation={[-Math.PI / 2, 0, 0]}
+//           fov={50}
+//           near={0.1}
+//           far={100}
+//         />
 
-		<div className='bg-brand-black p-8 flex w-full'>
+//         <ambientLight intensity={0.8} />
+        
+//         <GenerateDept count={count} characterPos={localPlayerPos} room={roomName} />
+
+//         {(roomPlayers.map((user: Player) => (
+//           <Character
+//             key={user.id}
+//             id={user.id}
+//             color={user.color}
+//             position={user.position}
+//             photo={user.photo}
+//             isLocalPlayer={user.id === localPlayerId}
+//           />
+//         )))}
+//       </Canvas>
+      
+//       <div className='absolute top-4 left-0 right-4 flex justify-end'>
+//         <ButtonVoiceRoom roomName={roomName} joinText={`Join ${roomName} Room`}/>
+//       </div>
+      
+//       {error && <div className='text-danger'>{error}</div>}
+//     </>
+//   );
+// }
+
+	return (
+	// <div className='bg-background-1 h-screen flex gap-0.5'>
+	<div className='flex flex-col h-full'>
+      {/* Page Header */}
+      <PageHeader 
+        icon={<IconOffice className="w-7 h-7" />}
+        title={roomName}
+        action={
+          <ButtonVoiceRoom 
+            roomName={roomName} 
+            joinText={`Join ${roomName} Room`}
+          />
+        }
+      />
+
+		{/* <div className='bg-background p-8 flex w-full'> */}
+		<div className='flex-1 relative'>
 			<Canvas className=''>
 				<PerspectiveCamera 
 					makeDefault
@@ -183,10 +233,10 @@ export function Office({ roomName } : SpaceProps ) {
 				{/* Grid helper for reference */}
 				{/* <gridHelper args={[20, 20]} /> */}
 			</Canvas>
-			<div className='flex absolute top-4 left-0 right-4 justify-end' >
+			{/* <div className='flex absolute top-4 left-0 right-4 justify-end' >
 				<ButtonVoiceRoom roomName={roomName} joinText={`Join ${roomName} Room`}/>
-			</div>
-			{error && (<div className='text-danger-base'>{error}</div>)}
+			</div> */}
+			{error && (<div className='text-danger'>{error}</div>)}
 		</div>
 
 	</div>
