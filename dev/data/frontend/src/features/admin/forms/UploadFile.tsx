@@ -58,9 +58,9 @@ export function UploadFile ({
 			className="hidden"
 		/>
 		<div onClick={handleClick} 
-				className={`flex flex-col cursor-pointer items-center text-white/60 bg-brand-gray-800 border border-brand-gray-500 rounded-lg p-4 
+				className={`flex flex-col cursor-pointer items-center text-white/60 bg-background-2 border border-border-2 rounded-lg p-4 
 				${className} ${fileName ? '' : 'border-dashed'} `} >
-			<IconUpload className='h-8 w-8 text-brand-lime'/>
+			<IconUpload className='h-8 w-8 text-accent-lime'/>
 			<h2 className='text-white'>{fileName ? 'File selected' : title}</h2>
 			<p className='text-xs'>{fileName ? fileName : desc}</p>
 		</div>

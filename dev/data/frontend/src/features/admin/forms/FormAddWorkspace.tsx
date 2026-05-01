@@ -36,7 +36,7 @@ export function FormAddWorkspace() {
 	};
 
 	return (
-		<div className='flex w-full bg-brand-black-sub p-8 py-4 rounded-2xl border border-brand-gray-500'>
+		<div className='flex w-full bg-background-1 p-8 py-4 rounded-2xl border border-border-2'>
 
 			<form onSubmit={handleSubmit} className='flex flex-col w-full h-full gap-y-4'>
 				<h1>Workspace Account</h1>
@@ -51,7 +51,7 @@ export function FormAddWorkspace() {
 				</div>
 
 				<div className='flex justify-center'>
-					<button type="submit" className='text-xs font-bold text-brand-lime border border-brand-lime p-1 px-8 rounded-lg bg-brand-gray-800 cursor-pointer'>Create Workspace</button>
+					<button type="submit" className='text-xs font-bold text-accent-lime border border-accent-lime p-1 px-8 rounded-lg bg-background-2 cursor-pointer'>Create Workspace</button>
 				</div>
 			</form>
 
