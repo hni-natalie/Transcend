@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../../features/auth/services/authService';
-import { ROUTE_PATH as R } from '../../config/routes.manifest';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
+import { authService } from '@features/auth/services/authService';
+import { IconGoogle } from '@shared';
+
+const loginInputClass = [
+    "w-full rounded-lg",
+    "bg-background-2",
+    "px-4 py-3",
+    "text-base lg:text-l text-white placeholder:text-white/85",
+    "border-[0.5px] border-transparent",
+    "hover:border-[0.5px] hover:border-accent-lime",
+    "focus:border-[0.5px] focus:border-accent-lime",
+    "focus:ring-1 focus:ring-accent-lime focus:ring-offset-0 focus:ring-opacity-50",
+    "transition-all outline-none"
+].join(" ");
 
 export const Login = () => {
     const navigate = useNavigate();
@@ -38,11 +51,10 @@ export const Login = () => {
     };
 
     return (
-        <div className="h-screen w-screen bg-[#0d0d0d] flex justify-center items-center m-0">
-            <div className="w-full max-w-[520px] flex flex-col items-center">
+        <div className="h-screen w-screen bg-background flex justify-center items-center m-0">
+            <div className="w-full max-w-[500px] flex flex-col items-center">
                 <h1 
-                    className="text-[72px] text-[#D0F05C] mb-[35px] cursor-pointer"
-                    style={{ fontFamily: "'Space Mono', monospace" }}
+                    className="brand-logo-lean text-[48px] font-bold mb-9"
                     onClick={onBack}
                 >
                     WorkFrom,
@@ -50,54 +62,74 @@ export const Login = () => {
 
                 <div className="w-[60%]">
                     <button 
-                        className="w-full bg-[#1a1a1a] border border-[#2a2a2a] text-white p-[16px] rounded-lg text-[16px] flex items-center justify-center gap-[12px] cursor-pointer"
-                        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                        className="btn-outline w-full py-3 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-6"
                         onClick={handleGoogleLogin}
                     >
+						<IconGoogle className="w-5 h-5" />
                         Continue with Google
                     </button>
 
-                    <div className="my-[24px] text-[#9ca3af] text-[14px] w-full text-center">or</div>
+                    <div className="my-6 text-foreground-4 text-sm w-full text-center">or</div>
 
-                    <form className="w-full flex flex-col gap-[12px]" onSubmit={handleEmailLogin}>
+                    <form className="w-full flex flex-col gap-6" onSubmit={handleEmailLogin}>
                         <input
                             type="email"
                             placeholder="Email"
-                            className="bg-[#1a1a1a] border border-[#222] text-white p-[16px] rounded-lg text-[14px] outline-none transition-colors duration-200 focus:border-[#D0F05C]"
-                            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                            className={loginInputClass} 
                             value={userEmail}
                             onChange={(e) => setUserEmail(e.target.value)}
                         />
                         <input
                             type="password"
                             placeholder="Password"
-                            className="bg-[#1a1a1a] border border-[#222] text-white p-[16px] rounded-lg text-[14px] outline-none transition-colors duration-200 focus:border-[#D0F05C]"
-                            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                            className={loginInputClass}
                             value={userPassword}
                             onChange={(e) => setUserPassword(e.target.value)}
                         />
 
                         <button 
                             type="submit" 
-                            className="bg-[#2d3321] text-[#D0F05C] border-none p-[16px] rounded-lg font-bold text-[16px] cursor-pointer mt-[12px] w-full"
-                            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                            className="btn-lime w-full mt-3 py-3 text-base lg:text-lg font-bold"
                             disabled={loading}
                         >
                             {loading ? 'Logging in...' : 'Log in'}
                         </button>
 
-                        <p className="text-[#ff4d4f] text-center text-[14px] my-[8px] min-h-[20px]">{error}</p>
+                        {/* Reserve 24px of space (h-6) for error message */}
+						<div className="h-4">
+							{error && <p className="error-message text-center text-sm lg:text-base">{error}</p>}
+						</div>
                     </form>
                 </div>
                 
-                <div className="mt-[24px] text-[#9ca3af] text-[14px] text-center">
-                    <p>No account? <span className="text-[#6b7280] font-semibold underline cursor-pointer">Contact us</span>.</p>
-                    <p className="mt-[50px] text-[14px] text-[#6b7280] leading-[1.6] text-center w-full">
-                        By continuing, you acknowledge that you understand <br />
-                        and agree to the <span className="text-[#6b7280] font-semibold underline cursor-pointer">Terms & Conditions</span>{' '}
-                        and <span className="text-[#6b7280] font-semibold underline cursor-pointer">Privacy Policy</span>.
-                    </p>
-                </div>
+				<div className="mt-10 flex flex-col items-center gap-8 text-center">
+					{/* Contact Section */}
+					<p className="text-sm text-foreground-2">
+						No account?{' '}
+						<span className="font-semibold text-foreground-2 underline decoration-foreground-2/30 underline-offset-4 cursor-pointer hover:text-white hover:decoration-white transition-colors">
+							Contact us
+						</span>.
+					</p>
+
+					{/* Legal Section */}
+					<p className="mt-15 text-[12px] md:text-sm text-foreground-2 leading-relaxed max-w-[320px] md:max-w-none opacity-80">
+						By continuing, you acknowledge that you understand <br className="hidden md:block" />
+						and agree to the{' '}
+						<span 
+							className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
+							onClick={() => navigate(R.TERMS)}
+						>
+							Terms & Conditions
+						</span>
+						{' '}and{' '}
+						<span 
+							className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
+							onClick={() => navigate(R.PRIVACY)}
+						>
+							Privacy Policy
+						</span>.
+					</p>
+				</div>
             </div>
         </div>
     );
