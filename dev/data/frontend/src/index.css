@@ -38,6 +38,7 @@
 @layer base {
 /* global browser settings */
   :root {
+	font-size: 12px;
 	font-family: var(--font-main);
 	line-height: 1.5;
 	color-scheme: dark;

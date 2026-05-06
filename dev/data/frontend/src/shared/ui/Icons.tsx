@@ -137,6 +137,17 @@ export const IconMessages: React.FC<IconProps> = ({ className, onClick }) => (
   </svg>
 );
 
+export const IconLogout: React.FC<IconProps> = ({ className, onClick }) => (
+  <svg
+  onClick={onClick}
+    className={className}
+	width="15" height="14"
+	viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg"
+  >
+	<path d="M9.55882 3.75V2.125C9.55882 1.69402 9.38529 1.2807 9.07641 0.975951C8.76753 0.671205 8.34859 0.5 7.91176 0.5H2.14706C1.71023 0.5 1.2913 0.671205 0.982412 0.975951C0.673529 1.2807 0.5 1.69402 0.5 2.125V11.875C0.5 12.306 0.673529 12.7193 0.982412 13.024C1.2913 13.3288 1.71023 13.5 2.14706 13.5H7.91176C8.34859 13.5 8.76753 13.3288 9.07641 13.024C9.38529 12.7193 9.55882 12.306 9.55882 11.875V10.25M4.61765 7H14.5M14.5 7L12.0294 4.5625M14.5 7L12.0294 9.4375" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+);
+
 /* *************************************************************
  * general icons with onClick hooks
  * *************************************************************/
