@@ -1,9 +1,36 @@
+export interface User {
+    userId: string;
+    userEmail: string;
+    userName: string;
+    userStatus: 'online' | 'offline' | 'away' | 'busy';
+    roleId: string;
+    roleName: string;
+    workspaceId?: string;
+    workspaceName?: string;
+    dpId?: string;
+    avatarUrl?: string | null;
+    city?: string;
+    country?: string;
+    timezone?: string;
+    authProvider?: string;
+    emailVerified?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
 /* user chip - sidebar */
 export type UserChipItem = {
-	name: string;
-	role: string;
-	photo: string;
+	name: User['userName'];
+	role: User['roleName'];
+	photo: NonNullable<User['avatarUrl']>;
 };
+
+// export type UserChipItem = {
+// 	name: string;
+// 	role: string;
+// 	photo: string;
+// };
+
 
 /* user account (for admin users table) */
 export interface UserAccount {

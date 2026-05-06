@@ -7,10 +7,19 @@ const bcrypt = require('bcrypt');
 const { OAuth2Client } = require('google-auth-library');
 
 const JWT_SECRET = fs.readFileSync('/run/secrets/jwt_secret', 'utf8').trim();
+const JWT_EXPIRY = process.env.JWT_EXPIRY || '1d';
 
 // google oauth client
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+
+async function verifyGoogleToken(idToken) {
+    const ticket = await client.verifyIdToken({
+        idToken: idToken,
+        audience: GOOGLE_CLIENT_ID
+    });
+    return ticket.getPayload();
+}
 
 // POST /auth/login — email login
 router.post('/login', async (req, res) => {
@@ -23,7 +32,7 @@ router.post('/login', async (req, res) => {
         });
 
         if (!user) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Invalid email or password' });
         }
 
         if (!user.userPassword) {
@@ -32,7 +41,7 @@ router.post('/login', async (req, res) => {
 
         const match = await bcrypt.compare(userPassword, user.userPassword);
         if (!match) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Invalid email or password' });
         }
 
         const token = jwt.sign(
@@ -42,7 +51,7 @@ router.post('/login', async (req, res) => {
             roleName: user.role.roleName
         },
         JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: JWT_EXPIRY }
         );
 
         res.json({
@@ -76,7 +85,7 @@ router.post('/google', async (req, res) => {
         }
 
         // extract user info
-        const { sub: googleId, email: userEmail, name: userName, picture: avatarUrl } = payload;
+        const { sub: googleId, email: userEmail, picture: avatarUrl } = payload;
 
         // find user by email (must exist already)
         let user = await prisma.user.findUnique({
@@ -117,7 +126,7 @@ router.post('/google', async (req, res) => {
                 roleName: user.role.roleName
             },
             JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: JWT_EXPIRY }
         );
 
         res.json({
@@ -134,6 +143,47 @@ router.post('/google', async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /auth/me — get current user from token
+router.get('/me', authMiddleware, async (req, res) => {
+    try {
+        // req.user comes from authMiddleware (has userId, roleId, roleName)
+        const user = await prisma.user.findUnique({
+            where: { userId: req.user.userId },
+            select: {
+                userId: true,
+                userName: true,
+                userEmail: true,
+                roleId: true,
+                role: {
+                    select: { roleName: true }
+                },
+                userStatus: true,
+                avatarUrl: true,
+                createdAt: true
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Return stable shape that matches login endpoint
+        res.json({
+            userId: user.userId,
+            userName: user.userName,
+            userEmail: user.userEmail,
+            roleId: user.roleId,
+            roleName: user.role.roleName,
+            userStatus: user.userStatus,
+            avatarUrl: user.avatarUrl ?? null,  // Use ?? instead of ||
+            createdAt: user.createdAt
+        });
+    } catch (err) {
+        console.error('Error in /me:', err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 

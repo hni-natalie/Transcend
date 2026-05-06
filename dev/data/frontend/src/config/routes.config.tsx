@@ -5,7 +5,16 @@ import { Landing, Login, Terms, Privacy,
 		UserDashboard, Office, OfficeRoom, Tasks, Meetings, Messages, UserSettings 
 		} from '@pages';
 
-export const routes = [
+export interface RouteConfig {
+  path: string;
+  element: React.ReactNode;
+  title: string;
+  requiresAuth?: boolean;
+  allowedRoles?: string[];
+  isGuestOnly?: boolean;		// redirects to dashboard if logged in
+}
+
+export const routes: RouteConfig[] = [
 	{
 		// testing
 		path: '/office',
@@ -23,12 +32,14 @@ export const routes = [
 	{
 		path: R.HOME,
 		element: <Landing />,
-		title: 'Home · WorkFrom,'
+		title: 'Home · WorkFrom,',
+		isGuestOnly: true,
 	},
 	{
 		path: R.LOGIN,
 		element: <Login />,
-		title: 'Login · WorkFrom,'
+		title: 'Login · WorkFrom,',
+		isGuestOnly: true,
 	},
 	{
         path: R.TERMS,
@@ -45,27 +56,37 @@ export const routes = [
 	{
 		path: R.ADMIN_DASHBOARD,
 		element: <AdminDashboard />,
-		title: 'Dashboard · Admin · WorkFrom,'
+		title: 'Dashboard · Admin · WorkFrom,',
+		requiresAuth: true,
+		allowedRoles: ['Admin'],
 	},
 	{
 		path: R.ADMIN_USERS,
 		element: <UserManagement />,
-		title: 'User Management · Admin · WorkFrom,'
+		title: 'User Management · Admin · WorkFrom,',
+		requiresAuth: true,
+		allowedRoles: ['Admin'],
 	},
 	{
 		path: R.ADMIN_SPACES,
 		element: <SpaceManagement />,
-		title: 'Spaces · Admin · WorkFrom,'
+		title: 'Spaces · Admin · WorkFrom,',
+		requiresAuth: true,
+		allowedRoles: ['Admin'],
 	},
 	{
 		path: R.ADMIN_ACTIVITY,
 		element: <ActivityLog />,
-		title: 'Activity · Admin · WorkFrom,'
+		title: 'Activity · Admin · WorkFrom,',
+		requiresAuth: true,
+		allowedRoles: ['Admin'],
 	},
 	{
 		path: R.ADMIN_SETTINGS,
 		element: <AdminSettings />,
-		title: 'Settings · Admin · WorkFrom,'
+		title: 'Settings · Admin · WorkFrom,',
+		requiresAuth: true,
+		allowedRoles: ['Admin'],
 	},
 
 
@@ -73,31 +94,37 @@ export const routes = [
 	{
 		path: R.USER_DASHBOARD,
 		element: <UserDashboard />,
-		title: 'Dashboard · User · WorkFrom,'
+		title: 'Dashboard · User · WorkFrom,',
+		requiresAuth: true,
 	},
 	{
 		path: R.USER_OFFICE,
 		element: <Office roomName="Office" />,
-		title: 'Virtual Office · User · WorkFrom,'
+		title: 'Virtual Office · User · WorkFrom,',
+		requiresAuth: true,
 	},
 	{
 		path: R.USER_TASKS,
 		element: <Tasks />,
-		title: 'Tasks · User · WorkFrom,'
+		title: 'Tasks · User · WorkFrom,',
+		requiresAuth: true,
 	},
 	{
 		path: R.USER_MEETINGS,
 		element: <Meetings />,
-		title: 'Meetings · User · WorkFrom,'
+		title: 'Meetings · User · WorkFrom,',
+		requiresAuth: true,
 	},
 	{
 		path: R.USER_MESSAGES,
 		element: <Messages />,
-		title: 'Messages · User · WorkFrom,'
+		title: 'Messages · User · WorkFrom,',
+		requiresAuth: true,
 	},
 	{
 		path: R.USER_SETTINGS,
 		element: <UserSettings />,
-		title: 'Settings · User · WorkFrom,'
+		title: 'Settings · User · WorkFrom,',
+		requiresAuth: true,
 	},
 ]

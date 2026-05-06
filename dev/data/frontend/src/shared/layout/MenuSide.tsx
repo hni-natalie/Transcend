@@ -2,19 +2,20 @@ import React, { ReactElement, useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { adminMenuConfig, userMenuConfig } from '@config/menu.config';
 import { UserChip } from '@features/users';
-import { IconCollapse } from '@shared/ui/Icons';
+import { IconCollapse, IconLogout } from '@shared/ui/Icons';
 import { MenuConfig } from '@shared/types/menu.types';
 import { UserChipItem } from '@shared/types/user.types';
+import { useAuth } from '@/features/auth/AuthContext';
 
 // TODO: add logout inline with user chip (hover avatar > logout icon?)
 // mock user for now
-function getUserData(): UserChipItem {
-  return {
-    name: "Mary Doe",
-    role: "Human Resource",
-    photo: "https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg"
-  };
-}
+// function getUserData(): UserChipItem {
+//   return {
+//     name: "Mary Doe",
+//     role: "Human Resource",
+//     photo: "https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg"
+//   };
+// }
 
 const getMenuForPath = (pathname: string): MenuConfig => {
   return pathname.startsWith('/admin') ? adminMenuConfig : userMenuConfig;
@@ -22,7 +23,8 @@ const getMenuForPath = (pathname: string): MenuConfig => {
 
 export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
   const location = useLocation();
-  const user: UserChipItem = getUserData();
+  const { user, logout } = useAuth();
+//   const user: UserChipItem = getUserData();
   const menuItems = conf ?? getMenuForPath(location.pathname);
   const [now, setNow] = useState(() => new Date());
   
@@ -41,6 +43,16 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     hour: '2-digit',
     minute: '2-digit',
   }).format(now);
+
+   const userChipData = user ? {
+    name: user.userName,
+    role: user.roleName,
+    photo: user.avatarUrl || '/default-avatar.png'
+  } : {
+    name: 'Guest',
+    role: 'Unknown',
+    photo: '/default-avatar.png'
+  };
 
   return (
     <aside className={`flex flex-col h-screen sticky top-0 border-r border-white/10 bg-black py-6 transition-none z-50 ${isExpanded ? 'w-[220px]' : 'w-[60px]'}`}>
@@ -125,12 +137,38 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
         </ul>
       </nav>
 
-      {/* 4. Footer */}
-      <div className="mt-auto pl-4.5 pb-2">
-         <div className="flex items-center justify-start h-10">
-           <UserChip {...user} expandStatus={expandStatus} />
+	  {/* Footer with UserChip and Logout button side by side */}
+		<div className="mt-auto pl-4.5 pb-2">
+		<div className="flex items-center justify-between h-10">
+			{/* UserChip - always at pl-4.5 position */}
+			<UserChip {...userChipData} expandStatus={expandStatus} />
+			
+			{/* Logout button - only shows when expanded, stays right */}
+	          {isExpanded && (
+            <button
+              onClick={logout}
+              className="relative mr-4 flex h-8 w-8 items-center justify-center text-white/60 hover:text-red-400 transition-colors group"
+            >
+              <IconLogout className="h-5 w-5" />
+              
+              {/* Tooltip - appears on the right with rounded corners */}
+              <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                Logout
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </aside>
   );
 }
+
+//       {/* 4. Footer
+//       <div className="mt-auto pl-4.5 pb-2">
+//          <div className="flex items-center justify-start h-10">
+//            <UserChip {...user} expandStatus={expandStatus} />
+//         </div>
+//       </div>
+//     </aside>
+//   ); */}
+// }

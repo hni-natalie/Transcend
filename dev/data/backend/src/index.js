@@ -22,17 +22,17 @@ multiplayer.socketService(io)
 /* *************************************************
  * import routes
  * *************************************************/
-const routesInit       = require('./routes/init')
-const routesLivekit    = require('./routes/livekit').router
-const authRoutes       = require('./routes/auth.routes');
-const roleRoutes       = require('./routes/role.routes');
-const roomRoutes       = require('./routes/room.routes');
-const userRoutes       = require('./routes/user.routes');
-const departmentRoutes = require('./routes/department.routes');
-const uploadRoutes     = require('./routes/upload.routes');
-const spaceRoutes = require('./routes/space.routes');
-const taskRoutes = require('./routes/task.routes');
-const meetingRoutes = require('./routes/meeting.routes');
+const routesInit		= require('./routes/init')
+const routesLivekit		= require('./routes/livekit').router
+const authRoutes		= require('./routes/auth.routes');
+const roleRoutes		= require('./routes/role.routes');
+const roomRoutes		= require('./routes/room.routes');
+const userRoutes		= require('./routes/user.routes');
+const departmentRoutes	= require('./routes/department.routes');
+const uploadRoutes		= require('./routes/upload.routes');
+const spaceRoutes		= require('./routes/space.routes');
+const taskRoutes		= require('./routes/task.routes');
+const meetingRoutes		= require('./routes/meeting.routes');
 
 /* *************************************************
 * all used routes
