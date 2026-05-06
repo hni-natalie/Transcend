@@ -25,23 +25,29 @@ class ApiClient {
       (error) => Promise.reject(error)
     );
 
-    // Response Interceptor; handles errors globally
-    this.client.interceptors.response.use(
-      (response) => response.data, // auto extract data
-      (error: AxiosError) => {
-        // Handle 401 Unauthorized
-        if (error.response?.status === 401) {
-          localStorage.removeItem('token');
-          throw new Error('SESSION_EXPIRED');
-        }
+	// Response Interceptor; handles errors globally
+	this.client.interceptors.response.use(
+	  (response) => response.data,
+	  (error: AxiosError) => {
+		// handle unauthorized
+		if (error.response?.status === 401) {
+		  // check if it's login/register endpoint
+		  const isAuthEndpoint = error.config?.url?.includes('/auth/login') || 
+								error.config?.url?.includes('/auth/google');
+		
+		  if (!isAuthEndpoint) {
+		  // only clear token and show session expired for non-auth endpoints
+			localStorage.removeItem('token');
+			throw new Error('SESSION_EXPIRED');
+		  }
+		}
 
-        // Extract error message from backend response
-        const errorData = error.response?.data as any;
-        const message = errorData?.error || errorData?.message || error.message;
-        
-        return Promise.reject(new Error(message));
-      }
-    );
+		const errorData = error.response?.data as any;
+		const message = errorData?.error || errorData?.message || error.message;
+		
+		return Promise.reject(new Error(message));
+	}
+	);
   }
 
   // Public API methods

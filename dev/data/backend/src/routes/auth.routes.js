@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const { OAuth2Client } = require('google-auth-library');
 
 const JWT_SECRET = fs.readFileSync('/run/secrets/jwt_secret', 'utf8').trim();
+const JWT_EXPIRY = process.env.JWT_EXPIRY || '1d';
 
 // google oauth client
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -31,7 +32,7 @@ router.post('/login', async (req, res) => {
         });
 
         if (!user) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Invalid email or password' });
         }
 
         if (!user.userPassword) {
@@ -40,7 +41,7 @@ router.post('/login', async (req, res) => {
 
         const match = await bcrypt.compare(userPassword, user.userPassword);
         if (!match) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Invalid email or password' });
         }
 
         const token = jwt.sign(
@@ -50,7 +51,7 @@ router.post('/login', async (req, res) => {
             roleName: user.role.roleName
         },
         JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: JWT_EXPIRY }
         );
 
         res.json({
@@ -125,7 +126,7 @@ router.post('/google', async (req, res) => {
                 roleName: user.role.roleName
             },
             JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: JWT_EXPIRY }
         );
 
         res.json({
