@@ -25,12 +25,14 @@ EOF
 fi
 
 # Always install dependencies if node_modules missing or incomplete
-if [ ! -d "node_modules" ] || [ ! -d "node_modules/vite" ]; then
-    echo "> Project exists, installing dependencies..."
-    npm install
-else
-    echo "> Project already exists, skipping ..."
-fi
+echo "> Installing dependencies..."
+npm install
+# if [ ! -d "node_modules" ] || [ ! -d "node_modules/vite" ]; then
+#     echo "> Project exists, installing dependencies..."
+#     npm install
+# else
+#     echo "> Project already exists, skipping ..."
+# fi
 
 echo "> Installation complete!"
 ls
