@@ -49,10 +49,8 @@ const socketService = (io) => {
       player.position = data.position;
       player.rotation = data.rotation;
 
-      // pending, might need to remove this
-      socket.broadcast.emit('player-moved', data);
       // emit position in room name
-      // socket.to(player.roomName).emit('user-moved', data);
+      socket.to(player.roomName).emit('player-moved', data);
     }
   });
 

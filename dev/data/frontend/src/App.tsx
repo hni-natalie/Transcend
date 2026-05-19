@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { useEffect } from 'react';
 import { routes } from './config/routes.config';
 import { AppLayout } from '@shared/layout/AppLayout';
-import { SocketProvider } from './context/ContextSocket';
+import { SocketProvider } from './features/socketio/ContextSocket';
 import { AuthProvider } from '@/features/auth/AuthContext';
 import { ProtectedRoute, GuestRoute } from '@/features/auth/ProtectedRoute';
 

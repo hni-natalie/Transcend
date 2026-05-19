@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { PerspectiveCamera, OrbitControls } from '@react-three/drei';
 import { useLocation } from 'react-router-dom';
-import { useSocket } from '@context/ContextSocket';
+import { useSocket } from '@/features/socketio/ContextSocket';
 import { PageHeader, IconOffice, Player } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
 import { GenerateDept, Character } from '@features/office';

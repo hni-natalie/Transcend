@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { livekitService } from '../services/livekitService';
-import { useSocket } from '@context/ContextSocket';
+import { useSocket } from '@/features/socketio/ContextSocket';
 
 
 // export function useLiveKit( roomName:string , participantName:string ) {

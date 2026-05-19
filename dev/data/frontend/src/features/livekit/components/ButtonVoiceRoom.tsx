@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import { useLiveKit } from '@features/livekit'
 import { IconMute, IconSpeak } from '@shared/ui/Icons';
-import { useSocket } from '@context/ContextSocket';
+import { useSocket } from '@/features/socketio/ContextSocket';
 import { ButtonLoading } from "@/shared/ui/ButtonLoading";
 
 export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room', roomName='myroom', allowLeave=true } ) {

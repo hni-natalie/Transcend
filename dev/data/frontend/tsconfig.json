@@ -22,8 +22,8 @@
       "@pages": ["src/pages"],
       "@config/*": ["src/config/*"],
       "@config": ["src/config"],
-      "@context/*": ["src/context/*"],
-      "@context": ["src/context"]
+      "@context/*": ["src/features/socketio/*"],
+      "@context": ["src/features/socketio"]
     }
   },
   "include": ["src"]
