@@ -4,8 +4,8 @@
 */
 
 import { useEffect, useState } from 'react';
-import { livekitService } from '../services/livekitService';
-import { useSocket } from '@/features/socketio/ContextSocket';
+import { livekitService } from '@/features/livekit/services/livekitService';
+import { useSocket } from '@/features/socketio/useSocket';
 
 
 // export function useLiveKit( roomName:string , participantName:string ) {
@@ -44,22 +44,26 @@ export function useLiveKit( roomName:string ) {
     calls socket.emit join-room to backend, backend creates room token
     then route back to connectToRoom in livekitService, create Room() in frontend
   */
-  const connect = () => {
-    setisLoading(true)
+  const connect = ( mode: "room" | "call" ) => {
 
     const onSuccess = (event: any) => {
       console.log('Connection complete!', event.detail);
-      setJoinCount(prev => prev + 1);
+      setJoinCount(prev => prev + 1); // debug
       setisLoading(false);
       window.removeEventListener('livekit-connect-success', onSuccess);
     };
-    
     const onError = (event: any) => {
       console.error('Connection failed!', event.detail);
       setisLoading(false);
       window.removeEventListener('livekit-connect-error', onError);
     };
-    
+
+    setisLoading(true)
+    livekitService.init(mode); // init once only
+
+    // either here or in init:
+    // do .resume
+    // do .play !! ###
     window.addEventListener('livekit-connect-success', onSuccess);
     window.addEventListener('livekit-connect-error', onError);
 

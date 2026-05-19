@@ -2,7 +2,7 @@
  services/livekitService.js - SINGLETON (persists across component unmounts)
 
  Livekit service, handles tokens & audio streaming
- init tokens done by socket.io in ContextSocket.tsx
+ init tokens done by socket.io in useSocket.tsx
  with audio stream input
  future need to separate messaging & audio room (prob)
 */
@@ -12,25 +12,31 @@ import { AudioManager } from './audioManager';
 
 class LiveKitService {
   constructor() {
-    this.init();
     this.room = null;
     this.audioElements = new Map();         // map for all audio tracks in room
     this.audioManager = new AudioManager(); // manage own audio mic, mute state
-    this.listeners = new Map();
+    this.listeners = new Map();             // event listener
+    this.isInitialized = false;
   }
+  /*
+    mode must be either "room" || "call"
+    room: spatial audio, call: non spatial audio
+  */
+  init( mode ) {
+    if (this.isInitialized) return ;
 
-  init() {
-    // Listen for LiveKit connection events from ContextSocket
+    // Listen for LiveKit connection events from useSocket
     window.addEventListener('livekit-connect', async (event) => {
       try {
         // console.log('Hello from livekit-connect service');
         // console.log('detail:', event.detail);
-        await this.connectToRoom(event.detail);
+        await this.connectToRoom(event.detail, mode);
+
         console.log('livekit-connect: Successfully joined room');
         window.dispatchEvent(new CustomEvent('livekit-connect-success', {
           detail: { success: true }
         }));
-
+        this.isInitialized = true;
       } catch (error) {
         console.error('Failed to connect:', error);
         window.dispatchEvent(new CustomEvent('livekit-connect-error', {
@@ -44,8 +50,30 @@ class LiveKitService {
     });
   }
 
-  // just unpack 'token'
-  async connectToRoom({ token }) {
+  handleCall(track, remoteParticipants) {
+    const audioElement = track.attach(); // creates HTML audio element so that player voice is heard
+    audioElement.autoplay = true;
+    audioElement.volume = 1.0;
+    // store this element to mute individual participants later
+    this.audioElements.set(remoteParticipants.identity, audioElement);
+  }
+
+  handleLeaveCall(track, remoteParticipants) {
+    const audioElement = this.audioElements.get(remoteParticipants.identity);
+    if (audioElement) {
+      audioElement.remove();
+      audioElements.delete(remoteParticipants.identity);
+    }
+    track.detach(); // Clean up audio elements
+    // console.log('cleaning up audio ...')
+  }
+  /*
+    mode has to be "room" || "call"
+    room -> creates a room with spatial audio
+    call -> creates a room with default call audio
+    get token from backend and handle frontend room creation
+  */
+  async connectToRoom({ token }, mode) {
 		// debug
 		// console.log('VITE_LIVEKIT_URL: ', import.meta.env.VITE_LIVEKIT_URL)
     try {
@@ -64,22 +92,26 @@ class LiveKitService {
           
           if (track.kind === Track.Kind.Audio) {
             // console.log(`Check audio participant ${remoteParticipants.identity}`);
-            const audioElement = track.attach();
-            audioElement.autoplay = true;
-            audioElement.volume = 1.0;
-            // store this element to mute individual participants later
-            this.audioElements.set(remoteParticipants.identity, audioElement);
+            if (mode === "call")
+              this.handleCall(track, remoteParticipants);
+            // const audioElement = track.attach();
+            // audioElement.autoplay = true;
+            // audioElement.volume = 1.0;
+            // // store this element to mute individual participants later
+            // this.audioElements.set(remoteParticipants.identity, audioElement);
           }
         });
         
         this.room.on(RoomEvent.TrackUnsubscribed, (track, remoteParticipants) => {
           if (track.kind === Track.Kind.Audio) {
-            const audioElement = this.audioElements.get(remoteParticipants.identity);
-            if (audioElement) {
-              audioElement.remove();
-              audioElements.delete(remoteParticipants.identity);
-            }
-            track.detach(); // Clean up audio elements
+            if (mode === "call")
+              this.handleLeaveCall(track, remoteParticipants);
+            // const audioElement = this.audioElements.get(remoteParticipants.identity);
+            // if (audioElement) {
+            //   audioElement.remove();
+            //   audioElements.delete(remoteParticipants.identity);
+            // }
+            // track.detach(); // Clean up audio elements
             // console.log('cleaning up audio ...')
           }
         });
@@ -121,6 +153,7 @@ class LiveKitService {
     };
   }
 
+  // cleanup
   disconnectFromRoom() {
     if (this.room) {
       this.room.disconnect();
