@@ -6,13 +6,49 @@ const meetingService = {
     // Review 
     async getAllMeetings() {
         return prisma.meeting.findMany({
-            orderBy: { meetStart: 'asc' }
+            orderBy: { meetStart: 'asc' },
+            include: {
+                participants: {
+                    select: {
+                        role: true,
+                        attendance: true,
+                        user: {
+                            select: {
+                                userName: true
+                            }
+                        }
+                    }
+                },
+                _count: {
+                    select: {
+                        participants: true
+                    }
+                }
+            }
         });
     },
 
     async getMeetingById(meetingId) {
         return prisma.meeting.findUnique({
-            where: { meetId: meetingId }
+            where: { meetId: meetingId },
+            include: {
+                participants: {
+                    select: {
+                        role: true,
+                        attendance: true,
+                        user: {
+                            select: {
+                                userName: true
+                            }
+                        }
+                    }
+                },
+                _count: {
+                    select: {
+                        participants: true
+                    }
+                }
+            }
         });
     },
 
