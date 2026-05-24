@@ -1,7 +1,122 @@
+import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, IconMeetings } from '@shared';
-import { MeetingColumn } from '@features/meetings/components/MeetingColumn';
+import { MeetingColumn } from '@features/meetings';
+import { meetingApi } from '@features/meetings';
+
+type Meeting = {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  duration: string;
+  participants: number;
+  pinned: boolean;
+  meetStart: string;
+  meetEnd: string;
+};
+
+type ApiMeeting = {
+  meetId: string;
+  meetTitle: string;
+  meetDesc?: string;
+  meetStart: string;
+  meetEnd: string;
+  isPinned: boolean;
+  participants?: any[];
+  _count?: { participants: number };
+};
+
+const getDuration = (start: string, end: string) => {
+  const diff = new Date(end).getTime() - new Date(start).getTime();
+  const mins = Math.round(diff / 60000);
+
+  if (mins < 60) return `${mins} min`;
+
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+
+  return m ? `${h}h ${m}m` : `${h}h`;
+};
 
 export const Meetings = () => {
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+
+  // ======================
+  // FETCH MEETINGS
+  // ======================
+  useEffect(() => {
+    const load = async () => {
+      const res = await meetingApi.getAllMeetings() as {
+        success: boolean;
+        data: ApiMeeting[];
+      };
+
+      const mapped: Meeting[] = res.data.map((m) => ({
+        id: m.meetId,
+        title: m.meetTitle,
+        description: m.meetDesc ?? '',
+        date: new Date(m.meetStart).toLocaleDateString(),
+        time: new Date(m.meetStart).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        duration: getDuration(m.meetStart, m.meetEnd),
+        participants: m._count?.participants ?? m.participants?.length ?? 0,
+        pinned: m.isPinned ?? false,
+        meetStart: m.meetStart,
+        meetEnd: m.meetEnd,
+      }));
+
+      setMeetings(mapped);
+    };
+
+    load();
+  }, []);
+
+  // ======================
+  // TOGGLE PIN
+  // ======================
+  const handleTogglePin = async (id: string) => {
+    try {
+      await meetingApi.toggleMeetingPin(id);
+
+      setMeetings(prev =>
+        prev.map(m =>
+          m.id === id ? { ...m, pinned: !m.pinned } : m
+        )
+      );
+    } catch (err) {
+      console.error('Failed to toggle pin:', err);
+    }
+  };
+
+  // ======================
+  // GROUPING LOGIC
+  // ======================
+  const grouped = useMemo(() => {
+    const now = new Date();
+
+    return {
+      today: meetings.filter(m =>
+        new Date(m.meetStart).toDateString() === now.toDateString()
+      ),
+
+      upcoming: meetings.filter(m =>
+        new Date(m.meetStart) > now
+      ),
+
+      past: meetings.filter(m =>
+        new Date(m.meetStart) < now
+      ),
+
+      mine: meetings,
+    };
+  }, [meetings]);
+
+  // ======================
+  // UI
+  // ======================
   return (
     <>
       <PageHeader
@@ -15,40 +130,33 @@ export const Meetings = () => {
       />
 
       <div className="grid grid-cols-4 gap-3 p-4">
-
         <MeetingColumn
           label="Today"
           action="join"
-          meetings={[
-            { id: '1', title: 'Product Review', description: 'Review product', date: 'Today', time: '16:30', duration: '90 min', participants: 2 },
-            { id: '2', title: 'Standup', description: 'Daily sync', date: 'Today', time: '10:00', duration: '15 min', participants: 5 },
-          ]}
+          meetings={grouped.today}
+          onTogglePin={handleTogglePin}
         />
 
         <MeetingColumn
           label="Upcoming"
           action="join"
-          meetings={[
-            { id: '3', title: 'Client Review', description: 'Review app', date: 'May 1', time: '14:00', duration: '60 min', participants: 3 },
-          ]}
+          meetings={grouped.upcoming}
+          onTogglePin={handleTogglePin}
         />
 
         <MeetingColumn
           label="Past"
           action="transcript"
-          meetings={[
-            { id: '9', title: 'Retro', description: 'Sprint review', date: 'March 16', time: '11:30', duration: '45 min', participants: 3 },
-          ]}
+          meetings={grouped.past}
+          onTogglePin={handleTogglePin}
         />
 
-		<MeetingColumn
+        <MeetingColumn
           label="My Meetings"
           action="manage"
-          meetings={[
-            { id: '9', title: 'Retro', description: 'Sprint review', date: 'March 16', time: '11:30', duration: '45 min', participants: 3 },
-          ]}
+          meetings={grouped.mine}
+          onTogglePin={handleTogglePin}
         />
-
       </div>
     </>
   );
