@@ -17,5 +17,6 @@ router.put('/participant', meetingController.updateParticipant);
 
 router.delete('/:meetId', meetingController.deleteMeeting);
 router.delete('/participant', meetingController.removeParticipant);
+router.patch('/:meetId/pin', meetingController.toggleMeetingPin);
 
 module.exports = router;

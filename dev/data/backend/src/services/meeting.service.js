@@ -217,7 +217,24 @@ const meetingService = {
 
         await prisma.meetingParticipant.deleteMany({ where: { meetId } });
 		await prisma.meeting.delete({ where: { meetId } });
-	}
+	}, 
+
+    // Toggle pin
+    async togglePin(meetId) {
+        // 1. Find the MEETING (not participant)
+        const meeting = await prisma.meeting.findUnique({
+            where: { meetId: meetId }
+        });
+
+        if (!meeting)
+            throw new Error('Meeting not found');
+
+        // 2. Update the MEETING (correct table!)
+        return prisma.meeting.update({
+            where: { meetId: meetId },
+            data: { isPinned: !meeting.isPinned }
+        });
+    }
 
 }
 

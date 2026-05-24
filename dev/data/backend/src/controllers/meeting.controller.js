@@ -183,7 +183,22 @@ const meetingController = {
         } catch (error) {
             return res.status(500).json({ success: false, message: error.message });
         }
-    }
+    },
+
+    async toggleMeetingPin(req, res) {
+        try {
+            const { meetId } = req.params;
+
+            const updated = await meetingService.togglePin( meetId );
+
+            return res.status(200).json(updated);
+        } catch (err) {
+            return res.status(400).json({
+                message: err.message
+            });
+        }
+    },
+
 };
 
 module.exports = meetingController; 

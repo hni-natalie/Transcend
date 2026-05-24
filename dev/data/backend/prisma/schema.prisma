@@ -208,6 +208,9 @@ model Meeting {
   meetDesc        String?
   meetStart       DateTime
   meetEnd         DateTime
+
+  isPinned        Boolean @default(false)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -216,10 +219,6 @@ model Meeting {
   createdBy       User      @relation("MeetingCreatedBy", fields: [createdByUserId], references: [userId])
 
   participants    MeetingParticipant[]
-
-  @@index([workspaceId])
-  @@index([spaceId])
-  @@index([workspaceId, meetStart])
 }
 
 model MeetingParticipant {
