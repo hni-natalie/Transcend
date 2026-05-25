@@ -31,27 +31,13 @@ export class AudioManager {
       // publish to livekit
       const audioTrack = new LocalAudioTrack(this.mediaStream.getAudioTracks()[0]);
       this.localPublication = await this.room.localParticipant.publishTrack(audioTrack);
-      // await this.setupAudioContext();
       return true;
+
     } catch (error) {
       console.error('Microphone error:', error);
       throw error;
     }
   }
-
-  // Setup audio context for mute control
-  // async setupAudioContext() {
-  //   const AudioContext = window.AudioContext || window.webkitAudioContext;
-  //   this.audioContext = new AudioContext();
-  //   this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
-  //   this.gainNode = this.audioContext.createGain();
-    
-  //   this.sourceNode.connect(this.gainNode);
-  //   // this.gainNode.connect(this.audioContext.destination);
-  //   this.gainNode.gain.value = 1; // Start unmuted
-    
-  //   await this.audioContext.resume();
-  // }
 
   // Toggle mute/unmute
   toggleMute() {
@@ -85,7 +71,7 @@ export class AudioManager {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
     }
-    if (this.localPublication) {
+    if (this.localPublication && this.localPublication.track) {
       this.localPublication.track.stop();
       this.localPublication = null;
     }

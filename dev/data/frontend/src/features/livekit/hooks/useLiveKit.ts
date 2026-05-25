@@ -33,7 +33,7 @@ export function useLiveKit( roomName:string ) {
       setIsConnectedRoom(false);
     };
     const handleSubscribed = ({ id }) => {
-      console.log("audio-track-subscribed!");
+      // console.log("audio-track-subscribed!");
       setReadyStreams(prev => {
         const newSet = new Set(prev);
         newSet.add(id);
@@ -41,7 +41,7 @@ export function useLiveKit( roomName:string ) {
       });
     };
     const handleUnsubscribed = ({ id }) => {
-      console.log("audio-track-unsubscribed!");
+      // console.log("audio-track-unsubscribed!");
       setReadyStreams(prev => {
         const newSet = new Set(prev);
         newSet.delete(id);
@@ -71,7 +71,10 @@ const connect = async ( mode: "room" | "call" ) => {
     const onSuccess = (event: any) => {
       console.log('Connection complete!', event.detail);
       setJoinCount(prev => prev + 1); // debug
-      setisLoading(false);
+
+      setTimeout(() => {
+        setisLoading(false);
+      }, 2000); // 2 second delay
       window.removeEventListener('livekit-connect-success', onSuccess);
     };
     const onError = (event: any) => {
@@ -84,8 +87,6 @@ const connect = async ( mode: "room" | "call" ) => {
     livekitService.init(mode); // init once only
     await livekitService.audioManager.resumeListener(); // .resume onClick
 
-    // await livekitService.setupRoomAudio(-1); //.resume & .play here
-
     window.addEventListener('livekit-connect-success', onSuccess);
     window.addEventListener('livekit-connect-error', onError);
 
@@ -94,9 +95,9 @@ const connect = async ( mode: "room" | "call" ) => {
     setIsMuted(livekitService.audioManager.getMuteState());
   };
 
-  const disconnect = () => {
+  const disconnect = async () => {
     leaveRoom(roomName); // emit leave-room signal to backend
-    livekitService.disconnectFromRoom(); // frontend cleanup
+    await livekitService.disconnectFromRoom(); // frontend cleanup
   };
 
   const toggleMute = () => {
@@ -112,12 +113,11 @@ const connect = async ( mode: "room" | "call" ) => {
   }
   const getPositionalAudio = ( userId:string ) => {
     const positionalAudio = livekitService.positionalAudios.get(userId);
-    if (positionalAudio instanceof THREE.PositionalAudio) {
+    if (positionalAudio instanceof THREE.PositionalAudio)
       console.log('useLiveKit: Valid PositionalAudio! ', userId);
-    }
-    else {
+    else
       console.error('useLiveKit: Invalid PositionalAudio ', userId);
-    }
+
     return livekitService.positionalAudios.get(userId);
   }
   const getMediaStream = ( userId:string ) => {
@@ -130,29 +130,11 @@ const connect = async ( mode: "room" | "call" ) => {
     }
     return livekitService.mediaStreams.get(userId);
   }
-  const connectStream = ( userId:string ) =>  {
-    const positionalAudio = livekitService.positionalAudios.get(userId);
-    const mediaStream = livekitService.mediaStreams.get(userId);
-    if (!positionalAudio || !mediaStream) return;
-
-    const ctx = livekitService.audioManager.listener.context;
-    const sourceNode = ctx.createMediaStreamSource(mediaStream);
-    livekitService.sourceNodes.set(userId, sourceNode);
-    // sourceNode.connect(positionalAudio.panner);
-    // positionalAudio.gain.gain.setValueAtTime(1, ctx.currentTime);
-      positionalAudio.isPlaying = true;
-      positionalAudio.setVolume(1);
-      positionalAudio.setMediaStreamSource(sourceNode);
-    console.log('[audio] stream connected, parent:', positionalAudio.parent?.name ?? 'NOO PARENT — not in scene graph');
-    console.log('[audio] parent object:', positionalAudio.parent);
-    console.log('[audio] parent type:', positionalAudio.parent?.type);
-    console.log('[audio] world position:', positionalAudio.getWorldPosition(new THREE.Vector3()));
-  }
 
   return { connect, disconnect, isConnectedRoom,
           isMuted, toggleMute, isLoading, joinCount, 
           activePlane, setActivePlane,
-          isPlayerAudioReady, connectStream,
+          isPlayerAudioReady,
           getMediaStream, getPositionalAudio, getAudioListener
         };
 }

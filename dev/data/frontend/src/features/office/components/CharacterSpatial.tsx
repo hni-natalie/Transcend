@@ -15,7 +15,6 @@ interface CharacterProps extends Player {
 	isPlayerAudioReady: boolean;
   listenerRef: RefObject<THREE.AudioListener>;
 	getPositionalAudio: (userId: string) => THREE.PositionalAudio;
-	connectStream: (userId: string) => void;
 }
 
 const fetchUserPhoto = async () => {
@@ -26,7 +25,7 @@ const fetchUserPhoto = async () => {
 }
 
 // 2D Circle Character Component + Movement handling
-export function Character({ id, position, color="#D0F05C", photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio, connectStream } : CharacterProps) {
+export function Character({ id, position, color="#D0F05C", photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps) {
 	const characterRef = useRef<THREE.Mesh>(null);
   const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
 
@@ -83,16 +82,16 @@ export function Character({ id, position, color="#D0F05C", photo, isLocalPlayer,
   useEffect(() => {
     if ( !characterRef.current || isLocalPlayer || !listenerRef || !positionalAudioRef || !isPlayerAudioReady ) return;
 		
-		characterRef.current.name = `player-${id}`;
-		console.log('[audio] characterRef:', characterRef.current);
-
-		// connectStream(id);
 		positionalAudioRef.current = getPositionalAudio(id);
 		characterRef.current.add(positionalAudioRef.current);
 
+		// debug --------------------------------
+		characterRef.current.name = `player-${id}`;
+		console.log('[audio] characterRef:', characterRef.current);
 		console.log("✅ Positional audio attached to remote player mesh ", id, " ", positionalAudioRef.current.position);
-		const worldPos = positionalAudioRef.current.getWorldPosition(new THREE.Vector3());
-		console.log('World position:', worldPos);
+		// const worldPos = positionalAudioRef.current.getWorldPosition(new THREE.Vector3());
+		// console.log('World position:', worldPos);
+		// --------------------------------------
 
 		return () => {
 			if (listenerRef.current && characterRef.current && positionalAudioRef.current) {
@@ -103,7 +102,7 @@ export function Character({ id, position, color="#D0F05C", photo, isLocalPlayer,
 		};
 	}, [isPlayerAudioReady])
 
-	// debug
+	// debug keep first
   // useFrame(() => {
   //   if (positionalAudioRef.current) {
   //     // This will automatically track character position because audio is parented to character

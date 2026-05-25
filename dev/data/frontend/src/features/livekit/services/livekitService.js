@@ -17,7 +17,6 @@ class LiveKitService {
     this.audioElements = new Map();         // map for all audio tracks in room
     this.mediaStreams = new Map();          // map for all media streams in room
     this.positionalAudios = new Map();      // map for all positional audios in room
-    this.sourceNodes = new Map();           // map for all media stream source in room
     this.audioManager = new AudioManager(); // manage own audio mic, mute state
     this.listeners = new Map();             // event listener
     this.isInitialized = false;
@@ -33,7 +32,6 @@ class LiveKitService {
     window.addEventListener('livekit-connect', async (event) => {
       try {
         // console.log('Hello from livekit-connect service');
-        // console.log('detail:', event.detail);
         await this.connectToRoom(event.detail, mode);
 
         console.log('livekit-connect: Successfully joined room');
@@ -67,31 +65,19 @@ class LiveKitService {
     positionalAudio.setDistanceModel('inverse'); // More natural distance falloff
 
     if (mediaStream) {
-      // const sourceNode = this.audioManager.listener.context.createMediaStreamSource(mediaStream);
-  		// positionalAudio.setNodeSource(sourceNode); // TS cast needed
-      // Connect to Three.js's internal gain node (which connects to the panner)
-      // sourceNode.connect(positionalAudio.getOutput());
-      // positionalAudio.setVolume(1);
-      // positionalAudio.gain.gain.setValueAtTime(1, this.audioManager.listener.context.currentTime);
-      // positionalAudio.isPlaying = true;
-      // positionalAudio.setMediaStreamSource(mediaStream); // remote player stream
 
-      const ctx = this.audioManager.listener.context;
         const audioElement = new Audio();
         audioElement.srcObject = mediaStream;
         audioElement.muted = true;  // Mute the element so it doesn't double-play
         audioElement.autoplay = true; // Start playback immediately
 
-        // use sourceNode to replace setMediaStreamSource
-        // const sourceNode = ctx.createMediaStreamSource(mediaStream);
-        // this.sourceNodes.set(key, sourceNode);
-        // sourceNode.connect(positionalAudio.panner);
-        // positionalAudio.gain.gain.setValueAtTime(1, ctx.currentTime);
         positionalAudio.setVolume(1);
         positionalAudio.isPlaying = true;
         positionalAudio.setMediaStreamSource(audioElement.srcObject);
+        this.positionalAudios.set(key, positionalAudio);
 
-
+      // debug section
+      const ctx = this.audioManager.listener.context;
       console.log('[audio] context state:', ctx.state);
       console.log('[audio] gain value:', positionalAudio.gain.gain.value);
       console.log('[audio] isPlaying:', positionalAudio.isPlaying);
@@ -100,20 +86,11 @@ class LiveKitService {
         console.log('[audio] track:', t.label, 'enabled:', t.enabled, 'muted:', t.muted, 'readyState:', t.readyState)
       );
     }
-
-    // if (this.audioManager.listener.context.state === 'running') {
-    //   positionalAudio.play(); // ### this need to debug for chrome
-
-    //   // debug
-    //   console.log("✅ livekitService: started positional audio for ", key);
+      // debug section
       if (positionalAudio.isPlaying) {
         console.log("✅ Positional Audio is currently playing");
       } else
         console.error("Positional Audio is not playing");
-    // }
-
-    this.positionalAudios.set(key, positionalAudio);
-  
       const pa = this.positionalAudios.get(key);
       console.log('[audio] panner position:', pa.panner.positionX?.value, pa.panner.positionY?.value, pa.panner.positionZ?.value);
       console.log('[audio] listener position:', this.audioManager.listener.position);
@@ -122,63 +99,33 @@ class LiveKitService {
 
   // this runs everytime when a track is subscribed
   async handleRoom(track, remoteParticipants) {
-    // pending review
-    // const existingStream = this.mediaStreams.get(remoteParticipants.identity);
-    // if (existingStream) return ;
-
-    // this.audioManager.resumeListener(); // .resume
-
-    // .play
     const mediaStream = track.mediaStream;
-      // const nativeTrack = track.mediaStreamTrack; // LiveKit's raw MediaStreamTrack
-      // const mediaStream = new MediaStream([nativeTrack]); // build a fresh stream
-      // const testAudio = document.createElement('audio');
-      // testAudio.srcObject = mediaStream;
-      // testAudio.autoplay = true;
-      // testAudio.volume = 1;
-      // document.body.appendChild(testAudio);
-      // console.log('[audio] html element test — track:', nativeTrack.readyState, nativeTrack.muted);
     this.mediaStreams.set(remoteParticipants.identity, mediaStream);
     // --------------------------------------------------------
 
-    const audioTrack = mediaStream?.getAudioTracks()[0];
-    if (audioTrack) {
-      if (audioTrack.muted) {
-        console.log('[audio] waiting for RTP flow...');
-        await new Promise((resolve) => {
-          // This fires when the browser starts receiving RTP packets
-          audioTrack.addEventListener('unmute', () => {
-            console.log('[audio] RTP flowing, muted:', audioTrack.muted);
-            resolve();
-          }, { once: true });
-          // Safety net — if unmute never fires something else is wrong
-          setTimeout(() => {
-            console.warn('[audio] unmute timeout, muted still:', audioTrack.muted);
-            resolve();
-          }, 5000);
-        });
-      } else {
-        console.log('[audio] track already live, muted:', audioTrack.muted);
-      }
-    }
+    // kiv
+    // const audioTrack = mediaStream?.getAudioTracks()[0];
+    // if (audioTrack) {
+    //   if (audioTrack.muted) {
+    //     console.log('[audio] waiting for RTP flow...');
+    //     await new Promise((resolve) => {
+    //       // This fires when the browser starts receiving RTP packets
+    //       audioTrack.addEventListener('unmute', () => {
+    //         console.log('[audio] RTP flowing, muted:', audioTrack.muted);
+    //         resolve();
+    //       }, { once: true });
+    //       // Safety net — if unmute never fires something else is wrong
+    //       setTimeout(() => {
+    //         console.warn('[audio] unmute timeout, muted still:', audioTrack.muted);
+    //         resolve();
+    //       }, 5000);
+    //     });
+    //   } else {
+    //     console.log('[audio] track already live, muted:', audioTrack.muted);
+    //   }
+    // }
     // --------------------------------------------------------
     await this.setupRoomAudio(remoteParticipants.identity, mediaStream);
-
-    // set positional audio here --------------------------------------------------------
-    // const positionalAudio = new THREE.PositionalAudio(this.audioManager.listener); // add local listener to positional audio
-    // positionalAudio.setRefDistance(1);     // Reference distance for volume falloff
-    // positionalAudio.setMaxDistance(4);     // Max audible distance
-    // positionalAudio.setRolloffFactor(10); // How quickly volume decreases
-    // positionalAudio.setDistanceModel('inverse'); // More natural distance falloff
-    // positionalAudio.setMediaStreamSource(mediaStream); // remote player stream
-    // positionalAudio.play();
-
-    // debug
-    // if (positionalAudio.isPlaying) {
-    //   console.log("Positional Audio is currently playing");
-    // } else {
-    //   console.error("Positional Audio is not playing");
-    // }
 
     // if (this.audioManager.listener.context.state === 'running') {
     //   positionalAudio.play(); // ### this need to debug for chrome
@@ -187,7 +134,6 @@ class LiveKitService {
     // else {
     //   console.error("livekitService: enable audio listener status to [running] before starting positional audio")
     // }
-    // this.positionalAudios.set(remoteParticipants.identity, positionalAudio);
     // ----------------------------------------------------------------------------------
     this.emit('audio-track-subscribed', { id: remoteParticipants.identity });
 
@@ -206,6 +152,11 @@ class LiveKitService {
     if (mediaStream) {
       this.mediaStreams.delete(remoteParticipants.identity);
       console.log("Removed media stream ", remoteParticipants.identity);
+    }
+    const positionalAudio = this.positionalAudios.get(remoteParticipants.identity);
+    if (positionalAudio) {
+      this.positionalAudios.delete(remoteParticipants.identity);
+      console.log("Removed positional audio ", remoteParticipants.identity);
     }
 
     this.emit('audio-track-unsubscribed', { id: remoteParticipants.identity });
@@ -244,14 +195,10 @@ class LiveKitService {
         console.log('Reusing existing connection');
       } else {
         this.room = new Room();
-        if (mode === "room")
-        // init .resume & .play here ####
-        // setup track=positionalAudio in listeners area
 
         /* *************************************************************
-         * Set up Listeners
+         * Set up Listeners for remote track
          * *************************************************************/
-        // Set up audio element for remote tracks
         this.room.on(RoomEvent.TrackSubscribed, (track, publication, remoteParticipants) => {
           console.log(`Track subscribed from ${remoteParticipants.identity}`);
           
@@ -271,13 +218,6 @@ class LiveKitService {
               this.handleLeaveCall(track, remoteParticipants);
             else if (mode === "room")
               this.handleLeaveRoom(track, remoteParticipants);
-            // const audioElement = this.audioElements.get(remoteParticipants.identity);
-            // if (audioElement) {
-            //   audioElement.remove();
-            //   audioElements.delete(remoteParticipants.identity);
-            // }
-            // track.detach(); // Clean up audio elements
-            // console.log('cleaning up audio ...')
           }
         });
 
@@ -299,8 +239,13 @@ class LiveKitService {
         /* *************************************************************
          * Connect to room
          * *************************************************************/
-        await this.room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
-        await this.audioManager.initMicrophone(this.room);
+        try {
+          await this.room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
+          await this.audioManager.initMicrophone(this.room);
+        } catch (error) {
+          console.error('LiveKit connection failed:', error);
+          window.location.reload();
+        }
       }
       this.emit('connected', { room: this.room });
       return { success: true, room: this.room };
@@ -319,15 +264,20 @@ class LiveKitService {
   }
 
   // cleanup
-  disconnectFromRoom() {
+  async disconnectFromRoom() {
     if (this.room) {
-      this.room.disconnect();
-      this.room = null;
-      this.emit('disconnected', { room: this.room });
-      this.audioManager.cleanup();
-      this.mediaStreams.clear();
-      this.positionalAudios.clear();
-      console.log('Disconnected from room');
+      try {
+        await this.room.disconnect();
+        this.room = null;
+        this.emit('disconnected', { room: this.room });
+        this.audioManager.cleanup();
+        this.mediaStreams.clear();
+        this.positionalAudios.clear();
+        console.log('Disconnected from room');
+      } catch (error) {
+        console.error('Disconnection failed: ', error, ' reloading page...');
+        window.location.reload();
+      }
     }
   }
 

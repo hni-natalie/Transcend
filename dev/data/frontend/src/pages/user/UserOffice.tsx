@@ -75,7 +75,7 @@ export function Office({ roomName } : SpaceProps ) {
   const location = useLocation();
 	/* ------------- sockets  ------------- */
 	const { enableSocket, players, fetchRoomPlayers, roomPlayers, localPlayerId, isConnected, localPlayerPos } = useSocket();
-	const { connectStream, getAudioListener, getPositionalAudio, isPlayerAudioReady } = useLiveKit(roomName);
+	const { getAudioListener, getPositionalAudio, isPlayerAudioReady } = useLiveKit(roomName);
 
 	// run once on mount
   useEffect(() => { enableSocket(); }, []);
@@ -108,81 +108,6 @@ export function Office({ roomName } : SpaceProps ) {
 		if (!isConnected) return ;
 		fetchRoomPlayers(roomName);
 	}, [isConnected])
-
-	// auto connect voice
-  // useEffect(() => {
-	// 	if (!isConnectedRoom) {
-	// 		console.log('[debug]Spaces:init')
-	// 		connect();
-	// 	}
-
-	// 	return () => {
-	// 		if (isConnectedRoom)
-	// 			disconnect();
-	// 	};
-	// }, [isConnectedRoom]);
-		
-	
-	// const socketUrl = import.meta.env.VITE_DOMAIN_URL
-	// console.log(`test env: ${socketUrl}`)
-
-  // Your WebRTC peer management logic
-  // const [remotePeers, setRemotePeers] = useState<Array<{
-  //   id: string;
-  //   stream: MediaStream;
-  //   position: [number, number, number];
-  // }>>([]);
-  
-  // // Example: Add a remote peer at a specific position
-  // useEffect(() => {
-  //   // Simulate adding a remote player
-  //   const addRemotePlayer = async () => {
-  //     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  //     setRemotePeers(prev => [...prev, {
-  //       id: 'player-1',
-  //       stream,
-  //       position: [5, 1, 2]
-  //     }]);
-  //   };
-  //   addRemotePlayer();
-  // }, []);
-
-// return (
-//     <>
-//       <Canvas className='w-full h-full'>
-//         <PerspectiveCamera 
-//           makeDefault
-//           position={[0, 30, 0]}
-//           rotation={[-Math.PI / 2, 0, 0]}
-//           fov={50}
-//           near={0.1}
-//           far={100}
-//         />
-
-//         <ambientLight intensity={0.8} />
-        
-//         <GenerateDept count={count} characterPos={localPlayerPos} room={roomName} />
-
-//         {(roomPlayers.map((user: Player) => (
-//           <Character
-//             key={user.id}
-//             id={user.id}
-//             color={user.color}
-//             position={user.position}
-//             photo={user.photo}
-//             isLocalPlayer={user.id === localPlayerId}
-//           />
-//         )))}
-//       </Canvas>
-      
-//       <div className='absolute top-4 left-0 right-4 flex justify-end'>
-//         <ButtonVoiceRoom roomName={roomName} joinText={`Join ${roomName} Room`}/>
-//       </div>
-      
-//       {error && <div className='text-danger'>{error}</div>}
-//     </>
-//   );
-// }
 
 	return (
 	// <div className='bg-background-1 h-screen flex gap-0.5'>
@@ -220,7 +145,6 @@ export function Office({ roomName } : SpaceProps ) {
 					<planeGeometry args={[100, 100]} />
 					<meshStandardMaterial color="#404040" />
 				</mesh> */}
-				{/* <GenerateDept count={count}/> */}
 				<GenerateDept count={count} characterPos={localPlayerPos} room={roomName} />
 
 				{/* {isConnectedRoom && */}
@@ -236,7 +160,6 @@ export function Office({ roomName } : SpaceProps ) {
 						isPlayerAudioReady={isPlayerAudioReady(user.id)}
 						getPositionalAudio={getPositionalAudio}
 						listenerRef={listenerRef}
-						connectStream={connectStream}
 					/>
 				)))}
 				

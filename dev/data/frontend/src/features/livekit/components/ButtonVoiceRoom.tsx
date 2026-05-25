@@ -25,8 +25,8 @@ export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room',
     await connect(mode);
   };
 
-  const handleLeave = () => {
-    disconnect();
+  const handleLeave = async () => {
+    await disconnect();
   };
 
   useEffect(() => {
