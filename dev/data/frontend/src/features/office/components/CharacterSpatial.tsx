@@ -1,16 +1,21 @@
 /*
-	Character with basic audio configured
-	Will hear same audio volume regardless of distance between each other
+	Character with spatial audio configured
+	Spatial audio enable audio panning from left/right
+	when A is at left/right position of B
 */
 
 import { useFrame, useLoader } from '@react-three/fiber';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, RefObject } from 'react';
 import * as THREE from 'three';
 import { useSocket } from '@/features/socketio/useSocket';
 import { Player } from '@shared/types/user.types';
 
 interface CharacterProps extends Player {
 	isLocalPlayer: boolean;
+	isPlayerAudioReady: boolean;
+  listenerRef: RefObject<THREE.AudioListener>;
+	getPositionalAudio: (userId: string) => THREE.PositionalAudio;
+	connectStream: (userId: string) => void;
 }
 
 const fetchUserPhoto = async () => {
@@ -21,9 +26,10 @@ const fetchUserPhoto = async () => {
 }
 
 // 2D Circle Character Component + Movement handling
-export function CharacterBasic({ id, position, color="#D0F05C", isLocalPlayer, photo } : CharacterProps) {
-	const listenerRef = useRef<THREE.AudioListener>(new THREE.AudioListener());
+export function Character({ id, position, color="#D0F05C", photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio, connectStream } : CharacterProps) {
 	const characterRef = useRef<THREE.Mesh>(null);
+  const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
+
 	const { enableSocket, isConnected, socket, setLocalPlayerPos, localPlayerPos } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
 
@@ -58,6 +64,53 @@ export function CharacterBasic({ id, position, color="#D0F05C", isLocalPlayer, p
 	// 	texture = (useLoader(THREE.TextureLoader, "https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg") as THREE.Texture) 
 	// 	// setTexture(new_texture);
 	// }, [imageUrl])
+
+	// add listener to local player ONLY
+  useEffect(() => {
+		if (!isLocalPlayer || !characterRef.current || !listenerRef) return ;
+		characterRef.current.add(listenerRef.current);
+		console.log('✅ Listener attached to local player mesh');
+
+		return () => {
+			if (characterRef.current && listenerRef.current) {
+				characterRef.current.remove(listenerRef.current);
+				console.log('Listener removed from local player mesh');
+			}
+		};
+  }, [isLocalPlayer, listenerRef]);
+
+	// add positional audio to remote player ONLY
+  useEffect(() => {
+    if ( !characterRef.current || isLocalPlayer || !listenerRef || !positionalAudioRef || !isPlayerAudioReady ) return;
+		
+		characterRef.current.name = `player-${id}`;
+		console.log('[audio] characterRef:', characterRef.current);
+
+		// connectStream(id);
+		positionalAudioRef.current = getPositionalAudio(id);
+		characterRef.current.add(positionalAudioRef.current);
+
+		console.log("✅ Positional audio attached to remote player mesh ", id, " ", positionalAudioRef.current.position);
+		const worldPos = positionalAudioRef.current.getWorldPosition(new THREE.Vector3());
+		console.log('World position:', worldPos);
+
+		return () => {
+			if (listenerRef.current && characterRef.current && positionalAudioRef.current) {
+				console.error('Cleanup positional audio')
+				characterRef.current.remove(positionalAudioRef.current);
+				positionalAudioRef.current = null;
+			}
+		};
+	}, [isPlayerAudioReady])
+
+	// debug
+  // useFrame(() => {
+  //   if (positionalAudioRef.current) {
+  //     // This will automatically track character position because audio is parented to character
+  //     const worldPos = positionalAudioRef.current.getWorldPosition(new THREE.Vector3());
+  //     console.log('🎤 Audio following character:', worldPos);
+  //   }
+  // });
 
 	// Handle keyboard input
 	useEffect(() => {

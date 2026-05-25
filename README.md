@@ -21,6 +21,7 @@ Before running this project, ensure the following is installed:
 - [Comparison of database](https://medium.com/@peymaan.abedinpour/mariadb-vs-mysql-vs-postgresql-vs-sqlite-a-comprehensive-comparison-for-web-applications-0523cc3bc9d8)
 - [nginx websocket proxying](https://nginx.org/en/docs/http/websocket.html?_x_tr_sch=http)
 - [Realtime audio streaming with livekit](https://github.com/livekit/livekit)
+- [Fixing positionalAudio with webRTC](https://discourse.threejs.org/t/positionalaudio-setmediastreamsource-with-webrtc-question-not-hearing-any-sound/14301/40)
 
 ## Team Information
 | Team Member | Role |

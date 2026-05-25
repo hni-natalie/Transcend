@@ -8,18 +8,21 @@ import { IconMute, IconSpeak } from '@shared/ui/Icons';
 import { useSocket } from '@/features/socketio/useSocket';
 import { ButtonLoading } from "@/shared/ui/ButtonLoading";
 
-export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room', roomName='myroom', allowLeave=true } ) {
+type ButtonVoiceRoomProps = {
+  joinText?: string;
+  leaveText?: string;
+  roomName?: string;
+  allowLeave?: boolean;
+  mode?: "call" | "room";
+};
+
+export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room', roomName='myroom', allowLeave=true, mode="call" } : ButtonVoiceRoomProps) {
   const { connect, disconnect, isConnectedRoom, isLoading, isMuted, toggleMute, joinCount } = useLiveKit(roomName);
   const { enableSocket, isConnected, localPlayerId, socket } = useSocket();
   useEffect(() => { enableSocket(); }, []);
   
-  // debug
-  // useEffect(() => {
-  //   console.log('FE lk Connection status: ', isConnectedRoom);
-  // }, [isConnectedRoom]);
-
   const handleJoin = async () => {
-    connect("call");
+    await connect(mode);
   };
 
   const handleLeave = () => {

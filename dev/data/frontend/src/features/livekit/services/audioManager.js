@@ -1,5 +1,6 @@
 // utils/audioUtils.js
 import { LocalAudioTrack, Track } from 'livekit-client';
+import * as THREE from 'three';
 
 export class AudioManager {
   constructor() {
@@ -7,9 +8,18 @@ export class AudioManager {
     this.mediaStream = null;
     this.isMuted = false;
     this.localPublication = null;
-    // this.audioContext = null;
-    // this.sourceNode = null;
-    // this.gainNode = null;
+    this.listener = new THREE.AudioListener;
+  }
+
+  async resumeListener() {
+		if (this.listener.context.state === 'suspended') {
+			await this.listener.context.resume();
+			console.log("handleJoin: Audio listener status: ", this.listener.context.state);
+		}
+    else {
+      //debug
+	    console.error("handleJoin: Audio listener already running: ", this.listener.context.state);
+		}
   }
 
   // Initialize microphone and audio context

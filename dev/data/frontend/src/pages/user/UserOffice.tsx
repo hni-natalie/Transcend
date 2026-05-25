@@ -71,11 +71,11 @@ export function Office({ roomName } : SpaceProps ) {
 	/* ------------- general  ------------- */
 	const count = getDeptCount()
   const [error, setError] = useState<string>('');
-	const listenerRef = useRef<THREE.AudioListener>(new THREE.AudioListener());
+	const listenerRef = useRef<THREE.AudioListener | null>(null);
   const location = useLocation();
 	/* ------------- sockets  ------------- */
 	const { enableSocket, players, fetchRoomPlayers, roomPlayers, localPlayerId, isConnected, localPlayerPos } = useSocket();
-	const { connect, disconnect, isConnectedRoom } = useLiveKit(roomName);
+	const { connectStream, getAudioListener, getPositionalAudio, isPlayerAudioReady } = useLiveKit(roomName);
 
 	// run once on mount
   useEffect(() => { enableSocket(); }, []);
@@ -84,6 +84,11 @@ export function Office({ roomName } : SpaceProps ) {
 		const supported = isAudioSupported();
 		if (!supported) {
 			setError('Audio features are not supported in this browser');
+		}
+		// init local listener
+		if (!listenerRef.current) {
+			listenerRef.current = getAudioListener();
+			console.log('✅ Audio listener initialized');
 		}
 	}, []);
 
@@ -190,6 +195,7 @@ export function Office({ roomName } : SpaceProps ) {
           <ButtonVoiceRoom 
             roomName={roomName} 
             joinText={`Join ${roomName} Room`}
+						mode="room"
           />
         }
       />
@@ -227,6 +233,10 @@ export function Office({ roomName } : SpaceProps ) {
 						position={user.position}
 						photo={user.photo}
 						isLocalPlayer={user.id === localPlayerId}
+						isPlayerAudioReady={isPlayerAudioReady(user.id)}
+						getPositionalAudio={getPositionalAudio}
+						listenerRef={listenerRef}
+						connectStream={connectStream}
 					/>
 				)))}
 				

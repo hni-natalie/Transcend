@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { livekitService } from '@/features/livekit/services/livekitService';
 import { useSocket } from '@/features/socketio/useSocket';
+import * as THREE from 'three'; //debug
 
 
 // export function useLiveKit( roomName:string , participantName:string ) {
@@ -18,6 +19,7 @@ export function useLiveKit( roomName:string ) {
 
   const [joinCount, setJoinCount] = useState<number>(0);
   const [isLoading, setisLoading] = useState<boolean>(false);
+  const [readyStreams, setReadyStreams] = useState<Set<string>>(new Set());
 
   
   // Set up handlers when hook mounts
@@ -30,13 +32,33 @@ export function useLiveKit( roomName:string ) {
       setActivePlane(null);
       setIsConnectedRoom(false);
     };
+    const handleSubscribed = ({ id }) => {
+      console.log("audio-track-subscribed!");
+      setReadyStreams(prev => {
+        const newSet = new Set(prev);
+        newSet.add(id);
+        return newSet;
+      });
+    };
+    const handleUnsubscribed = ({ id }) => {
+      console.log("audio-track-unsubscribed!");
+      setReadyStreams(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+    };
     
     livekitService.on('connected', handleConnected);
     livekitService.on('disconnected', handleDisconnected);
-    
+    livekitService.on('audio-track-subscribed', handleSubscribed);
+    livekitService.on('audio-track-unsubscribed', handleUnsubscribed);
+
     return () => {
       livekitService.off('connected', handleConnected);
       livekitService.off('disconnected', handleDisconnected);
+      livekitService.off('audio-track-subscribed', handleSubscribed);
+      livekitService.off('audio-track-unsubscribed', handleUnsubscribed);
     };
   }, []);
 
@@ -44,7 +66,7 @@ export function useLiveKit( roomName:string ) {
     calls socket.emit join-room to backend, backend creates room token
     then route back to connectToRoom in livekitService, create Room() in frontend
   */
-  const connect = ( mode: "room" | "call" ) => {
+const connect = async ( mode: "room" | "call" ) => {
 
     const onSuccess = (event: any) => {
       console.log('Connection complete!', event.detail);
@@ -60,13 +82,14 @@ export function useLiveKit( roomName:string ) {
 
     setisLoading(true)
     livekitService.init(mode); // init once only
+    await livekitService.audioManager.resumeListener(); // .resume onClick
 
-    // either here or in init:
-    // do .resume
-    // do .play !! ###
+    // await livekitService.setupRoomAudio(-1); //.resume & .play here
+
     window.addEventListener('livekit-connect-success', onSuccess);
     window.addEventListener('livekit-connect-error', onError);
 
+    // below may be added into onSuccess instead
     joinRoom(roomName);
     setIsMuted(livekitService.audioManager.getMuteState());
   };
@@ -81,7 +104,57 @@ export function useLiveKit( roomName:string ) {
     setIsMuted(status)
   }
 
-  return { connect, disconnect, isConnectedRoom, isMuted, toggleMute, isLoading, joinCount, activePlane, setActivePlane };
+  const isPlayerAudioReady = ( playerId:string ): boolean => {
+    return (readyStreams.has(playerId));
+  }
+  const getAudioListener = () => {
+    return livekitService.audioManager.listener;
+  }
+  const getPositionalAudio = ( userId:string ) => {
+    const positionalAudio = livekitService.positionalAudios.get(userId);
+    if (positionalAudio instanceof THREE.PositionalAudio) {
+      console.log('useLiveKit: Valid PositionalAudio! ', userId);
+    }
+    else {
+      console.error('useLiveKit: Invalid PositionalAudio ', userId);
+    }
+    return livekitService.positionalAudios.get(userId);
+  }
+  const getMediaStream = ( userId:string ) => {
+    const mediaStream = livekitService.mediaStreams.get(userId);
+    if (mediaStream instanceof MediaStream) {
+      console.log('useLiveKit: Valid MediaStream! ', userId);
+    }
+    else {
+      console.error('useLiveKit: Invalid media stream ', userId);
+    }
+    return livekitService.mediaStreams.get(userId);
+  }
+  const connectStream = ( userId:string ) =>  {
+    const positionalAudio = livekitService.positionalAudios.get(userId);
+    const mediaStream = livekitService.mediaStreams.get(userId);
+    if (!positionalAudio || !mediaStream) return;
+
+    const ctx = livekitService.audioManager.listener.context;
+    const sourceNode = ctx.createMediaStreamSource(mediaStream);
+    livekitService.sourceNodes.set(userId, sourceNode);
+    // sourceNode.connect(positionalAudio.panner);
+    // positionalAudio.gain.gain.setValueAtTime(1, ctx.currentTime);
+      positionalAudio.isPlaying = true;
+      positionalAudio.setVolume(1);
+      positionalAudio.setMediaStreamSource(sourceNode);
+    console.log('[audio] stream connected, parent:', positionalAudio.parent?.name ?? 'NOO PARENT — not in scene graph');
+    console.log('[audio] parent object:', positionalAudio.parent);
+    console.log('[audio] parent type:', positionalAudio.parent?.type);
+    console.log('[audio] world position:', positionalAudio.getWorldPosition(new THREE.Vector3()));
+  }
+
+  return { connect, disconnect, isConnectedRoom,
+          isMuted, toggleMute, isLoading, joinCount, 
+          activePlane, setActivePlane,
+          isPlayerAudioReady, connectStream,
+          getMediaStream, getPositionalAudio, getAudioListener
+        };
 }
 
 /*
