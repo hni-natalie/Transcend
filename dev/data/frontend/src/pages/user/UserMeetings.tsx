@@ -96,7 +96,7 @@ export const Meetings = () => {
   }, [user]);
 
   // ======================
-  // TOGGLE PIN (IMPORTANT CHANGE)
+  // TOGGLE PIN
   // ======================
   const handleTogglePin = async (id: string) => {
     try {
@@ -109,7 +109,6 @@ export const Meetings = () => {
 
       const newPinned = res.data.pinned;
 
-      // update ALL lists using backend truth
       setMeetings(prev =>
         prev.map(m =>
           m.id === id ? { ...m, pinned: newPinned } : m
@@ -127,19 +126,29 @@ export const Meetings = () => {
   };
 
   // ======================
-  // GROUPING
+  // GROUPING (FIXED - NO OVERLAP)
   // ======================
   const grouped = useMemo(() => {
-    const now = new Date();
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
 
     return {
       today: meetings.filter(
-        m => new Date(m.meetStart).toDateString() === now.toDateString()
+        m =>
+          new Date(m.meetStart) >= startOfToday &&
+          new Date(m.meetStart) <= endOfToday
       ),
 
-      upcoming: meetings.filter(m => new Date(m.meetStart) > now),
+      upcoming: meetings.filter(
+        m => new Date(m.meetStart) > endOfToday
+      ),
 
-      past: meetings.filter(m => new Date(m.meetStart) < now),
+      past: meetings.filter(
+        m => new Date(m.meetStart) < startOfToday
+      ),
 
       mine: myMeetings,
     };
@@ -161,10 +170,33 @@ export const Meetings = () => {
       />
 
       <div className="grid grid-cols-4 gap-3 p-4">
-        <MeetingColumn label="Today" action="join" meetings={grouped.today} onTogglePin={handleTogglePin} />
-        <MeetingColumn label="Upcoming" action="join" meetings={grouped.upcoming} onTogglePin={handleTogglePin} />
-        <MeetingColumn label="Past" action="transcript" meetings={grouped.past} onTogglePin={handleTogglePin} />
-        <MeetingColumn label="My Meetings" action="manage" meetings={grouped.mine} onTogglePin={handleTogglePin} />
+        <MeetingColumn
+          label="Today"
+          action="join"
+          meetings={grouped.today}
+          onTogglePin={handleTogglePin}
+        />
+
+        <MeetingColumn
+          label="Upcoming"
+          action="join"
+          meetings={grouped.upcoming}
+          onTogglePin={handleTogglePin}
+        />
+
+        <MeetingColumn
+          label="Past"
+          action="transcript"
+          meetings={grouped.past}
+          onTogglePin={handleTogglePin}
+        />
+
+        <MeetingColumn
+          label="My Meetings"
+          action="manage"
+          meetings={grouped.mine}
+          onTogglePin={handleTogglePin}
+        />
       </div>
     </>
   );
