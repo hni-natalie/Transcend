@@ -21,8 +21,10 @@ type Props = {
   label: string;
   meetings: Meeting[];
   action: 'join' | 'transcript' | 'manage';
+
   onTogglePin?: (id: string) => void;
-  onViewMore?: (id: string) => void; // 👈 add this
+  onViewMore?: (id: string) => void;
+  onDelete?: (id: string) => void;
 };
 
 // truncate helper
@@ -38,6 +40,7 @@ export const MeetingColumn = ({
   action,
   onTogglePin,
   onViewMore,
+  onDelete,
 }: Props) => {
   const sortedMeetings = useMemo(() => {
     return [...meetings].sort(
@@ -114,7 +117,7 @@ export const MeetingColumn = ({
               </div>
             </div>
 
-            {/* View More (ABOVE ACTION BUTTONS) */}
+            {/* View More */}
             <button
               onClick={() => onViewMore?.(meeting.id)}
               className="text-xs text-accent-lime font-medium mb-2 hover:underline"
@@ -136,10 +139,15 @@ export const MeetingColumn = ({
                 <button className="flex-1 bg-accent-lime text-surface-primary text-xs font-semibold py-1.5 rounded-lg">
                   Start
                 </button>
+
                 <button className="flex-1 border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg">
                   Edit
                 </button>
-                <button className="flex-1 border border-red-500 text-red-400 text-xs font-semibold py-1.5 rounded-lg">
+
+                <button
+                  onClick={() => onDelete?.(meeting.id)}
+                  className="flex-1 border border-red-500 text-red-400 text-xs font-semibold py-1.5 rounded-lg hover:bg-red-500/10"
+                >
                   Delete
                 </button>
               </div>

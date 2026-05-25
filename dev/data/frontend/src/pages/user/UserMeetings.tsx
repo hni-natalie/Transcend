@@ -5,199 +5,255 @@ import { meetingApi } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
 
 type Meeting = {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  duration: string;
-  participants: number;
-  pinned: boolean;
-  meetStart: string;
-  meetEnd: string;
+	id: string;
+	title: string;
+	description: string;
+	date: string;
+	time: string;
+	duration: string;
+	participants: number;
+	pinned: boolean;
+	meetStart: string;
+	meetEnd: string;
+	createdAt: string;
 };
 
 type ApiMeeting = {
-  meetId: string;
-  meetTitle: string;
-  meetDesc?: string;
-  meetStart: string;
-  meetEnd: string;
-
-  pinned: boolean;
-
-  participants?: any[];
-  _count?: {
-    participants: number;
-  };
+	meetId: string;
+	meetTitle: string;
+	meetDesc?: string;
+	meetStart: string;
+	meetEnd: string;
+	pinned: boolean;
+	createdAt: string;
+	_count?: {
+		participants: number;
+	};
+	participants?: any[];
 };
 
+// ======================
+// UTILS
+// ======================
 const getDuration = (start: string, end: string) => {
-  const diff = new Date(end).getTime() - new Date(start).getTime();
-  const mins = Math.round(diff / 60000);
+	const diff = new Date(end).getTime() - new Date(start).getTime();
+	const mins = Math.round(diff / 60000);
 
-  if (mins < 60) return `${mins} min`;
+	if (mins < 60) return `${mins} min`;
 
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
+	const h = Math.floor(mins / 60);
+	const m = mins % 60;
 
-  return m ? `${h}h ${m}m` : `${h}h`;
+	return m ? `${h}h ${m}m` : `${h}h`;
 };
 
 const mapMeeting = (m: ApiMeeting): Meeting => ({
-  id: m.meetId,
-  title: m.meetTitle,
-  description: m.meetDesc ?? '',
-  date: new Date(m.meetStart).toLocaleDateString(),
-  time: new Date(m.meetStart).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  }),
-  duration: getDuration(m.meetStart, m.meetEnd),
-  participants: m._count?.participants ?? m.participants?.length ?? 0,
-  pinned: m.pinned,
-  meetStart: m.meetStart,
-  meetEnd: m.meetEnd,
+	id: m.meetId,
+	title: m.meetTitle,
+	description: m.meetDesc ?? '',
+	date: new Date(m.meetStart).toLocaleDateString(),
+	time: new Date(m.meetStart).toLocaleTimeString([], {
+	hour: '2-digit',
+	minute: '2-digit',
+}),
+	duration: getDuration(m.meetStart, m.meetEnd),
+	participants: m._count?.participants ?? m.participants?.length ?? 0,
+	pinned: m.pinned,
+	meetStart: m.meetStart,
+	meetEnd: m.meetEnd,
+	createdAt: m.createdAt,
 });
 
+// ======================
+// COMPONENT
+// ======================
 export const Meetings = () => {
-  const { user } = useAuth();
+	const { user } = useAuth();
 
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [myMeetings, setMyMeetings] = useState<Meeting[]>([]);
+	const [meetings, setMeetings] = useState<Meeting[]>([]);
+	const [myMeetings, setMyMeetings] = useState<Meeting[]>([]);
+	const [message, setMessage] = useState<string | null>(null);
 
-  // ======================
-  // FETCH
-  // ======================
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = (await meetingApi.getAllMeetings()) as {
-          success: boolean;
-          data: ApiMeeting[];
-        };
+	// ======================
+	// FETCH
+	// ======================
+	useEffect(() => {
+		const load = async () => {
+			try {
+				const res = (await meetingApi.getAllMeetings()) as {
+					success: boolean;
+					data: ApiMeeting[];
+				};
 
-        setMeetings(res.data.map(mapMeeting));
+				setMeetings(res.data.map(mapMeeting));
 
-        if (user?.userId) {
-          const myRes = (await meetingApi.getMyMeetings(user.userId)) as {
-            success: boolean;
-            data: ApiMeeting[];
-          };
+				if (user?.userId) {
+					const myRes = (await meetingApi.getMyMeetings(user.userId)) as {
+					success: boolean;
+					data: ApiMeeting[];
+					};
 
-          setMyMeetings(myRes.data.map(mapMeeting));
-        }
-      } catch (err) {
-        console.error('Failed to load meetings:', err);
-      }
-    };
+					setMyMeetings(myRes.data.map(mapMeeting));
+				}
+			} catch (err) {
+				console.error('Failed to load meetings:', err);
+			}
+		};
 
-    load();
-  }, [user]);
+		load();
+	}, [user]);
 
-  // ======================
-  // TOGGLE PIN
-  // ======================
-  const handleTogglePin = async (id: string) => {
-    try {
-      const res = (await meetingApi.toggleMeetingPin(id)) as {
-        success: boolean;
-        data: {
-          pinned: boolean;
-        };
-      };
+	// ======================
+	// PIN TOGGLE
+	// ======================
+	const handleTogglePin = async (id: string) => {
+		try {
+			const res = (await meetingApi.toggleMeetingPin(id)) as {
+			success: boolean;
+			data: { pinned: boolean };
+			};
 
-      const newPinned = res.data.pinned;
+			const newPinned = res.data.pinned;
 
-      setMeetings(prev =>
-        prev.map(m =>
-          m.id === id ? { ...m, pinned: newPinned } : m
-        )
-      );
+			setMeetings(prev =>
+			prev.map(m =>
+				m.id === id ? { ...m, pinned: newPinned } : m
+			));
 
-      setMyMeetings(prev =>
-        prev.map(m =>
-          m.id === id ? { ...m, pinned: newPinned } : m
-        )
-      );
-    } catch (err) {
-      console.error('Failed to toggle pin:', err);
-    }
-  };
+			setMyMeetings(prev =>
+			prev.map(m =>
+				m.id === id ? { ...m, pinned: newPinned } : m
+			));
+		} catch (err) {
+			console.error('Failed to toggle pin:', err);
+		}
+	};
 
-  // ======================
-  // GROUPING (FIXED - NO OVERLAP)
-  // ======================
-  const grouped = useMemo(() => {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+	// ======================
+	// DELETE MEETING
+	// ======================
+	const handleDeleteMeeting = async (id: string) => {
+		const confirmed = window.confirm(
+			'Delete this meeting? This cannot be undone.'
+		);
 
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
+		if (!confirmed) return;
 
-    return {
-      today: meetings.filter(
-        m =>
-          new Date(m.meetStart) >= startOfToday &&
-          new Date(m.meetStart) <= endOfToday
-      ),
+		try {
+			await meetingApi.deleteMeeting(id);
 
-      upcoming: meetings.filter(
-        m => new Date(m.meetStart) > endOfToday
-      ),
+			setMeetings(prev => prev.filter(m => m.id !== id));
+			setMyMeetings(prev => prev.filter(m => m.id !== id));
 
-      past: meetings.filter(
-        m => new Date(m.meetStart) < startOfToday
-      ),
+			setMessage('Meeting deleted successfully');
 
-      mine: myMeetings,
-    };
-  }, [meetings, myMeetings]);
+			setTimeout(() => setMessage(null), 2000);
+		} catch (err) {
+			console.error('Failed to delete meeting:', err);
+		}
+	};
 
-  // ======================
-  // UI
-  // ======================
-  return (
-    <>
-      <PageHeader
-        icon={<IconMeetings className="w-7 h-7" />}
-        title="Meetings"
-        action={
-          <button className="bg-accent-lime-bg text-accent-lime border border-accent-lime px-4 py-1.5 rounded-lg font-bold text-xs tracking-wider hover:opacity-90 transition-opacity">
-            + Schedule Meeting
-          </button>
-        }
-      />
+	// ======================
+	// GROUPING (NO OVERLAP)
+	// ======================
+	const grouped = useMemo(() => {
+	const startOfToday = new Date();
+	startOfToday.setHours(0, 0, 0, 0);
 
-      <div className="grid grid-cols-4 gap-3 p-4">
-        <MeetingColumn
-          label="Today"
-          action="join"
-          meetings={grouped.today}
-          onTogglePin={handleTogglePin}
-        />
+	const endOfToday = new Date();
+	endOfToday.setHours(23, 59, 59, 999);
 
-        <MeetingColumn
-          label="Upcoming"
-          action="join"
-          meetings={grouped.upcoming}
-          onTogglePin={handleTogglePin}
-        />
+	const today = meetings.filter(
+		m =>
+		new Date(m.meetStart) >= startOfToday &&
+		new Date(m.meetStart) <= endOfToday
+	);
 
-        <MeetingColumn
-          label="Past"
-          action="transcript"
-          meetings={grouped.past}
-          onTogglePin={handleTogglePin}
-        />
+	const upcoming = meetings
+	.filter(m => new Date(m.meetStart) > endOfToday)
+	.sort(
+	(a, b) =>
+		new Date(a.meetStart).getTime() -
+		new Date(b.meetStart).getTime()
+	);
 
-        <MeetingColumn
-          label="My Meetings"
-          action="manage"
-          meetings={grouped.mine}
-          onTogglePin={handleTogglePin}
-        />
-      </div>
-    </>
-  );
+	const past = meetings
+	.filter(m => new Date(m.meetStart) < startOfToday)
+	.sort(
+	(a, b) =>
+		new Date(b.meetStart).getTime() -
+		new Date(a.meetStart).getTime()
+	);
+
+	const mine = [...myMeetings].sort(
+		(a, b) =>
+		new Date(b.createdAt).getTime() -
+		new Date(a.createdAt).getTime()
+	);
+
+	return {
+	today,
+	upcoming,
+	past,
+	mine,
+	};
+	}, [meetings, myMeetings]);
+
+	// ======================
+	// UI
+	// ======================
+	return (
+	<>
+	<PageHeader
+	icon={<IconMeetings className="w-7 h-7" />}
+	title="Meetings"
+	action={
+		<button className="bg-accent-lime-bg text-accent-lime border border-accent-lime px-4 py-1.5 rounded-lg font-bold text-xs tracking-wider hover:opacity-90 transition-opacity">
+		+ Schedule Meeting
+		</button>
+	}
+	/>
+
+	{/* ✅ SUCCESS MESSAGE */}
+	{message && (
+	<div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-green-100 text-green-700 text-sm font-medium">
+		{message}
+	</div>
+	)}
+
+	<div className="grid grid-cols-4 gap-3 p-4">
+	<MeetingColumn
+		label="Today"
+		action="join"
+		meetings={grouped.today}
+		onTogglePin={handleTogglePin}
+		onDelete={handleDeleteMeeting}
+	/>
+
+	<MeetingColumn
+		label="Upcoming"
+		action="join"
+		meetings={grouped.upcoming}
+		onTogglePin={handleTogglePin}
+		onDelete={handleDeleteMeeting}
+	/>
+
+	<MeetingColumn
+		label="Past"
+		action="transcript"
+		meetings={grouped.past}
+		onTogglePin={handleTogglePin}
+		onDelete={handleDeleteMeeting}
+	/>
+
+	<MeetingColumn
+		label="My Meetings"
+		action="manage"
+		meetings={grouped.mine}
+		onTogglePin={handleTogglePin}
+		onDelete={handleDeleteMeeting}
+	/>
+	</div>
+	</>
+	);
 };
