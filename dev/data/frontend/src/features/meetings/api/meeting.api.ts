@@ -79,6 +79,7 @@ export const meetingApi = {
   // =====================
 
   toggleMeetingPin(meetId: string) {
-    return apiClient.patch(`${base}/${meetId}/pin`);
+    return apiClient.patch(`${base}/pin/${meetId}`);
   },
+
 };

@@ -3,7 +3,9 @@ const meetingService = require('../services/meeting.service');
 const meetingController = {
     async getAllMeetings(req, res) {
         try {
-            const meetings = await meetingService.getAllMeetings();
+            const userId = req.user.userId;
+            
+            const meetings = await meetingService.getAllMeetings(userId);
             return res.status(200).json({ success: true, data: meetings });
         } catch (error) {
             return res.status(500).json({ success: false, message: error.message });
@@ -188,10 +190,11 @@ const meetingController = {
     async toggleMeetingPin(req, res) {
         try {
             const { meetId } = req.params;
+            const userId = req.user.userId;
 
-            const updated = await meetingService.togglePin( meetId );
+            const updated = await meetingService.togglePin( meetId, userId );
 
-            return res.status(200).json(updated);
+            return res.status(200).json({ success: true, data: updated });
         } catch (err) {
             return res.status(400).json({
                 message: err.message
@@ -199,6 +202,17 @@ const meetingController = {
         }
     },
 
+    async getAllMeetingPin(req, res) {
+        try {
+            const result = await meetingService.getAllMeetingPin();
+
+            return res.status(200).json({ success: true, data: result });
+        } catch (err) {
+            return res.status(400).json({
+                message: err.message
+            });
+        }
+    }
 };
 
 module.exports = meetingController; 

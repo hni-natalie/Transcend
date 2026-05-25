@@ -113,6 +113,7 @@ model User {
   assignedTasks         TaskAssignment[]
 
   meetingParticipations MeetingParticipant[]
+  pinnedMeetings        MeetingPin[]
 }
 
 // WORKSPACES
@@ -209,8 +210,6 @@ model Meeting {
   meetStart       DateTime
   meetEnd         DateTime
 
-  isPinned        Boolean @default(false)
-
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -219,6 +218,7 @@ model Meeting {
   createdBy       User      @relation("MeetingCreatedBy", fields: [createdByUserId], references: [userId])
 
   participants    MeetingParticipant[]
+  pinnedBy        MeetingPin[]
 }
 
 model MeetingParticipant {
@@ -236,6 +236,20 @@ model MeetingParticipant {
   @@index([meetId, role])
   @@index([meetId])
   @@index([userId])
+}
+
+model MeetingPin {
+  pinId      String   @id @default(uuid())
+
+  userId     String
+  meetId     String
+
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  meeting    Meeting  @relation(fields: [meetId], references: [meetId], onDelete: Cascade)
+
+  @@unique([userId, meetId])
 }
 
 model Document {

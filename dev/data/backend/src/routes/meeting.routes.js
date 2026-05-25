@@ -6,17 +6,19 @@ const meetingController = require('../controllers/meeting.controller');
 router.use(authMiddleware);
 
 router.get('/', meetingController.getAllMeetings);
-router.get('/:meetingId', meetingController.getMeetingById);
-router.get('/organiser/:userId', meetingController.getMeetingByUserId);
+router.get('/user/:userId', meetingController.getMeetingByUserId);
 router.get('/participant/:userId', meetingController.getMeetingByParticipantId);
+router.get('/pin', meetingController.getAllMeetingPin);
+router.get('/:meetingId', meetingController.getMeetingById);
+
+router.patch('/pin/:meetId', meetingController.toggleMeetingPin);
 
 router.post('/', meetingController.createMeeting);
 
 router.put('/', meetingController.updateMeeting);
 router.put('/participant', meetingController.updateParticipant);
 
-router.delete('/:meetId', meetingController.deleteMeeting);
 router.delete('/participant', meetingController.removeParticipant);
-router.patch('/:meetId/pin', meetingController.toggleMeetingPin);
+router.delete('/:meetId', meetingController.deleteMeeting);
 
 module.exports = router;

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, IconMeetings } from '@shared';
 import { MeetingColumn } from '@features/meetings';
 import { meetingApi } from '@features/meetings';
+import { useAuth } from '@/features/auth/AuthContext';
 
 type Meeting = {
   id: string;
@@ -22,9 +23,13 @@ type ApiMeeting = {
   meetDesc?: string;
   meetStart: string;
   meetEnd: string;
-  isPinned: boolean;
+
+  pinned: boolean;
+
   participants?: any[];
-  _count?: { participants: number };
+  _count?: {
+    participants: number;
+  };
 };
 
 const getDuration = (start: string, end: string) => {
@@ -39,51 +44,81 @@ const getDuration = (start: string, end: string) => {
   return m ? `${h}h ${m}m` : `${h}h`;
 };
 
+const mapMeeting = (m: ApiMeeting): Meeting => ({
+  id: m.meetId,
+  title: m.meetTitle,
+  description: m.meetDesc ?? '',
+  date: new Date(m.meetStart).toLocaleDateString(),
+  time: new Date(m.meetStart).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  }),
+  duration: getDuration(m.meetStart, m.meetEnd),
+  participants: m._count?.participants ?? m.participants?.length ?? 0,
+  pinned: m.pinned,
+  meetStart: m.meetStart,
+  meetEnd: m.meetEnd,
+});
+
 export const Meetings = () => {
+  const { user } = useAuth();
+
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [myMeetings, setMyMeetings] = useState<Meeting[]>([]);
 
   // ======================
-  // FETCH MEETINGS
+  // FETCH
   // ======================
   useEffect(() => {
     const load = async () => {
-      const res = await meetingApi.getAllMeetings() as {
-        success: boolean;
-        data: ApiMeeting[];
-      };
+      try {
+        const res = (await meetingApi.getAllMeetings()) as {
+          success: boolean;
+          data: ApiMeeting[];
+        };
 
-      const mapped: Meeting[] = res.data.map((m) => ({
-        id: m.meetId,
-        title: m.meetTitle,
-        description: m.meetDesc ?? '',
-        date: new Date(m.meetStart).toLocaleDateString(),
-        time: new Date(m.meetStart).toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-        duration: getDuration(m.meetStart, m.meetEnd),
-        participants: m._count?.participants ?? m.participants?.length ?? 0,
-        pinned: m.isPinned ?? false,
-        meetStart: m.meetStart,
-        meetEnd: m.meetEnd,
-      }));
+        setMeetings(res.data.map(mapMeeting));
 
-      setMeetings(mapped);
+        if (user?.userId) {
+          const myRes = (await meetingApi.getMyMeetings(user.userId)) as {
+            success: boolean;
+            data: ApiMeeting[];
+          };
+
+          setMyMeetings(myRes.data.map(mapMeeting));
+        }
+      } catch (err) {
+        console.error('Failed to load meetings:', err);
+      }
     };
 
     load();
-  }, []);
+  }, [user]);
 
   // ======================
-  // TOGGLE PIN
+  // TOGGLE PIN (IMPORTANT CHANGE)
   // ======================
   const handleTogglePin = async (id: string) => {
     try {
-      await meetingApi.toggleMeetingPin(id);
+      const res = (await meetingApi.toggleMeetingPin(id)) as {
+        success: boolean;
+        data: {
+          pinned: boolean;
+        };
+      };
 
+      const newPinned = res.data.pinned;
+
+      // update ALL lists using backend truth
       setMeetings(prev =>
         prev.map(m =>
-          m.id === id ? { ...m, pinned: !m.pinned } : m
+          m.id === id ? { ...m, pinned: newPinned } : m
+        )
+      );
+
+      setMyMeetings(prev =>
+        prev.map(m =>
+          m.id === id ? { ...m, pinned: newPinned } : m
         )
       );
     } catch (err) {
@@ -92,27 +127,23 @@ export const Meetings = () => {
   };
 
   // ======================
-  // GROUPING LOGIC
+  // GROUPING
   // ======================
   const grouped = useMemo(() => {
     const now = new Date();
 
     return {
-      today: meetings.filter(m =>
-        new Date(m.meetStart).toDateString() === now.toDateString()
+      today: meetings.filter(
+        m => new Date(m.meetStart).toDateString() === now.toDateString()
       ),
 
-      upcoming: meetings.filter(m =>
-        new Date(m.meetStart) > now
-      ),
+      upcoming: meetings.filter(m => new Date(m.meetStart) > now),
 
-      past: meetings.filter(m =>
-        new Date(m.meetStart) < now
-      ),
+      past: meetings.filter(m => new Date(m.meetStart) < now),
 
-      mine: meetings,
+      mine: myMeetings,
     };
-  }, [meetings]);
+  }, [meetings, myMeetings]);
 
   // ======================
   // UI
@@ -130,33 +161,10 @@ export const Meetings = () => {
       />
 
       <div className="grid grid-cols-4 gap-3 p-4">
-        <MeetingColumn
-          label="Today"
-          action="join"
-          meetings={grouped.today}
-          onTogglePin={handleTogglePin}
-        />
-
-        <MeetingColumn
-          label="Upcoming"
-          action="join"
-          meetings={grouped.upcoming}
-          onTogglePin={handleTogglePin}
-        />
-
-        <MeetingColumn
-          label="Past"
-          action="transcript"
-          meetings={grouped.past}
-          onTogglePin={handleTogglePin}
-        />
-
-        <MeetingColumn
-          label="My Meetings"
-          action="manage"
-          meetings={grouped.mine}
-          onTogglePin={handleTogglePin}
-        />
+        <MeetingColumn label="Today" action="join" meetings={grouped.today} onTogglePin={handleTogglePin} />
+        <MeetingColumn label="Upcoming" action="join" meetings={grouped.upcoming} onTogglePin={handleTogglePin} />
+        <MeetingColumn label="Past" action="transcript" meetings={grouped.past} onTogglePin={handleTogglePin} />
+        <MeetingColumn label="My Meetings" action="manage" meetings={grouped.mine} onTogglePin={handleTogglePin} />
       </div>
     </>
   );
