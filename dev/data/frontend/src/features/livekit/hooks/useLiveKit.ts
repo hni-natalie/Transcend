@@ -27,10 +27,18 @@ export function useLiveKit( roomName:string ) {
     const status = livekitService.getConnectionStatus();
     setIsConnectedRoom(status.isConnected);
     
-    const handleConnected = () => setIsConnectedRoom(true);
+    const handleConnected = (data) => {
+      console.log('Connected to room:', data.room);
+      setTimeout(() => {
+        setIsConnectedRoom(true);
+        setisLoading(false);
+      }, 3000)
+    };
     const handleDisconnected = () => {
-      setActivePlane(null);
-      setIsConnectedRoom(false);
+      setTimeout(() => {
+        setActivePlane(null);
+        setIsConnectedRoom(false);
+      }, 2000)
     };
     const handleSubscribed = ({ id }) => {
       // console.log("audio-track-subscribed!");
@@ -68,31 +76,31 @@ export function useLiveKit( roomName:string ) {
   */
 const connect = async ( mode: "room" | "call" ) => {
 
-    const onSuccess = (event: any) => {
-      console.log('Connection complete!', event.detail);
-      setJoinCount(prev => prev + 1); // debug
+    // const onSuccess = (event: any) => {
+    //   console.log('Connection complete!', event.detail);
+    //   setJoinCount(prev => prev + 1); // debug
 
-      setTimeout(() => {
-        setisLoading(false);
-      }, 2000); // 2 second delay
-      window.removeEventListener('livekit-connect-success', onSuccess);
-    };
+    //   // setTimeout(() => {
+    //     // setisLoading(false);
+    //   // }, 2000); // 2 second delay
+    //   window.removeEventListener('livekit-connect-success', onSuccess);
+    // };
     const onError = (event: any) => {
       console.error('Connection failed!', event.detail);
       setisLoading(false);
       window.removeEventListener('livekit-connect-error', onError);
     };
+    // window.addEventListener('livekit-connect-success', onSuccess);
+    window.addEventListener('livekit-connect-error', onError);
+
 
     setisLoading(true)
+    setIsMuted(livekitService.audioManager.getMuteState());
     livekitService.init(mode); // init once only
     await livekitService.audioManager.resumeListener(); // .resume onClick
 
-    window.addEventListener('livekit-connect-success', onSuccess);
-    window.addEventListener('livekit-connect-error', onError);
-
-    // below may be added into onSuccess instead
+    // below runs & return event listener success or error
     joinRoom(roomName);
-    setIsMuted(livekitService.audioManager.getMuteState());
   };
 
   const disconnect = async () => {

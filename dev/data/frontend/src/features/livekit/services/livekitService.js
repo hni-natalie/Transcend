@@ -31,14 +31,11 @@ class LiveKitService {
     // Listen for LiveKit connection events from useSocket
     window.addEventListener('livekit-connect', async (event) => {
       try {
-        // console.log('Hello from livekit-connect service');
+        // emits connected signal to useLiveKit
         await this.connectToRoom(event.detail, mode);
-
         console.log('livekit-connect: Successfully joined room');
-        window.dispatchEvent(new CustomEvent('livekit-connect-success', {
-          detail: { success: true }
-        }));
         this.isInitialized = true;
+
       } catch (error) {
         console.error('Failed to connect:', error);
         window.dispatchEvent(new CustomEvent('livekit-connect-error', {
@@ -70,6 +67,7 @@ class LiveKitService {
         audioElement.srcObject = mediaStream;
         audioElement.muted = true;  // Mute the element so it doesn't double-play
         audioElement.autoplay = true; // Start playback immediately
+        this.audioElements.set(key, audioElement);
 
         positionalAudio.setVolume(1);
         positionalAudio.isPlaying = true;
@@ -126,15 +124,6 @@ class LiveKitService {
     // }
     // --------------------------------------------------------
     await this.setupRoomAudio(remoteParticipants.identity, mediaStream);
-
-    // if (this.audioManager.listener.context.state === 'running') {
-    //   positionalAudio.play(); // ### this need to debug for chrome
-    //   console.log("✅ livekitService: positional audio started");
-    // }
-    // else {
-    //   console.error("livekitService: enable audio listener status to [running] before starting positional audio")
-    // }
-    // ----------------------------------------------------------------------------------
     this.emit('audio-track-subscribed', { id: remoteParticipants.identity });
 
     // debug
@@ -155,8 +144,18 @@ class LiveKitService {
     }
     const positionalAudio = this.positionalAudios.get(remoteParticipants.identity);
     if (positionalAudio) {
+      positionalAudio.isPlaying = false;
+      positionalAudio.disconnect();
+      // positionalAudio.parent.remove(positionalAudio);
+
       this.positionalAudios.delete(remoteParticipants.identity);
       console.log("Removed positional audio ", remoteParticipants.identity);
+    }
+    const audioElement = this.audioElements.get(remoteParticipants.identity);
+    if (audioElement) {
+      audioElement.remove();
+      this.audioElements.delete(remoteParticipants.identity);
+      console.log("Removed audio element ", remoteParticipants.identity);
     }
 
     this.emit('audio-track-unsubscribed', { id: remoteParticipants.identity });
@@ -175,7 +174,7 @@ class LiveKitService {
     const audioElement = this.audioElements.get(remoteParticipants.identity);
     if (audioElement) {
       audioElement.remove();
-      audioElements.delete(remoteParticipants.identity);
+      this.audioElements.delete(remoteParticipants.identity);
     }
     track.detach(); // Clean up audio elements
     // console.log('cleaning up audio ...')
@@ -212,7 +211,7 @@ class LiveKitService {
           }
         });
         
-        this.room.on(RoomEvent.TrackUnsubscribed, (track, remoteParticipants) => {
+        this.room.on(RoomEvent.TrackUnsubscribed, (track, publication, remoteParticipants) => {
           if (track.kind === Track.Kind.Audio) {
             if (mode === "call")
               this.handleLeaveCall(track, remoteParticipants);

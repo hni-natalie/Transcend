@@ -95,7 +95,7 @@ export function Character({ id, position, color="#D0F05C", photo, isLocalPlayer,
 
 		return () => {
 			if (listenerRef.current && characterRef.current && positionalAudioRef.current) {
-				console.error('Cleanup positional audio')
+				console.warn('Cleanup positional audio')
 				characterRef.current.remove(positionalAudioRef.current);
 				positionalAudioRef.current = null;
 			}

@@ -75,7 +75,6 @@ export class AudioManager {
       this.localPublication.track.stop();
       this.localPublication = null;
     }
-    
     this.isMuted = false;
   }
 }

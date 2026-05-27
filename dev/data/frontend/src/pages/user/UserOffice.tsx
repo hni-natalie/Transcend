@@ -75,10 +75,24 @@ export function Office({ roomName } : SpaceProps ) {
   const location = useLocation();
 	/* ------------- sockets  ------------- */
 	const { enableSocket, players, fetchRoomPlayers, roomPlayers, localPlayerId, isConnected, localPlayerPos } = useSocket();
-	const { getAudioListener, getPositionalAudio, isPlayerAudioReady } = useLiveKit(roomName);
+	const { disconnect, getAudioListener, getPositionalAudio, isPlayerAudioReady } = useLiveKit(roomName);
+
+	const handleUncaughtRejection = async ( event:PromiseRejectionEvent ) => {
+		if (event.reason?.name === 'NegotiationError' ||
+				event.reason?.message?.includes('Cannot set local offer')) {
+			console.warn('Negotiation error occurred, SDK will typically self-heal:', event.reason);
+			await disconnect();
+			window.location.reload();
+			// event.preventDefault(); // Prevents the "uncaught" console error
+		}
+	}
 
 	// run once on mount
   useEffect(() => { enableSocket(); }, []);
+  useEffect(() => {window.addEventListener('unhandledrejection', handleUncaughtRejection);
+    return () => { window.removeEventListener('unhandledrejection', handleUncaughtRejection); };
+  }, []);
+
 	useEffect(() => {
 		// Check browser audio support
 		const supported = isAudioSupported();

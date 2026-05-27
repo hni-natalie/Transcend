@@ -157,6 +157,7 @@ export function SocketProvider ({ children }) {
     Function to join a room
     emits to backend to create room token, then done
     backend will return token & details in signal room-joined
+    frontend then dispatch signal livekit-connect
   */
   const joinRoom = useCallback(( roomName:string ) => {
     if (socket && isConnected) {
