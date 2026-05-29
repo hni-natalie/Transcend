@@ -43,6 +43,7 @@ const taskService = {
 				taskTitle: true,
 				taskDesc: true,
 				taskStatus: true,
+				dueDate: true,
 				createdAt: true,
 				assignedTo: {
 					select: { taskPriority: true }

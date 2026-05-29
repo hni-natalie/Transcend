@@ -1,10 +1,10 @@
 export type Task = {
-	id: string;
+	taskId: string;
 	taskTitle: string;
 	taskPriority: 'low' | 'medium' | 'high';
 	taskDesc?: string;
 	taskStatus: 'not_started' | 'in_progress' | 'done';
-	workspaceId: string;
+	workSpaceId: string;
 	dueDate?: string;
 	createdAt: string;
 	updatedAt: string;

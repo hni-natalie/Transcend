@@ -17,7 +17,7 @@ export const taskApi = {
 		taskTitle: string;
 		taskPriority: 'low' | 'medium' | 'high';
 		taskDescription?: string;
-		workspaceId: string;
+		workSpaceId: string;
 	}) => {
 		return apiClient.post<Task>(API_URL, data);
 	},
@@ -26,7 +26,8 @@ export const taskApi = {
 		taskTitle?: string;
 		taskPriority?: 'low' | 'medium' | 'high';
 		taskDescription?: string;
-		workspaceId?: string;
+		taskStatus?: 'not_started' | 'in_progress' | 'done';
+		dueDate?: string;
 	}) => {
 		return apiClient.put<Task>(`${API_URL}/${taskId}`, data);
 	},
