@@ -1,12 +1,12 @@
 import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { PerspectiveCamera, OrbitControls } from '@react-three/drei';
+import { PerspectiveCamera, MapControls } from '@react-three/drei';
 import { useLocation } from 'react-router-dom';
 import { useSocket } from '@/features/socketio/useSocket';
-import { PageHeader, IconOffice, Player } from '@shared';;
+import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
-import { GenerateDept, Character } from '@features/office';
+import { GenerateDept, CameraTracking, Character } from '@features/office';
 
 // Sound component with depth-based volume
 // function SoundSource({ position, url, isPlaying = true }) {
@@ -62,12 +62,16 @@ function getDeptCount() {
 	return (count);
 }
 
+
 // Main Scene
 interface SpaceProps {
   roomName: string;
 }
 
 export function Office({ roomName } : SpaceProps ) {
+	/* ------------- threejs  ------------- */
+  const localPlayerRef = useRef<THREE.Mesh>(null);
+	const controlsRef = useRef<React.ElementRef<typeof MapControls>>(null);
 	/* ------------- general  ------------- */
 	const count = getDeptCount()
   const [error, setError] = useState<string>('');
@@ -106,6 +110,11 @@ export function Office({ roomName } : SpaceProps ) {
 		}
 	}, []);
 
+	useEffect(() => {
+		if (!isConnected) return ;
+		fetchRoomPlayers(roomName);
+	}, [isConnected])
+
 	// debug
 	// useEffect(() => {
 	// 	console.log('✅ roomPlayers CHANGED:', roomPlayers);
@@ -118,13 +127,11 @@ export function Office({ roomName } : SpaceProps ) {
 	// 	console.log('Length:', roomPlayers?.length);
 	// }, [roomPlayers]);  // This runs whenever roomPlayers updates
 
-	useEffect(() => {
-		if (!isConnected) return ;
-		fetchRoomPlayers(roomName);
-	}, [isConnected])
-
+	// for testing only
+	// should remove MenuSide & w-full when live
 	return (
 	// <div className='bg-background-1 h-screen flex gap-0.5'>
+	// <MenuSide />
 	<div className='flex flex-col h-full'>
       {/* Page Header */}
       <PageHeader 
@@ -150,6 +157,19 @@ export function Office({ roomName } : SpaceProps ) {
 					near={0.1}
 					far={100}
 				/>
+				<MapControls
+					ref={controlsRef}
+					enableZoom={true}
+					zoomSpeed={0.5}
+					panSpeed={0.5}
+					minDistance={10}
+					maxDistance={50}
+					minPolarAngle={0}  						// top down 90 deg
+					maxPolarAngle={Math.PI / 24} 	// slight slant, 30 deg tilt
+					minAzimuthAngle={0}						// min left rotation
+					maxAzimuthAngle={0}						// max right rotation
+				/>
+				<CameraTracking localPlayerRef={localPlayerRef} controlsRef={controlsRef} />
 
 				<ambientLight intensity={0.8} />
 				{/* <directionalLight position={[10, 5, 5]} /> */}
@@ -166,6 +186,7 @@ export function Office({ roomName } : SpaceProps ) {
 				{(roomPlayers.map(( user:Player ) => (
 					<Character
 						key={user.id}
+	          ref={user.id === localPlayerId ? localPlayerRef : null}
 						id={user.id}
 						color={user.color}
 						position={user.position}
@@ -187,5 +208,6 @@ export function Office({ roomName } : SpaceProps ) {
 		</div>
 
 	</div>
+	// </div>
 	);
 }

@@ -60,8 +60,11 @@ export function GenerateDept({ count=5, padding=3, characterPos, room } : Genera
   });
 
   // Get canvas dimensions in world units
-  const canvasWidth = viewport.width;
-  const canvasHeight = viewport.height;
+  // const canvasWidth = viewport.width;
+  // const canvasHeight = viewport.height;
+  // console.log("canvas w: ", canvasWidth, " , canvas h: ", canvasHeight);
+  const canvasWidth = 50;
+  const canvasHeight = 50;
 
   // Calculate plane dimensions based on canvas size and count
   const planes = useMemo(() => {
@@ -100,7 +103,7 @@ export function GenerateDept({ count=5, padding=3, characterPos, room } : Genera
           <mesh
             key={i}
           	ref={setPlaneRef(i)}
-            position={[x, 0, z]}
+            position={[x, -0.5, z]}
             rotation={[-Math.PI / 2, 0, 0]}
             userData={{ index: i }}
           >

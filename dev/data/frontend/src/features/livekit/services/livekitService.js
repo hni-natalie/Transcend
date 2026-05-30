@@ -56,9 +56,9 @@ class LiveKitService {
       console.error('AudioContext not running ', key);
 
     const positionalAudio = new THREE.PositionalAudio(this.audioManager.listener); // add local listener to positional audio
-    positionalAudio.setRefDistance(2);     // Reference distance for volume falloff
-    positionalAudio.setMaxDistance(4);     // Max audible distance
-    positionalAudio.setRolloffFactor(8); // How quickly volume decreases
+    positionalAudio.setRefDistance(2);        // Volume starts decrease after this distance
+    // positionalAudio.setMaxDistance(4);     // Max audible distance
+    positionalAudio.setRolloffFactor(8);      // How quickly volume decreases
     positionalAudio.setDistanceModel('inverse'); // More natural distance falloff
 
     if (mediaStream) {

@@ -5,7 +5,7 @@
 */
 
 import { useFrame, useLoader } from '@react-three/fiber';
-import { useRef, useState, useEffect, RefObject } from 'react';
+import React, { useRef, useState, useEffect, RefObject } from 'react';
 import * as THREE from 'three';
 import { useSocket } from '@/features/socketio/useSocket';
 import { Player } from '@shared/types/user.types';
@@ -25,7 +25,11 @@ const fetchUserPhoto = async () => {
 }
 
 // 2D Circle Character Component + Movement handling
-export function Character({ id, position, color="#D0F05C", photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps) {
+// export function Character(
+export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
+	{ id, position, color="#D0F05C", photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps,
+	ref) => 
+		{
 	const characterRef = useRef<THREE.Mesh>(null);
   const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
 
@@ -63,6 +67,17 @@ export function Character({ id, position, color="#D0F05C", photo, isLocalPlayer,
 	// 	texture = (useLoader(THREE.TextureLoader, "https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg") as THREE.Texture) 
 	// 	// setTexture(new_texture);
 	// }, [imageUrl])
+
+  // Handle ref forwarding for tracking camera
+  useEffect(() => {
+    if (ref && characterRef.current) {
+      if (typeof ref === 'function') {
+        ref(characterRef.current);
+      } else {
+        ref.current = characterRef.current;
+      }
+    }
+  }, [ref]);
 
 	// add listener to local player ONLY
   useEffect(() => {
@@ -174,7 +189,7 @@ export function Character({ id, position, color="#D0F05C", photo, isLocalPlayer,
 	return (
 		// we need rotation as plane default pos = facing z pos
 		<mesh ref={characterRef} position={[position.x, position.y, position.z]} rotation={[-Math.PI / 2, 0, 0]} >
-			<circleGeometry args={[0.8, 24]} />
+			<circleGeometry args={[1, 24]} />
 			{texture ? (
 			<meshStandardMaterial map={texture} color="#FFFFFF" side={THREE.DoubleSide} />
 			) : (
@@ -182,4 +197,4 @@ export function Character({ id, position, color="#D0F05C", photo, isLocalPlayer,
 			)}
 		</mesh>
 	);
-}
+})
