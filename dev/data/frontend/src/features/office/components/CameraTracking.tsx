@@ -33,12 +33,12 @@ export const CameraTracking = ({ localPlayerRef, controlsRef }) => {
 
   // Track key presses
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = ( e:KeyboardEvent ) => {
       if (!isModifierKey(e.code)) {
         isKeyPressed.current = true
       }
     }
-    const handleKeyUp = (e) => {
+    const handleKeyUp = ( e:KeyboardEvent ) => {
       if (!isModifierKey(e.code)) {
         isKeyPressed.current = false
       }
@@ -61,7 +61,7 @@ export const CameraTracking = ({ localPlayerRef, controlsRef }) => {
         controlsRef.current.target.y,
         localPlayerRef.current.position.z
       );
-	    controlsRef.current.update(); // Force update
+	    controlsRef.current.update();
     }
   });
   return null;

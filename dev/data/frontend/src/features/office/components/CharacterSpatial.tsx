@@ -5,6 +5,7 @@
 */
 
 import { useFrame, useLoader } from '@react-three/fiber';
+import { Text } from '@react-three/drei';
 import React, { useRef, useState, useEffect, RefObject } from 'react';
 import * as THREE from 'three';
 import { useSocket } from '@/features/socketio/useSocket';
@@ -24,14 +25,21 @@ const fetchUserPhoto = async () => {
 	return ('https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg');
 }
 
+const calculateTextWidth = ( text:string, fontSize=0.6 ) => {
+  // Approximate: average character width is about 0.6 * fontSize
+  const avgCharWidth = fontSize * 0.6;
+  return text.length * avgCharWidth;
+};
+
 // 2D Circle Character Component + Movement handling
 // export function Character(
 export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 	{ id, position, color="#D0F05C", photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps,
-	ref) => 
-		{
+	ref) => {
+
 	const characterRef = useRef<THREE.Mesh>(null);
   const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
+	const [hovered, setHovered] = useState(false);
 
 	const { enableSocket, isConnected, socket, setLocalPlayerPos, localPlayerPos } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
@@ -43,22 +51,6 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 	const speed = 5; //movement speed
 	const texture = (useLoader(THREE.TextureLoader, photo) as THREE.Texture) 
 
-  // console.log(`Init: Player ${id} received position prop:`, position);
-
-	// listener setup
-  // useEffect(() => {
-  //   if (!characterRef.current[id]) return;
-    
-  //   // attach listener to player mesh
-  //   characterRef.current[id].add(listenerRef.current);
-  //   console.log("Listener attached directly to player mesh");
-    
-  //   return () => {
-  //     if (listenerRef.current && characterRef.current) {
-  //       characterRef.current[id].remove(listenerRef.current);
-  //     }
-  //   };
-  // }, [characterRef]);
 	
 	// useEffect(() => {
 	// 	if (!imageUrl) return ;
@@ -126,7 +118,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
   //   }
   // });
 
-	// Handle keyboard input
+	// Handle keyboard input to track active key, then pass boolean to update player position
 	useEffect(() => {
 		if (!isLocalPlayer) return ;
 
@@ -187,14 +179,50 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 	});
 	
 	return (
-		// we need rotation as plane default pos = facing z pos
-		<mesh ref={characterRef} position={[position.x, position.y, position.z]} rotation={[-Math.PI / 2, 0, 0]} >
+		<>
+		{/* plane mesh need rotation as default position = facing z pos */}
+		<mesh
+			ref={characterRef}
+			position={[position.x, position.y, position.z]}
+			rotation={[-Math.PI / 2, 0, 0]}
+		  onPointerOver={() => {
+				console.log("hoveer!")
+				setHovered(true)}
+			}
+			onPointerOut={() => setHovered(false)}
+		>
+			{/* main circle */}
 			<circleGeometry args={[1, 24]} />
 			{texture ? (
 			<meshStandardMaterial map={texture} color="#FFFFFF" side={THREE.DoubleSide} />
 			) : (
 				<meshStandardMaterial color={color} side={THREE.DoubleSide} /> 
 			)}
+
+			{/* Ring outline on hover */}
+			{hovered && (
+				<mesh>
+					<ringGeometry args={[0.95, 1.1, 36]} />
+					<meshStandardMaterial color="#D0F05C" emissive="#627C06" side={THREE.DoubleSide} />
+				</mesh>
+			)}
+
+			{/* Text on hover */}
+			{hovered && (
+			<group position={[0, -2, 1]}>
+				{/* Rounded Background Mesh */}
+				<mesh position={[0, 0, -0.1]}>
+					<planeGeometry args={[calculateTextWidth(id), 0.9]} />
+					<meshStandardMaterial color="#1D2307" opacity={0.5} transparent />
+				</mesh>
+				<Text
+					fontSize={0.6}
+					color="white"
+				>{id}</Text>
+	  	</group>
+			)}
+
 		</mesh>
+		</>
 	);
 })
