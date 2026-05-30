@@ -84,10 +84,14 @@ const socketService = (io) => {
     player.roomName = roomName;
     roomData.users.push(player); // append entire player obj
     socket.join(roomName);
+    socket.emit('existing-room-players', roomData?.users || []); // send only to client
+
     
     // Generate room-specific token
     const token = await generateRoomToken(roomName, player.name);
     // Send room-joined event with room context
+
+    // either setRoomPlayers in existing-room-players or room-joined
     socket.emit('room-joined', {
       roomName,
       token,
@@ -106,10 +110,14 @@ const socketService = (io) => {
   });
 
 	// Get existing players in room
-  socket.on('existing-room-players', async ({ roomName }) => {
+  socket.on('request-room-players', async ({ roomName }) => {
     let roomData = rooms.get(roomName);
-    if (!roomData) return ;
-    socket.emit('players-in-room', roomData?.users || []);
+    if (!roomData) {
+      socket.emit('existing-room-players', []);
+      return ;
+    }
+    socket.emit('existing-room-players', roomData?.users || []);
+    console.log('[existing-room-players] ', roomData?.users || []);
   });
 
   // Handle leaving specific room
@@ -124,7 +132,7 @@ const socketService = (io) => {
     if (player.roomName)
       handleLeaveRoom(socket, player, player.roomName)
     players.delete(socket.id);
-    socket.broadcast.emit('player-left', { id:socket.id });
+    socket.broadcast.emit('player-left', { id:socket.id }); // send to all clients globally
   });
 
   /* *****************************************************************
@@ -142,13 +150,13 @@ const socketService = (io) => {
         return ;
       }
       console.log('Backend: leave-room, user count bf: ', roomData.users.length)
-      roomData.users = roomData.users.filter(u => u.id !== player.id); //#####
+      roomData.users = roomData.users.filter(u => u.id !== player.id); // remove user from room
       console.log('Backend: leave-room, user count af: ', roomData.users.length)
       console.log('Backend: leave-room, users now: ', roomData.users)
 
       socket.leave(roomName);
       player.roomName = null;
-      
+
       // Notify room members
       socket.to(roomName).emit('player-left-room', { 
         id: player.id,

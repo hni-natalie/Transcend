@@ -24,9 +24,11 @@ export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room',
   const handleJoin = async () => {
     await connect(mode);
   };
-
   const handleLeave = async () => {
-    await disconnect();
+    await disconnect(true);
+  };
+  const handleBeforeUnload = async () => {
+    await disconnect(false); //dont show loading icon
   };
 
   useEffect(() => {
@@ -37,15 +39,15 @@ export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room',
   // Clean up when component unmounts
   useEffect(() => {
   return () => {
-    handleLeave();
+    disconnect(false); //dont show loading icon
   };
   }, []);
 
   // cleanup when page refresh/close
   useEffect(() => {
-    window.addEventListener('beforeunload', handleLeave);
+    window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
-      window.removeEventListener('beforeunload', handleLeave);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 
@@ -62,11 +64,11 @@ export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room',
       ) : (
         <div className="flex gap-4">
           {allowLeave && 
-          (<button onClick={handleLeave} className="btn-lime-outline" disabled={isLoading}>
+          (<button onClick={handleLeave} disabled={isLoading} className="btn-lime-outline">
             {leaveText}
           </button>)}
           {/* mute/unmute button */}
-          <button onClick={toggleMute} className={`${isMuted ? 'btn-outline' : 'btn-lime-outline'} rounded-full transition-colors duration-500 p-1`}>{ isMuted ? <IconMute className="w-4 h-4 text-border-2"/> : <IconSpeak className="w-4 h-4"/> }</button>
+          <button onClick={toggleMute} disabled={isLoading} className={`${isMuted ? 'btn-outline' : 'btn-lime-outline'} rounded-full transition-colors duration-500 p-1`}>{ isMuted ? <IconMute className="w-4 h-4 text-border-2"/> : <IconSpeak className="w-4 h-4"/> }</button>
         </div>
       )}
     </nav>

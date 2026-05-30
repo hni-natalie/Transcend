@@ -191,8 +191,11 @@ class LiveKitService {
     try {
       // Reuse existing room if possible
       if (this.room && this.room.state === 'connected') {
-        console.log('Reusing existing connection');
-      } else {
+        console.warn('Existing room found! Disconnecting before start new connection');
+        await this.room.disconnect();
+        await new Promise(resolve => setTimeout(resolve, 500)); // delay
+      }
+      else {
         this.room = new Room();
 
         /* *************************************************************
@@ -268,6 +271,7 @@ class LiveKitService {
       try {
         await this.room.disconnect();
         this.room = null;
+        await new Promise(resolve => setTimeout(resolve, 1500));
         this.emit('disconnected', { room: this.room });
         this.audioManager.cleanup();
         this.mediaStreams.clear();

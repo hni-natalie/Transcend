@@ -74,8 +74,6 @@ export function SocketProvider ({ children }) {
     socket.on('room-joined', (data) => {
       console.log('Room joined successfully:', data);
       setCurrentRoom(data.roomName);
-      // set all room players
-      setRoomPlayers(prev => [...prev, data.player]);
       console.log('[room-joined]curr room players: ', data.participants);
 
       // Emit event for LiveKit service to connect
@@ -84,14 +82,17 @@ export function SocketProvider ({ children }) {
       }));
     });
   
+    // update when new player joins
     socket.on('player-joined-room', (data) => {
       setRoomPlayers(prev => [...prev, data.player]);
       console.log(`User ${data.player.name}, id:${data.player.id} joined ${data.roomName}`);
     });
 
-    socket.once('players-in-room', (data) => {
-      console.log(`Received players:`, data);
-      setRoomPlayers(prev => [...prev, ...data]);
+    // existing players
+    socket.on('existing-room-players', (data) => {
+      console.log(`[existing-room-players]:`, data);
+      setRoomPlayers(data);
+      // setRoomPlayers(prev => [...prev, ...data]);
     })
   
     // User left room
@@ -131,6 +132,7 @@ export function SocketProvider ({ children }) {
         socket.off('player-moved');
         socket.off('room-joined');
         socket.off('player-joined-room');
+        socket.off('existing-room-players');
         socket.off('player-left-room');
         socket.off('room-full');
         socket.off('connect_error');
@@ -165,6 +167,7 @@ export function SocketProvider ({ children }) {
       socket.emit('join-room', { roomName });
     } else {
       console.error('Socket not connected, cannot join room');
+      window.location.reload();
     }
   }, [socket, isConnected]);
 
@@ -174,12 +177,14 @@ export function SocketProvider ({ children }) {
       // console.log(`Leaving room: ${currentRoom}`);
       socket.emit('leave-room', { roomName });
       setCurrentRoom(null);
-      setRoomPlayers(prev => prev.filter(p => p.id !== socket.id));
+      // setRoomPlayers(prev => prev.filter(p => p.id !== socket.id));
+      setRoomPlayers(prev => []);
     }
   }, [socket, isConnected, currentRoom]);
 
   const fetchRoomPlayers = ( roomName:string ) => {
-    socket.emit('existing-room-players', { roomName });
+    console.log('Fetching room players in ', roomName);
+    socket.emit('request-room-players', { roomName });
   }
 
 

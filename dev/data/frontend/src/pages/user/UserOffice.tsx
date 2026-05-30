@@ -110,22 +110,22 @@ export function Office({ roomName } : SpaceProps ) {
 		}
 	}, []);
 
-	useEffect(() => {
-		if (!isConnected) return ;
-		fetchRoomPlayers(roomName);
-	}, [isConnected])
-
 	// debug
 	// useEffect(() => {
 	// 	console.log('✅ roomPlayers CHANGED:', roomPlayers);
-	// 	roomPlayers.forEach( (player:Player) => {
-	// 		console.log('Player id:', player.id);
-	// 		console.log('Player color:', player.color);
-	// 		console.log('Player position:', player.position);
-	// 	});
-	// 	console.log('localid: ', localPlayerId);
+	// 	// roomPlayers.forEach( (player:Player) => {
+	// 	// 	console.log('Player id:', player.id);
+	// 	// 	console.log('Player color:', player.color);
+	// 	// 	console.log('Player position:', player.position);
+	// 	// });
+	// 	// console.log('localid: ', localPlayerId);
 	// 	console.log('Length:', roomPlayers?.length);
 	// }, [roomPlayers]);  // This runs whenever roomPlayers updates
+
+	// useEffect(() => {
+	// 	if (!isConnected) return;
+	// 	fetchRoomPlayers(roomName);
+	// }, [isConnected, roomPlayers])
 
 	// for testing only
 	// should remove MenuSide & w-full when live

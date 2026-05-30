@@ -38,6 +38,7 @@ export function useLiveKit( roomName:string ) {
       setTimeout(() => {
         setActivePlane(null);
         setIsConnectedRoom(false);
+        setisLoading(false);
       }, 2000)
     };
     const handleSubscribed = ({ id }) => {
@@ -103,7 +104,9 @@ const connect = async ( mode: "room" | "call" ) => {
     joinRoom(roomName);
   };
 
-  const disconnect = async () => {
+  const disconnect = async ( showLoading:boolean ) => {
+    if (showLoading)
+      setisLoading(true);
     leaveRoom(roomName); // emit leave-room signal to backend
     await livekitService.disconnectFromRoom(); // frontend cleanup
   };
