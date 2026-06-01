@@ -1,5 +1,5 @@
 /*
-  Socket config for multiplayer detection
+  Socket context for multiplayer detection
   export as useSocket(), SocketProvider
 */
 
@@ -52,6 +52,7 @@ export function SocketProvider ({ children }) {
     socket.on('player-left', (data) => {
       setPlayers(prev => prev.filter(p => p.id !== data.id));
       console.log(`Player ${data.id || data.name} left`);
+      console.log('[player-left] currently online: ', players);
     });
 
     socket.on('player-moved', (data) => {
@@ -177,7 +178,7 @@ export function SocketProvider ({ children }) {
       // console.log(`Leaving room: ${currentRoom}`);
       socket.emit('leave-room', { roomName });
       setCurrentRoom(null);
-      // setRoomPlayers(prev => prev.filter(p => p.id !== socket.id));
+      // setRoomPlayers(prev => prev.filter(p => p.id !== socket.id)); // remove myself only
       setRoomPlayers(prev => []);
     }
   }, [socket, isConnected, currentRoom]);

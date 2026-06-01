@@ -4,29 +4,29 @@
 */
 
 import * as THREE from 'three';
-import { useThree, useFrame } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useLiveKit } from '@features/livekit'
 
 interface GenerateDeptProps {
 	count?: number;
 	padding?: number;
+  localPlayerRef?: React.RefObject<THREE.Mesh | null>;
 	characterPos?: THREE.Vector3;
   room: string;
 }
 
-export function GenerateDept({ count=5, padding=3, characterPos, room } : GenerateDeptProps) {
-  const { viewport } = useThree();
-  // const [activePlane, setActivePlane] = useState(null);
+export function GenerateDept({ count=5, padding=3, localPlayerRef, characterPos, room } : GenerateDeptProps) {
   const { activePlane, setActivePlane, isConnectedRoom } = useLiveKit(room);
 
-  const characterPosRef = useRef(characterPos);
+  const characterPosRef = useRef(null);
   const planeRefs = useRef(new Map());
 
   useEffect(() => {
-    characterPosRef.current = characterPos;
-    // console.log('Character posRef:', characterPosRef.current)
-  }, [characterPos]);
+    if (!localPlayerRef.current) return;
+    characterPosRef.current = localPlayerRef.current.position;
+    console.log('Character posRef:', characterPosRef.current)
+  }, [localPlayerRef.current]);
   
 	// Function to set ref
   const setPlaneRef = ( index:number ) => ( el:number ) => {

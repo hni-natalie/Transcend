@@ -23,6 +23,7 @@ Before running this project, ensure the following is installed:
 - [Realtime audio streaming with livekit](https://github.com/livekit/livekit)
 - [Fixing positionalAudio with webRTC](https://discourse.threejs.org/t/positionalaudio-setmediastreamsource-with-webrtc-question-not-hearing-any-sound/14301/40)
 - [ThreeJS Positional Audio Documentation](https://threejs.org/docs/#PositionalAudio)
+- [Raycasting move to mouse click](https://github.com/WaelYasmina/spaceship/blob/main/src/js/scripts.js)
 
 ## Team Information
 | Team Member | Role |

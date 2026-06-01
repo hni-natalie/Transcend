@@ -9,6 +9,7 @@ import { Text } from '@react-three/drei';
 import React, { useRef, useState, useEffect, RefObject } from 'react';
 import * as THREE from 'three';
 import { useSocket } from '@/features/socketio/useSocket';
+import { useKeyboard } from '@features/office/context/useKeyboard';
 import { Player } from '@shared/types/user.types';
 
 interface CharacterProps extends Player {
@@ -44,10 +45,11 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 	const { enableSocket, isConnected, socket, setLocalPlayerPos, localPlayerPos } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
 
-	const [keys, setKeys] = useState({
-		w: false, s: false, a: false, d: false,
-	  ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false
-	});
+	const { keys } = useKeyboard();
+	// const [keys, setKeys] = useState({
+	// 	w: false, s: false, a: false, d: false,
+	//   ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false
+	// });
 	const speed = 5; //movement speed
 	const texture = (useLoader(THREE.TextureLoader, photo) as THREE.Texture) 
 
@@ -119,41 +121,49 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
   // });
 
 	// Handle keyboard input to track active key, then pass boolean to update player position
-	useEffect(() => {
-		if (!isLocalPlayer) return ;
+	// useEffect(() => {
+	// 	if (!isLocalPlayer) return ;
 
-		const handleKeyDown = (e: KeyboardEvent) => {
-			const key = e.key;
-			const normalizedKey = key.length === 1 ? key.toLowerCase() : key;
-			if (keys.hasOwnProperty(normalizedKey)) {
-				setKeys(prev => ({ ...prev, [normalizedKey]: true }));
-			}
-		};
-		const handleKeyUp = (e: KeyboardEvent) => {
-			const key = e.key;
-			const normalizedKey = key.length === 1 ? key.toLowerCase() : key;
-			if (keys.hasOwnProperty(normalizedKey)) {
-				setKeys(prev => ({ ...prev, [normalizedKey]: false }));
-			}
-		};
-		window.addEventListener('keydown', handleKeyDown);
-		window.addEventListener('keyup', handleKeyUp);
+	// 	const handleKeyDown = (e: KeyboardEvent) => {
+	// 		const key = e.key;
+	// 		const normalizedKey = key.length === 1 ? key.toLowerCase() : key;
+	// 		if (keys.hasOwnProperty(normalizedKey)) {
+	// 			setKeys(prev => ({ ...prev, [normalizedKey]: true }));
+	// 		}
+	// 	};
+	// 	const handleKeyUp = (e: KeyboardEvent) => {
+	// 		const key = e.key;
+	// 		const normalizedKey = key.length === 1 ? key.toLowerCase() : key;
+	// 		if (keys.hasOwnProperty(normalizedKey)) {
+	// 			setKeys(prev => ({ ...prev, [normalizedKey]: false }));
+	// 		}
+	// 	};
+	// 	window.addEventListener('keydown', handleKeyDown);
+	// 	window.addEventListener('keyup', handleKeyUp);
 		
-		return () => {
-			window.removeEventListener('keydown', handleKeyDown);
-			window.removeEventListener('keyup', handleKeyUp);
-		};
-	}, [isLocalPlayer]);
+	// 	return () => {
+	// 		window.removeEventListener('keydown', handleKeyDown);
+	// 		window.removeEventListener('keyup', handleKeyUp);
+	// 	};
+	// }, [isLocalPlayer]);
 
 
 	/*
 		Calls this function to update position every frame for local player
 	  delta is from useFrame
 	*/
+	const movement = new THREE.Vector3(0, 0, 0);
+	const newPos = new THREE.Vector3();
+
 	useFrame(( _, delta ) => {
 		if (!characterRef.current || !isLocalPlayer) return;
-		const movement = new THREE.Vector3(0, 0, 0);
-		const newPos = new THREE.Vector3(characterRef.current.position.x, 0, characterRef.current.position.z);
+
+		movement.set(0,0,0);
+		// newPos.set(localPlayerPos.x, 0, localPlayerPos.z);
+		newPos.set(characterRef.current.position.x, 0, characterRef.current.position.z);
+		// const newPos = new THREE.Vector3(characterRef.current.position.x, 0, characterRef.current.position.z);
+		// console.log('debug: localPos: ', localPlayerPos);
+
 		const moveDistance = speed * delta;
 
 		// Calculate movement direction
@@ -168,9 +178,11 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 		// Apply movement with speed and delta time
 		newPos.x += movement.x * moveDistance;
 		newPos.z += movement.z * moveDistance;
+
 		characterRef.current.position.set(newPos.x, 0, newPos.z);
-		socket.emit('player-move', { id:id, position: { x:newPos.x, y:0, z:newPos.z }});
 		setLocalPlayerPos({ x:newPos.x, y:0, z:newPos.z });
+
+		socket.emit('player-move', { id:id, position: { x:newPos.x, y:0, z:newPos.z }});
 		// Optional: Rotate 3D character to face movement direction
 		// if (movement.x !== 0 || movement.z !== 0) {
 		// 	const angle = Math.atan2(movement.x, movement.z);
@@ -182,13 +194,10 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 		<>
 		{/* plane mesh need rotation as default position = facing z pos */}
 		<mesh
-			ref={characterRef}
+			ref={characterRef} // only for localPlayer
 			position={[position.x, position.y, position.z]}
 			rotation={[-Math.PI / 2, 0, 0]}
-		  onPointerOver={() => {
-				console.log("hoveer!")
-				setHovered(true)}
-			}
+		  onPointerOver={() => setHovered(true)}
 			onPointerOut={() => setHovered(false)}
 		>
 			{/* main circle */}
