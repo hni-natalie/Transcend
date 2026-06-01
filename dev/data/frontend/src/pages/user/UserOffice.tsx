@@ -8,52 +8,6 @@ import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit
 import { GenerateDept, CameraTracking, Character } from '@features/office';
 import { KeyboardProvider } from '@features/office/context/useKeyboard';
 
-// Sound component with depth-based volume
-// function SoundSource({ position, url, isPlaying = true }) {
-// 	const soundRef = useRef()
-// 	const listenerRef = useRef()
-	
-// 	useEffect(() => {
-// 		// Create audio listener and sound
-// 		const listener = new THREE.AudioListener()
-// 		const sound = new THREE.Audio(listener)
-		
-// 		listenerRef.current = listener
-// 		soundRef.current = sound
-		
-// 		// Load audio
-// 		const audioLoader = new THREE.AudioLoader()
-// 		audioLoader.load(url, (buffer) => {
-// 			sound.setBuffer(buffer)
-// 			sound.setLoop(true)
-// 			sound.setVolume(1)
-// 			if (isPlaying) sound.play()
-// 		})
-		
-// 		// Add listener to camera
-// 		// Note: You'll need to attach this to your camera component
-// 		// This is a simplified version
-		
-// 		return () => {
-// 			sound.stop()
-// 			sound.disconnect()
-// 		}
-// 	}, [url, isPlaying])
-	
-// 	// Update volume based on distance from camera
-// 	useFrame(({ camera }) => {
-// 		if (!soundRef.current || !listenerRef.current) return
-		
-// 		const distance = camera.position.distanceTo(position)
-// 		// Volume decreases with distance (adjust these values as needed)
-// 		const maxDistance = 10
-// 		const volume = Math.max(0, 1 - (distance / maxDistance))
-// 		soundRef.current.setVolume(volume)
-// 	})
-	
-// 	return null
-// }
-
 // get count from backend API to decide how many blocks to generate
 function getDeptCount() {
 	let count:number ;
@@ -67,33 +21,6 @@ interface SpaceProps {
   roomName: string;
 }
 
-
-// export const MyRaycaster = ({ isConnectedRoom, localPlayerRef, clickPoint }) => {
-// 	const { isMoveKey } = useKeyboard();
-// 	if (!clickPoint) return;
-
-// 	// Smooth movement
-// 	useFrame(() => {
-// 		if (!isConnectedRoom) return;
-
-// 		if (isMoveKey())
-// 			clickPoint.current = null;
-
-// 		if (clickPoint.current && localPlayerRef.current) {
-// 			// Move smoothly towards target 4% every frame
-// 			localPlayerRef.current.position.lerp(clickPoint.current, 0.04);
-
-// 			// Stop when close enough
-// 			if (localPlayerRef.current.position.distanceTo(clickPoint.current) < 0.1) {
-// 				localPlayerRef.current.position.copy(clickPoint.current);
-// 				console.log('arrived at clickpoint')
-// 				clickPoint.current = null;
-// 			}
-// 		}
-// 	});
-// 	return null;
-// }
-
 export function Office({ roomName } : SpaceProps ) {
 	/* ------------- sockets  ------------- */
 	const { enableSocket, socket, players, fetchRoomPlayers, roomPlayers, localPlayerId } = useSocket();
@@ -104,6 +31,8 @@ export function Office({ roomName } : SpaceProps ) {
 	const controlsRef = useRef<React.ElementRef<typeof MapControls>>(null);
 	const cameraRef = useRef<THREE.Camera>(null);
 	const clickPoint = useRef(null);
+	const hasMouseMoved = useRef(false);
+	const hasMouseDown = useRef(false);
 	/* ------------- general  ------------- */
 	const count = getDeptCount()
   const [error, setError] = useState<string>('');
@@ -116,7 +45,7 @@ export function Office({ roomName } : SpaceProps ) {
 			console.warn('Negotiation error occurred, SDK will typically self-heal:', event.reason);
 			await disconnect(false);
 			alert("Unable to connect, refresh and try again!");
-			window.location.reload(); //maybe this, disconnect, then reload?
+			window.location.reload();
 		}
 	}
 	const handleGroundClick = (e) => {
@@ -164,14 +93,6 @@ export function Office({ roomName } : SpaceProps ) {
 	// 	console.log('Length:', roomPlayers?.length);
 	// }, [roomPlayers]);  // This runs whenever roomPlayers updates
 
-	// useEffect(() => {
-	// 	if (!isConnected) return;
-	// 	fetchRoomPlayers(roomName);
-	// }, [isConnected, roomPlayers])
-
-
-	const hasMouseMoved = useRef(false);
-	const hasMouseDown = useRef(false);
 	const handlePointerDown = () => {
 		// console.log('Mouse down! Mouse move: ', hasMouseMoved.current);
 		hasMouseDown.current = true;
@@ -237,14 +158,12 @@ export function Office({ roomName } : SpaceProps ) {
 					maxAzimuthAngle={0}						// max right rotation
 				/>
 				<CameraTracking isConnectedRoom={isConnectedRoom} clickPoint={clickPoint} localPlayerRef={localPlayerRef} controlsRef={controlsRef} />
-				{/* <MyRaycaster isConnectedRoom={isConnectedRoom} clickPoint={clickPoint} localPlayerRef={localPlayerRef} controlsRef={controlsRef} /> */}
 
 				<ambientLight intensity={0.8} />
 				{/* <directionalLight position={[10, 5, 5]} /> */}
 				
 				{/* Ground Plane */}
 				<mesh
-					// onClick={handleGroundClick}
 					onPointerUp={handlePointerUp}
 					onPointerDown={handlePointerDown}
 					onPointerMove={handlePointerMove}
@@ -259,7 +178,6 @@ export function Office({ roomName } : SpaceProps ) {
 				<GenerateDept count={count} localPlayerRef={localPlayerRef} room={roomName} />
 
 				{/* {isConnectedRoom && */}
-				{/* {(players.map(( user:Player ) => ( */}
 				{(roomPlayers.map(( user:Player ) => (
 					<Character
 						key={user.id}
