@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { useLiveKit } from '@features/livekit'
+import { officeSceneConfig as conf } from '@/config/office.config';
 
 interface GenerateDeptProps {
 	count?: number;
@@ -15,7 +16,7 @@ interface GenerateDeptProps {
   room: string;
 }
 
-export function GenerateDept({ count=5, padding=3, localPlayerRef, room } : GenerateDeptProps) {
+export function GenerateDept({ count=5, padding=5, localPlayerRef, room } : GenerateDeptProps) {
   const { activePlane, setActivePlane, isConnectedRoom } = useLiveKit(room);
   const planeRefs = useRef(new Map());
 
@@ -54,8 +55,8 @@ export function GenerateDept({ count=5, padding=3, localPlayerRef, room } : Gene
   // const canvasWidth = viewport.width;
   // const canvasHeight = viewport.height;
   // console.log("canvas w: ", canvasWidth, " , canvas h: ", canvasHeight);
-  const canvasWidth = 50;
-  const canvasHeight = 50;
+  const canvasWidth = conf.World.width;
+  const canvasHeight = conf.World.height;
 
   // Calculate plane dimensions based on canvas size and count
   const planes = useMemo(() => {
@@ -69,11 +70,13 @@ export function GenerateDept({ count=5, padding=3, localPlayerRef, room } : Gene
 		// Calculate cell size including padding
 		const cellWidth = canvasWidth / cols;
 		const cellHeight = canvasHeight / rows;
-		
+
 		// Calculate actual plane size (subtract padding)
 		const planeWidth = cellWidth - padding;
 		const planeHeight = cellHeight - padding;
-    
+
+    // console.log('col: ', cols, 'row: ', rows, 'cell_w: ', cellWidth, 'cell_h: ', cellHeight, 'plane_w: ', planeWidth, 'plane_h: ', planeHeight);
+
     // Calculate positions to fill the entire canvas viewport
     const startX = -canvasWidth / 2 + cellWidth / 2;
     const startZ = -canvasHeight / 2 + cellHeight / 2;
@@ -103,7 +106,7 @@ export function GenerateDept({ count=5, padding=3, localPlayerRef, room } : Gene
 	            color={activePlane === i ? `hsl(${hue}, 50%, 60%)` : `hsl(${hue}, 20%, 50%)`}
               side={THREE.DoubleSide}
               roughness={0.4}
-              metalness={0.1}
+              metalness={0.2}
               emissive={`hsl(${hue}, 70%, 10%)`}
             />
           </mesh>

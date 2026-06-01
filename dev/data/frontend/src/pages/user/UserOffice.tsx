@@ -1,12 +1,13 @@
 import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { PerspectiveCamera, MapControls } from '@react-three/drei';
+import { Canvas, useThree } from '@react-three/fiber';
+import { PerspectiveCamera, MapControls, SpotLight } from '@react-three/drei';
 import { useSocket } from '@/features/socketio/useSocket';
 import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
 import { GenerateDept, CameraTracking, Character } from '@features/office';
 import { KeyboardProvider } from '@features/office/context/useKeyboard';
+import { officeSceneConfig as conf } from '@/config/office.config';
 
 // get count from backend API to decide how many blocks to generate
 function getDeptCount() {
@@ -151,7 +152,7 @@ export function Office({ roomName } : SpaceProps ) {
 					zoomSpeed={0.5}
 					panSpeed={0.5}
 					minDistance={10}
-					maxDistance={50}
+					maxDistance={80}
 					minPolarAngle={0}  						// top down 90 deg
 					maxPolarAngle={Math.PI / 24} 	// slight slant, 30 deg tilt
 					minAzimuthAngle={0}						// min left rotation
@@ -160,6 +161,20 @@ export function Office({ roomName } : SpaceProps ) {
 				<CameraTracking isConnectedRoom={isConnectedRoom} clickPoint={clickPoint} localPlayerRef={localPlayerRef} controlsRef={controlsRef} />
 
 				<ambientLight intensity={0.8} />
+				<spotLight
+						position={[0, 5, 0]}
+						intensity={1}
+						distance={30}           // How far light reaches
+						angle={0.8}             // Cone angle (radians)
+						penumbra={0.3}          // Soft edge (0-1)
+						decay={1}               // Light falloff
+						color="#ffffff"
+						castShadow
+						shadow-mapSize-width={1024}
+						shadow-mapSize-height={1024}
+						shadow-bias={-0.0001}
+				/>
+				
 				{/* <directionalLight position={[10, 5, 5]} /> */}
 				
 				{/* Ground Plane */}
@@ -171,8 +186,8 @@ export function Office({ roomName } : SpaceProps ) {
 					position={[0, -1, 0]}
 					ref={groundRef}
 				>
-					<planeGeometry args={[100, 100]} />
-					<meshStandardMaterial color="#FFFFFF" visible={false} />
+					<planeGeometry args={[conf.World.width+10, conf.World.height+10]} />
+					<meshStandardMaterial color="#6E6E6E" metalness={0.5} visible={true} />
 				</mesh>
 
 				<GenerateDept count={count} localPlayerRef={localPlayerRef} room={roomName} />

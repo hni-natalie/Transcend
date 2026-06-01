@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useKeyboard } from '../context/useKeyboard';
 import { useSocket } from '@/features/socketio/useSocket';
+import { officeSceneConfig as conf } from '@/config/office.config';
 
 /* controls scene camera to follow player */
 export const CameraTracking = ({ localPlayerRef, controlsRef, isConnectedRoom, clickPoint }) => {
@@ -60,7 +61,7 @@ export const CameraTracking = ({ localPlayerRef, controlsRef, isConnectedRoom, c
     if (localPlayerRef.current) {
       // 1. Handle move by mouseClick
       if (clickPoint.current) {
-        localPlayerRef.current.position.lerp(clickPoint.current, 0.04); // Move smoothly towards target 4% every frame
+        localPlayerRef.current.position.lerp(clickPoint.current, conf.Movement.click_speed); // Move smoothly towards target 4% every frame
     		socket.emit('player-move', { id:localPlayerId, position:{ x:localPlayerRef.current.position.x, y:0, z:localPlayerRef.current.position.z }});
 
         // Update last position

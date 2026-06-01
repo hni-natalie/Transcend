@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { useSocket } from '@/features/socketio/useSocket';
 import { useKeyboard } from '@features/office/context/useKeyboard';
 import { Player } from '@shared/types/user.types';
+import { officeSceneConfig as conf } from '@/config/office.config';
 
 interface CharacterProps extends Player {
 	isLocalPlayer: boolean;
@@ -41,28 +42,15 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 	const characterRef = useRef<THREE.Mesh>(null);
   const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
 	const [hovered, setHovered] = useState(false);
+	const { keys } = useKeyboard();
 
 	const { enableSocket, isConnected, socket } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
 
-	const { keys } = useKeyboard();
-	// const [keys, setKeys] = useState({
-	// 	w: false, s: false, a: false, d: false,
-	//   ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false
-	// });
-	const speed = 5; //movement speed
+	const speed = conf.Movement.keyboard_speed; //movement speed
 	const texture = (useLoader(THREE.TextureLoader, photo) as THREE.Texture) 
 
 	
-	// useEffect(() => {
-	// 	if (!imageUrl) return ;
-	// 	console.log('img url: ', imageUrl);
-	// 	// const texture = (useLoader(THREE.TextureLoader, imageUrl) as THREE.Texture) 
-	// 	texture = (useLoader(THREE.TextureLoader, "https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg") as THREE.Texture) 
-	// 	// setTexture(new_texture);
-	// }, [imageUrl])
-
-  // Handle ref forwarding for tracking camera
   useEffect(() => {
     if (ref && characterRef.current) {
       if (typeof ref === 'function') {
@@ -120,33 +108,6 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
   //   }
   // });
 
-	// Handle keyboard input to track active key, then pass boolean to update player position
-	// useEffect(() => {
-	// 	if (!isLocalPlayer) return ;
-
-	// 	const handleKeyDown = (e: KeyboardEvent) => {
-	// 		const key = e.key;
-	// 		const normalizedKey = key.length === 1 ? key.toLowerCase() : key;
-	// 		if (keys.hasOwnProperty(normalizedKey)) {
-	// 			setKeys(prev => ({ ...prev, [normalizedKey]: true }));
-	// 		}
-	// 	};
-	// 	const handleKeyUp = (e: KeyboardEvent) => {
-	// 		const key = e.key;
-	// 		const normalizedKey = key.length === 1 ? key.toLowerCase() : key;
-	// 		if (keys.hasOwnProperty(normalizedKey)) {
-	// 			setKeys(prev => ({ ...prev, [normalizedKey]: false }));
-	// 		}
-	// 	};
-	// 	window.addEventListener('keydown', handleKeyDown);
-	// 	window.addEventListener('keyup', handleKeyUp);
-		
-	// 	return () => {
-	// 		window.removeEventListener('keydown', handleKeyDown);
-	// 		window.removeEventListener('keyup', handleKeyUp);
-	// 	};
-	// }, [isLocalPlayer]);
-
 
 	/*
 		Calls this function to update position every frame for local player
@@ -154,6 +115,15 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 	*/
 	const movement = new THREE.Vector3(0, 0, 0);
 	const newPos = new THREE.Vector3();
+	const worldWidth = conf.World.width + conf.World.border;
+	const worldHeight = conf.World.height + conf.World.border;
+
+	const boundaries = {
+			minX: -worldWidth/2 + conf.Player.radius,
+			maxX: worldWidth/2 - conf.Player.radius,
+			minZ: -worldHeight/2 + conf.Player.radius,
+			maxZ: worldHeight/2 - conf.Player.radius
+	};
 
 	useFrame(( _, delta ) => {
 		if (!characterRef.current || !isLocalPlayer) return;
@@ -176,6 +146,17 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 		// Apply movement with speed and delta time
 		newPos.x += movement.x * moveDistance;
 		newPos.z += movement.z * moveDistance;
+		// clamp to plane size
+    // newPos.x = Math.max(boundaries.minX, Math.min(boundaries.maxX, newPos.x)) * 0.98;
+    // newPos.z = Math.max(boundaries.minZ, Math.min(boundaries.maxZ, newPos.z));
+
+		// bounce back when hit wall
+		newPos.x = newPos.x < boundaries.minX ? boundaries.minX * 0.98 : 
+							 newPos.x > boundaries.maxX ? boundaries.maxX * 0.98 : 
+							 newPos.x;
+		newPos.z = newPos.z < boundaries.minZ ? boundaries.minZ * 0.98 : 
+							 newPos.z > boundaries.maxZ ? boundaries.maxZ * 0.98 : 
+							 newPos.z;
 
 		characterRef.current.position.set(newPos.x, 0, newPos.z);
 
@@ -198,7 +179,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 			onPointerOut={() => setHovered(false)}
 		>
 			{/* main circle */}
-			<circleGeometry args={[1, 24]} />
+			<circleGeometry args={[conf.Player.radius, conf.Player.segments]} />
 			{texture ? (
 			<meshStandardMaterial map={texture} color="#FFFFFF" side={THREE.DoubleSide} />
 			) : (
