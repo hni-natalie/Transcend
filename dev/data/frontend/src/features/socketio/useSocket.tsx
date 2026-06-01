@@ -15,7 +15,7 @@ export function SocketProvider ({ children }) {
   const [isConnected, setIsConnected] = useState<Boolean>(false);
   const [socket, setSocket] = useState< Socket|null >(null);
   const [players, setPlayers] = useState< Player[] >([]);
-  const [localPlayerPos, setLocalPlayerPos] = useState< Position | null >(null);
+  // const [localPlayerPos, setLocalPlayerPos] = useState< Position | null >(null);
   const [localPlayerId, setLocalPlayerId] = useState<String>(null);
   const [messages, setMessages] = useState([]);
   
@@ -227,8 +227,8 @@ export function SocketProvider ({ children }) {
     getPlayerCount,
     getPlayerById,
     getPlayerPosById,
-    localPlayerPos,
-    setLocalPlayerPos,
+    // localPlayerPos,
+    // setLocalPlayerPos,
     
     /* Room methods */
     joinRoom,

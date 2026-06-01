@@ -42,7 +42,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
   const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
 	const [hovered, setHovered] = useState(false);
 
-	const { enableSocket, isConnected, socket, setLocalPlayerPos, localPlayerPos } = useSocket();
+	const { enableSocket, isConnected, socket } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
 
 	const { keys } = useKeyboard();
@@ -159,10 +159,8 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 		if (!characterRef.current || !isLocalPlayer) return;
 
 		movement.set(0,0,0);
-		// newPos.set(localPlayerPos.x, 0, localPlayerPos.z);
 		newPos.set(characterRef.current.position.x, 0, characterRef.current.position.z);
 		// const newPos = new THREE.Vector3(characterRef.current.position.x, 0, characterRef.current.position.z);
-		// console.log('debug: localPos: ', localPlayerPos);
 
 		const moveDistance = speed * delta;
 
@@ -180,7 +178,6 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 		newPos.z += movement.z * moveDistance;
 
 		characterRef.current.position.set(newPos.x, 0, newPos.z);
-		setLocalPlayerPos({ x:newPos.x, y:0, z:newPos.z });
 
 		socket.emit('player-move', { id:id, position: { x:newPos.x, y:0, z:newPos.z }});
 		// Optional: Rotate 3D character to face movement direction

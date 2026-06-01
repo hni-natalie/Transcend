@@ -24,7 +24,7 @@ const fetchUserPhoto = async () => {
 export function CharacterBasic({ id, position, color="#D0F05C", isLocalPlayer, photo } : CharacterProps) {
 	const listenerRef = useRef<THREE.AudioListener>(new THREE.AudioListener());
 	const characterRef = useRef<THREE.Mesh>(null);
-	const { enableSocket, isConnected, socket, setLocalPlayerPos, localPlayerPos } = useSocket();
+	const { enableSocket, isConnected, socket } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
 
 	const [keys, setKeys] = useState({
@@ -111,7 +111,7 @@ export function CharacterBasic({ id, position, color="#D0F05C", isLocalPlayer, p
 		newPos.z += movement.z * moveDistance;
 		characterRef.current.position.set(newPos.x, 0, newPos.z);
 		socket.emit('player-move', { id:id, position: { x:newPos.x, y:0, z:newPos.z }});
-		setLocalPlayerPos({ x:newPos.x, y:0, z:newPos.z });
+		// setLocalPlayerPos({ x:newPos.x, y:0, z:newPos.z });
 		// Optional: Rotate 3D character to face movement direction
 		// if (movement.x !== 0 || movement.z !== 0) {
 		// 	const angle = Math.atan2(movement.x, movement.z);

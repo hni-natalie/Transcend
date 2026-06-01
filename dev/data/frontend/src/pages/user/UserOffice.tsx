@@ -2,11 +2,10 @@ import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { PerspectiveCamera, MapControls } from '@react-three/drei';
-import { useLocation } from 'react-router-dom';
 import { useSocket } from '@/features/socketio/useSocket';
 import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
-import { GenerateDept, CameraTracking, Character, MyRaycaster } from '@features/office';
+import { GenerateDept, CameraTracking, Character } from '@features/office';
 import { KeyboardProvider } from '@features/office/context/useKeyboard';
 
 // Sound component with depth-based volume
@@ -100,7 +99,6 @@ export function Office({ roomName } : SpaceProps ) {
 	const { enableSocket, socket, players, fetchRoomPlayers, roomPlayers, localPlayerId } = useSocket();
 	const { disconnect, getAudioListener, getPositionalAudio, isPlayerAudioReady, isConnectedRoom } = useLiveKit(roomName);
 	/* ------------- threejs  ------------- */
-	// const { camera, scene, gl } = useThree();
   const localPlayerRef = useRef<THREE.Mesh>(null);
   const groundRef = useRef<THREE.Mesh>(null);
 	const controlsRef = useRef<React.ElementRef<typeof MapControls>>(null);
@@ -216,7 +214,6 @@ export function Office({ roomName } : SpaceProps ) {
 
 		{/* <div className='bg-background p-8 flex w-full'> */}
 		<div className='flex-1 relative'>
-			{/* <KeyboardProvider> */}
 			<Canvas className=''>
 				<PerspectiveCamera 
 				  ref={cameraRef as React.Ref<THREE.PerspectiveCamera>}
@@ -256,7 +253,7 @@ export function Office({ roomName } : SpaceProps ) {
 					ref={groundRef}
 				>
 					<planeGeometry args={[100, 100]} />
-					<meshStandardMaterial color="#FFFFFF" visible={true} />
+					<meshStandardMaterial color="#FFFFFF" visible={false} />
 				</mesh>
 
 				<GenerateDept count={count} localPlayerRef={localPlayerRef} room={roomName} />
@@ -281,10 +278,6 @@ export function Office({ roomName } : SpaceProps ) {
 				{/* Grid helper for reference */}
 				{/* <gridHelper args={[20, 20]} /> */}
 			</Canvas>
-			{/* </KeyboardProvider> */}
-			{/* <div className='flex absolute top-4 left-0 right-4 justify-end' >
-				<ButtonVoiceRoom roomName={roomName} joinText={`Join ${roomName} Room`}/>
-			</div> */}
 			{error && (<div className='text-danger'>{error}</div>)}
 		</div>
 

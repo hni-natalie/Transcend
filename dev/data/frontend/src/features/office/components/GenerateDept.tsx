@@ -12,22 +12,13 @@ interface GenerateDeptProps {
 	count?: number;
 	padding?: number;
   localPlayerRef?: React.RefObject<THREE.Mesh | null>;
-	characterPos?: THREE.Vector3;
   room: string;
 }
 
-export function GenerateDept({ count=5, padding=3, localPlayerRef, characterPos, room } : GenerateDeptProps) {
+export function GenerateDept({ count=5, padding=3, localPlayerRef, room } : GenerateDeptProps) {
   const { activePlane, setActivePlane, isConnectedRoom } = useLiveKit(room);
-
-  const characterPosRef = useRef(null);
   const planeRefs = useRef(new Map());
 
-  useEffect(() => {
-    if (!localPlayerRef.current) return;
-    characterPosRef.current = localPlayerRef.current.position;
-    console.log('Character posRef:', characterPosRef.current)
-  }, [localPlayerRef.current]);
-  
 	// Function to set ref
   const setPlaneRef = ( index:number ) => ( el:number ) => {
     if (el) {
@@ -38,15 +29,15 @@ export function GenerateDept({ count=5, padding=3, localPlayerRef, characterPos,
   };
 	// Collision detection
   useFrame(() => {
-    if (!characterPosRef.current || !isConnectedRoom) return;
+    if (!localPlayerRef.current || !isConnectedRoom) return;
     
     for (const [index, plane] of planeRefs.current.entries()) {
       const halfWidth = plane.geometry.parameters.width / 2;
       const halfHeight = plane.geometry.parameters.height / 2;
       
       const isWithinBounds = 
-        Math.abs(characterPosRef.current.x - plane.position.x) < halfWidth &&
-        Math.abs(characterPosRef.current.z - plane.position.z) < halfHeight;
+        Math.abs(localPlayerRef.current.position.x - plane.position.x) < halfWidth &&
+        Math.abs(localPlayerRef.current.position.z - plane.position.z) < halfHeight;
       
       if (isWithinBounds) {
         if (activePlane !== index) {
