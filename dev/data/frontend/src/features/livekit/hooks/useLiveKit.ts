@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { livekitService } from '@/features/livekit/services/livekitService';
-import { useSocket } from '@/features/socketio/useSocket';
+import { useSocket } from '@/features/socketio/SocketContext';
 import * as THREE from 'three'; //debug
 
 

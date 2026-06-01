@@ -2,11 +2,11 @@ import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
 import { PerspectiveCamera, MapControls, SpotLight } from '@react-three/drei';
-import { useSocket } from '@/features/socketio/useSocket';
+import { useSocket } from '@/features/socketio/SocketContext';
 import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
 import { GenerateDept, CameraTracking, Character } from '@features/office';
-import { KeyboardProvider } from '@features/office/context/useKeyboard';
+import { KeyboardProvider } from '@/features/office/context/KeyboardContext';
 import { officeSceneConfig as conf } from '@/config/office.config';
 
 // get count from backend API to decide how many blocks to generate

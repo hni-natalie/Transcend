@@ -6,7 +6,7 @@
 import { useFrame, useLoader } from '@react-three/fiber';
 import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
-import { useSocket } from '@/features/socketio/useSocket';
+import { useSocket } from '@/features/socketio/SocketContext';
 import { Player } from '@shared/types/user.types';
 
 interface CharacterProps extends Player {

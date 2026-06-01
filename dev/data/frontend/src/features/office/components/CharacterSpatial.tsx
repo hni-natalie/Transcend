@@ -8,10 +8,11 @@ import { useFrame, useLoader } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import React, { useRef, useState, useEffect, RefObject } from 'react';
 import * as THREE from 'three';
-import { useSocket } from '@/features/socketio/useSocket';
-import { useKeyboard } from '@features/office/context/useKeyboard';
+import { useSocket } from '@/features/socketio/SocketContext';
+import { useKeyboard } from '@/features/office/context/KeyboardContext';
 import { Player } from '@shared/types/user.types';
 import { officeSceneConfig as conf } from '@/config/office.config';
+import { useTextWidth } from '@/features/office/hooks/useTextWidth';
 
 interface CharacterProps extends Player {
 	isLocalPlayer: boolean;
@@ -27,12 +28,6 @@ const fetchUserPhoto = async () => {
 	return ('https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg');
 }
 
-const calculateTextWidth = ( text:string, fontSize=0.6 ) => {
-  // Approximate: average character width is about 0.6 * fontSize
-  const avgCharWidth = fontSize * 0.6;
-  return text.length * avgCharWidth;
-};
-
 // 2D Circle Character Component + Movement handling
 // export function Character(
 export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
@@ -43,6 +38,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
   const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
 	const [hovered, setHovered] = useState(false);
 	const { keys } = useKeyboard();
+	const { textRef, textWidth, updateTextWidth } = useTextWidth();
 
 	const { enableSocket, isConnected, socket } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
@@ -50,7 +46,6 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 	const speed = conf.Movement.keyboard_speed; //movement speed
 	const texture = (useLoader(THREE.TextureLoader, photo) as THREE.Texture) 
 
-	
   useEffect(() => {
     if (ref && characterRef.current) {
       if (typeof ref === 'function') {
@@ -130,7 +125,6 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 
 		movement.set(0,0,0);
 		newPos.set(characterRef.current.position.x, 0, characterRef.current.position.z);
-		// const newPos = new THREE.Vector3(characterRef.current.position.x, 0, characterRef.current.position.z);
 
 		const moveDistance = speed * delta;
 
@@ -199,12 +193,14 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 			<group position={[0, -2, 1]}>
 				{/* Rounded Background Mesh */}
 				<mesh position={[0, 0, -0.1]}>
-					<planeGeometry args={[calculateTextWidth(id), 0.9]} />
+					<planeGeometry args={[textWidth, 0.9]} />
 					<meshStandardMaterial color="#1D2307" opacity={0.5} transparent />
 				</mesh>
 				<Text
+		      ref={textRef}
 					fontSize={0.6}
 					color="white"
+					onSync={updateTextWidth}
 				>{id}</Text>
 	  	</group>
 			)}
