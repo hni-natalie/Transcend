@@ -3,10 +3,11 @@ import { useState, useCallback, useRef } from 'react';
 import * as THREE from 'three';
 
 export const useTextWidth = (padding=0.5) => {
-  const [textWidth, setTextWidth] = useState(0);
+  const [textWidth, setTextWidth] = useState(10);
   const textRef = useRef(null);
+  // const textRef = useRef({});
 
-  const updateTextWidth = useCallback(() => {
+  const getTextWidth = useCallback(() => {
     if (textRef.current) {
 			const box = new THREE.Box3().setFromObject(textRef.current);
 			const padding = 0.5;
@@ -15,5 +16,5 @@ export const useTextWidth = (padding=0.5) => {
     }
   }, [padding]);
 
-  return { textWidth, textRef, updateTextWidth };
+  return { textWidth, textRef, getTextWidth, setTextWidth };
 };

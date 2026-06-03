@@ -19,7 +19,10 @@ export const API_CONFIG = {
     roles: '/roles',
     users: '/users',
     uploads: '/uploads',
-    departments: '/departments',
+    departments: {
+      data: '/departments',
+      names: '/departments/dpname',
+    },
     spaces: '/spaces',
     tasks: '/tasks',
     meetings: '/meetings',

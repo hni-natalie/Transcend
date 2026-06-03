@@ -7,6 +7,7 @@ router.use(authMiddleware);
 
 // anyone can view departments (for dropdowns, displaying user roles)
 router.get('/', departmentController.getAllDepartments);
+router.get('/dpname', departmentController.getAllDepartmentNames);
 router.get('/:dpId', departmentController.getDepartmentById);
 
 // admin only (create, update others, delete)

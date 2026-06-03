@@ -8,6 +8,14 @@ const departmentService = {
         });
     },
 
+    async getAllDepartmentNames(workspaceId) {
+        return prisma.department.findMany({
+            where: { workspaceId },
+            select: { dpName: true },
+            orderBy: { dpName: 'asc' }
+        });
+    },
+
     async getDepartmentById(dpId) {
         return prisma.department.findUnique({
             where: { dpId: dpId }

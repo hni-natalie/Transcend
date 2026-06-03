@@ -10,6 +10,15 @@ const departmentController = {
         }
     },
 
+    async getAllDepartmentNames(req, res) {
+        try {
+            const departments = await departmentService.getAllDepartmentNames(req.workspaceId);
+            return res.status(200).json({ success: true, data: departments });
+        } catch (error) {
+            return res.status(500).json({ success: false, message: error.message });
+        }
+    },
+
     async getDepartmentById(req, res) {
         try {
             const { dpId } = req.params;

@@ -10,12 +10,21 @@ import { KeyboardProvider } from '@/features/office/context/KeyboardContext';
 import { officeSceneConfig as conf } from '@/config/office.config';
 
 // get count from backend API to decide how many blocks to generate
-function getDeptCount() {
-	let count:number ;
-	// call backend API
-	count = 8;
-	return (count);
-}
+// const getOfficeDept = async () => {
+// 	const res = await officeService.getAllDeptNames();
+// 	let departmentNames = [];
+// 	let departmentCount = 0;
+
+// 	console.log('received data: ', res);
+// 	console.log('received data: ', res?.success);
+// 	if (res.success && Array.isArray(res.data)) {
+// 		departmentNames = res.data;
+// 		departmentCount = res.data.length;
+// 		console.log('Departments:', res.data);
+// 		console.log('Length of array:', res.data.length);
+// 	}
+// 	return { departmentNames, departmentCount};
+// }
 
 // Main Scene
 interface SpaceProps {
@@ -35,7 +44,6 @@ export function Office({ roomName } : SpaceProps ) {
 	const hasMouseMoved = useRef(false);
 	const hasMouseDown = useRef(false);
 	/* ------------- general  ------------- */
-	const count = getDeptCount()
   const [error, setError] = useState<string>('');
 	const listenerRef = useRef<THREE.AudioListener | null>(null);
 	const isConnectedRoomRef = useRef(isConnectedRoom);
@@ -190,7 +198,7 @@ export function Office({ roomName } : SpaceProps ) {
 					<meshStandardMaterial color="#6E6E6E" metalness={0.5} visible={true} />
 				</mesh>
 
-				<GenerateDept count={count} localPlayerRef={localPlayerRef} room={roomName} />
+				<GenerateDept localPlayerRef={localPlayerRef} room={roomName} />
 
 				{/* {isConnectedRoom && */}
 				{(roomPlayers.map(( user:Player ) => (

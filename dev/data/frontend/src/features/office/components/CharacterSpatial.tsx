@@ -38,7 +38,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
   const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
 	const [hovered, setHovered] = useState(false);
 	const { keys } = useKeyboard();
-	const { textRef, textWidth, updateTextWidth } = useTextWidth();
+	const { textRef, textWidth, getTextWidth, setTextWidth } = useTextWidth();
 
 	const { enableSocket, isConnected, socket } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
@@ -200,7 +200,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 		      ref={textRef}
 					fontSize={0.6}
 					color="white"
-					onSync={updateTextWidth}
+					onSync={getTextWidth}
 				>{id}</Text>
 	  	</group>
 			)}
