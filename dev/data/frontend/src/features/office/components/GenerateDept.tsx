@@ -165,14 +165,14 @@ export function GenerateDept({ padding=5, localPlayerRef, room } : GenerateDeptP
             <group position={[0, planeHeight*-0.4, 0.2]} >
               {/* Rectangle Background Mesh */}
               <mesh position={[0, 0, -0.1]}>
-                <planeGeometry args={[textWidth, 0.9]} />
+                <planeGeometry args={[textWidth[i], 0.9]} />
                 <meshStandardMaterial color="#1D2307" opacity={0.5} transparent />
               </mesh>
               <Text
-                ref={textRef}
+                ref={(ref) => textRef.current[i] = ref}
                 fontSize={0.6}
                 color="white"
-                onSync={getTextWidth}
+                onSync={() => getTextWidth(i)}
               >{dept.dpName}</Text>
             </group>
             )}
