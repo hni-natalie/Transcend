@@ -14,7 +14,7 @@ export const useTextWidth = (padding=0.5) => {
       const padding = 0.5;
       const width = box.max.x - box.min.x + padding;
       setTextWidth(prev => ({ ...prev, [index]: width }));
-      console.log('set ', index, 'width to ', width);
+      // console.log('set ', index, 'width to ', width);
     }
   }, [padding, textWidth]);
 

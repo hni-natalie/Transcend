@@ -13,24 +13,42 @@
 
 const { generateRoomToken } = require('../routes/livekit.js')
 const { randomHslColor }    = require('../utils/color.js');
+const { getUserPhoto }      = require('../utils/getUserPhoto.js');
+const { apiClient } = require('../api/api.client.js')
 const players     = new Map();
 const rooms       = new Map();      // Map<roomName, roomPlayers>
 
 // socket io setup
 const socketService = (io) => {
+  io.use(async (socket, next) => {
+    const token = socket.handshake.auth.token;
+    // /*debug*/ console.log('Token received:', token ? 'Yes' : 'No');
+    
+    if (!token)
+        return next(new Error('Authentication error: No token provided'));
+    
+    apiClient.setTokenProvider(token);
+    const user = await apiClient.get('/auth/me');
+
+    if (user) {
+      socket.user = user;
+      next();
+    }
+    else
+      return next(new Error('socket.service: User not found'));
+  })
 	io.on('connection', (socket) => {
-  console.log(`Player connected lobby: ${socket.id}`);
+  console.log(`Player connected lobby: ${socket.id} ${socket.user.userName}`);
   
   // Initialize player, should this be in db?
   players.set(socket.id, {
     id: socket.id,
-    name: socket.id, // 'GetUsersNameAPI'
+    name: socket.user.userName || socket.id, // 'GetUsersNameAPI'
     roomName: null,
     position: { x:0, y:0, z:0 },
     rotation: { x:-Math.PI/2, y:0, z:0 },
     color: randomHslColor(),
-    // photo: 'GetUserPhotoAPI'
-    photo: "https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg",
+    photo: socket.user.avatarUrl || null,
     audioEnabled: true,
     speaking: false,
   });
@@ -40,7 +58,6 @@ const socketService = (io) => {
   socket.emit('existing-players', Array.from(players.values()));
   
   // Broadcast entire new player object to everyone else
-  // frontend sets up listener & do next steps: eg print names
   socket.broadcast.emit('player-joined', players.get(socket.id));
   
   // Handle position updates
@@ -89,7 +106,6 @@ const socketService = (io) => {
     
     // Generate room-specific token
     const token = await generateRoomToken(roomName, player.name);
-    // Send room-joined event with room context
 
     // either setRoomPlayers in existing-room-players or room-joined
     socket.emit('room-joined', {
@@ -171,9 +187,9 @@ const socketService = (io) => {
       }
     }
   }
-// within socket
+  // within io
 });
-// within io
+// within socket
 }
 
 module.exports = {

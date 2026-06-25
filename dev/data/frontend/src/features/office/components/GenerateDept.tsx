@@ -26,12 +26,12 @@ const getOfficeDept = async () => {
   let departmentCount = 0;
 
   console.log('received data: ', res);
-  console.log('received data: ', res?.success);
+  // console.log('received data: ', res?.success);
   if (res.success && Array.isArray(res.data)) {
     departmentNames = res.data;
     departmentCount = res.data.length;
-    console.log('Departments:', res.data);
-    console.log('Length of array:', res.data.length);
+    // console.log('Departments:', res.data);
+    // console.log('Length of array:', res.data.length);
   }
   return { departmentNames, departmentCount};
 }

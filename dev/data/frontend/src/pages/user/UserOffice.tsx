@@ -9,23 +9,6 @@ import { GenerateDept, CameraTracking, Character } from '@features/office';
 import { KeyboardProvider } from '@/features/office/context/KeyboardContext';
 import { officeSceneConfig as conf } from '@/config/office.config';
 
-// get count from backend API to decide how many blocks to generate
-// const getOfficeDept = async () => {
-// 	const res = await officeService.getAllDeptNames();
-// 	let departmentNames = [];
-// 	let departmentCount = 0;
-
-// 	console.log('received data: ', res);
-// 	console.log('received data: ', res?.success);
-// 	if (res.success && Array.isArray(res.data)) {
-// 		departmentNames = res.data;
-// 		departmentCount = res.data.length;
-// 		console.log('Departments:', res.data);
-// 		console.log('Length of array:', res.data.length);
-// 	}
-// 	return { departmentNames, departmentCount};
-// }
-
 // Main Scene
 interface SpaceProps {
   roomName: string;
@@ -206,6 +189,7 @@ export function Office({ roomName } : SpaceProps ) {
 						key={user.id}
 	          ref={user.id === localPlayerId ? localPlayerRef : null}
 						id={user.id}
+						name={user.name}
 						color={user.color}
 						position={user.position} // need user.position to receive socketio remote pos updates
 						photo={user.photo}

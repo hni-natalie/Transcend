@@ -26,7 +26,8 @@ export function SocketProvider ({ children }) {
     if (shouldConnect && !socket) {
     const socket = io('/', {
       path: '/api/socket.io',
-      transports: ['websocket', 'polling']  // Allow both
+      transports: ['websocket', 'polling'],  // Allow both
+      auth: { token: getToken() },
     });
     setSocket(socket);
 
@@ -147,6 +148,7 @@ export function SocketProvider ({ children }) {
   /* **************************************************************
    * Helper functions
    * **************************************************************/
+  const getToken = () => localStorage.getItem('token');
   const enableSocket = () => setShouldConnect(true);
   const getPlayerCount = () => players.length;
   const getPlayerById = ( playerId:String ) => {

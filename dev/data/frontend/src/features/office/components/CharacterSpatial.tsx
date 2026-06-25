@@ -31,7 +31,7 @@ const fetchUserPhoto = async () => {
 // 2D Circle Character Component + Movement handling
 // export function Character(
 export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
-	{ id, position, color="#D0F05C", photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps,
+	{ id, name, position, color="#D0F05C", photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps,
 	ref) => {
 
 	const characterRef = useRef<THREE.Mesh>(null);
@@ -193,15 +193,15 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 			<group position={[0, -2, 1]}>
 				{/* Rounded Background Mesh */}
 				<mesh position={[0, 0, -0.1]}>
-					<planeGeometry args={[textWidth, 0.9]} />
+					<planeGeometry args={[textWidth[0], 0.9]} />
 					<meshStandardMaterial color="#1D2307" opacity={0.5} transparent />
 				</mesh>
 				<Text
-		      ref={textRef}
+					ref={(ref) => textRef.current[0] = ref}
 					fontSize={0.6}
 					color="white"
-					onSync={getTextWidth}
-				>{id}</Text>
+					onSync={() => getTextWidth(0)}
+				>{name || id}</Text>
 	  	</group>
 			)}
 
