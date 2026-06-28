@@ -3,8 +3,10 @@
 	that generates token
 */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { livekitService } from '@/features/livekit/services/livekitService';
+import { useLocation } from 'react-router-dom';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useSocket } from '@/features/socketio/SocketContext';
 import * as THREE from 'three'; //debug
 
@@ -20,8 +22,26 @@ export function useLiveKit( roomName:string ) {
   const [joinCount, setJoinCount] = useState<number>(0);
   const [isLoading, setisLoading] = useState<boolean>(false);
   const [readyStreams, setReadyStreams] = useState<Set<string>>(new Set());
+  const location = useLocation();
 
-  
+  const isConnectedRef = useRef(isConnectedRoom);
+  const prevPathRef = useRef(location.pathname);
+
+  // disconnect when move to other page
+  useEffect(() => {
+      isConnectedRef.current = isConnectedRoom;
+  }, [isConnectedRoom]);
+  useEffect(() => {
+    const currentPath = location.pathname;
+
+    if (prevPathRef.current !== currentPath) {
+      if (prevPathRef.current === R.USER_OFFICE) {
+        disconnect(false);
+      }
+      prevPathRef.current = currentPath
+    }
+  }, [location]);
+
   // Set up handlers when hook mounts
   useEffect(() => {
     const status = livekitService.getConnectionStatus();

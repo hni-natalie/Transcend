@@ -1,11 +1,12 @@
 import React, { ReactElement, useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { adminMenuConfig, userMenuConfig } from '@config/menu.config';
 import { UserChip } from '@features/users';
 import { IconCollapse, IconLogout } from '@shared/ui/Icons';
-import { MenuConfig } from '@shared/types/menu.types';
+import { MenuConfig, MenuItem } from '@shared/types/menu.types';
 import { UserChipItem } from '@shared/types/user.types';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useLiveKit } from '@features/livekit'
 
 // TODO: add logout inline with user chip (hover avatar > logout icon?)
 // mock user for now
@@ -17,7 +18,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 //   };
 // }
 
-const getMenuForPath = (pathname: string): MenuConfig => {
+const getMenuForPath = ( pathname:string ): MenuConfig => {
   return pathname.startsWith('/admin') ? adminMenuConfig : userMenuConfig;
 };
 
@@ -33,6 +34,13 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
   
   const toggleExpand = () => setIsExpanded(prev => !prev);
   const expandStatus = isExpanded ? 'expanded' : 'collapsed';
+
+  const { connect, isConnectedRoom, isLoading } = useLiveKit("Office");
+  const navigate = useNavigate();
+  const handleJoinOffice = async ( href:string ) => {
+    await connect("room");
+    navigate(href);
+  }
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(new Date()), 60000);
@@ -54,10 +62,23 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     photo: '/default-avatar.png'
   };
 
+  const linkClass = ({ isActive } : { isActive:boolean }) => `
+    flex items-center h-10 pl-7.5 transition-none group
+    ${isActive ? 'bg-accent-lime/10 text-accent-lime' : 'text-white/50 hover:bg-white/5 hover:text-white'}
+  `;
+  const linkContent = ( item:MenuItem ) => (
+    <>
+    <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+      {item.icon}
+    </span>
+    {isExpanded && <span className="ml-3 text-base font-medium whitespace-nowrap">{item.title}</span>}
+    </>
+  );
+
   return (
     <aside className={`flex flex-col h-screen sticky top-0 border-r border-white/10 bg-black py-6 transition-none z-50 ${isExpanded ? 'w-[220px]' : 'w-[60px]'}`}>
       
-      {/* Header */}
+    {/* Header */}
 	  <div 
 		className="relative flex flex-col pl-7 mb-4" 
 		onMouseEnter={() => setIsHovering(true)}
@@ -120,18 +141,31 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
         <ul className="flex flex-col gap-1">
           {menuItems.map((item) => (
             <li key={item.title}>
+              {item.title === 'Office' ? (
+                <button
+                  onClick={() => handleJoinOffice(item.href)}
+                  className={`${linkClass({ isActive:location.pathname === item.href })} w-full 
+                              ${isConnectedRoom ? '' : 'cursor-pointer'} `}
+                  disabled={isConnectedRoom || isLoading}
+                >
+                  {linkContent(item)}
+                </button>
+              ) : (
               <NavLink
                 to={item.href}
-                className={({ isActive }) => `
-                  flex items-center h-10 pl-7.5 transition-none group
-                  ${isActive ? 'bg-accent-lime/10 text-accent-lime' : 'text-white/50 hover:bg-white/5 hover:text-white'}
-                `}
+                className={linkClass}
+                // className={({ isActive }) => `
+                //   flex items-center h-10 pl-7.5 transition-none group
+                //   ${isActive ? 'bg-accent-lime/10 text-accent-lime' : 'text-white/50 hover:bg-white/5 hover:text-white'}
+                // `}
               >
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                {linkContent(item)}
+                {/* <span className="flex h-5 w-5 shrink-0 items-center justify-center">
                   {item.icon}
                 </span>
-                {isExpanded && <span className="ml-3 text-base font-medium whitespace-nowrap">{item.title}</span>}
+                {isExpanded && <span className="ml-3 text-base font-medium whitespace-nowrap">{item.title}</span>} */}
               </NavLink>
+              )}
             </li>
           ))}
         </ul>
