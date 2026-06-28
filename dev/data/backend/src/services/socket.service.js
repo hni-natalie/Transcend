@@ -29,7 +29,7 @@ const socketService = (io) => {
     
     apiClient.setTokenProvider(token);
     const user = await apiClient.get('/auth/me');
-
+    console.log('[socket] userData: ', user);
     if (user) {
       socket.user = user;
       next();
@@ -39,8 +39,22 @@ const socketService = (io) => {
   })
 	io.on('connection', (socket) => {
   console.log(`Player connected lobby: ${socket.id} ${socket.user.userName}`);
-  
-  updateSocketId(socket.id, socket.user.userId, 'online');
+
+  // logout duplicate sessions
+  if (socket.user.userStatus === 'online') {
+    console.log('[socket.service] duplicate login detected! ', socket.user.socketId);
+    io.to(socket.user.socketId).emit('force-logout', {
+      message: `Logged in at another device, logging out now...`,
+      timestamp: new Date().toISOString()
+    });
+  }
+  else
+    console.log('[socket.service] new login!')
+
+  setTimeout(() => {
+    updateSocketId(socket.id, socket.user.userId, 'online');
+  }, 3000);
+
   // Initialize player, should this be in db?
   players.set(socket.id, {
     id: socket.id,

@@ -153,6 +153,7 @@ router.get('/me', authMiddleware, async (req, res) => {
         const user = await prisma.user.findUnique({
             where: { userId: req.user.userId },
             select: {
+                socketId: true,
                 userId: true,
                 userName: true,
                 userEmail: true,
@@ -172,6 +173,7 @@ router.get('/me', authMiddleware, async (req, res) => {
 
         // Return stable shape that matches login endpoint
         res.json({
+            socketId: user.socketId,
             userId: user.userId,
             userName: user.userName,
             userEmail: user.userEmail,

@@ -5,7 +5,6 @@ import { useSocket } from '@/features/socketio/SocketContext';
 
 const getUserStatus = async () => {
   const userData = await authService.getMe();
-  console.log('[UserChip] ', userData);
   return userData.userStatus || 'offline'
 }
 

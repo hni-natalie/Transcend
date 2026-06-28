@@ -6,11 +6,14 @@
 import { io, Socket } from 'socket.io-client';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Player } from '@shared/types/user.types';
+import { useAuth } from '@/features/auth/AuthContext';
 
 const SocketContext     = createContext(null);
 export const useSocket  = () => useContext(SocketContext);
 
 export function SocketProvider ({ children }) {
+  const { logout } = useAuth();
+
   const [shouldConnect, setShouldConnect] = useState(false);
   const [isConnected, setIsConnected] = useState<Boolean>(false);
   const [socket, setSocket] = useState< Socket|null >(null);
@@ -31,6 +34,10 @@ export function SocketProvider ({ children }) {
     });
     setSocket(socket);
 
+    socket.on('force-logout', (data) => {
+      console.log('[force-logout] ', data.timestamp, ' ', data.message);
+      logout();
+    }) 
     socket.on('connect', () => {
       console.log('FE: Socket connected!', socket.id);
       setLocalPlayerId(socket.id)

@@ -7,6 +7,7 @@ export interface LoginRequest {
 }
 
 export interface AuthUser {
+  socketId: string,
   userId: string;
   userName: string;
   userEmail: string;
@@ -27,6 +28,7 @@ export const toAuthUser = (user: User): AuthUser => ({
   userName: user.userName,
   userEmail: user.userEmail,
   roleId: user.roleId,
+  socketId: user.socketId,
   roleName: user.roleName,
   userStatus: user.userStatus,
   avatarUrl: user.avatarUrl ?? null,
