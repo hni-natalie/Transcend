@@ -21,12 +21,19 @@ import { useLiveKit } from '@features/livekit'
 const getMenuForPath = ( pathname:string ): MenuConfig => {
   return pathname.startsWith('/admin') ? adminMenuConfig : userMenuConfig;
 };
+const getUserLocation = () => {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const parts = timezone.split('/');
+  const city = parts[parts.length - 1].replace(/_/g, ' ');
+  return (city);
+}
 
 export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
   const location = useLocation();
   const { user, logout } = useAuth();
 //   const user: UserChipItem = getUserData();
   const menuItems = conf ?? getMenuForPath(location.pathname);
+  const userLocation = getUserLocation();
   const [now, setNow] = useState(() => new Date());
   
   const [isExpanded, setIsExpanded] = useState(true);
@@ -129,7 +136,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
         {/* Location and Time */}
         <div className="h-6 flex items-center mt-1">
           <div className={`flex items-center gap-2 transition-none ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-            <p className="text-[10px] uppercase tracking-widest text-white/40">Location</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/40">{userLocation}</p>
             <span className="text-[10px] text-white/20">|</span>
             <p className="font-mono text-[10px] text-white/60">{timeLabel}</p>
           </div>
