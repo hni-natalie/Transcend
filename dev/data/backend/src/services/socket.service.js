@@ -13,8 +13,8 @@
 
 const { generateRoomToken } = require('../routes/livekit.js')
 const { randomHslColor }    = require('../utils/color.js');
-const { getUserPhoto }      = require('../utils/getUserPhoto.js');
-const { apiClient } = require('../api/api.client.js')
+const { apiClient }         = require('../api/api.client.js')
+const { updateSocketId }    = require('./supabase-storage.service.js')
 const players     = new Map();
 const rooms       = new Map();      // Map<roomName, roomPlayers>
 
@@ -40,9 +40,11 @@ const socketService = (io) => {
 	io.on('connection', (socket) => {
   console.log(`Player connected lobby: ${socket.id} ${socket.user.userName}`);
   
+  updateSocketId(socket.id, socket.user.userId, 'online');
   // Initialize player, should this be in db?
   players.set(socket.id, {
     id: socket.id,
+    userId: socket.user.userId,
     name: socket.user.userName || socket.id, // 'GetUsersNameAPI'
     roomName: null,
     position: { x:0, y:0, z:0 },
@@ -149,6 +151,7 @@ const socketService = (io) => {
       handleLeaveRoom(socket, player, player.roomName)
     players.delete(socket.id);
     socket.broadcast.emit('player-left', { id:socket.id }); // send to all clients globally
+    updateSocketId(null, socket.user.userId, 'offline');
   });
 
   /* *****************************************************************

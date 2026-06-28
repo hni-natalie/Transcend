@@ -5,7 +5,7 @@
 
 import { io, Socket } from 'socket.io-client';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { Player, Position } from '@shared/types/user.types';
+import { Player } from '@shared/types/user.types';
 
 const SocketContext     = createContext(null);
 export const useSocket  = () => useContext(SocketContext);
@@ -15,15 +15,15 @@ export function SocketProvider ({ children }) {
   const [isConnected, setIsConnected] = useState<Boolean>(false);
   const [socket, setSocket] = useState< Socket|null >(null);
   const [players, setPlayers] = useState< Player[] >([]);
-  // const [localPlayerPos, setLocalPlayerPos] = useState< Position | null >(null);
   const [localPlayerId, setLocalPlayerId] = useState<String>(null);
+  const [onlineStatus, setOnlineStatus] = useState('offline')
   const [messages, setMessages] = useState([]);
   
   const [currentRoom, setCurrentRoom] = useState<String>(null);
   const [roomPlayers, setRoomPlayers] = useState< Player[] >([]);
 
   useEffect(() => {
-    if (shouldConnect && !socket) {
+  if (shouldConnect && !socket) {
     const socket = io('/', {
       path: '/api/socket.io',
       transports: ['websocket', 'polling'],  // Allow both
@@ -38,7 +38,7 @@ export function SocketProvider ({ children }) {
     });
     socket.on('connect_error', (err) => {
       console.error('❌ FE: Socket error:', err);
-			alert("Unable to connect, please reload page and rejoin room.");
+			alert("Unable to connect, please reload page and try again.");
       setIsConnected(false);
     });
 
@@ -220,6 +220,8 @@ export function SocketProvider ({ children }) {
     enableSocket,
     isConnected,
     socket,
+    onlineStatus,
+    setOnlineStatus,
     
     /* Player methods */
     players,

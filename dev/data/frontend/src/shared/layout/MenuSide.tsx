@@ -161,16 +161,8 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
               <NavLink
                 to={item.href}
                 className={linkClass}
-                // className={({ isActive }) => `
-                //   flex items-center h-10 pl-7.5 transition-none group
-                //   ${isActive ? 'bg-accent-lime/10 text-accent-lime' : 'text-white/50 hover:bg-white/5 hover:text-white'}
-                // `}
               >
                 {linkContent(item)}
-                {/* <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-                  {item.icon}
-                </span>
-                {isExpanded && <span className="ml-3 text-base font-medium whitespace-nowrap">{item.title}</span>} */}
               </NavLink>
               )}
             </li>

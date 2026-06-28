@@ -18,7 +18,7 @@ type ButtonVoiceRoomProps = {
 
 export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room', roomName='myroom', allowLeave=true, mode="call" } : ButtonVoiceRoomProps) {
   const { connect, disconnect, isConnectedRoom, isLoading, isMuted, toggleMute, joinCount } = useLiveKit(roomName);
-  const { enableSocket, isConnected, localPlayerId, socket } = useSocket();
+  const { enableSocket, isConnected, localPlayerId } = useSocket();
   useEffect(() => { enableSocket(); }, []);
   
   const handleJoin = async () => {
