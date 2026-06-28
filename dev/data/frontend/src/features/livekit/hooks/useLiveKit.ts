@@ -3,34 +3,41 @@
 	that generates token
 */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { livekitService } from '@/features/livekit/services/livekitService';
 import { useLocation } from 'react-router-dom';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useSocket } from '@/features/socketio/SocketContext';
 import * as THREE from 'three'; //debug
 
-
 // export function useLiveKit( roomName:string , participantName:string ) {
 export function useLiveKit( roomName:string ) {
-  const [isConnectedRoom, setIsConnectedRoom] = useState(false);
-  const [activePlane, setActivePlane] = useState(null);
-  const [isMuted, setIsMuted] = useState(false);
   const { enableSocket, joinRoom, leaveRoom } = useSocket();
   useEffect(() => { enableSocket(); }, []);
-
-  const [joinCount, setJoinCount] = useState<number>(0);
-  const [isLoading, setisLoading] = useState<boolean>(false);
-  const [readyStreams, setReadyStreams] = useState<Set<string>>(new Set());
+  
+  const [state, setState] = useState(() => livekitService.getState());
   const location = useLocation();
 
-  const isConnectedRef = useRef(isConnectedRoom);
+  const isConnectedRef = useRef(state.isConnectedRoom);
   const prevPathRef = useRef(location.pathname);
+
+  useEffect(() => {
+      const initialState = livekitService.getState();
+      setState(initialState);
+      
+      // Subscribe to ALL state changes
+      const unsubscribe = livekitService.onStateChange((newState) => {
+          // console.log('📡 State updated:', newState);
+          setState(newState);
+      });
+      
+      return () => { unsubscribe(); }
+  }, []);
 
   // disconnect when move to other page
   useEffect(() => {
-      isConnectedRef.current = isConnectedRoom;
-  }, [isConnectedRoom]);
+      isConnectedRef.current = state.isConnectedRoom;
+  }, [state.isConnectedRoom]);
   useEffect(() => {
     const currentPath = location.pathname;
 
@@ -42,91 +49,25 @@ export function useLiveKit( roomName:string ) {
     }
   }, [location]);
 
-  // Set up handlers when hook mounts
-  useEffect(() => {
-    const status = livekitService.getConnectionStatus();
-    setIsConnectedRoom(status.isConnected);
-    
-    const handleConnected = (data) => {
-      console.log('Connected to room:', data.room);
-      setTimeout(() => {
-        setIsConnectedRoom(true);
-        setisLoading(false);
-      }, 3000)
-    };
-    const handleDisconnected = () => {
-      setTimeout(() => {
-        setActivePlane(null);
-        setIsConnectedRoom(false);
-        setisLoading(false);
-      }, 2000)
-    };
-    const handleSubscribed = ({ id }) => {
-      // console.log("audio-track-subscribed!");
-      setReadyStreams(prev => {
-        const newSet = new Set(prev);
-        newSet.add(id);
-        return newSet;
-      });
-    };
-    const handleUnsubscribed = ({ id }) => {
-      // console.log("audio-track-unsubscribed!");
-      setReadyStreams(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
-    };
-    
-    livekitService.on('connected', handleConnected);
-    livekitService.on('disconnected', handleDisconnected);
-    livekitService.on('audio-track-subscribed', handleSubscribed);
-    livekitService.on('audio-track-unsubscribed', handleUnsubscribed);
-
-    return () => {
-      livekitService.off('connected', handleConnected);
-      livekitService.off('disconnected', handleDisconnected);
-      livekitService.off('audio-track-subscribed', handleSubscribed);
-      livekitService.off('audio-track-unsubscribed', handleUnsubscribed);
-    };
-  }, []);
-
   /* 
     calls socket.emit join-room to backend, backend creates room token
     then route back to connectToRoom in livekitService, create Room() in frontend
   */
-const connect = async ( mode: "room" | "call" ) => {
+  const connect = async ( mode: "room" | "call" ) => {
 
-    // const onSuccess = (event: any) => {
-    //   console.log('Connection complete!', event.detail);
-    //   setJoinCount(prev => prev + 1); // debug
-
-    //   // setTimeout(() => {
-    //     // setisLoading(false);
-    //   // }, 2000); // 2 second delay
-    //   window.removeEventListener('livekit-connect-success', onSuccess);
-    // };
-    const onError = (event: any) => {
-      console.error('Connection failed!', event.detail);
-      setisLoading(false);
-      window.removeEventListener('livekit-connect-error', onError);
-    };
-    // window.addEventListener('livekit-connect-success', onSuccess);
-    window.addEventListener('livekit-connect-error', onError);
-
-
-    setisLoading(true)
+    setIsLoading(true)
     setIsMuted(livekitService.audioManager.getMuteState());
     livekitService.init(mode); // init once only
     await livekitService.audioManager.resumeListener(); // .resume onClick
 
-    // below runs & return event listener success or error
+    // below runs & wait for livekit-connect signal if success
+    // handles isLoading state in connectToRoom
     joinRoom(roomName);
   };
 
   const disconnect = async ( showLoading:boolean ) => {
     if (showLoading)
-      setisLoading(true);
+      setIsLoading(true);
     leaveRoom(roomName); // emit leave-room signal to backend
     await livekitService.disconnectFromRoom(); // frontend cleanup
   };
@@ -137,7 +78,7 @@ const connect = async ( mode: "room" | "call" ) => {
   }
 
   const isPlayerAudioReady = ( playerId:string ): boolean => {
-    return (readyStreams.has(playerId));
+    return (livekitService.readyStreams.has(playerId));
   }
   const getAudioListener = () => {
     return livekitService.audioManager.listener;
@@ -161,10 +102,24 @@ const connect = async ( mode: "room" | "call" ) => {
     }
     return livekitService.mediaStreams.get(userId);
   }
+  const setActivePlane = useCallback(( index:number | null ) => {
+      livekitService.setActivePlane(index);
+  }, []);
+  const setIsConnectedRoom = useCallback(( status:boolean ) => {
+    livekitService.setIsConnectedRoom(status);
+  }, []);
+  const setIsLoading = useCallback(( status:boolean ) => {
+    livekitService.setIsLoading(status);
+  }, []);
+  const setIsMuted = useCallback(( status:boolean ) => {
+    livekitService.setIsMuted(status);
+  }, []);
 
-  return { connect, disconnect, isConnectedRoom,
-          isMuted, toggleMute, isLoading, joinCount, 
-          activePlane, setActivePlane,
+  return { connect, disconnect, 
+          toggleMute, setActivePlane,
+          isMuted: state.isMuted, isLoading: state.isLoading, joinCount: state.joinCount, 
+          activePlane: state.activePlane,
+          isConnectedRoom: state.isConnectedRoom,
           isPlayerAudioReady,
           getMediaStream, getPositionalAudio, getAudioListener
         };

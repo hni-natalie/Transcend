@@ -11,6 +11,18 @@ import { Room, RoomEvent, Track } from 'livekit-client';
 import { AudioManager } from './audioManager';
 import * as THREE from 'three';
 
+/*
+for reference:
+  interface LiveKitState {
+    isConnectedRoom: boolean;
+    activePlane: number;
+    isMuted: boolean;
+    joinCount: number;
+    isLoading: boolean;
+    readyStreams: Set<string>;
+  }
+*/
+
 class LiveKitService {
   constructor() {
     this.room = null;
@@ -20,7 +32,56 @@ class LiveKitService {
     this.audioManager = new AudioManager(); // manage own audio mic, mute state
     this.listeners = new Map();             // event listener
     this.isInitialized = false;
+    this._state = {
+      isConnectedRoom: false,
+      activePlane: null,
+      isMuted: false,
+      joinCount: 0,
+      isLoading: false,
+      readyStreams: new Set()
+    }
   }
+
+  get isConnectedRoom() { return this._state.isConnectedRoom; }
+  get activePlane() { return this._state.activePlane; }
+  get isMuted() { return this._state.isMuted; }
+  get joinCount() { return this._state.joinCount; }
+  get isLoading() { return this._state.isLoading; }
+  get readyStreams() { return this._state.readyStreams; }
+
+  _setState(updates) {
+    this._state = { ...this._state, ...updates };
+    this.emit('stateChange', this._state);
+  }
+  getState(){
+    return { ...this._state };
+  }
+  setActivePlane(index){
+      this._setState({ activePlane:index });
+  }
+  setIsConnectedRoom(status){
+    this._setState({ isConnectedRoom:status });
+  }
+  setIsLoading(status) {
+      this._setState({ isLoading:status });
+  }
+  setIsMuted(status) {
+      this._setState({ isMuted:status });
+  }
+  setJoinCount(count) {
+      this._setState({ joinCount:count });
+  }
+  setReadyStreams(id) {
+    const newSet = new Set(this._state.readyStreams);
+    newSet.add(id);
+    this._setState({ readyStreams:newSet });
+  }
+  deleteReadyStreams(id) {
+    const newSet = new Set(this._state.readyStreams);
+    newSet.delete(id);
+    this._setState({ readyStreams:newSet });
+  }
+
   /*
     mode must be either "room" || "call"
     room: spatial audio, call: non spatial audio
@@ -57,7 +118,6 @@ class LiveKitService {
 
     const positionalAudio = new THREE.PositionalAudio(this.audioManager.listener); // add local listener to positional audio
     positionalAudio.setRefDistance(2);        // Volume starts decrease after this distance
-    // positionalAudio.setMaxDistance(4);     // Max audible distance
     positionalAudio.setRolloffFactor(8);      // How quickly volume decreases
     positionalAudio.setDistanceModel('inverse'); // More natural distance falloff
 
@@ -124,7 +184,8 @@ class LiveKitService {
     // }
     // --------------------------------------------------------
     await this.setupRoomAudio(remoteParticipants.identity, mediaStream);
-    this.emit('audio-track-subscribed', { id: remoteParticipants.identity });
+    // this.emit('audio-track-subscribed', { id: remoteParticipants.identity });
+    setReadyStreams(remoteParticipants.identity)
 
     // debug
     const tstream = this.mediaStreams.get(remoteParticipants.identity);
@@ -158,7 +219,8 @@ class LiveKitService {
       console.log("Removed audio element ", remoteParticipants.identity);
     }
 
-    this.emit('audio-track-unsubscribed', { id: remoteParticipants.identity });
+    // this.emit('audio-track-unsubscribed', { id: remoteParticipants.identity });
+    deleteReadyStreams(remoteParticipants.identity)
   }
 
 
@@ -177,7 +239,6 @@ class LiveKitService {
       this.audioElements.delete(remoteParticipants.identity);
     }
     track.detach(); // Clean up audio elements
-    // console.log('cleaning up audio ...')
   }
   /*
     mode has to be "room" || "call"
@@ -249,11 +310,19 @@ class LiveKitService {
           window.location.reload();
         }
       }
-      this.emit('connected', { room: this.room });
+      // this.emit('connected', { room: this.room }); // ###
+      console.log('Connected to room:', this.room);
+      setTimeout(() => {
+        console.log('pipak')
+        this.setIsConnectedRoom(true);
+        this.setIsLoading(false);
+      }, 3000)
       return { success: true, room: this.room };
       
     } catch (error) {
+      // should emit error here to standardize ###
       console.error('Livekit Service: Connection failed:', error);
+      this.setIsLoading(false);
     }
   }
 
@@ -271,8 +340,13 @@ class LiveKitService {
       try {
         await this.room.disconnect();
         this.room = null;
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        this.emit('disconnected', { room: this.room });
+        await new Promise(resolve => setTimeout(resolve, 1500)); // blocking
+        // this.emit('disconnected', { room: this.room });
+        setTimeout(() => {
+          this.setActivePlane(null);
+          this.setIsConnectedRoom(false);
+          this.setIsLoading(false);
+        }, 2000)
         this.audioManager.cleanup();
         this.mediaStreams.clear();
         this.positionalAudios.clear();
@@ -314,6 +388,11 @@ class LiveKitService {
       console.log(`📡 emit: Emitting event: ${event}`, data);
     } else
     console.log(`📡 emit: No listeners found for ${event}`);
+  }
+
+  onStateChange(callback) {
+    this.on('stateChange', callback);
+    return () => this.off('stateChange', callback);
   }
 }
 

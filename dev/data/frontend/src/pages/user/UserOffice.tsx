@@ -36,7 +36,7 @@ export function Office({ roomName } : SpaceProps ) {
 				event.reason?.message?.includes('Cannot set local offer')) {
 			console.warn('Negotiation error occurred, SDK will typically self-heal:', event.reason);
 			await disconnect(false);
-			alert("Unable to connect, refresh and try again!");
+			alert("Unable to connect, please reload page and rejoin room.");
 			window.location.reload();
 		}
 	}

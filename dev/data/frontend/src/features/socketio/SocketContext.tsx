@@ -38,6 +38,7 @@ export function SocketProvider ({ children }) {
     });
     socket.on('connect_error', (err) => {
       console.error('❌ FE: Socket error:', err);
+			alert("Unable to connect, please reload page and rejoin room.");
       setIsConnected(false);
     });
 
