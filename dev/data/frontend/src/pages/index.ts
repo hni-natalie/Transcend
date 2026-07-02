@@ -6,10 +6,10 @@ export { Privacy } from './public/Privacy'
 
 // ADMIN
 export { AdminDashboard } from './admin/AdminDashboard'
-export { UserManagement } from './admin/AdminUserManagement'
+export { AdminUserManagement } from './admin/AdminUserManagement'
 export { SpaceManagement} from './admin/AdminSpaceManagement'
-export { ActivityLog } from './admin/AdminActivity'	
-export { AdminSettings } from './admin/AdminSettings'
+export { AdminActivity } from './admin/AdminActivity'	
+// export { AdminSettings } from './admin/AdminSettings'
 
 // USER
 export { UserDashboard } from './user/UserDashboard'

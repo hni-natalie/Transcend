@@ -28,11 +28,11 @@ export const adminMenuConfig: MenuConfig = [
     href: R.ADMIN_ACTIVITY,
     icon: <IconActivity />,
   },
-  {
-    title: 'Settings',
-    href: R.ADMIN_SETTINGS,
-    icon: <IconSettings />,
-  },
+//   {
+//     title: 'Settings',
+//     href: R.ADMIN_SETTINGS,
+//     icon: <IconSettings />,
+//   },
 ];
 
 export const userMenuConfig: MenuConfig = [

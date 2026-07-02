@@ -1,5 +1,3 @@
-// config/routes.manifest.ts - Single source of truth
-
 export const ROUTE_PATH = {
 	// public
 	HOME: '/',
@@ -12,7 +10,7 @@ export const ROUTE_PATH = {
 	ADMIN_USERS: '/admin/users',
 	ADMIN_SPACES: '/admin/spaces',
 	ADMIN_ACTIVITY: '/admin/activity',
-	ADMIN_SETTINGS: '/admin/settings',
+	// ADMIN_SETTINGS: '/admin/settings', // kiv - to remove
 
 	// user
 	USER_DASHBOARD: '/user/dashboard',
