@@ -1,16 +1,21 @@
 import { PageHeader, IconDashboard } from '@shared';
-// add features
+import { Dashboard } from '@/features/admin/dashboard/Dashboard';
 
 export const AdminDashboard = () => {
   return (
     <>
-      <PageHeader 
-        icon={<IconDashboard className="w-7 h-7" />}
-        title="Dashboard"
-      />
-      <div className="flex items-center justify-center h-full">
-        <p className="text-content-2">Admin Dashboard coming soon...</p>
-      </div>
+	  <PageHeader 
+		icon={<IconDashboard className="w-7 h-7" />}
+		title="Dashboard"
+		action={
+		<button
+		  // onClick={() => getRefresh(true)}
+		  className="btn-header">
+		  Refresh
+		</button>
+		}
+	  />
+	  < Dashboard />
     </>
   );
 };
