@@ -1,30 +1,32 @@
-// reusable text input
-
-// interface InputProps = {
-//   title: String;
-//   placeholder: String;
-//   value: String;
-//   onChange: String;
-//   required: Boolean;
-//   type: String,
-//   error,
-//   disabled = false,
-//   name = '',
-// 	inputStyle = ''
-// }
+interface InputTextProps {
+  title?: string;
+  placeholder?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  required?: boolean;
+  type?: string;
+  error?: string;
+  disabled?: boolean;
+  name?: string;
+  inputStyle?: string;
+}
 
 export function InputText({ 
   title, 
   placeholder = '', 
   value = '', 
   onChange,
+  onBlur,
+  onFocus,
   required = false,
   type = 'text',
   error = '',
   disabled = false,
   name = '',
   inputStyle = ''
-}) {
+}: InputTextProps) {
   return (
     <div className="flex flex-col gap-y-1">
       {title && (
@@ -41,6 +43,8 @@ export function InputText({
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+		onBlur={onBlur}
+        onFocus={onFocus} 
         required={required}
         disabled={disabled}
       />
