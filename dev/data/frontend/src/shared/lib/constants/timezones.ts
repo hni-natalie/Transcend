@@ -1,0 +1,58 @@
+export interface TimezoneOption {
+  value: string;
+  label: string;
+}
+
+export const timezoneOptions: TimezoneOption[] = [
+  // UTC -12 to UTC -1
+  { value: 'Pacific/Honolulu', label: 'Pacific/Honolulu (GMT-10)' },
+  { value: 'America/Anchorage', label: 'America/Anchorage (GMT-9)' },
+  { value: 'America/Los_Angeles', label: 'America/Los Angeles (GMT-8)' },
+  { value: 'America/Denver', label: 'America/Denver (GMT-7)' },
+  { value: 'America/Chicago', label: 'America/Chicago (GMT-6)' },
+  { value: 'America/New_York', label: 'America/New York (GMT-5)' },
+  { value: 'America/Halifax', label: 'America/Halifax (GMT-4)' },
+  { value: 'America/St_Johns', label: 'America/St Johns (GMT-3:30)' },
+  { value: 'America/Sao_Paulo', label: 'America/Sao Paulo (GMT-3)' },
+  { value: 'Atlantic/Azores', label: 'Atlantic/Azores (GMT-1)' },
+  
+  // UTC (GMT)
+  { value: 'Europe/London', label: 'Europe/London (GMT+0)' },
+  { value: 'Europe/Paris', label: 'Europe/Paris (GMT+1)' },
+  { value: 'Europe/Berlin', label: 'Europe/Berlin (GMT+1)' },
+  { value: 'Europe/Athens', label: 'Europe/Athens (GMT+2)' },
+  { value: 'Europe/Helsinki', label: 'Europe/Helsinki (GMT+2)' },
+  { value: 'Africa/Cairo', label: 'Africa/Cairo (GMT+2)' },
+  { value: 'Europe/Moscow', label: 'Europe/Moscow (GMT+3)' },
+  { value: 'Asia/Kuwait', label: 'Asia/Kuwait (GMT+3)' },
+  { value: 'Asia/Tehran', label: 'Asia/Tehran (GMT+3:30)' },
+  { value: 'Asia/Dubai', label: 'Asia/Dubai (GMT+4)' },
+  { value: 'Asia/Baku', label: 'Asia/Baku (GMT+4)' },
+  { value: 'Asia/Kabul', label: 'Asia/Kabul (GMT+4:30)' },
+  { value: 'Asia/Karachi', label: 'Asia/Karachi (GMT+5)' },
+  { value: 'Asia/Tashkent', label: 'Asia/Tashkent (GMT+5)' },
+  { value: 'Asia/Kolkata', label: 'Asia/Kolkata (GMT+5:30)' },
+  { value: 'Asia/Colombo', label: 'Asia/Colombo (GMT+5:30)' },
+  { value: 'Asia/Kathmandu', label: 'Asia/Kathmandu (GMT+5:45)' },
+  { value: 'Asia/Dhaka', label: 'Asia/Dhaka (GMT+6)' },
+  { value: 'Asia/Almaty', label: 'Asia/Almaty (GMT+6)' },
+  { value: 'Asia/Yangon', label: 'Asia/Yangon (GMT+6:30)' },
+  { value: 'Asia/Bangkok', label: 'Asia/Bangkok (GMT+7)' },
+  { value: 'Asia/Jakarta', label: 'Asia/Jakarta (GMT+7)' },
+  { value: 'Asia/Kuala_Lumpur', label: 'Asia/Kuala Lumpur (GMT+8)' },
+  { value: 'Asia/Singapore', label: 'Asia/Singapore (GMT+8)' },
+  { value: 'Asia/Shanghai', label: 'Asia/Shanghai (GMT+8)' },
+  { value: 'Asia/Taipei', label: 'Asia/Taipei (GMT+8)' },
+  { value: 'Australia/Perth', label: 'Australia/Perth (GMT+8)' },
+  { value: 'Asia/Tokyo', label: 'Asia/Tokyo (GMT+9)' },
+  { value: 'Asia/Seoul', label: 'Asia/Seoul (GMT+9)' },
+  { value: 'Australia/Adelaide', label: 'Australia/Adelaide (GMT+9:30)' },
+  { value: 'Australia/Brisbane', label: 'Australia/Brisbane (GMT+10)' },
+  { value: 'Australia/Sydney', label: 'Australia/Sydney (GMT+10)' },
+  { value: 'Australia/Melbourne', label: 'Australia/Melbourne (GMT+10)' },
+  { value: 'Pacific/Guam', label: 'Pacific/Guam (GMT+10)' },
+  { value: 'Pacific/Guadalcanal', label: 'Pacific/Guadalcanal (GMT+11)' },
+  { value: 'Pacific/Auckland', label: 'Pacific/Auckland (GMT+12)' },
+  { value: 'Pacific/Fiji', label: 'Pacific/Fiji (GMT+12)' },
+  { value: 'Pacific/Tongatapu', label: 'Pacific/Tongatapu (GMT+13)' },
+];
