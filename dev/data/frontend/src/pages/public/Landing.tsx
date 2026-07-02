@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ROUTE_PATH as R } from '../../config/routes.manifest';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
 
 // TODO : enhancement with animations etc? (basic for now)
 export const Landing = () => {
