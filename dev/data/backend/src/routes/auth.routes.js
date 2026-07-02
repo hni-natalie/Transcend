@@ -28,7 +28,7 @@ router.post('/login', async (req, res) => {
     try {
         const user = await prisma.user.findUnique({
             where: { userEmail },
-            include: { role: true }
+            include: { role: true, department: true }
         });
 
         if (!user) {
@@ -43,6 +43,12 @@ router.post('/login', async (req, res) => {
         if (!match) {
         return res.status(401).json({ error: 'Invalid email or password' });
         }
+
+		const loginAt = new Date();
+        await prisma.user.update({
+            where: { userId: user.userId },
+            data: { lastLoginAt: loginAt }
+        });
 
         const token = jwt.sign(
         { 
@@ -62,8 +68,11 @@ router.post('/login', async (req, res) => {
             userEmail: user.userEmail,
             roleId: user.roleId,
             roleName: user.role.roleName,
+			department: user.department,
             userStatus: user.userStatus,
             avatarUrl: user.avatarUrl || null,
+			authProvider: user.authProvider || 'email',
+			lastLoginAt: loginAt,
         },
         });
     } catch (err) {
@@ -90,7 +99,7 @@ router.post('/google', async (req, res) => {
         // find user by email (must exist already)
         let user = await prisma.user.findUnique({
             where: { userEmail: userEmail },
-            include: { role: true }
+            include: { role: true, department: true }
         });
 
         // if email doesnt exist > reject login
@@ -116,7 +125,22 @@ router.post('/google', async (req, res) => {
             return res.status(401).json({ 
                 error: 'This email is linked to a different Google account.' 
             });
+        } else if (
+            avatarUrl &&
+            (!user.avatarUrl || user.avatarUrl.includes('googleusercontent.com'))
+        ) {
+            user = await prisma.user.update({
+                where: { userId: user.userId },
+                data: { avatarUrl: avatarUrl },
+                include: { role: true }
+            });
         }
+
+		const loginAt = new Date();
+        await prisma.user.update({
+            where: { userId: user.userId },
+            data: { lastLoginAt: loginAt }
+        });
 
         // generate app's JWT
         const token = jwt.sign(
@@ -137,8 +161,11 @@ router.post('/google', async (req, res) => {
                 userEmail: user.userEmail,
                 roleId: user.roleId,
                 roleName: user.role.roleName,
+				department: user.department,
                 userStatus: user.userStatus,
                 avatarUrl: user.avatarUrl || null,
+				authProvider: user.authProvider || 'google',
+				lastLoginAt: loginAt,
             },
         });
     } catch (err) {
@@ -160,9 +187,20 @@ router.get('/me', authMiddleware, async (req, res) => {
                 role: {
                     select: { roleName: true }
                 },
+				department: {
+                    select: { 
+                        dpId: true,
+                        dpName: true 
+                    }
+                },
                 userStatus: true,
                 avatarUrl: true,
-                createdAt: true
+				authProvider: true,
+                createdAt: true,
+				country: true,
+                city: true,
+                timezone: true,
+				lastLoginAt: true,
             }
         });
 
@@ -170,16 +208,21 @@ router.get('/me', authMiddleware, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Return stable shape that matches login endpoint
         res.json({
             userId: user.userId,
             userName: user.userName,
             userEmail: user.userEmail,
             roleId: user.roleId,
             roleName: user.role.roleName,
+			department: user.department,
             userStatus: user.userStatus,
-            avatarUrl: user.avatarUrl ?? null,  // Use ?? instead of ||
-            createdAt: user.createdAt
+            avatarUrl: user.avatarUrl ?? null,
+			authProvider: user.authProvider ?? 'email',
+            country: user.country ?? null,
+            city: user.city ?? null,
+            timezone: user.timezone ?? null,
+            createdAt: user.createdAt,
+			lastLoginAt: user.lastLoginAt,
         });
     } catch (err) {
         console.error('Error in /me:', err);

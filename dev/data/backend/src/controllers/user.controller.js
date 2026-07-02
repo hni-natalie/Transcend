@@ -1,6 +1,31 @@
+const prisma = require('../../prisma/client');
 const userService = require('../services/user.service');
+const { validatePassword, PASSWORD_RULES } = require('../utils/password');
 
 const userController = {
+	async getDashboardMetrics(req, res) {
+        try {
+            const metrics = await userService.getDashboardMetrics();
+            return res.json({ users: metrics });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    },
+
+	async getUserDashboard(req, res) {
+		try {
+			const userId = req.user.userId;
+			const dashboardData = await userService.getUserDashboardData(userId);
+			return res.json(dashboardData);
+		} catch (error) {
+			console.error('Dashboard controller error:', error);
+			if (error.message === 'User not found') {
+				return res.status(404).json({ error: error.message });
+			}
+			return res.status(500).json({ error: error.message });
+		}
+	},
+
     async getCurrentUser(req, res) {
         try {
             const user = await userService.getUserById(req.user.userId);
@@ -15,7 +40,7 @@ const userController = {
 
     async updateCurrentUser(req, res) {
         try {
-            const allowedUpdates = ['city', 'country', 'timezone'];
+            const allowedUpdates = ['userName', 'userEmail', 'city', 'country', 'timezone'];
             const updates = {};
             
             allowedUpdates.forEach(field => {
@@ -26,9 +51,18 @@ const userController = {
             
             if (Object.keys(updates).length === 0) {
                 return res.status(400).json({ 
-                    error: 'No valid fields to update. Allowed: city, country, timezone' 
+                    error: 'No valid fields to update. Allowed: name, email, city, country, timezone' 
                 });
             }
+
+			if (updates.userEmail) {
+            const existingUser = await userService.getUserByEmail(updates.userEmail);
+            if (existingUser && existingUser.userId !== req.user.userId) {
+                return res.status(409).json({ 
+                    error: 'Email already in use by another account' 
+                });
+            }
+        }
             
             const user = await userService.updateUserProfile(req.user.userId, updates);
             return res.json(user);
@@ -36,6 +70,30 @@ const userController = {
             return res.status(500).json({ error: error.message });
         }
     },
+
+	async updateUserStatus(req, res) {
+		try {
+			const userId = req.user.userId;
+			const { status } = req.body;
+			
+			if (!status) {
+				return res.status(400).json({ error: 'Status is required' });
+			}
+			
+			await userService.updateUserStatus(userId, status);
+			
+			return res.json({ 
+				success: true, 
+				message: 'Status updated successfully',
+				status: status 
+			});
+		} catch (error) {
+			if (error.message === 'Invalid status') {
+            	return res.status(400).json({ error: error.message });
+			}
+			return res.status(500).json({ error: error.message });
+		}
+	},
 
     async getAllUsers(req, res) {
         try {
@@ -64,28 +122,65 @@ const userController = {
         }
     },
 
-    async createUser(req, res) {
-        try {
-            const { email, password, name, roleId, workspaceId, dpId } = req.body;
-            
-            const result = await userService.createUser({
-                email, password, name, roleId, workspaceId, dpId
-            });
-            
-            // result will show temp password
-            return res.status(201).json({
-                success: true,
-                message: password ? 'User created successfully' : 'User created with temporary password',
-                data: result
-            });
-            
-        } catch (error) {
+	async createUser(req, res) {
+		try {
+			const { email, password, name, roleId, dpId } = req.body;
+			
+			// get admin's workspaceId
+			const currentUser = await prisma.user.findUnique({
+				where: { userId: req.user.userId },
+				select: { workspaceId: true }
+			});
+			
+			if (!currentUser || !currentUser.workspaceId) {
+				return res.status(400).json({ 
+					success: false, 
+					message: 'Current user has no workspace assigned' 
+				});
+			}
+			
+			const result = await userService.createUser({
+				email,
+				password,
+				name,
+				roleId,
+				workspaceId: currentUser.workspaceId,  // user admin's
+				dpId
+			});
+			
+			return res.status(201).json({
+				success: true,
+				message: password ? 'User created successfully' : 'User created with temporary password',
+				data: result
+			});
+		} catch (error) {
             if (error.message === 'Email already exists') {
                 return res.status(409).json({ success: false, message: error.message });
             }
             return res.status(500).json({ success: false, message: error.message });
         }
     },
+
+	async getPasswordRules(req, res) {
+	  try {
+		res.json({
+			success: true,
+			rules: {
+			minLength: PASSWORD_RULES.minLength,
+			maxLength: PASSWORD_RULES.maxLength,
+			requireUppercase: PASSWORD_RULES.requireUppercase,
+			requireLowercase: PASSWORD_RULES.requireLowercase,
+			requireNumbers: PASSWORD_RULES.requireNumbers,
+			requireSpecialChars: PASSWORD_RULES.requireSpecialChars,
+			}
+		});
+		} catch (error) {
+		res.status(500).json({ 
+			success: false, 
+			message: error.message 
+		});
+	  }
+	},
 
     async changePassword(req, res) {
         try {
@@ -115,6 +210,13 @@ const userController = {
             });
             
         } catch (error) {
+			if (error.message.includes('Password must')) {
+			return res.status(400).json({
+				success: false,
+				message: error.message,
+				code: 'PASSWORD_RULES_VIOLATION'
+			});
+			}
             if (error.message === 'User not found') {
                 return res.status(404).json({ success: false, message: error.message });
             }
@@ -127,6 +229,54 @@ const userController = {
             return res.status(500).json({ success: false, message: error.message });
         }
     },
+
+	async resetUserPassword(req, res) {
+		try {
+			const { userId } = req.params;
+			const { newPassword } = req.body;
+			
+			if (!newPassword) {
+				return res.status(400).json({
+					success: false,
+					message: 'New password is required'
+				});
+			}
+			
+			// Validate password rules
+			const validation = validatePassword(newPassword);
+			if (!validation.isValid) {
+				return res.status(400).json({
+					success: false,
+					message: validation.errors.join('. '),
+					code: 'PASSWORD_RULES_VIOLATION'
+				});
+			}
+			
+			const updatedUser = await userService.resetUserPassword(userId, newPassword);
+			
+			return res.status(200).json({
+				success: true,
+				message: 'Password reset successfully',
+				data: {
+					userId: updatedUser.userId,
+					userEmail: updatedUser.userEmail,
+					userName: updatedUser.userName
+				}
+			});
+			
+		} catch (error) {
+			if (error.message === 'User not found') {
+				return res.status(404).json({ 
+					success: false, 
+					message: error.message 
+				});
+			}
+			return res.status(500).json({ 
+				success: false, 
+				message: error.message 
+			});
+		}
+	},
 
     async updateUser(req, res) {
         try {
