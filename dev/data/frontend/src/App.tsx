@@ -4,6 +4,7 @@ import { routes } from './config/routes.config';
 import { AppLayout } from '@shared/layout/AppLayout';
 import { SocketProvider } from './context/ContextSocket';
 import { AuthProvider } from '@/features/auth/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { ProtectedRoute, GuestRoute } from '@/features/auth/ProtectedRoute';
 
 function AppRoutes() {
@@ -20,7 +21,7 @@ function AppRoutes() {
   const protectedRoutes = routes.filter(route => route.requiresAuth);
 
   return (
-    <div className="w-full min-h-screen flex flex-col bg-bg-primary text-content-primary overflow-x-hidden">
+    <div className="w-full min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden">
       <Routes>
         {/* Guest-only routes (login page) - redirects if logged in */}
         {guestRoutes.map(route => (
@@ -69,7 +70,9 @@ export function App() {
     <Router>
       <AuthProvider>
         <SocketProvider>
-          <AppRoutes />
+		  <ToastProvider>
+			<AppRoutes />
+		  </ToastProvider>
         </SocketProvider>
       </AuthProvider>
     </Router>
