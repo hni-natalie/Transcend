@@ -1,44 +1,51 @@
 import React from 'react';
 
-// Define props interface
 interface IconProps {
   className?: string;
   onClick?: () => void;
+  strokeWidth?: number;
 }
 
-export const IconGoogle: React.FC<IconProps> = ({ className, onClick }) => (
+
+/* *************************************************************
+ * auth icons
+ * *************************************************************/
+
+export const IconGoogle = ({ className, onClick }: IconProps) => (
   <svg
 	className={className}
-	width="15" 
-	height="15" 
+	width="15" height="15" 
 	viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M0.814286 4.1325C1.45103 2.88993 2.42784 1.84538 3.63554 1.1156C4.84323 0.38582 6.23423 -0.000437676 7.65306 3.72174e-07C9.71556 3.72174e-07 11.4482 0.7425 12.773 1.95375L10.5788 4.10475C9.7852 3.3615 8.77653 2.98275 7.65306 2.98275C5.65944 2.98275 3.97194 4.30275 3.37117 6.075C3.21811 6.525 3.13087 7.005 3.13087 7.5C3.13087 7.995 3.21811 8.475 3.37117 8.925C3.9727 10.698 5.65944 12.0173 7.65306 12.0173C8.6824 12.0173 9.55867 11.751 10.2444 11.301C10.6419 11.0445 10.9822 10.7117 11.2448 10.3226C11.5074 9.93357 11.6867 9.49639 11.7719 9.0375H7.65306V6.1365H14.8607C14.951 6.627 15 7.1385 15 7.67025C15 9.95475 14.1658 11.8778 12.7179 13.1828C11.452 14.3288 9.71939 15 7.65306 15C6.64793 15.0004 5.65258 14.8067 4.72389 14.4299C3.79519 14.0531 2.95137 13.5007 2.24063 12.8042C1.5299 12.1077 0.966196 11.2807 0.581736 10.3706C0.197276 9.46047 -0.00040168 8.48503 6.12792e-07 7.5C6.12792e-07 6.2895 0.295409 5.145 0.814286 4.1325Z" fill="white"/>
-</svg>
-);
-
-
-// Define icon components with types
-export const IconExpand: React.FC<IconProps> = ({ className, onClick }) => (
-  <svg 
-    onClick={onClick}
-    className={className}
-    viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-  >
-  <path fillRule="evenodd" clipRule="evenodd" d="M7.9399 13.06C7.659 12.7788 7.50122 12.3975 7.50122 12C7.50122 11.6025 7.659 11.2213 7.9399 10.94L13.5959 5.282C13.8773 5.00074 14.2589 4.84278 14.6568 4.84287C14.8538 4.84292 15.0488 4.88177 15.2308 4.9572C15.4128 5.03263 15.5781 5.14317 15.7174 5.2825C15.8567 5.42183 15.9671 5.58723 16.0425 5.76925C16.1178 5.95127 16.1566 6.14635 16.1565 6.34335C16.1565 6.54035 16.1176 6.73541 16.0422 6.9174C15.9668 7.09939 15.8562 7.26473 15.7169 7.404L11.1219 12L15.7179 16.596C15.8612 16.7343 15.9756 16.8998 16.0543 17.0827C16.133 17.2657 16.1744 17.4625 16.1763 17.6617C16.1781 17.8608 16.1402 18.0584 16.0649 18.2428C15.9896 18.4271 15.8783 18.5947 15.7375 18.7356C15.5967 18.8765 15.4293 18.9879 15.245 19.0634C15.0607 19.139 14.8632 19.177 14.664 19.1754C14.4648 19.1737 14.268 19.1324 14.085 19.0539C13.9019 18.9754 13.7363 18.8612 13.5979 18.718L7.9379 13.06H7.9399Z" fill="currentColor"/>
+  <path d="M0.814286 4.1325C1.45103 2.88993 2.42784 1.84538 3.63554 1.1156C4.84323 0.38582 6.23423 -0.000437676 7.65306 3.72174e-07C9.71556 3.72174e-07 11.4482 0.7425 12.773 1.95375L10.5788 4.10475C9.7852 3.3615 8.77653 2.98275 7.65306 2.98275C5.65944 2.98275 3.97194 4.30275 3.37117 6.075C3.21811 6.525 3.13087 7.005 3.13087 7.5C3.13087 7.995 3.21811 8.475 3.37117 8.925C3.9727 10.698 5.65944 12.0173 7.65306 12.0173C8.6824 12.0173 9.55867 11.751 10.2444 11.301C10.6419 11.0445 10.9822 10.7117 11.2448 10.3226C11.5074 9.93357 11.6867 9.49639 11.7719 9.0375H7.65306V6.1365H14.8607C14.951 6.627 15 7.1385 15 7.67025C15 9.95475 14.1658 11.8778 12.7179 13.1828C11.452 14.3288 9.71939 15 7.65306 15C6.64793 15.0004 5.65258 14.8067 4.72389 14.4299C3.79519 14.0531 2.95137 13.5007 2.24063 12.8042C1.5299 12.1077 0.966196 11.2807 0.581736 10.3706C0.197276 9.46047 -0.00040168 8.48503 6.12792e-07 7.5C6.12792e-07 6.2895 0.295409 5.145 0.814286 4.1325Z" fill="white"/>
   </svg>
 );
 
-export const IconCollapse: React.FC<IconProps> = ({ className, onClick }) => (
+export const IconLogin = ({ className }: IconProps) => (
   <svg 
-    onClick={onClick}
-    className={className}
-    viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-  >
-  <path fillRule="evenodd" clipRule="evenodd" d="M16.0601 13.06C16.341 12.7788 16.4988 12.3975 16.4988 12C16.4988 11.6025 16.341 11.2213 16.0601 10.94L10.4041 5.282C10.1227 5.00074 9.7411 4.84278 9.34325 4.84287C9.14625 4.84292 8.95118 4.88177 8.7692 4.9572C8.58721 5.03263 8.42187 5.14317 8.2826 5.2825C8.14333 5.42183 8.03287 5.58723 7.95753 5.76925C7.88218 5.95127 7.84343 6.14635 7.84347 6.34335C7.84352 6.54035 7.88237 6.73541 7.9578 6.9174C8.03323 7.09939 8.14377 7.26473 8.2831 7.404L12.8781 12L8.2821 16.596C8.13877 16.7343 8.02442 16.8998 7.94572 17.0827C7.86702 17.2657 7.82555 17.4625 7.82373 17.6617C7.8219 17.8608 7.85976 18.0584 7.9351 18.2428C8.01043 18.4271 8.12173 18.5947 8.2625 18.7356C8.40328 18.8765 8.5707 18.9879 8.75501 19.0634C8.93932 19.139 9.13682 19.177 9.33599 19.1754C9.53516 19.1737 9.732 19.1324 9.91505 19.0539C10.0981 18.9754 10.2637 18.8612 10.4021 18.718L16.0621 13.06H16.0601Z" fill="currentColor"/>
+  	className={className}
+	viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M5.36468 10.05V11.625C5.36468 12.0427 5.53201 12.4433 5.82987 12.7387C6.12772 13.034 6.53169 13.2 6.95292 13.2L12.5117 13.2C12.933 13.2 13.3369 13.034 13.6348 12.7387C13.9326 12.4433 14.1 12.0427 14.1 11.625L14.1 2.17498C14.1 1.75726 13.9326 1.35665 13.6348 1.06128C13.3369 0.765913 12.933 0.599976 12.5117 0.599976L6.95292 0.599976C6.53169 0.599976 6.12772 0.765913 5.82987 1.06128C5.53201 1.35665 5.36468 1.75726 5.36468 2.17498V3.74998M10.1294 6.89998L0.599976 6.89997M2.98233 4.53748L0.599976 6.89997L2.98233 9.26248" stroke="#393939" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
 );
 
-export const IconDashboard: React.FC<IconProps> = ({ className, onClick }) => (
+
+export const IconLogout = ({ className, onClick }: IconProps) => (
+  <svg
+  onClick={onClick}
+    className={className}
+	width="15" height="14"
+	viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg"
+  >
+	<path d="M9.55882 3.75V2.125C9.55882 1.69402 9.38529 1.2807 9.07641 0.975951C8.76753 0.671205 8.34859 0.5 7.91176 0.5H2.14706C1.71023 0.5 1.2913 0.671205 0.982412 0.975951C0.673529 1.2807 0.5 1.69402 0.5 2.125V11.875C0.5 12.306 0.673529 12.7193 0.982412 13.024C1.2913 13.3288 1.71023 13.5 2.14706 13.5H7.91176C8.34859 13.5 8.76753 13.3288 9.07641 13.024C9.38529 12.7193 9.55882 12.306 9.55882 11.875V10.25M4.61765 7H14.5M14.5 7L12.0294 4.5625M14.5 7L12.0294 9.4375" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+);
+
+
+/* *************************************************************
+ * main icons
+ * *************************************************************/
+
+export const IconDashboard = ({ className, onClick }: IconProps) => (
   <svg 
   	onClick={onClick}
     className={className}
@@ -48,7 +55,7 @@ export const IconDashboard: React.FC<IconProps> = ({ className, onClick }) => (
   </svg>
 );
 
-export const IconUsers: React.FC<IconProps> = ({ className, onClick }) => (
+export const IconUsers = ({ className, onClick }: IconProps) => (
   <svg 
 	onClick={onClick}
     className={className}
@@ -58,7 +65,7 @@ export const IconUsers: React.FC<IconProps> = ({ className, onClick }) => (
   </svg>
 );
 
-export const IconSpaces: React.FC<IconProps> = ({ className, onClick }) => (
+export const IconSpaces = ({ className, onClick }: IconProps) => (
   <svg 
 	onClick={onClick}
     className={className}
@@ -71,7 +78,7 @@ export const IconSpaces: React.FC<IconProps> = ({ className, onClick }) => (
   </svg>
 );
 
-export const IconActivity: React.FC<IconProps> = ({ className, onClick }) => (
+export const IconActivity = ({ className, onClick }: IconProps) => (
   <svg 
 	onClick={onClick}
     className={className}
@@ -81,7 +88,7 @@ export const IconActivity: React.FC<IconProps> = ({ className, onClick }) => (
   </svg>
 );
 
-export const IconSettings: React.FC<IconProps> = ({ className, onClick }) => (
+export const IconSettings = ({ className, onClick }: IconProps) => (
   <svg
 	onClick={onClick}
     className={className}
@@ -92,7 +99,7 @@ export const IconSettings: React.FC<IconProps> = ({ className, onClick }) => (
   </svg>
 );
 
-export const IconOffice: React.FC<IconProps> = ({ className, onClick }) => (
+export const IconOffice = ({ className, onClick }: IconProps) => (
   <svg
 	onClick={onClick}
     className={className}
@@ -104,7 +111,7 @@ export const IconOffice: React.FC<IconProps> = ({ className, onClick }) => (
 );
 
 
-export const IconTasks: React.FC<IconProps> = ({ className, onClick }) => (
+export const IconTasks = ({ className, onClick }: IconProps) => (
   <svg
 	onClick={onClick}
     className={className}
@@ -115,7 +122,7 @@ export const IconTasks: React.FC<IconProps> = ({ className, onClick }) => (
   </svg>
 );
 
-export const IconMeetings: React.FC<IconProps> = ({ className, onClick }) => (
+export const IconMeetings = ({ className, onClick }: IconProps) => (
   <svg
 	onClick={onClick}
     className={className}
@@ -126,7 +133,7 @@ export const IconMeetings: React.FC<IconProps> = ({ className, onClick }) => (
   </svg>
 );
 
-export const IconMessages: React.FC<IconProps> = ({ className, onClick }) => (
+export const IconMessages = ({ className, onClick }: IconProps) => (
   <svg 
 	onClick={onClick}
     className={className}
@@ -137,21 +144,11 @@ export const IconMessages: React.FC<IconProps> = ({ className, onClick }) => (
   </svg>
 );
 
-export const IconLogout: React.FC<IconProps> = ({ className, onClick }) => (
-  <svg
-  onClick={onClick}
-    className={className}
-	width="15" height="14"
-	viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg"
-  >
-	<path d="M9.55882 3.75V2.125C9.55882 1.69402 9.38529 1.2807 9.07641 0.975951C8.76753 0.671205 8.34859 0.5 7.91176 0.5H2.14706C1.71023 0.5 1.2913 0.671205 0.982412 0.975951C0.673529 1.2807 0.5 1.69402 0.5 2.125V11.875C0.5 12.306 0.673529 12.7193 0.982412 13.024C1.2913 13.3288 1.71023 13.5 2.14706 13.5H7.91176C8.34859 13.5 8.76753 13.3288 9.07641 13.024C9.38529 12.7193 9.55882 12.306 9.55882 11.875V10.25M4.61765 7H14.5M14.5 7L12.0294 4.5625M14.5 7L12.0294 9.4375" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-);
 
 /* *************************************************************
- * general icons with onClick hooks
+ * AUDIO icons with onClick hooks
  * *************************************************************/
-export const IconMute: React.FC<IconProps> = ({ className, onClick }) => (
+export const IconMute = ({ className, onClick }: IconProps) => (
   <svg 
     onClick={onClick}
     className={className}
@@ -161,7 +158,7 @@ export const IconMute: React.FC<IconProps> = ({ className, onClick }) => (
   </svg>
 );
 
-export const IconSpeak: React.FC<IconProps> = ({ className, onClick }) => (
+export const IconSpeak = ({ className, onClick }: IconProps) => (
   <svg 
     onClick={onClick}
     className={className}
@@ -171,7 +168,90 @@ export const IconSpeak: React.FC<IconProps> = ({ className, onClick }) => (
     </svg>
 );
 
-export const IconUpload: React.FC<IconProps> = ({ className, onClick }) => (
+
+/* *************************************************************
+ * TASK & MEETING icons
+ * *************************************************************/
+
+export const IconTaskAdd = ({ className }: IconProps) => (
+  <svg 
+	className={className}
+	viewBox="0 0 18 13" fill="none" xmlns="http://www.w3.org/2000/svg"
+  >
+	<path d="M0.600006 9.76664H6.82223M11.2667 8.84998H13.9333M13.9333 8.84998H16.6M13.9333 8.84998V11.6M13.9333 8.84998V6.09998M0.600006 5.18331H10.3778M0.600006 0.599976H10.3778" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+);
+
+export const IconTaskDone = ({ className }: IconProps) => (
+  <svg 
+	className={className}
+	viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg"
+  >
+	<path d="M0.600006 9.69088H6.72501M14.6 6.96361L11.1 10.6L9.35001 8.78179M0.600006 5.14543H10.225M0.600006 0.599976H10.225" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+);
+
+export const IconMeetingAdd = ({ className }: IconProps) => (
+  <svg 
+	className={className}
+	viewBox="0 0 15 17" fill="none" xmlns="http://www.w3.org/2000/svg"
+  >
+	<path d="M0.599976 5.59998H13.6M0.599976 5.59998V12.9335C0.599976 13.8669 0.599976 14.3334 0.77709 14.6899C0.932884 15.0035 1.1813 15.2587 1.48706 15.4185C1.83433 15.6 2.28916 15.6 3.19747 15.6H11.0029C11.9112 15.6 12.3654 15.6 12.7126 15.4185C13.0184 15.2587 13.2672 15.0035 13.423 14.6899C13.6 14.3337 13.6 13.8679 13.6 12.9363V5.59998M0.599976 5.59998V4.93347C0.599976 4.00005 0.599976 3.53299 0.77709 3.17647C0.932884 2.86287 1.1813 2.60809 1.48706 2.4483C1.83467 2.26664 2.29005 2.26664 3.20013 2.26664H3.84998M13.6 5.59998V4.93073C13.6 3.99914 13.6 3.53264 13.423 3.17647C13.2672 2.86287 13.0184 2.60809 12.7126 2.4483C12.365 2.26664 11.9102 2.26664 11.0001 2.26664H10.35M3.84998 2.26664H10.35M3.84998 2.26664V0.599976M10.35 2.26664V0.599976M9.13123 10.6H7.09998M7.09998 10.6H5.06873M7.09998 10.6V8.51664M7.09998 10.6V12.6833" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+);
+
+
+
+/* *************************************************************
+ * general icons with onClick hooks
+ * *************************************************************/
+export const IconEye = ({ className, onClick }: IconProps) => (
+    <svg 
+        onClick={onClick}
+        className={className}
+        viewBox="0 0 24 24" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor"/>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor"/>
+    </svg>
+);
+
+export const IconEyeOff = ({ className, onClick }: IconProps) => (
+    <svg 
+        onClick={onClick}
+        className={className}
+        viewBox="0 0 24 24" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" stroke="currentColor"/>
+    </svg>
+);
+
+
+export const IconExpand = ({ className, onClick }: IconProps) => (
+  <svg 
+    onClick={onClick}
+    className={className}
+    viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+  >
+  	<path fillRule="evenodd" clipRule="evenodd" d="M7.9399 13.06C7.659 12.7788 7.50122 12.3975 7.50122 12C7.50122 11.6025 7.659 11.2213 7.9399 10.94L13.5959 5.282C13.8773 5.00074 14.2589 4.84278 14.6568 4.84287C14.8538 4.84292 15.0488 4.88177 15.2308 4.9572C15.4128 5.03263 15.5781 5.14317 15.7174 5.2825C15.8567 5.42183 15.9671 5.58723 16.0425 5.76925C16.1178 5.95127 16.1566 6.14635 16.1565 6.34335C16.1565 6.54035 16.1176 6.73541 16.0422 6.9174C15.9668 7.09939 15.8562 7.26473 15.7169 7.404L11.1219 12L15.7179 16.596C15.8612 16.7343 15.9756 16.8998 16.0543 17.0827C16.133 17.2657 16.1744 17.4625 16.1763 17.6617C16.1781 17.8608 16.1402 18.0584 16.0649 18.2428C15.9896 18.4271 15.8783 18.5947 15.7375 18.7356C15.5967 18.8765 15.4293 18.9879 15.245 19.0634C15.0607 19.139 14.8632 19.177 14.664 19.1754C14.4648 19.1737 14.268 19.1324 14.085 19.0539C13.9019 18.9754 13.7363 18.8612 13.5979 18.718L7.9379 13.06H7.9399Z" fill="currentColor"/>
+  </svg>
+);
+
+export const IconCollapse = ({ className, onClick }: IconProps) => (
+  <svg 
+    onClick={onClick}
+    className={className}
+    viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+  >
+  <path fillRule="evenodd" clipRule="evenodd" d="M16.0601 13.06C16.341 12.7788 16.4988 12.3975 16.4988 12C16.4988 11.6025 16.341 11.2213 16.0601 10.94L10.4041 5.282C10.1227 5.00074 9.7411 4.84278 9.34325 4.84287C9.14625 4.84292 8.95118 4.88177 8.7692 4.9572C8.58721 5.03263 8.42187 5.14317 8.2826 5.2825C8.14333 5.42183 8.03287 5.58723 7.95753 5.76925C7.88218 5.95127 7.84343 6.14635 7.84347 6.34335C7.84352 6.54035 7.88237 6.73541 7.9578 6.9174C8.03323 7.09939 8.14377 7.26473 8.2831 7.404L12.8781 12L8.2821 16.596C8.13877 16.7343 8.02442 16.8998 7.94572 17.0827C7.86702 17.2657 7.82555 17.4625 7.82373 17.6617C7.8219 17.8608 7.85976 18.0584 7.9351 18.2428C8.01043 18.4271 8.12173 18.5947 8.2625 18.7356C8.40328 18.8765 8.5707 18.9879 8.75501 19.0634C8.93932 19.139 9.13682 19.177 9.33599 19.1754C9.53516 19.1737 9.732 19.1324 9.91505 19.0539C10.0981 18.9754 10.2637 18.8612 10.4021 18.718L16.0621 13.06H16.0601Z" fill="currentColor"/>
+  </svg>
+);
+
+export const IconUpload = ({ className, onClick }: IconProps) => (
   <svg
     onClick={onClick}
     className={className}
@@ -180,3 +260,29 @@ export const IconUpload: React.FC<IconProps> = ({ className, onClick }) => (
     <path d="M4 15.2044V18.8925C4 19.4514 4.21071 19.9875 4.58579 20.3827C4.96086 20.778 5.46957 21 6 21H18C18.5304 21 19.0391 20.778 19.4142 20.3827C19.7893 19.9875 20 19.4514 20 18.8925V15.2044M12.0007 14.9425L12.0007 3M12.0007 3L7.42931 7.56318M12.0007 3L16.5722 7.56318" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
+
+
+/* *************************************************************
+ * general icons
+ * *************************************************************/
+
+export const IconSearch = ({ className }: IconProps) => (
+  <svg 
+	className={className}
+	viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg"
+  >
+  <path d="M9.93986 10.02L12.4 12.4M11.6067 6.05333C11.6067 9.12035 9.12035 11.6067 6.05333 11.6067C2.98631 11.6067 0.5 9.12035 0.5 6.05333C0.5 2.98631 2.98631 0.5 6.05333 0.5C9.12035 0.5 11.6067 2.98631 11.6067 6.05333Z"
+    stroke="currentColor" stroke-linecap="round"/>
+  </svg>
+);
+
+export const IconCamera = ({ className, strokeWidth = 2  }: IconProps) => (
+  <svg 
+  	className={className}
+	viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+  >
+    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
