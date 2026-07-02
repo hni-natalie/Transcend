@@ -1,5 +1,5 @@
 import { PageHeader, IconDashboard } from '@shared';
-// import features
+import { Dashboard } from '@/features/users/dashboard/Dashboard';
 
 export const UserDashboard = () => {
   return (
@@ -8,9 +8,7 @@ export const UserDashboard = () => {
 		icon={<IconDashboard className="w-7 h-7" />}
 		title="Dashboard"
 	  />
-	  <div className="flex items-center justify-center h-full">
-		<p className="text-content-2">User Dashboard coming soon...</p>
-	  </div>
+	  < Dashboard />
 	</>
   );
 };

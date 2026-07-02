@@ -9,7 +9,7 @@ export const Tasks = () => {
 		title="Tasks"
 	  />
 	  <div className="flex items-center justify-center h-full">
-		<p className="text-content-2">Tasks coming soon...</p>
+		<p className="text-foreground-3">Tasks coming soon...</p>
 	  </div>
 	</>
   );

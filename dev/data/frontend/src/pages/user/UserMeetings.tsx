@@ -9,7 +9,7 @@ export const Meetings = () => {
 		title="Meetings"
 	  />
       <div className="flex items-center justify-center h-full">
-		<p className="text-content-2">Meetings coming soon...</p>
+		<p className="text-foreground-3">Meetings coming soon...</p>
       </div>
 	</>
   );
