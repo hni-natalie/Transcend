@@ -10,6 +10,7 @@
     "isolatedModules": true,    // ensure every file can be compiled alone
     "noEmit": true,             // only does typechecking, no outputting files
     "baseUrl": ".",
+	"ignoreDeprecations": "6.0",
     "paths": {
       "@/*": ["src/*"],
 	  "@api/*": ["src/api/*"],

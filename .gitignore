@@ -1,14 +1,22 @@
+# os / ide
 .DS_Store
 .vscode
+
+# env / secrets
 .env
 dev/secrets
+
+# dependencies
 node_modules
-**/supabase/.temp
-database.types.ts
-structure.txt
 package.json
 package-lock.json
 
+# build / cache
+**/supabase/.temp
+database.types.ts
+structure.md
+
+# dev tool / scripts
 _bin
 dev/frontend/tmp_*
 ref.*
