@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "UserStatus" AS ENUM ('offline', 'online', 'busy', 'in_meeting');
+CREATE TYPE "UserStatus" AS ENUM ('offline', 'online', 'focus', 'in_meeting');
 
 -- CreateEnum
 CREATE TYPE "AccessLevel" AS ENUM ('shared', 'department');

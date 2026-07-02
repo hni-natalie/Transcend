@@ -17,8 +17,9 @@ datasource db {
 enum UserStatus {
   offline
   online
-  busy
+  focus
   in_meeting
+  away
 }
 
 enum AccessLevel {
@@ -97,11 +98,11 @@ model User {
   timezone              String?
   authProvider          String?    @default("email")
   googleId              String?    @unique
+  socketId				String?
   emailVerified         Boolean?   @default(false)
-  testField             String?
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
-
+  lastLoginAt           DateTime?
   role                  Role         @relation(fields: [roleId], references: [roleId])
   workspace             Workspace?   @relation(fields: [workspaceId], references: [workspaceId])
   department            Department?  @relation("UserDepartment", fields: [dpId], references: [dpId])
@@ -134,6 +135,7 @@ model Workspace {
 
 // SPACES
 // for permission; add in be (canUserAccessSpace(user, space))
+// @@unique([workspaceId, spaceName]) - spacename is now unique, diff workspace can hv same name
 model Space {
   spaceId       String       @id @default(uuid())
   spaceName     String
@@ -144,6 +146,7 @@ model Space {
   isPublicBook  Boolean?     @default(true)
   userCapacity  Int?         @default(0)
   // sortOrder    Int?         @default(0)    // drag / reorder spaces
+  isOccupied    Boolean      @default(false) 
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -152,6 +155,8 @@ model Space {
   keyPerson     User?       @relation("SpaceKeyPerson", fields: [keyPersonId], references: [userId], onDelete: SetNull)
 
   meetings      Meeting[]
+
+  @@unique([workspaceId, spaceName])
 }
 
 // TASKS
