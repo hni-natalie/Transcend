@@ -16,8 +16,9 @@ export const taskApi = {
 	createTask: (data: {
 		taskTitle: string;
 		taskPriority: 'low' | 'medium' | 'high';
-		taskDescription?: string;
-		workSpaceId: string;
+		taskDesc?: string;
+		dueDate?: string;
+		assignedUserIds?: string[];
 	}) => {
 		return apiClient.post<Task>(API_URL, data);
 	},
@@ -25,7 +26,7 @@ export const taskApi = {
 	updateTask: (taskId: string, data: {
 		taskTitle?: string;
 		taskPriority?: 'low' | 'medium' | 'high';
-		taskDescription?: string;
+		taskDesc?: string;
 		taskStatus?: 'not_started' | 'in_progress' | 'done';
 		dueDate?: string;
 	}) => {

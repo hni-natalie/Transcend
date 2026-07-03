@@ -19,6 +19,7 @@ const taskService = {
 				taskId: true,
 				taskTitle: true,
 				taskDesc: true,
+				dueDate: true,
 				taskStatus: true,
 				createdAt: true,
 				updatedAt: true,
@@ -53,28 +54,48 @@ const taskService = {
 	},
 
 	async createTask(taskData) {
-		const { taskTitle, taskPriority, workSpaceId, userId, taskDesc } = taskData;
+		const {taskTitle, taskPriority, workspaceId, createdByUserId, taskDesc, dueDate, assignedUserIds = [], } = taskData;
+		const uniqueAssignedUserIds = [...new Set(assignedUserIds)];
 
 		return await prisma.task.create({
 			data: {
-				taskTitle,
-				taskDesc,
-				taskStatus: "not_started", 
-				workspace: {
-					connect: { workspaceId: workSpaceId }
-				},
-				createdBy: {
-					connect: { userId: userId }
-				},
+			taskTitle,
+			taskDesc: taskDesc || null,
+			dueDate,
+			taskStatus: "not_started",
+			completedDate: null,
 
-				// 4. Create the Junction table record
-				assignedTo: {
-					create: {
-						userId: userId,
-						taskPriority: taskPriority // Ensure this matches your Enum (e.g., "low", "medium", "high")
-					}
-				}
-			}
+			workspace: {
+				connect: { workspaceId },
+			},
+
+			createdBy: {
+				connect: { userId: createdByUserId },
+			},
+
+			assignedTo: {
+				create: uniqueAssignedUserIds.map((userId) => ({
+				user: {
+					connect: { userId },
+				},
+				taskPriority,
+				})),
+			},
+			},
+
+			include: {
+			assignedTo: {
+				include: {
+				user: {
+					select: {
+					userId: true,
+					userName: true,
+					userEmail: true,
+					},
+				},
+				},
+			},
+			},
 		});
 	},
 

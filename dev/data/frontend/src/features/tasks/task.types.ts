@@ -8,6 +8,7 @@ export type Task = {
 	dueDate?: string;
 	createdAt: string;
 	updatedAt: string;
+	completedDate?: string;
 
 	assignedTo: 
 	{
@@ -17,3 +18,4 @@ export type Task = {
 		assignedDate: string;
 	}[];
 }
+

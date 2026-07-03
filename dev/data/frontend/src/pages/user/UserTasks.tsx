@@ -3,12 +3,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
 
-const TaskDetailModal = ({
-  task,
-  onClose,
-  onUpdate,
-  loading,
-}: {
+type TaskMember = {
+  userId: string;
+  userName: string;
+  userEmail?: string;
+};
+
+const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
   task: Task;
   onClose: () => void;
   onUpdate: (
@@ -19,10 +20,8 @@ const TaskDetailModal = ({
       taskDesc?: string;
       taskStatus?: 'not_started' | 'in_progress' | 'done';
       dueDate?: string;
-    }
-  ) => void;
-  loading: boolean;
-}) => {
+    }) => void;
+  loading: boolean;}) => {
 
   const [taskTitle, setTaskTitle] = useState(task.taskTitle);
   const [taskDesc, setTaskDesc] = useState(task.taskDesc || '');
@@ -32,7 +31,7 @@ const TaskDetailModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl rounded-3xl bg-[#1f1f1f] border border-gray-700 p-8 shadow-2xl">
+      <div className="relative w-full max-w-[480px] max-h-[88vh] overflow-y-auto rounded-[1.5rem] bg-[#1b1b1b] border border-[#242424] px-8 py-7 shadow-2xl text-gray-200">
         <button
           onClick={onClose}
           className="absolute right-6 top-6 text-2xl text-gray-300 hover:text-white"
@@ -103,78 +102,220 @@ const TaskDetailModal = ({
   );
 };
 
-const CreateTaskModal = ({onClose, onSubmit, loading,}:
-{
+  const CreateTaskModal = ({onClose, onSubmit, loading}:
+  {
+    onClose: () => void;
+    onSubmit: (data: {
+      taskTitle: string;
+      taskPriority: 'low' | 'medium' | 'high';
+      taskDesc?: string; 
+      dueDate?: string;
+      assignedUserIds: string[];
+    }) => void;
+    loading: boolean;}) => {
 
-  onClose: () => void;
-  onSubmit: (data: {
-    taskTitle: string;
-    taskPriority: 'low' | 'medium' | 'high';
-    taskDescription?: string; }) => void;
-  loading: boolean;}) => {
+    const [taskTitle, setTaskTitle] = useState('');
+    const [taskPriority, setTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
+    const [taskDesc, setTaskDesc] = useState('');
+    const [dueDate, setDueDate] = useState('');
 
-  const [taskTitle, setTaskTitle] = useState('');
-  const [taskPriority, setTaskPriority] =
-    useState<'low' | 'medium' | 'high'>('medium');
-  const [taskDescription, setTaskDescription] = useState('');
+    const [users, setUsers] = useState<TaskMember[]>([]);
+    const [memberOpen, setMemberOpen] = useState(false);
+    const [selectedUserIds, setSelectedUserIds] =  useState<string[]>([]);
 
+    useEffect(() => {
+    const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      // Force status to empty so backend does NOT use task status like "focus"
+      const params = new URLSearchParams();
+      params.append("status", "offline");
+
+      const url = `/api/users?${params.toString()}`;
+
+      console.log("Fetching users from:", url);
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      console.log("Fetched users:", data);
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch users");
+      }
+
+      if (Array.isArray(data)) {
+        setUsers(data);
+      } else if (Array.isArray(data.users)) {
+        setUsers(data.users);
+      } else if (Array.isArray(data.data)) {
+        setUsers(data.data);
+      } else {
+        setUsers([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+      setUsers([]);
+    }
+  };
+
+  fetchUsers();
+}, []);
+
+  function toggleUser(userId: string) {
+    setSelectedUserIds((prevSelected) => {
+      if (prevSelected.includes(userId)) 
+      {
+        return prevSelected.filter((id) => id !== userId);
+      } 
+      else 
+      {
+        return [...prevSelected, userId];
+      }
+    });
+  }
+
+  const selectedUsers = users.filter((user) => selectedUserIds.includes(user.userId));
+  const selectedText = selectedUsers.length > 0 ? selectedUsers.map((user) => user.userName).join(', ') : 'Select members';
   const handleSubmit = () => {
     onSubmit({
       taskTitle,
       taskPriority,
-      taskDescription,
+      taskDesc,
+      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined, 
+      assignedUserIds: selectedUserIds,
     });
  };
 
     return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="relative w-full max-w-xl rounded-3xl bg-[#1f1f1f] border border-gray-700 p-8 shadow-2xl">
-        <button
-          onClick={onClose}
-          className="absolute right-6 top-6 text-2xl text-gray-300 hover:text-white"
-        >
-          ×
-        </button>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm">
+    <div className="relative w-full max-w-[480px] max-h-[92vh] overflow-y-auto rounded-[2rem] bg-[#1b1b1b] border border-[#242424] px-12 py-10 shadow-2xl text-gray-200">
+      
+      <button
+        onClick={onClose}
+        className="absolute right-9 top-8 text-4xl font-light text-white hover:text-lime-300"
+      >
+        ×
+      </button>
 
-        <h1 className="text-3xl font-bold mb-6">Create Task</h1>
-
-        <input
-          value={taskTitle}
-          onChange={(e) => setTaskTitle(e.target.value)}
-          placeholder="Task title"
-          className="w-full mb-4 rounded-xl bg-[#2a2a2a] p-4 outline-none"
-        />
-
-        <textarea
-          value={taskDescription}
-          onChange={(e) => setTaskDescription(e.target.value)}
-          placeholder="Description"
-          className="w-full mb-4 rounded-xl bg-[#2a2a2a] p-4 outline-none"
-        />
-
-        <select
-          value={taskPriority}
-          onChange={(e) =>
-            setTaskPriority(e.target.value as 'low' | 'medium' | 'high')
-          }
-          className="w-full mb-6 rounded-xl bg-[#2a2a2a] p-4 outline-none"
-        >
-          <option value="low">Low Priority</option>
-          <option value="medium">Medium Priority</option>
-          <option value="high">High Priority</option>
-        </select>
-
-        <button
-          onClick={handleSubmit}
-          disabled={loading || !taskTitle}
-          className="w-full rounded-xl bg-lime-300 py-3 font-bold text-black disabled:opacity-50"
-        >
-          {loading ? 'Creating...' : 'Create Task'}
-        </button>
+      <div className="mb-4 flex justify-center text-4xl text-white">
+        ☰+
       </div>
+
+      <h1 className="mb-6 text-center text-4xl font-medium text-lime-300">
+        Create New Task
+      </h1>
+
+      <label className="mb-3 block text-2xl font-bold text-gray-400">
+        Title
+      </label>
+      <input
+        value={taskTitle}
+        onChange={(e) => setTaskTitle(e.target.value)}
+        placeholder="Task Title"
+        className="mb-6 h-16 w-full rounded-2xl border-2 border-[#5a5a5a] bg-transparent px-6 py-4 text-2xl text-gray-200 placeholder:text-gray-500 outline-none focus:border-lime-300"
+      />
+
+      <label className="mb-3 block text-2xl font-bold text-gray-400">
+        Description
+      </label>
+      <textarea
+        value={taskDesc}
+        onChange={(e) => setTaskDesc(e.target.value)}
+        placeholder="Task Description"
+        className="mb-6 h-16 w-full resize-none rounded-2xl border-2 border-[#5a5a5a] bg-transparent px-6 py-4 text-2xl text-gray-200 placeholder:text-gray-500 outline-none focus:border-lime-300"
+      />
+
+      <label className="mb-3 block text-2xl font-bold text-gray-400">
+        Priority
+      </label>
+      <select
+        value={taskPriority}
+        onChange={(e) =>
+          setTaskPriority(e.target.value as "low" | "medium" | "high")
+        }
+        className="mb-6 h-16 w-full rounded-2xl border-2 border-[#5a5a5a] bg-[#1b1b1b] px-6 py-4 text-2xl text-gray-200 outline-none focus:border-lime-300"
+      >
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
+
+      <label className="mb-3 block text-2xl font-bold text-gray-400">
+        Due Date
+      </label>
+      <input
+        type="date"
+        value={dueDate}
+        onChange={(e) => setDueDate(e.target.value)}
+        className="mb-6 h-16 w-full rounded-2xl border-2 border-[#5a5a5a] bg-transparent px-6 py-4 text-2xl text-gray-200 outline-none focus:border-lime-300"
+      />
+
+      {/* Task Members Dropdown */}
+      <div className="relative">
+        <label className="mb-3 block text-2xl font-bold text-gray-400">
+          Task Members
+        </label>
+
+        <button
+          type="button"
+          onClick={() => setMemberOpen(!memberOpen)}
+          className="flex w-full items-center justify-between rounded-2xl border-2 border-[#5a5a5a] bg-transparent px-6 py-4 text-left text-2xl text-gray-200 outline-none focus:border-lime-300"
+        >
+          <span className="truncate">{selectedText}</span>
+          <span className="text-2xl text-white">{memberOpen ? "⌃" : "⌄"}</span>
+        </button>
+
+        {memberOpen && (
+          <div className="absolute z-20 mt-2 w-full max-h-72 overflow-y-auto rounded-2xl border-2 border-[#5a5a5a] bg-[#1b1b1b] p-3 shadow-2xl">
+            {users.length === 0 ? (
+              <p className="px-4 py-3 text-xl text-gray-400">
+                No users found
+              </p>
+            ) : (
+              users.map((user) => (
+                <label
+                  key={user.userId}
+                  className="flex cursor-pointer items-center gap-4 rounded-2xl px-4 py-3 text-xl text-gray-200 hover:bg-[#2a2a2a]"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedUserIds.includes(user.userId)}
+                    onChange={() => toggleUser(user.userId)}
+                    className="h-5 w-5 accent-lime-300"
+                  />
+
+                  <div>
+                    <p>{user.userName}</p>
+                    <p className="text-sm text-gray-400">{user.userEmail}</p>
+                  </div>
+                </label>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={handleSubmit}
+        disabled={loading || !taskTitle}
+        className="mt-6 w-full rounded-2xl bg-lime-300 py-4 text-2xl font-bold text-black hover:bg-lime-200 disabled:opacity-50"
+      >
+        {loading ? "Creating..." : "Create Task"}
+      </button>
     </div>
-  );
+  </div>
+);
 };
+
+
 
 const TaskCard = ({ task, onClick, onDelete,}: {
   task: Task;
@@ -183,6 +324,7 @@ const TaskCard = ({ task, onClick, onDelete,}: {
 }) => {
   const priority = task.assignedTo?.[0]?.taskPriority;
   const [showMenu, setShowMenu] = useState(false);
+  const displayDate = task.taskStatus === 'done' ? task.completedDate: task.dueDate;
 
   return (
     <div
@@ -228,27 +370,20 @@ const TaskCard = ({ task, onClick, onDelete,}: {
         {task.taskDesc || 'No description'}
       </p>
 
-      <p
-        className={`text-lg font-medium ${
+      <p className={`text-lg font-medium ${
           priority === 'high'
             ? 'text-lime-300'
             : priority === 'medium'
             ? 'text-yellow-300'
             : 'text-gray-400'
-        }`}
-      >
+        }`}>
         {priority ? `${priority} Priority` : 'No Priority'}
       </p>
 
       <p className="text-lg mb-4">
-        {task.taskStatus === 'done' ? 'Completed' : 'Due on'}{' '}
-        {task.dueDate
-          ? new Date(task.dueDate).toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            })
-          : 'No due date'}
+        
+        {task.taskStatus === 'done' ? 'Completed on' : 'Due on'}{' '}
+        {displayDate ? new Date(displayDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric',}): 'No due date'}
       </p>
 
       <div className="flex -space-x-2">
@@ -310,30 +445,40 @@ export const Tasks = () => {
 
 
   const fetchTasks = async () => {
-    try {
+    try 
+    {
       setLoading(true);
       setError(null);
 
       const res = await taskApi.getAllTasks();
       setTasks(res);
-    } catch (err: any) {
+    } 
+    catch (err: any) 
+    {
       setError(err.message || 'Failed to load tasks');
-    } finally {
+    } 
+    finally 
+    {
       setLoading(false);
     }
   };
 
   const handleTaskClick = async (id: string) => {
-    try {
+    try 
+    {
       setDetailLoading(true);
       setError(null);
 
       const res = await taskApi.getTaskById(id);
 
       setSelectedTask(res);
-    } catch (err: any) {
+    } 
+    catch (err: any) 
+    {
       setError(err.message || 'Failed to load task detail');
-    } finally {
+    } 
+    finally 
+    {
       setDetailLoading(false);
     }
   };
@@ -341,20 +486,25 @@ export const Tasks = () => {
   const handleCreateTask = async (data: {
     taskTitle: string;
     taskPriority: 'low' | 'medium' | 'high';
-    taskDescription?: string; }) => {
-    try {
+    taskDesc?: string;
+    dueDate?: string; 
+    assignedUserIds: string[];
+}) => {
+    try 
+    {
       setCreateLoading(true);
       setError(null);
 
-      await taskApi.createTask({
-        ...data,
-        workSpaceId: 'b90333e5-6b53-4dfb-87ca-0b5120b5d960',
-      });
+      await taskApi.createTask(data);
       await fetchTasks();
       setShowCreateModal(false);
-    } catch (err: any) {
+    } 
+    catch (err: any) 
+    {
       setError(err.message || 'Failed to create task');
-    } finally {
+    } 
+    finally 
+    {
       setCreateLoading(false);
     }
   };
@@ -369,16 +519,22 @@ export const Tasks = () => {
       dueDate?: string;
     }
   ) => {
-    try {
+    try 
+    {
       setUpdateLoading(true);
       setError(null);
-      
-      const updatedTask = await taskApi.updateTask(taskId, data);
+
+
+      await taskApi.updateTask(taskId, data);
       setSelectedTask(null);
       await fetchTasks();
-    } catch (err: any) {
+    } 
+    catch (err: any) 
+    {
       setError(err.message || 'Failed to update task');
-    } finally {
+    } 
+    finally 
+    {
       setUpdateLoading(false);
     }
   };
