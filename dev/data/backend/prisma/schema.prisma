@@ -60,19 +60,22 @@ model Role {
   roleName  String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  users     User[]
+
+  users User[]
 }
 
 // DEPARTMENTS
 model Department {
-  dpId        String    @id @default(uuid())
-  dpName      String    @unique
-  dpLead      String?   @unique
+  dpId        String   @id @default(uuid())
+  dpName      String   @unique
+  dpLead      String?  @unique
   workspaceId String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  lead        User?     @relation("DepartmentLead", fields: [dpLead], references: [userId])
-  users       User[]    @relation("UserDepartment")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lead  User?  @relation("DepartmentLead", fields: [dpLead], references: [userId], onDelete: SetNull)
+  users User[] @relation("UserDepartment")
+
   workspace   Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
   spaces      Space[]
 }
@@ -81,12 +84,11 @@ model Department {
 // password ? cz with google no need password
 // for spaces, handle the logic in be; if dpLead == spaceDpLead
 model User {
-  socketId              String?
-  userId                String               @id @default(uuid())
-  userEmail             String               @unique
+  userId                String     @id @default(uuid())
+  userEmail             String     @unique
   userPassword          String?
   userName              String
-  userStatus            UserStatus           @default(offline)
+  userStatus            UserStatus @default(offline)
   roleId                String
   workspaceId           String?
   dpId                  String?
@@ -94,31 +96,35 @@ model User {
   city                  String?
   country               String?
   timezone              String?
-  authProvider          String?              @default("email")
-  googleId              String?              @unique
-  emailVerified         Boolean?             @default(false)
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
+  authProvider          String?    @default("email")
+  googleId              String?    @unique
+  socketId				String?
+  emailVerified         Boolean?   @default(false)
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
   lastLoginAt           DateTime?
-  role                  Role                 @relation(fields: [roleId], references: [roleId])
-  workspace             Workspace?           @relation(fields: [workspaceId], references: [workspaceId])
-  department            Department?          @relation("UserDepartment", fields: [dpId], references: [dpId])
-  leadDepartment        Department?          @relation("DepartmentLead")
-  spacesKeyPerson       Space?               @relation("SpaceKeyPerson")
-  createdMeetings       Meeting[]            @relation("MeetingCreatedBy")
+  role                  Role         @relation(fields: [roleId], references: [roleId])
+  workspace             Workspace?   @relation(fields: [workspaceId], references: [workspaceId])
+  department            Department?  @relation("UserDepartment", fields: [dpId], references: [dpId])
+  leadDepartment        Department?  @relation("DepartmentLead")
+  spacesKeyPerson       Space?       @relation("SpaceKeyPerson")
+  createdMeetings       Meeting[]    @relation("MeetingCreatedBy")
+
   tasks                 Task[]
   assignedTasks         TaskAssignment[]
+
   meetingParticipations MeetingParticipant[]
 }
 
 // WORKSPACES
 // tied to everything as a boundary (in case to scale to multi-tenant)
 model Workspace {
-  workspaceId   String       @id @default(uuid())
+  workspaceId   String   @id @default(uuid())
   workspaceName String
   logoUrl       String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
   users         User[]
   departments   Department[]
   spaces        Space[]
@@ -129,23 +135,26 @@ model Workspace {
 
 // SPACES
 // for permission; add in be (canUserAccessSpace(user, space))
+// @@unique([workspaceId, spaceName]) - spacename is now unique, diff workspace can hv same name
 model Space {
-  spaceId      String      @id @default(uuid())
-  spaceName    String
-  workspaceId  String
-  accessLevel  AccessLevel @default(shared)
-  departmentId String?
-  keyPersonId  String?     @unique
-  isPublicBook Boolean?    @default(true)
-  userCapacity Int?        @default(0)
+  spaceId       String       @id @default(uuid())
+  spaceName     String
+  workspaceId   String
+  accessLevel   AccessLevel  @default(shared)
+  departmentId  String?
+  keyPersonId   String?      @unique
+  isPublicBook  Boolean?     @default(true)
+  userCapacity  Int?         @default(0)
   // sortOrder    Int?         @default(0)    // drag / reorder spaces
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  isOccupied   Boolean     @default(false)
-  meetings     Meeting[]
-  department   Department? @relation(fields: [departmentId], references: [dpId])
-  keyPerson    User?       @relation("SpaceKeyPerson", fields: [keyPersonId], references: [userId])
-  workspace    Workspace   @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+  isOccupied    Boolean      @default(false) 
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  workspace     Workspace   @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+  department    Department? @relation(fields: [departmentId], references: [dpId])
+  keyPerson     User?       @relation("SpaceKeyPerson", fields: [keyPersonId], references: [userId], onDelete: SetNull)
+
+  meetings      Meeting[]
 
   @@unique([workspaceId, spaceName])
 }
@@ -154,19 +163,21 @@ model Space {
 // @@ is fetch task by workspace/id
 // add be contraint: if taskstatus == done, add completed date
 model Task {
-  taskId          String           @id @default(uuid())
+  taskId          String      @id @default(uuid())
   taskTitle       String
   taskDesc        String?
-  taskStatus      TaskStatus       @default(not_started)
+  taskStatus      TaskStatus  @default(not_started)
   dueDate         DateTime?
   completedDate   DateTime?
   workspaceId     String
   createdByUserId String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
   deletedAt       DateTime?
-  createdBy       User             @relation(fields: [createdByUserId], references: [userId], onDelete: Cascade)
-  workspace       Workspace        @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+
+  createdBy       User         @relation(fields: [createdByUserId], references: [userId], onDelete: Cascade)
+  workspace       Workspace    @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+
   assignedTo      TaskAssignment[]
 
   @@index([workspaceId, taskStatus])
@@ -176,13 +187,15 @@ model Task {
 }
 
 model TaskAssignment {
-  assignedId   String       @id @default(uuid())
-  taskId       String
-  userId       String
-  taskPriority TaskPriority @default(medium)
-  assignedDate DateTime     @default(now())
-  task         Task         @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [userId])
+  assignedId      String @id @default(uuid())
+
+  taskId          String
+  userId          String
+  taskPriority    TaskPriority @default(medium)
+  assignedDate    DateTime @default(now())
+
+  task            Task @relation(fields: [taskId], references: [taskId], onDelete: Cascade)
+  user            User @relation(fields: [userId], references: [userId])
 
   @@unique([taskId, userId])
   @@index([userId])
@@ -192,7 +205,7 @@ model TaskAssignment {
 
 // EVENTS
 model Meeting {
-  meetId          String               @id @default(uuid())
+  meetId          String   @id @default(uuid())
   workspaceId     String
   spaceId         String
   createdByUserId String
@@ -200,11 +213,13 @@ model Meeting {
   meetDesc        String?
   meetStart       DateTime
   meetEnd         DateTime
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  workspace       Workspace            @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
-  space           Space                @relation(fields: [spaceId], references: [spaceId])
-  createdBy       User                 @relation("MeetingCreatedBy", fields: [createdByUserId], references: [userId])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  workspace       Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+  space           Space     @relation(fields: [spaceId], references: [spaceId])
+  createdBy       User      @relation("MeetingCreatedBy", fields: [createdByUserId], references: [userId])
+
   participants    MeetingParticipant[]
 
   @@index([workspaceId])
@@ -213,14 +228,15 @@ model Meeting {
 }
 
 model MeetingParticipant {
-  id         String           @id @default(uuid())
-  meetId     String
-  userId     String
-  role       MeetingRole
-  attendance AttendanceStatus @default(present)
-  createdAt  DateTime         @default(now())
-  meet       Meeting          @relation(fields: [meetId], references: [meetId])
-  user       User             @relation(fields: [userId], references: [userId])
+  id            String   @id @default(uuid())
+  meetId        String
+  userId        String
+  role          MeetingRole
+  attendance    AttendanceStatus @default(present)
+  createdAt     DateTime @default(now())
+
+  meet          Meeting   @relation(fields: [meetId], references: [meetId])
+  user          User      @relation(fields: [userId], references: [userId])
 
   @@unique([meetId, userId])
   @@index([meetId, role])
@@ -229,15 +245,15 @@ model MeetingParticipant {
 }
 
 model Document {
-  id          String          @id @default(uuid())
+  id          String   @id @default(uuid())
   title       String
   fileURL     String?    // actual PDF
   content     String?    // extracted text for RAG / search
   type        DocumentType
   workspaceId String
-  createdAt   DateTime        @default(now())
+  createdAt   DateTime @default(now())
 
-  workspace   Workspace       @relation(fields: [workspaceId], references: [workspaceId])
+  workspace   Workspace @relation(fields: [workspaceId], references: [workspaceId])
   chunks      DocumentChunk[]
 
   @@index([workspaceId])
@@ -245,13 +261,14 @@ model Document {
 
 // chunkindex to make sure content is in order for RAG search
 model DocumentChunk {
-  id         String                 @id @default(uuid())
-  content    String
-  embedding  Unsupported("vector")?
-  chunkIndex Int
-  documentId String
-  createdAt  DateTime               @default(now())
-  document   Document               @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  content     String
+  embedding   Unsupported("vector(1536)")?
+  chunkIndex  Int
+  documentId  String
+  createdAt   DateTime @default(now())
+
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@index([documentId])
   @@unique([documentId, chunkIndex])
