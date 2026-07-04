@@ -48,7 +48,8 @@ router.post('/login', async (req, res) => {
         { 
             userId: user.userId, 
             roleId: user.roleId,
-            roleName: user.role.roleName
+            roleName: user.role.roleName,
+            workspaceId: user.workspaceId,  // added to retrieve workspaceid when creating task (YJ)
         },
         JWT_SECRET,
         { expiresIn: JWT_EXPIRY }
@@ -123,7 +124,8 @@ router.post('/google', async (req, res) => {
             { 
                 userId: user.userId, 
                 roleId: user.roleId,
-                roleName: user.role.roleName
+                roleName: user.role.roleName, 
+                workspaceId: user.workspaceId, // added to retrieve workspaceid when creating task (YJ)
             },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRY }

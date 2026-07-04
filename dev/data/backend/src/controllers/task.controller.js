@@ -33,18 +33,24 @@ const taskController = {
 
 	async createTask(req, res) {
 		try {
-			const { taskTitle, taskPriority, workSpaceId, taskDesc } = req.body;
 			
-			if (!taskTitle || !taskPriority || !workSpaceId) {
-				return res.status(400).json({ error: 'taskTitle, taskPriority, and workSpaceId are required' });
+			const { taskTitle, taskPriority, taskDesc, dueDate, assignedUserIds } = req.body;
+			
+			if (!taskTitle || !taskPriority) {
+				return res.status(400).json({ error: 'taskTitle and taskPriority are required' });
 			}
+
+			const workspaceId = req.user.workspaceId;
+			const createdByUserId = req.user.userId;
 
 			const newTask = await taskService.createTask({
 				taskTitle,
-				taskPriority,
-				workSpaceId,
 				taskDesc,
-				userId: req.user.userId
+				dueDate,
+				taskPriority,
+				workspaceId,
+				createdByUserId,
+				assignedUserIds,
 			});
 			return res.status(201).json(newTask);
 
