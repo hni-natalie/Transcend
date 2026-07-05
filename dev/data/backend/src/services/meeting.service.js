@@ -4,23 +4,84 @@ const { validateMeeting } = require('../validators/meeting.validator');
 
 const meetingService = {
     // Review 
-    async getAllMeetings() {
-        return prisma.meeting.findMany({
-            orderBy: { meetStart: 'asc' }
+    async getAllMeetings(userId) {
+        const meetings = await prisma.meeting.findMany({
+            include: {
+                _count: {
+                    select: {
+                        participants: true
+                    }
+                }
+            }
         });
+
+        // fetch all pins for this user once
+        const pins = await prisma.meetingPin.findMany({
+            where: { userId },
+            select: { meetId: true }
+        });
+
+        const pinnedSet = new Set(pins.map(p => p.meetId));
+
+        return meetings.map(meeting => ({
+            ...meeting,
+            pinned: pinnedSet.has(meeting.meetId)
+        }));
     },
 
     async getMeetingById(meetingId) {
         return prisma.meeting.findUnique({
-            where: { meetId: meetingId }
+            where: { meetId: meetingId },
+            include: {
+                participants: {
+                    select: {
+                        role: true,
+                        attendance: true,
+                        user: {
+                            select: {
+                                userName: true
+                            }
+                        }
+                    }
+                },
+                _count: {
+                    select: {
+                        participants: true
+                    }
+                }
+            }
         });
     },
 
     // Search for meeting that created by the specific user
     async getMeetingByUserId(userId) {
-        return prisma.meeting.findMany({
-            where: { createdByUserId: userId }
+        // 1. get meetings created by this user
+        const meetings = await prisma.meeting.findMany({
+            where: {
+            createdByUserId: userId,
+            },
+            include: {
+            _count: {
+                select: {
+                participants: true,
+                },
+            },
+            },
         });
+
+        // 2. fetch all pins for this user (single query)
+        const pins = await prisma.meetingPin.findMany({
+            where: { userId },
+            select: { meetId: true },
+        });
+
+        const pinnedSet = new Set(pins.map(p => p.meetId));
+
+        // 3. attach pinned flag
+        return meetings.map(meeting => ({
+            ...meeting,
+            pinned: pinnedSet.has(meeting.meetId),
+        }));
     },
 
     // Search for meeting that user joined
@@ -217,8 +278,46 @@ const meetingService = {
 
         await prisma.meetingParticipant.deleteMany({ where: { meetId } });
 		await prisma.meeting.delete({ where: { meetId } });
-	}
+	}, 
 
+    async togglePin(meetId, userId) {
+        // Ensure meeting exists
+        const meeting = await prisma.meeting.findUnique({
+            where: { meetId }
+        });
+
+        if (!meeting) { throw new Error('Meeting not found'); }
+
+        // Check if already pinned by THIS user
+        const existingPin = await prisma.meetingPin.findUnique({
+            where: {
+                userId_meetId: { userId, meetId, }
+            }
+        });
+
+        // 3. Toggle
+        if (existingPin) {
+            // Unpin
+            await prisma.meetingPin.delete({
+                where: {
+                    userId_meetId: { userId, meetId, }
+                }
+            });
+
+            return { pinned: false };
+        }
+
+        // Pin
+        await prisma.meetingPin.create({
+            data: { userId, meetId, }
+        });
+
+        return { pinned: true };
+    },
+
+    async getAllMeetingPin() {
+        return prisma.meetingPin.findMany({});
+    }
 }
 
 module.exports = meetingService;

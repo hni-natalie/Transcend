@@ -114,6 +114,7 @@ model User {
   assignedTasks         TaskAssignment[]
 
   meetingParticipations MeetingParticipant[]
+  pinnedMeetings        MeetingPin[]
 }
 
 // WORKSPACES
@@ -213,6 +214,7 @@ model Meeting {
   meetDesc        String?
   meetStart       DateTime
   meetEnd         DateTime
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -221,10 +223,7 @@ model Meeting {
   createdBy       User      @relation("MeetingCreatedBy", fields: [createdByUserId], references: [userId])
 
   participants    MeetingParticipant[]
-
-  @@index([workspaceId])
-  @@index([spaceId])
-  @@index([workspaceId, meetStart])
+  pinnedBy        MeetingPin[]
 }
 
 model MeetingParticipant {
@@ -242,6 +241,20 @@ model MeetingParticipant {
   @@index([meetId, role])
   @@index([meetId])
   @@index([userId])
+}
+
+model MeetingPin {
+  pinId      String   @id @default(uuid())
+
+  userId     String
+  meetId     String
+
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  meeting    Meeting  @relation(fields: [meetId], references: [meetId], onDelete: Cascade)
+
+  @@unique([userId, meetId])
 }
 
 model Document {

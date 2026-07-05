@@ -26,13 +26,6 @@ export type UserChipItem = {
 	photo: NonNullable<User['avatarUrl']>;
 };
 
-// export type UserChipItem = {
-// 	name: string;
-// 	role: string;
-// 	photo: string;
-// };
-
-
 /* user account (for admin users table) */
 export interface UserAccount {
 	id: string;			// need truncation? since its uuid
