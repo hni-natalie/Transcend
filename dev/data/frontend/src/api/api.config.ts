@@ -21,9 +21,12 @@ export const API_CONFIG = {
     uploads: '/uploads',
     departments: {
       data: '/departments',
-      names: '/departments/dpname',
+      names: '/departments/dpName',
     },
-    spaces: '/spaces',
+    spaces: {
+      data: '/spaces',
+      names: '/spaces/spaceName',
+    },
     tasks: '/tasks',
     meetings: '/meetings',
     init: '/init',

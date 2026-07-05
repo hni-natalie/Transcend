@@ -10,17 +10,17 @@ interface DeptResponse {
 
 export const officeService = {
 	// get office departments
-	getAllDept: async (): Promise<DeptResponse> => {
+	getAllSpace: async (): Promise<DeptResponse> => {
 		const data = await apiClient.get(
-			API_CONFIG.endpoints.departments.data
+			API_CONFIG.endpoints.spaces.data
 		);
 		return data;
 	},
 
 	// get office departments
-	getAllDeptNames: async (): Promise<DeptResponse> => {
+	getAllSpaceNames: async (): Promise<DeptResponse> => {
 		const data = await apiClient.get(
-			API_CONFIG.endpoints.departments.names
+			API_CONFIG.endpoints.spaces.names
 		);
 		return data;
 	},

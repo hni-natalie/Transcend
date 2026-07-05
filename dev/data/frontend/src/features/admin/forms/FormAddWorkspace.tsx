@@ -5,7 +5,7 @@ import { InputText, InputDropdown } from '@shared'
 import { UploadPhoto, UploadFile  } from '@features/admin'
 
 const permissionOptions = [
-	'Default : All Users'
+	{ value: 'default', label: 'Default : All Users' }
 ];
 
 

@@ -21,7 +21,7 @@ interface GenerateDeptProps {
 }
 
 const getOfficeDept = async () => {
-  const res = await officeService.getAllDeptNames();
+  const res = await officeService.getAllSpaceNames();
   let departmentNames = [];
   let departmentCount = 0;
 
@@ -127,7 +127,7 @@ export function GenerateDept({ padding=5, localPlayerRef, room } : GenerateDeptP
     const startZ = -canvasHeight / 2 + cellHeight / 2;
     
     // for (let i = 0; i < count; i++) {
-    departmentNames.map((dept, i) => {
+    departmentNames.map((space, i) => {
 
       const col = i % cols;
       const row = Math.floor(i / cols);
@@ -146,7 +146,7 @@ export function GenerateDept({ padding=5, localPlayerRef, room } : GenerateDeptP
             ref={setPlaneRef(i)}
             position={[x, -0.5, z]}
             rotation={[-Math.PI / 2, 0, 0]}
-            userData={{ index:i, name:dept.dpName }}
+            userData={{ index:i, name:space.spaceName }}
             onPointerOver={() => setHoveredIndex(i)}
             onPointerOut={() => setHoveredIndex(null)}
             // onPointerOut={handlePointerOut}
@@ -173,7 +173,7 @@ export function GenerateDept({ padding=5, localPlayerRef, room } : GenerateDeptP
                 fontSize={0.6}
                 color="white"
                 onSync={() => getTextWidth(i)}
-              >{dept.dpName}</Text>
+              >{space.spaceName}</Text>
             </group>
             )}
           </mesh>

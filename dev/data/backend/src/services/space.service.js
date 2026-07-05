@@ -3,6 +3,15 @@ const prisma = require('../../prisma/client');
 const spaceService = {
     async getAllSpaces() {
         return prisma.space.findMany({
+            where: { workspaceId },
+            orderBy: { spaceName: 'asc' }
+        });
+    },
+
+    async getAllSpaceNames(workspaceId) {
+        return prisma.space.findMany({
+            where: { workspaceId },
+            select: { spaceName: true },
             orderBy: { spaceName: 'asc' }
         });
     },

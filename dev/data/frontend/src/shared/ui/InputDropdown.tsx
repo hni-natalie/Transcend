@@ -2,15 +2,15 @@ import { ChangeEvent } from 'react';
 
 interface InputDropdownProps {
   title: string;
-  name: string;
-  choices: Array<string>;
+  name?: string;
+  choices: Array<{ value: string; label: string }>;
   value: string;
   onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
   required?: boolean;
   placeholder?: string;
   error?: string;
   disabled?: boolean;
-  inputStyle?: string;
+  className?: string;
 }
 
 export function InputDropdown({ 
@@ -23,7 +23,7 @@ export function InputDropdown({
   placeholder = 'Select an option',
   error = '',
   disabled = false,
-	inputStyle = ''
+	className = ''
 } : InputDropdownProps) {
 
   return (
@@ -34,10 +34,10 @@ export function InputDropdown({
           {required && <span className="text-xs text-accent-lime"> *</span>}
         </label>
       )}
-      <div className={`input-base p-0 pr-2 ${error ? 'input-error' : ''}`}>
+      <div className={`input-base ${error ? 'input-error' : ''}`}>
         <select
         name={name}
-        className={`select-base ${!value ? 'text-white/50' : 'text-white'} ${inputStyle}`}
+        className={`select-base ${!value ? 'text-white/50' : 'text-white'} ${className}`}
         value={value}
         onChange={onChange}
         required={required}
@@ -45,8 +45,8 @@ export function InputDropdown({
       >
         <option value="">{placeholder}</option>
         {choices.map((choice, index) => (
-          <option key={index} value={choice}>
-            {choice}
+          <option key={index} value={choice.value}>
+            {choice.label}
           </option>
         ))}
       </select>

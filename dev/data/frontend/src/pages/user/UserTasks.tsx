@@ -1,13 +1,26 @@
-import { PageHeader, IconTasks } from '@shared';
+import { PageHeader, IconTasks, InputDropdown, InputText, IconCreateTask } from '@shared';
 import { useEffect, useMemo, useState } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
+import { InputTextArea } from '@/shared/ui/InputTextArea';
+import { InputDropdownChecklist } from '@/shared/ui/InputDropdownChecklist';
 
 type TaskMember = {
   userId: string;
   userName: string;
   userEmail?: string;
 };
+
+const taskStatusOptions = [
+	{ value: 'not_started', label: 'Not Started' },
+	{ value: 'in_progress', label: 'In Progress' },
+	{ value: 'done', label: 'Done' }
+];
+const taskPriorityOptions = [
+	{ value: 'low', label: 'Low Priority' },
+	{ value: 'medium', label: 'Medium Priority' },
+	{ value: 'high', label: 'High Priority' }
+];
 
 const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
   task: Task;
@@ -31,56 +44,56 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="relative w-full max-w-[480px] max-h-[88vh] overflow-y-auto rounded-[1.5rem] bg-[#1b1b1b] border border-[#242424] px-8 py-7 shadow-2xl text-gray-200">
+      <div className="flex flex-col gap-y-4 w-full max-w-[480px] max-h-[88vh] overflow-y-auto rounded-[1.5rem] bg-[#1b1b1b] border border-[#242424] px-8 py-7 shadow-2xl text-gray-200">
         <button
           onClick={onClose}
-          className="absolute right-6 top-6 text-2xl text-gray-300 hover:text-white"
+          className="close-right"
         >
           ×
         </button>
+        <div className='flex flex-col gap-y-2 items-center justify-center text-center text-4xl'>
+          <IconTasks className='text-white w-6 h-6' />
+          <h1 className="font-medium text-accent-lime">Edit Task</h1>
+        </div>
 
-        <input
+        <InputText
+          title='Title'
+          type='text'
+          placeholder='Task Title'
           value={taskTitle}
           onChange={(e) => setTaskTitle(e.target.value)}
-          className="w-full mb-4 rounded-xl bg-[#2a2a2a] p-4 outline-none text-2xl font-bold"
         />
-
-        <textarea
+        <InputTextArea
+          title='Description'
           value={taskDesc}
           onChange={(e) => setTaskDesc(e.target.value)}
           placeholder="No description"
-          className="w-full mb-4 rounded-xl bg-[#2a2a2a] p-4 outline-none"
         />
-
-        <select
+        <InputDropdown
+          title='Status'
+          choices={taskStatusOptions}
           value={taskStatus}
           onChange={(e) =>
             setTaskStatus(e.target.value as 'not_started' | 'in_progress' | 'done')
           }
-          className="w-full mb-4 rounded-xl bg-[#2a2a2a] p-4 outline-none"
-        >
-          <option value="not_started">Not Started</option>
-          <option value="in_progress">In Progress</option>
-          <option value="done">Done</option>
-        </select>
-
-        <select
+          placeholder='--- Select Task Status ---'
+          className='appearance-auto'
+        />
+        <InputDropdown
+          title='Priority'
+          choices={taskPriorityOptions}
           value={taskPriority}
           onChange={(e) =>
             setTaskPriority(e.target.value as 'low' | 'medium' | 'high')
           }
-          className="w-full mb-4 rounded-xl bg-[#2a2a2a] p-4 outline-none"
-        >
-          <option value="low">Low Priority</option>
-          <option value="medium">Medium Priority</option>
-          <option value="high">High Priority</option>
-        </select>
-
-        <input
-          type="date"
+          placeholder='--- Select Task Priority ---'
+          className='appearance-auto'
+        />
+        <InputText 
+          title='Due Date'
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="w-full mb-6 rounded-xl bg-[#2a2a2a] p-4 outline-none"
+          type='date'
         />
 
         <button
@@ -120,7 +133,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
     const [dueDate, setDueDate] = useState('');
 
     const [users, setUsers] = useState<TaskMember[]>([]);
-    const [memberOpen, setMemberOpen] = useState(false);
+    // const [memberOpen, setMemberOpen] = useState(false);
     const [selectedUserIds, setSelectedUserIds] =  useState<string[]>([]);
 
     useEffect(() => {
@@ -183,7 +196,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
   }
 
   const selectedUsers = users.filter((user) => selectedUserIds.includes(user.userId));
-  const selectedText = selectedUsers.length > 0 ? selectedUsers.map((user) => user.userName).join(', ') : 'Select members';
+  // const selectedText = selectedUsers.length > 0 ? selectedUsers.map((user) => user.userName).join(', ') : 'Select members';
   const handleSubmit = () => {
     onSubmit({
       taskTitle,
@@ -196,70 +209,62 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
 
     return (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm">
-    <div className="relative w-full max-w-[480px] max-h-[92vh] overflow-y-auto rounded-[2rem] bg-[#1b1b1b] border border-[#242424] px-12 py-10 shadow-2xl text-gray-200">
+    <div className="flex flex-col gap-y-4 w-full max-w-[480px] max-h-[92vh] overflow-y-auto rounded-[2rem] bg-[#1b1b1b] border border-[#242424] px-12 py-10 shadow-2xl text-gray-200">
       
       <button
         onClick={onClose}
-        className="absolute right-9 top-8 text-4xl font-light text-white hover:text-lime-300"
+        className='close-right text-4xl'
       >
         ×
       </button>
 
-      <div className="mb-4 flex justify-center text-4xl text-white">
-        ☰+
+      <div className='flex flex-col gap-y-2 items-center justify-center text-center text-4xl'>
+        <IconCreateTask className='text-white w-8 h-8' />
+        <h1 className="font-medium text-accent-lime">Create New Task</h1>
       </div>
 
-      <h1 className="mb-6 text-center text-4xl font-medium text-lime-300">
-        Create New Task
-      </h1>
-
-      <label className="mb-3 block text-2xl font-bold text-gray-400">
-        Title
-      </label>
-      <input
+      <InputText
+        title='Title'
         value={taskTitle}
         onChange={(e) => setTaskTitle(e.target.value)}
-        placeholder="Task Title"
-        className="mb-6 h-16 w-full rounded-2xl border-2 border-[#5a5a5a] bg-transparent px-6 py-4 text-2xl text-gray-200 placeholder:text-gray-500 outline-none focus:border-lime-300"
+        required={true}
+        placeholder='Task Title'
+        type='text'
       />
-
-      <label className="mb-3 block text-2xl font-bold text-gray-400">
-        Description
-      </label>
-      <textarea
+      <InputTextArea
+        title='Description'
         value={taskDesc}
         onChange={(e) => setTaskDesc(e.target.value)}
         placeholder="Task Description"
-        className="mb-6 h-16 w-full resize-none rounded-2xl border-2 border-[#5a5a5a] bg-transparent px-6 py-4 text-2xl text-gray-200 placeholder:text-gray-500 outline-none focus:border-lime-300"
       />
-
-      <label className="mb-3 block text-2xl font-bold text-gray-400">
-        Priority
-      </label>
-      <select
+      <InputDropdown 
+        title='Priority'
+        name='task_priority'
+        choices={taskPriorityOptions}
         value={taskPriority}
         onChange={(e) =>
           setTaskPriority(e.target.value as "low" | "medium" | "high")
         }
-        className="mb-6 h-16 w-full rounded-2xl border-2 border-[#5a5a5a] bg-[#1b1b1b] px-6 py-4 text-2xl text-gray-200 outline-none focus:border-lime-300"
-      >
-        <option value="low">Low</option>
-        <option value="medium">Medium</option>
-        <option value="high">High</option>
-      </select>
-
-      <label className="mb-3 block text-2xl font-bold text-gray-400">
-        Due Date
-      </label>
-      <input
-        type="date"
+        className='appearance-auto'
+      />
+      <InputText
+        title='Due Date'
         value={dueDate}
         onChange={(e) => setDueDate(e.target.value)}
-        className="mb-6 h-16 w-full rounded-2xl border-2 border-[#5a5a5a] bg-transparent px-6 py-4 text-2xl text-gray-200 outline-none focus:border-lime-300"
+        required={true}
+        type='date'
+      />
+      <InputDropdownChecklist
+        title='Task Members'
+        placeholder='Select Members'
+        emptyText='No users found'
+        users={users}
+        selectedUserIds={selectedUserIds}
+        onUserToggle={toggleUser}
       />
 
       {/* Task Members Dropdown */}
-      <div className="relative">
+      {/* <div className="relative">
         <label className="mb-3 block text-2xl font-bold text-gray-400">
           Task Members
         </label>
@@ -289,7 +294,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
                     type="checkbox"
                     checked={selectedUserIds.includes(user.userId)}
                     onChange={() => toggleUser(user.userId)}
-                    className="h-5 w-5 accent-lime-300"
+                    className="h-5 w-5 accent-lime"
                   />
 
                   <div>
@@ -301,12 +306,12 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
             )}
           </div>
         )}
-      </div>
+      </div> */}
 
       <button
         onClick={handleSubmit}
         disabled={loading || !taskTitle}
-        className="mt-6 w-full rounded-2xl bg-lime-300 py-4 text-2xl font-bold text-black hover:bg-lime-200 disabled:opacity-50"
+        className="mt-6 w-full rounded-2xl bg-lime-300 py-4 text-2xl font-bold text-black hover:brightness-110 disabled:opacity-50"
       >
         {loading ? "Creating..." : "Create Task"}
       </button>
@@ -372,7 +377,7 @@ const TaskCard = ({ task, onClick, onDelete,}: {
 
       <p className={`text-lg font-medium ${
           priority === 'high'
-            ? 'text-lime-300'
+            ? 'text-accent-lime'
             : priority === 'medium'
             ? 'text-yellow-300'
             : 'text-gray-400'
@@ -410,7 +415,7 @@ const TaskColumn = ({
     <div>
       <div className="flex items-center justify-between border border-gray-700 rounded-2xl px-6 py-4 mb-6">
         <h2 className="text-xl font-semibold">{title}</h2>
-        <span className="text-2xl font-bold text-lime-300">
+        <span className="text-2xl font-bold text-accent-lime">
           {tasks.length}
         </span>
       </div>
@@ -584,7 +589,7 @@ export const Tasks = () => {
 
         <button
           onClick={() => setShowCreateModal(true)}
-          className="rounded-full border border-lime-300 px-5 py-2 text-lime-300 font-semibold hover:bg-lime-300 hover:text-black"
+          className="btn-lime-outline"
         >
           + Add Task
         </button>

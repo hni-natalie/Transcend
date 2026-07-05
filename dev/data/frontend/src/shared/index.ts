@@ -5,6 +5,7 @@ export { InputDropdown } from './ui/InputDropdown';
 export { PageHeader } from './ui/PageHeader';
 export { BlinkingText } from './ui/BlinkingText';
 export { countryOptions } from './lib/constants/countries';
+export * from './utils/normalizeOptions'
 export * from './ui/Icons';
 export * from './types/user.types';
 export * from './types/menu.types';

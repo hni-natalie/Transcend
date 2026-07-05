@@ -3,7 +3,7 @@ import React from 'react';
 import { useState, ChangeEvent } from 'react';
 import { InputText, InputDropdown } from '@shared';
 import { UploadPhoto } from '@features/admin';
-import { countryOptions } from '@shared';
+import { countryOptions, normalizeOptions } from '@shared';
 
 
 const deptOptions = [
@@ -62,9 +62,9 @@ export function FormAddUser() {
 					<InputText title='First Name' placeholder='Enter First Name' name='firstName' value={formData.firstName} onChange={handleChange} required={true} />
 					<InputText title='Last Name' placeholder='Enter Last Name' name='lastName' value={formData.lastName} onChange={handleChange} required={true} />
 					<InputText title='Email' placeholder='Enter Email' name='email' value={formData.email} onChange={handleChange} required={true} />
-					<InputDropdown title='Department' name='dept' choices={deptOptions} value={formData.dept} onChange={handleChange} />
-					<InputDropdown title='Role' name='role' choices={roleOptions} value={formData.role} onChange={handleChange} required={true} />
-					<InputDropdown title='Location' name='location' choices={countryOptions} value={formData.location} onChange={handleChange} />
+					<InputDropdown title='Department' name='dept' choices={normalizeOptions(deptOptions)} value={formData.dept} onChange={handleChange} />
+					<InputDropdown title='Role' name='role' choices={normalizeOptions(roleOptions)} value={formData.role} onChange={handleChange} required={true} />
+					<InputDropdown title='Location' name='location' choices={normalizeOptions(countryOptions)} value={formData.location} onChange={handleChange} />
 				</div>
 
 				<div className='flex justify-center'>
