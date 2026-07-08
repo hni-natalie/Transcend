@@ -124,11 +124,12 @@ import { UserStatusBadge } from '@features/users';
 | Hook | Returns / Notes |
 |---|---|
 | `useAuth` | `{ user, isLoading, login, logout, updateUserStatus }` |
-| [useLivekit](src/features/livekit/hooks/useLiveKit.ts) | `{ connect, disconnect, toggleMute, setActivePlane, isMuted, isLoading, joinCount, activePlane, isConnectedRoom, isPlayerAudioReady, getMediaStream, getPositionalAudio, getAudioListener }` — from `@livekit/hooks/useLiveKit.ts` |
+| [useLiveKit](src/features/livekit/hooks/useLiveKit.ts) | `{ connect, disconnect, toggleMute, setActivePlane, isMuted, isLoading, joinCount, activePlane, isConnectedRoom, isPlayerAudioReady, getMediaStream, getPositionalAudio, getAudioListener }` — from `@livekit/hooks/useLiveKit.ts` |
 | `useToast` | `{ showToast }` — `showToast('success' \| 'error', message)` |
 | `useAvatarUpload` | `{ isUploading, handleAvatarUpload }` — args: `userId`, `onSuccess` |
 | `useUserLocation` | `{ location, city, country, isLoading, error }` — browser geolocation w/ IP fallback |
 | `useRolesAndDepartments` | `{ roles, departments, departmentOptions, roleOptions, isLoading }` |
+| [useUserStatusSync](src/shared/hooks/useUserStatusSync.ts) | `{ user }` |
 
 ---
 
