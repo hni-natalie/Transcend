@@ -124,11 +124,20 @@ import { UserStatusBadge } from '@features/users';
 | Hook | Returns / Notes |
 |---|---|
 | `useAuth` | `{ user, isLoading, login, logout, updateUserStatus }` |
-| `useSocket` | `{ socket, isConnected }` — from `@/context/SocketContext` |
+| [useLivekit](src/features/livekit/hooks/useLiveKit.ts) | `{ connect, disconnect, toggleMute, setActivePlane, isMuted, isLoading, joinCount, activePlane, isConnectedRoom, isPlayerAudioReady, getMediaStream, getPositionalAudio, getAudioListener }` — from `@livekit/hooks/useLiveKit.ts` |
 | `useToast` | `{ showToast }` — `showToast('success' \| 'error', message)` |
 | `useAvatarUpload` | `{ isUploading, handleAvatarUpload }` — args: `userId`, `onSuccess` |
 | `useUserLocation` | `{ location, city, country, isLoading, error }` — browser geolocation w/ IP fallback |
 | `useRolesAndDepartments` | `{ roles, departments, departmentOptions, roleOptions, isLoading }` |
+
+---
+
+## 4. Shared Context (`@context`)
+| Context | Returns / Notes |
+|---|---|
+| [useSocket](src/context/SocketContext.tsx) | `{ socket, isConnected }` — from `@/context/SocketContext` |
+| [useKeyboard](src/context/KeyboardContext.tsx#9) | `{ keys, isMoveKey, isModifierKey }` — from `@/context/KeyboardContext` |
+
 
 ---
 
