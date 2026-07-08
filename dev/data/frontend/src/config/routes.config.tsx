@@ -1,7 +1,7 @@
 import React from 'react';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { Landing, Login, Terms, Privacy,
-		AdminDashboard, UserManagement, SpaceManagement, ActivityLog, AdminSettings,
+		AdminDashboard, AdminUserManagement, SpaceManagement, AdminActivity,
 		UserDashboard, Office, OfficeRoom, Tasks, Meetings, Messages, UserSettings 
 		} from '@pages';
 
@@ -62,7 +62,7 @@ export const routes: RouteConfig[] = [
 	},
 	{
 		path: R.ADMIN_USERS,
-		element: <UserManagement />,
+		element: <AdminUserManagement />,
 		title: 'User Management · Admin · WorkFrom,',
 		requiresAuth: true,
 		allowedRoles: ['Admin'],
@@ -76,18 +76,18 @@ export const routes: RouteConfig[] = [
 	},
 	{
 		path: R.ADMIN_ACTIVITY,
-		element: <ActivityLog />,
+		element: <AdminActivity />,
 		title: 'Activity · Admin · WorkFrom,',
 		requiresAuth: true,
 		allowedRoles: ['Admin'],
 	},
-	{
-		path: R.ADMIN_SETTINGS,
-		element: <AdminSettings />,
-		title: 'Settings · Admin · WorkFrom,',
-		requiresAuth: true,
-		allowedRoles: ['Admin'],
-	},
+	// {
+	// 	path: R.ADMIN_SETTINGS,
+	// 	element: <AdminSettings />,
+	// 	title: 'Settings · Admin · WorkFrom,',
+	// 	requiresAuth: true,
+	// 	allowedRoles: ['Admin'],
+	// },
 
 
 	// User 

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, ChangeEvent } from 'react';
-import { IconDown, IconUp } from './Icons';
+import { IconDown } from './Icons';
 
 interface User {
   userId: string;
@@ -83,22 +83,23 @@ export function InputDropdownChecklist({
           disabled={disabled}
         >
           <span className="truncate text-left w-full">{selectedText}</span>
-          <span className='w-5 h-5'>
-            {memberOpen ? <IconDown/> : <IconUp/> }
+          <span className={`w-4 h-4 text-white/40 transform transition-transform ${memberOpen ? 'rotate-180' : ''}`}>
+            <IconDown/>
           </span>
         </button>
 
         {memberOpen && !disabled && (
-          <div className="w-full max-h-72 overflow-y-auto">
+          <div className="max-h-72 overflow-y-auto
+          mt-2 bg-background-1 border border-background-4 rounded-xl shadow-2xl z-50 py-1.5">
             {users.length === 0 ? (
-              <p className="px-4 py-3 text-xl text-gray-400">
+              <p className="px-4 py-3 text-sm text-gray-400">
                 {emptyText}
               </p>
             ) : (
               users.map((user) => (
                 <label
                   key={user.userId}
-                  className="flex cursor-pointer items-center gap-4 rounded-2xl px-4 py-3 text-l text-gray-200 hover:bg-background-3"
+                  className="flex cursor-pointer items-center gap-4 px-4 py-3 text-base text-gray-200 hover:bg-background-3"
                 >
                   <input
                     type="checkbox"

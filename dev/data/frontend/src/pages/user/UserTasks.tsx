@@ -1,9 +1,10 @@
-import { PageHeader, IconTasks, InputDropdown, InputText, IconCreateTask } from '@shared';
+import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd } from '@shared';
 import { useEffect, useMemo, useState } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
 import { InputTextArea } from '@/shared/ui/InputTextArea';
 import { InputDropdownChecklist } from '@/shared/ui/InputDropdownChecklist';
+import { DropdownChoice } from '@/shared/types/ui.types';
 
 type TaskMember = {
   userId: string;
@@ -11,15 +12,15 @@ type TaskMember = {
   userEmail?: string;
 };
 
-const taskStatusOptions = [
-	{ value: 'not_started', label: 'Not Started' },
-	{ value: 'in_progress', label: 'In Progress' },
-	{ value: 'done', label: 'Done' }
+const taskStatusOptions : DropdownChoice[] = [
+	{ id: 'not_started', name: 'Not Started' },
+	{ id: 'in_progress', name: 'In Progress' },
+	{ id: 'done', name: 'Done' }
 ];
-const taskPriorityOptions = [
-	{ value: 'low', label: 'Low Priority' },
-	{ value: 'medium', label: 'Medium Priority' },
-	{ value: 'high', label: 'High Priority' }
+const taskPriorityOptions : DropdownChoice[] = [
+	{ id: 'low', name: 'Low Priority' },
+	{ id: 'medium', name: 'Medium Priority' },
+	{ id: 'high', name: 'High Priority' }
 ];
 
 const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
@@ -219,7 +220,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
       </button>
 
       <div className='flex flex-col gap-y-2 items-center justify-center text-center text-4xl'>
-        <IconCreateTask className='text-white w-8 h-8' />
+        <IconTaskAdd className='text-white w-8 h-8' />
         <h1 className="font-medium text-accent-lime">Create New Task</h1>
       </div>
 

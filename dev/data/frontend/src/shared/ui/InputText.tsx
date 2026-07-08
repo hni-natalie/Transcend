@@ -1,17 +1,16 @@
-// reusable text input
-import { ChangeEvent } from 'react';
-
-interface InputProps {
+interface InputTextProps {
   title?: string;
-  name?: string;
   placeholder?: string;
-  value: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
   required?: boolean;
   type?: string;
   error?: string;
-  disabled?: false;
-	className?: string;
+  disabled?: boolean;
+  name?: string;
+  className?: string;
 }
 
 export function InputText({ 
@@ -19,14 +18,15 @@ export function InputText({
   name = '',
   value = '', 
   onChange,
+  onBlur,
+  onFocus,
   required = false,
   placeholder = '', 
   type = 'text',
   error = '',
   disabled = false,
   className = ''
-} : InputProps) {
-
+}: InputTextProps) {
   return (
     <div className="flex flex-col gap-y-1">
       {title && (
@@ -43,6 +43,8 @@ export function InputText({
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+		    onBlur={onBlur}
+        onFocus={onFocus} 
         required={required}
         disabled={disabled}
       />

@@ -1,4 +1,3 @@
-// src/features/auth/ProtectedRoute.tsx
 import { Navigate } from 'react-router-dom';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useAuth } from './AuthContext';
@@ -12,7 +11,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
-    return <div>Loading...</div>; // or loading spinner?
+    return <div>Loading...</div>;
   }
 
   if (!isAuthenticated) {
@@ -29,7 +28,9 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
 export const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) 
+	return 
+		<div>Loading...</div>;
 
   if (isAuthenticated) {
     if (user?.roleName === 'Admin') {

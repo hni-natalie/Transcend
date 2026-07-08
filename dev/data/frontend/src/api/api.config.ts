@@ -17,7 +17,11 @@ export const API_CONFIG = {
     lk: '/lk',
     player: '/player',
     roles: '/roles',
-    users: '/users',
+    users: {
+      base: '/users',
+      dashboardMetrics: '/users/dashboard/metrics',
+	  userDashboard: '/users/dashboard', 
+    },
     uploads: '/uploads',
     departments: {
       data: '/departments',

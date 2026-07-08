@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { authService } from './auth.service';
 import type { AuthUser } from './auth.types';
 import { toAuthUser } from './auth.types';
+import { UserBackendStatus } from '@shared';
+import { apiClient } from '@api/api.client';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -10,6 +12,7 @@ interface AuthContextType {
   googleLogin: (idToken: string) => Promise<AuthUser>; 
   login: (email: string, password: string) => Promise<AuthUser>;
   logout: () => void;
+  updateUserStatus: (status: UserBackendStatus) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,9 +21,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-const getToken = () => localStorage.getItem('token');
-const setToken = (token: string) => localStorage.setItem('token', token);
-const removeToken = () => localStorage.removeItem('token');
+  const updateUserStatus = async (status: UserBackendStatus) => {
+    try {
+      await apiClient.patch('/users/status', { status });
+      
+      setUser(prev => prev ? { ...prev, userStatus: status } : null);
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
+  };
+
+  const getToken = () => localStorage.getItem('token');
+  const setToken = (token: string) => localStorage.setItem('token', token);
+  const removeToken = () => localStorage.removeItem('token');
 
   // App bootstrap - restore auth from token
   useEffect(() => {
@@ -34,11 +47,11 @@ const removeToken = () => localStorage.removeItem('token');
 
       try {
         const userData = await authService.getMe();
-		setUser(toAuthUser(userData));
+        setUser(toAuthUser(userData));
       } catch (error) {
-		if (error instanceof Error && error.message === 'SESSION_EXPIRED') {
-			console.log('Session expired. Please login again.');
-  		}
+        if (error instanceof Error && error.message === 'SESSION_EXPIRED') {
+          console.log('Session expired. Please login again.');
+        }
         removeToken();
         setUser(null);
       } finally {
@@ -60,15 +73,15 @@ const removeToken = () => localStorage.removeItem('token');
   const login = async (email: string, password: string): Promise<AuthUser> => {
     const response = await authService.login(email, password);
     const authUser = toAuthUser(response.user);
-	setToken(response.token);
+    setToken(response.token);
     setUser(authUser);
     return authUser; 
   };
 
   const logout = () => {
-	removeToken();
-	setUser(null);
-	window.location.href = '/login';
+    removeToken();
+    setUser(null);
+    window.location.href = '/login';
   };
 
   return (
@@ -77,9 +90,10 @@ const removeToken = () => localStorage.removeItem('token');
         user,
         isAuthenticated: !!user,
         isLoading,
-		googleLogin,
+        googleLogin,
         login,
         logout,
+        updateUserStatus, 
       }}
     >
       {children}

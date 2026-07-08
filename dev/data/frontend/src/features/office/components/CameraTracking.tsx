@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useKeyboard } from '@/features/office/context/KeyboardContext';
-import { useSocket } from '@/features/socketio/SocketContext';
+import { useKeyboard } from '@/context/KeyboardContext';
+import { useSocket } from '@/context/SocketContext';
 import { officeSceneConfig as conf } from '@/config/office.config';
 
 /* controls scene camera to follow player */

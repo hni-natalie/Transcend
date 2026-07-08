@@ -1,12 +1,36 @@
+// hooks
+export { useAvatarUpload } from './hooks/useAvatarUpload'
+export { useRolesAndDepartments } from './hooks/useRolesAndDepartments';
+export { useUserLocation } from './hooks/useUserLocation';
+export { useUserStatusSync } from './hooks/useUserStatusSync'
+
+// utils
+export { normalizeOptions } from './utils/normalizeOptions'
+
+// layout
 export { MenuSide } from './layout/MenuSide';
-export { ButtonLoading } from './ui/ButtonLoading';
-export { InputText } from './ui/InputText';
-export { InputDropdown } from './ui/InputDropdown';
-export { PageHeader } from './ui/PageHeader';
-export { BlinkingText } from './ui/BlinkingText';
-export { countryOptions } from './lib/constants/countries';
-export * from './utils/normalizeOptions'
-export * from './ui/Icons';
+export { FilterLayout } from './layout/FilterLayout';
+
+// lib
+export { countryOptions } from './lib/constants/countries'
+export { timezoneOptions } from './lib/constants/timezones'
+export * from './lib/constants/userStatus';
+
+// types
 export * from './types/user.types';
 export * from './types/menu.types';
-export * from './lib/mocks/users';
+
+// ui
+export { PageHeader } from './ui/PageHeader';
+export { DefaultAvatar } from './ui/DefaultAvatar'; 
+export { InputDropdown } from './ui/InputDropdown';
+export { InputText } from './ui/InputText';
+export { ButtonLoading } from './ui/ButtonLoading';
+export { UploadFile } from './ui/UploadFile';
+export { UploadPhoto } from './ui/UploadPhoto';
+export { Modal } from './ui/Modal';
+export { BlinkingText } from './ui/BlinkingText';
+export { TruncatedText } from './ui/TruncatedText';
+export { PasswordField, usePasswordField } from './ui/PasswordField'
+export * from './ui/Icons';
+export * from './ui/State';

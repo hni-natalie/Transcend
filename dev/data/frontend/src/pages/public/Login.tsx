@@ -61,11 +61,11 @@ export const Login = () => {
         script.async = true;
         script.defer = true;
         script.onload = () => {
-            console.log('Google SDK loaded'); // debug
+            // console.log('Google SDK loaded'); // debug
             setIsGoogleSDKLoaded(true);
         };
         script.onerror = () => {
-            console.error('Failed to load Google SDK'); // debug
+            // console.error('Failed to load Google SDK'); // debug
             setError('Failed to load Google login. Please refresh the page.');
         };
         document.body.appendChild(script);

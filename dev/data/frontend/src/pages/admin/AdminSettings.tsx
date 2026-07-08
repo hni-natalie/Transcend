@@ -9,7 +9,7 @@ export const AdminSettings = () => {
         title="Settings"
       />
       <div className="flex items-center justify-center h-full">
-        <p className="text-content-2">Admin Settings coming soon...</p>
+        <p className="text-foreground-3">Admin Settings coming soon...</p>
       </div>
     </>
   );

@@ -117,6 +117,7 @@ erDiagram
         string accessLevel
         string createdAt
         string departmentId
+        string isOccupied
         string isPublicBook
         string keyPersonId
         string spaceId
@@ -154,8 +155,9 @@ erDiagram
         string dpId
         string emailVerified
         string googleId
+        string lastLoginAt
         string roleId
-        string testField
+        string socketId
         string timezone
         string updatedAt
         string userEmail
@@ -172,7 +174,7 @@ erDiagram
         string workspaceId
         string workspaceName
     }
-   public_Department }|..o{ public_User : "led by"
+	public_Department }|..o{ public_User : "led by"
     public_Department ||--o{ public_Workspace : "belongs to"
     public_Document ||--o{ public_Workspace : "belongs to"
     public_DocumentChunk ||--o{ public_Document : "part of"
@@ -193,6 +195,12 @@ erDiagram
     public_User }|..o{ public_Workspace : "belongs to"
 ```
 
+> [!NOTE]
+> #### ERD Notation Legend
+> - **PK / FK**: Primary Key / Foreign Key
+> - `||--o{` : **Required One-to-Many** (One parent *must* exist for many children)
+> - `}|..o{` : **Optional Many-to-Many / Optional Relationship** (Zero or more can exist)
+
 ---
 
 ## Table Definitions
@@ -200,25 +208,30 @@ erDiagram
 ### 1. User & Access Control
 | Table | Purpose | Key Fields |
 | :--- | :--- | :--- |
-| **User** | User accounts and profiles | `userId`, `userEmail`, `userName`, `userStatus`, `roleId`, `workspaceId`, `dpId`, `avatarUrl`, `timezone`, `authProvider` |
+| **User** | User accounts and profiles | `userId`, `userEmail`, `userName`, `userPassword`, `userStatus` (offline/online/focus/in_meeting/away), `roleId`, `workspaceId`, `dpId`, `avatarUrl`, `city`, `country`, `timezone`, `authProvider` (email/google), `googleId`, `emailVerified`, `lastLoginAt`, `socketId` |
 | **Role** | User roles for RBAC | `roleId`, `roleName` |
 | **Workspace** | Multi-tenant boundaries | `workspaceId`, `workspaceName`, `logoUrl` |
-| **Department** | Organizational units | `dpId`, `dpName`, `dpLead`, `workspaceId` |
+| **Department** | Organizational units | `dpId`, `dpName`, `dpLead` (references User), `workspaceId` |
 
 ### 2. Collaboration & Workflow
 | Table | Purpose | Key Fields |
 | :--- | :--- | :--- |
-| **Space** | Virtual collaboration rooms | `spaceId`, `spaceName`, `accessLevel`, `departmentId`, `keyPersonId`, `isPublicBook`, `userCapacity` |
-| **Task** | Task management | `taskId`, `taskTitle`, `taskDesc`, `taskStatus`, `workspaceId`, `createdByUserId` |
-| **TaskAssignment** | Junction table for assignments | `assignedId`, `taskId`, `userId`, `taskPriority`, `assignedDate` |
-| **Meeting** | Events and scheduling | `meetId`, `workspaceId`, `spaceId`, `createdByUserId`, `meetTitle`, `meetStart`, `meetEnd` |
-| **MeetingParticipant** | Junction table for attendees | `id`, `meetId`, `userId`, `role`, `attendanceStatus` |
+| **Space** | Virtual collaboration rooms | `spaceId`, `spaceName`, `accessLevel` (shared/department), `workspaceId`, `departmentId` (optional), `keyPersonId` (references User), `isPublicBook`, `userCapacity`, `isOccupied` |
+| **Task** | Task management | `taskId`, `taskTitle`, `taskDesc`, `taskStatus` (not_started/in_progress/done), `workspaceId`, `createdByUserId`, `dueDate`, `completedDate` (auto-set when status=done), `deletedAt` (soft delete) |
+| **TaskAssignment** | Junction table for task assignments | `assignedId`, `taskId`, `userId`, `taskPriority` (low/medium/high), `assignedDate` |
+| **Meeting** | Events and scheduling | `meetId`, `workspaceId`, `spaceId`, `createdByUserId`, `meetTitle`, `meetDesc`, `meetStart`, `meetEnd` |
+| **MeetingParticipant** | Junction table for meeting attendees | `id`, `meetId`, `userId`, `role` (organiser/participant), `attendance` (absent/present) |
 
 ### 3. Knowledge Base & RAG
 | Table | Purpose | Key Fields |
 | :--- | :--- | :--- |
-| **Document** | Knowledge base storage | `id`, `title`, `fileURL`, `type` (faq/meeting_summary), `workspaceId` |
+| **Document** | Knowledge base storage | `id`, `title`, `fileURL` (PDF storage), `content` (extracted text for RAG/search), `type` (faq/meeting_summary), `workspaceId` |
 | **DocumentChunk** | Vector chunks for AI search | `id`, `content`, `embedding` (Vector 1536), `chunkIndex`, `documentId` |
+
+### 4. Real-time & Presence
+| Table | Purpose | Key Fields |
+| :--- | :--- | :--- |
+| **User** (presence fields) | Real-time user presence | `socketId` (WebSocket connection ID), `userStatus` (offline/online/focus/in_meeting/away), `lastLoginAt` |
 
 ---
 
@@ -229,12 +242,15 @@ erDiagram
 - **User ↔ Workspace:** Many-to-One. Users belong to a workspace (tenant boundary).
 - **Workspace ↔ Department:** One-to-Many. Workspaces are subdivided into departments.
 - **Department ↔ Space:** One-to-Many. Spaces can be restricted to specific departments.
+- **User ↔ Department:** Many-to-One. Users belong to a department (optional).
+- **User ↔ Department (Lead):** One-to-One (unique). A user can lead only one department.
 
 ### Activity & Ownership
 - **User ↔ Task/Meeting:** One-to-Many. Tracks the creator/owner of the resource.
 - **Task ↔ User (via Assignment):** Many-to-Many. Handled via `TaskAssignment`.
 - **Meeting ↔ User (via Participant):** Many-to-Many. Handled via `MeetingParticipant`.
 - **Document ↔ Chunk:** One-to-Many. Documents are split into multiple vector embeddings for RAG.
+- **Space ↔ User (Key Person):** One-to-One (unique). A user can be the key person for only one space.
 
 ---
 
@@ -246,20 +262,40 @@ erDiagram
 | **User** | `UNIQUE(googleId)` | Ensures unique OAuth mapping. |
 | **Department** | `UNIQUE(dpLead)` | Limits a user to leading only one department. |
 | **Space** | `UNIQUE(keyPersonId)` | Limits a user to being the key person for one space. |
+| **Space** | `UNIQUE(workspaceId, spaceName)` | Ensures unique space names within a workspace. |
 | **TaskAssignment** | `UNIQUE(taskId, userId)` | Prevents duplicate user assignments per task. |
 | **MeetingParticipant** | `UNIQUE(meetId, userId)` | Prevents duplicate attendance entries. |
 | **DocumentChunk** | `UNIQUE(documentId, chunkIndex)` | Ensures chunk ordering and data integrity. |
+
+| Table | Index | Purpose |
+| :--- | :--- | :--- |
+| **User** | `INDEX(lastLoginAt)` | For analytics and activity tracking. |
+| **Task** | `INDEX(workspaceId, taskStatus)` | For filtered task lists. |
+| **Task** | `INDEX(workspaceId, createdByUserId)` | For user-specific task queries. |
+| **Task** | `INDEX(createdByUserId)` | For tasks created by a user. |
+| **Task** | `INDEX(deletedAt)` | For soft delete queries. |
+| **TaskAssignment** | `INDEX(userId)` | For user assignment lookups. |
+| **TaskAssignment** | `INDEX(taskId)` | For task assignment lookups. |
+| **TaskAssignment** | `INDEX(taskPriority)` | For filtering by priority. |
+| **Meeting** | `INDEX(workspaceId)` | For workspace meeting queries. |
+| **Meeting** | `INDEX(spaceId)` | For space meeting queries. |
+| **Meeting** | `INDEX(workspaceId, meetStart)` | For calendar queries and scheduling. |
+| **MeetingParticipant** | `INDEX(meetId, role)` | For role-based meeting participant queries. |
+| **MeetingParticipant** | `INDEX(meetId)` | For meeting participant lookups. |
+| **MeetingParticipant** | `INDEX(userId)` | For user's meeting participation. |
+| **Document** | `INDEX(workspaceId)` | For workspace document queries. |
+| **DocumentChunk** | `INDEX(documentId)` | For document chunk retrieval. |
 
 ---
 
 ## Enums & Constants
 
-- **UserStatus:** `offline`, `online`, `busy`, `in_meeting`
+- **UserStatus:** `offline`, `online`, `focus`, `in_meeting`, `away`
 - **AccessLevel:** `shared`, `department`
+- **AttendanceStatus:** `absent`, `present`
 - **TaskStatus:** `not_started`, `in_progress`, `done`
 - **TaskPriority:** `low`, `medium`, `high`
 - **MeetingRole:** `organiser`, `participant`
-- **AttendanceStatus:** `absent`, `present`
 - **DocumentType:** `faq`, `meeting_summary`
 
 ---
@@ -268,13 +304,21 @@ erDiagram
 
 The system utilizes a multi-layered permission strategy:
 
-1.  **Global RBAC:** Managed via the `Role` table for broad application access.
-2.  **Departmental Isolation:** Users are tied to a `dpId`, restricting their visibility to specific internal units.
-3.  **Space-Level Security:** 
-    - `shared`: Visible workspace-wide.
-    - `department`: Restricted to members of the associated department.
-4.  **Ownership Rights:** The `createdByUserId` and `keyPersonId` fields grant administrative privileges over specific Tasks, Meetings, or Spaces.
+1. **Global RBAC:** Managed via the `Role` table for broad application access.
+2. **Departmental Isolation:** Users are tied to a `dpId`, restricting their visibility to specific internal units.
+3. **Space-Level Security:** 
+   - `shared`: Visible workspace-wide.
+   - `department`: Restricted to members of the associated department.
+4. **Ownership Rights:** 
+   - `createdByUserId`: Grants administrative privileges over specific Tasks and Meetings.
+   - `keyPersonId`: Grants administrative privileges over specific Spaces.
+5. **Soft Delete:** Tasks support soft deletion via `deletedAt` field, allowing data recovery and auditing.
+
+## Real-time Features
+
+- **Presence Tracking:** `socketId` and `userStatus` fields enable real-time user presence detection.
+- **Last Login Tracking:** `lastLoginAt` field for user activity analytics and session management.
 
 <br>
 
-*Last updated : April 17, 2026*
+*Last updated : July 2nd, 2026*

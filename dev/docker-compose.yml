@@ -62,6 +62,7 @@ services:
     secrets:
       - jwt_secret
       - app_root
+      - app_mock
       - livekit_api_key
       - livekit_api_secret
     volumes:
@@ -93,6 +94,8 @@ secrets:
     file: ./secrets/jwt_secret.txt
   app_root:
     file: ./secrets/app_admin_password.txt
+  app_mock:
+    file: ./secrets/app_mock_user_password.txt
   livekit_api_key:
     file: ./secrets/livekit_api_key.txt
   livekit_api_secret:

@@ -7,7 +7,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { livekitService } from '@/features/livekit/services/livekitService';
 import { useLocation } from 'react-router-dom';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
-import { useSocket } from '@/features/socketio/SocketContext';
+import { useSocket } from '@/context/SocketContext';
 import * as THREE from 'three'; //debug
 
 // export function useLiveKit( roomName:string , participantName:string ) {

@@ -1,43 +1,43 @@
 import React, { ReactElement, useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { adminMenuConfig, userMenuConfig } from '@config/menu.config';
+import { useAuth } from '@/features/auth';
+import { authService } from '@features/auth/auth.service';
 import { UserChip } from '@features/users';
-import { IconCollapse, IconLogout } from '@shared/ui/Icons';
-import { MenuConfig, MenuItem } from '@shared/types/menu.types';
-import { UserChipItem } from '@shared/types/user.types';
-import { useAuth } from '@/features/auth/AuthContext';
+import { MenuConfig, MenuItem, IconCollapse, IconLogout, LoadingState, useUserLocation, UserBackendStatus, UserChipItem  } from '@shared';
 import { useLiveKit } from '@features/livekit'
-
-// TODO: add logout inline with user chip (hover avatar > logout icon?)
-// mock user for now
-// function getUserData(): UserChipItem {
-//   return {
-//     name: "Mary Doe",
-//     role: "Human Resource",
-//     photo: "https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg"
-//   };
-// }
+import { useSocket } from '@/context/SocketContext';
+import { useUserStatusSync } from '@shared';
 
 const getMenuForPath = ( pathname:string ): MenuConfig => {
   return pathname.startsWith('/admin') ? adminMenuConfig : userMenuConfig;
 };
-const getUserLocation = () => {
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const parts = timezone.split('/');
-  const city = parts[parts.length - 1].replace(/_/g, ' ');
-  return (city);
-}
+
+// const getUserStatus = async () => {
+//   const userData = await authService.getMe();
+//   return userData.userStatus || 'away'
+// }
+
+// hl's
+// const getUserLocation = () => {
+//   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+//   const parts = timezone.split('/');
+//   const city = parts[parts.length - 1].replace(/_/g, ' ');
+//   return (city);
+// }
 
 export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
   const location = useLocation();
-  const { user, logout } = useAuth();
-//   const user: UserChipItem = getUserData();
+  const { logout } = useAuth();
+  const { user } = useUserStatusSync();
   const menuItems = conf ?? getMenuForPath(location.pathname);
-  const userLocation = getUserLocation();
+  // const userLocation = getUserLocation();
   const [now, setNow] = useState(() => new Date());
   
   const [isExpanded, setIsExpanded] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
+
+  const { location: userLocation, isLoading: locationLoading, error: locationError } = useUserLocation();
   
   const toggleExpand = () => setIsExpanded(prev => !prev);
   const expandStatus = isExpanded ? 'expanded' : 'collapsed';
@@ -49,6 +49,12 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     navigate(href);
   }
 
+  const utcTimeLabel = new Intl.DateTimeFormat([], {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'UTC',
+}).format(now);
+
   useEffect(() => {
     const interval = window.setInterval(() => setNow(new Date()), 60000);
     return () => window.clearInterval(interval);
@@ -59,14 +65,26 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     minute: '2-digit',
   }).format(now);
 
-   const userChipData = user ? {
+  if (!user) {
+	return <LoadingState message="" size="medium" />
+  }
+
+  const userChipData = user ? {
     name: user.userName,
+    email: user.userEmail,
     role: user.roleName,
-    photo: user.avatarUrl || '/default-avatar.png'
+    photo: user.avatarUrl || '/default-avatar.png',
+    status: user.userStatus as UserBackendStatus,
   } : {
     name: 'Guest',
     role: 'Unknown',
     photo: '/default-avatar.png'
+  };
+
+  const getLocationDisplay = () => {
+    if (locationLoading) return 'Detecting location...';
+    if (locationError) return 'Location Unavailable';
+    return userLocation;
   };
 
   const linkClass = ({ isActive } : { isActive:boolean }) => `
@@ -81,67 +99,65 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     {isExpanded && <span className="ml-3 text-base font-medium whitespace-nowrap">{item.title}</span>}
     </>
   );
-
   return (
     <aside className={`flex flex-col h-screen sticky top-0 border-r border-white/10 bg-black py-6 transition-none z-50 ${isExpanded ? 'w-[220px]' : 'w-[60px]'}`}>
       
-    {/* Header */}
-	  <div 
-		className="relative flex flex-col pl-7 mb-4" 
+      {/* Header */}
+		<div 
+		className="relative flex flex-col pl-7 -mb-1" 
 		onMouseEnter={() => setIsHovering(true)}
 		onMouseLeave={() => setIsHovering(false)}
-	  >
-  {/* Master Row: justify-between keeps button right, but logo container is static */}
-  <div className="flex items-center justify-between h-10 w-full pr-4">
-    
-    {/* LOGO CONTAINER: This is the anchor. No margins, no width, just a start point. */}
-    <div className="flex items-center justify-start" onClick={toggleExpand}>
-      {isExpanded ? (
-        <span className="brand-logo-lean text-2xl font-bold leading-none whitespace-nowrap cursor-default">
-          WorkFrom,
-        </span>
-      ) : (
-        <div className="cursor-pointer flex items-center justify-start h-8">
-          {isHovering ? (
-            /* Using a span wrapper for the icon to match the text anchor */
-            <span className="flex items-center justify-center text-white">
-				<span style={{ transform: 'rotate(0deg)', display: 'inline-flex' }}>
-					<IconCollapse className="h-7 w-7" />
+		>
+		<div className="flex items-center justify-between h-10 w-full pr-4">
+			<div className="flex items-center justify-start" onClick={toggleExpand}>
+			{isExpanded ? (
+				<span className="brand-logo-lean text-2xl font-bold leading-none whitespace-nowrap cursor-default">
+				WorkFrom,
 				</span>
-               {/* <IconCollapse className="h-7 w-7 text-accent-lime rotate-180" /> */}
-            </span>
-          ) : (
-            <span className="brand-logo-lean text-2xl font-bold leading-none text-accent-lime">
-              WF
-            </span>
-          )}
-        </div>
-      )}
-    </div>
+			) : (
+				<div className="cursor-pointer flex items-center justify-start h-8">
+				{isHovering ? (
+					<span className="flex items-center justify-center text-white">
+					<span style={{ transform: 'rotate(0deg)', display: 'inline-flex' }}>
+						<IconCollapse className="h-7 w-7" />
+					</span>
+					</span>
+				) : (
+					<span className="brand-logo-lean text-2xl font-bold leading-none text-accent-lime">
+					WF
+					</span>
+				)}
+				</div>
+			)}
+			</div>
 
-    {/* COLLAPSE BUTTON: Only shows when expanded */}
-    {isExpanded && (
-      <button
-        onClick={toggleExpand}
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-white hover:bg-white/10 transition-none"
-      >
-		<span style={{ transform: 'rotate(180deg)', display: 'inline-flex' }}>
-			<IconCollapse className="h-7 w-7" />
-		</span>
-        {/* <IconCollapse className="h-7 w-7 rotate-0" /> */}
-      </button>
-    )}
-  </div>
+			{isExpanded && (
+			<button
+				onClick={toggleExpand}
+				className="flex h-8 w-8 items-center justify-center rounded-lg text-white hover:bg-white/10 transition-none"
+			>
+				<span style={{ transform: 'rotate(180deg)', display: 'inline-flex' }}>
+				<IconCollapse className="h-7 w-7 cursor-pointer" />
+				</span>
+			</button>
+			)}
+		</div>
 
-        {/* Location and Time */}
-        <div className="h-6 flex items-center mt-1">
-          <div className={`flex items-center gap-2 transition-none ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-            <p className="text-[10px] uppercase tracking-widest text-white/40">{userLocation}</p>
-            <span className="text-[10px] text-white/20">|</span>
-            <p className="font-mono text-[10px] text-white/60">{timeLabel}</p>
-          </div>
-        </div>
-      </div>
+		{/* Location and Time */}
+		<div className="h-12">
+		<div className={`flex flex-col transition-none ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+			<p className="text-base text-bold text-foreground-2 truncate max-w-[200px]">
+			{getLocationDisplay()}
+			</p>
+      <p className='text-foreground-3 whitespace-pre'>
+			  <span className="text-xs text-foreground-3/80">LOCAL  </span>
+        <span className="text-base">{timeLabel}   ·   </span>
+        <span className="text-xs text-foreground-3/80">UTC  </span>
+        <span className="text-base">{utcTimeLabel}</span>
+      </p>
+		</div>
+		</div>
+		</div>
 
       {/* Navigation */}
       <nav className="mt-6 flex-1 overflow-x-hidden">
@@ -170,21 +186,17 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
         </ul>
       </nav>
 
-	  {/* Footer with UserChip and Logout button side by side */}
-		<div className="mt-auto pl-4.5 pb-2">
-		<div className="flex items-center justify-between h-10">
-			{/* UserChip - always at pl-4.5 position */}
-			<UserChip {...userChipData} expandStatus={expandStatus} />
-			
-			{/* Logout button - only shows when expanded, stays right */}
-	          {isExpanded && (
+      {/* Footer */}
+      <div className="mt-auto pl-4.5 pb-2">
+        <div className="flex items-center justify-between h-10">
+          <UserChip {...userChipData} expandStatus={expandStatus} />
+          
+          {isExpanded && (
             <button
               onClick={logout}
               className="relative mr-4 flex h-8 w-8 items-center justify-center text-white/60 hover:text-red-400 transition-colors group"
             >
               <IconLogout className="h-5 w-5" />
-              
-              {/* Tooltip - appears on the right with rounded corners */}
               <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                 Logout
               </span>
@@ -195,13 +207,3 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     </aside>
   );
 }
-
-//       {/* 4. Footer
-//       <div className="mt-auto pl-4.5 pb-2">
-//          <div className="flex items-center justify-start h-10">
-//            <UserChip {...user} expandStatus={expandStatus} />
-//         </div>
-//       </div>
-//     </aside>
-//   ); */}
-// }

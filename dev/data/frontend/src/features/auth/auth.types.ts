@@ -1,4 +1,3 @@
-// src/features/auth/auth.types.ts
 import type { User } from '@/shared/types/user.types';
 
 export interface LoginRequest {
@@ -27,9 +26,9 @@ export const toAuthUser = (user: User): AuthUser => ({
   userId: user.userId,
   userName: user.userName,
   userEmail: user.userEmail,
-  roleId: user.roleId,
+  roleId: user.roleId ?? user.role?.roleId ?? '',
   socketId: user.socketId,
-  roleName: user.roleName,
+  roleName: user.roleName ?? user.role?.roleName ?? '',
   userStatus: user.userStatus,
   avatarUrl: user.avatarUrl ?? null,
 });

@@ -19,18 +19,21 @@ export function SocketProvider ({ children }) {
   const [socket, setSocket] = useState< Socket|null >(null);
   const [players, setPlayers] = useState< Player[] >([]);
   const [localPlayerId, setLocalPlayerId] = useState<String>(null);
-  const [onlineStatus, setOnlineStatus] = useState('offline')
+  // const [onlineStatus, setOnlineStatus] = useState('offline')
   const [messages, setMessages] = useState([]);
   
   const [currentRoom, setCurrentRoom] = useState<String>(null);
   const [roomPlayers, setRoomPlayers] = useState< Player[] >([]);
 
   useEffect(() => {
+  const token = getToken();
+  if (!token) return ;
+
   if (shouldConnect && !socket) {
     const socket = io('/', {
       path: '/api/socket.io',
       transports: ['websocket', 'polling'],  // Allow both
-      auth: { token: getToken() },
+      auth: { token },
     });
     setSocket(socket);
 
@@ -41,7 +44,12 @@ export function SocketProvider ({ children }) {
     socket.on('connect', () => {
       console.log('FE: Socket connected!', socket.id);
       setLocalPlayerId(socket.id)
-      setIsConnected(true);
+    });
+    socket.on('online-status', (data) => {
+      setTimeout(() => {
+        setIsConnected(true);
+        // setOnlineStatus(data.status);
+      }, 1000);
     });
     socket.on('connect_error', (err) => {
       console.error('❌ FE: Socket error:', err);
@@ -227,8 +235,8 @@ export function SocketProvider ({ children }) {
     enableSocket,
     isConnected,
     socket,
-    onlineStatus,
-    setOnlineStatus,
+    // onlineStatus,
+    // setOnlineStatus,
     
     /* Player methods */
     players,

@@ -17,11 +17,11 @@ export function UploadFile ({
 	name='file'
 } : UploadFileProps ) {
 	
-  const fileInputRef = useRef<HTMLInputElement>(null); // to trigger click event
+  const fileInputRef = useRef<HTMLInputElement>(null); // trigger click event
   const [fileName, setFileName] = useState<string>('');
 
   const handleClick = () => {
-    // Trigger the hidden file input
+	// trigger hidden file input
     fileInputRef.current?.click();
   };
 
@@ -30,7 +30,7 @@ export function UploadFile ({
 		
 		if (file) {
 			setFileName(file.name);
-			// Pass the data URL to the form
+			// pass data url to form
       const reader = new FileReader();
       reader.onload = (event: ProgressEvent<FileReader>) => {
 				console.log('reader res: ', reader.result);
@@ -58,7 +58,7 @@ export function UploadFile ({
 			className="hidden"
 		/>
 		<div onClick={handleClick} 
-				className={`flex flex-col cursor-pointer items-center text-white/60 bg-background-2 border border-border-2 rounded-lg p-4 
+				className={`flex flex-col cursor-pointer items-center text-white/60 bg-background-2 border border-background-2-2 rounded-lg p-4 
 				${className} ${fileName ? '' : 'border-dashed'} `} >
 			<IconUpload className='h-8 w-8 text-accent-lime'/>
 			<h2 className='text-white'>{fileName ? 'File selected' : title}</h2>

@@ -9,7 +9,7 @@ export const Messages = () => {
 		title="Messages"
 	  />
 	  <div className="flex items-center justify-center h-full">
-		<p className="text-content-2">Messages coming soon...</p>
+		<p className="text-foreground-3">Messages coming soon...</p>
 	  </div>
 	</>
   );

@@ -1,59 +1,68 @@
-import React from 'react';
-import type { UserList as UserListType } from '@shared/types/user.types';
+import React, { useEffect, useState } from 'react';
+import { DefaultAvatar } from '@shared/ui/DefaultAvatar'; 
+import type { UserTableRow } from '@shared/types/user.types';
 import { UserStatusBadge } from './UserStatusBadge';
 
-export const UserList = ({ user }: { user: UserListType }) => {
-	return (
-	<tr className="border-b border-border-2/30 hover:bg-white/[0.02] transition-colors group">
-		{/* Column 1: User (Photo + Name + Email) */}
-		{/* adjust table row ht - py */}
-		<td className="py-4 px-6">
-			<div className="flex items-center gap-3">
-			<img 
-				src={user.photo} 
-				alt={user.firstName} 
-				className="w-10 h-10 rounded-full border border-border-2" 
-			/>
-			<div className="flex flex-col">
-				<span className="text-white font-medium text-sm">
-				{user.firstName} {user.lastName}
-				</span>
-				<span className="text-foreground-3 text-xs">{user.email}</span>
-			</div>
-			</div>
-		</td>
+interface UserListProps {
+  user: UserTableRow;
+  onEdit?: (user: UserTableRow) => void;
+}
 
-		{/* Column 2: ID (HR001)*/}
-		<td className="py-4 px-6 text-sm text-foreground-3 font-mono">
-			{user.username}
-		</td>
+export const UserList = ({ user, onEdit }: UserListProps) => {
+  const [imageError, setImageError] = useState(false);
 
-		{/* Column 3: Department */}
-		<td className="py-4 px-6 text-sm text-foreground-3">
-			{user.department}
-		</td>
+  useEffect(() => {
+    setImageError(false);
+  }, [user.photo]);
 
-		{/* Column 4: Role */}
-		<td className="py-4 px-6 text-sm text-foreground-3">
-			{user.role}
-		</td>
+  const avatarSrc = user.photo?.trim();
+  const showDefaultAvatar = !avatarSrc || imageError;
 
-		{/* Column 5: Status */}
-		<td className="py-4 px-6">
-			<UserStatusBadge status={user.status} />
-		</td>
+  return (
+    <tr className="hover:bg-white/[0.02] transition-colors group">
+      <td className="py-3 px-4">
+        <div className="flex items-center gap-3">
+          {showDefaultAvatar ? (
+            <DefaultAvatar
+              name={user.username}
+              email={user.email}
+              className="w-12 h-12 rounded-full"
+            />
+          ) : (
+            <img
+              src={avatarSrc}
+              alt={user.username}
+              className="w-12 h-12 rounded-full object-cover"
+              onError={() => setImageError(true)}
+            />
+          )}
 
-		{/* Column 6: Date Joined */}
-		<td className="py-4 px-6 text-sm text-foreground-2">
-			{user.dateJoined}
-		</td>
+          <div className="flex flex-col">
+            <span className="text-white font-medium text-base">
+              {user.username}
+            </span>
+            <span className="text-foreground-3 text-sm">
+              {user.email}
+            </span>
+          </div>
+        </div>
+      </td>
 
-		{/* Column 7: Action */}
-		<td className="py-4 px-6 text-smt">
-			<button className="text-foreground-2 hover:text-white text-xs font-bold transition-colors">
-			EDIT
-			</button>
-		</td>
-		</tr>
-	);
+      <td className="py-6.5 px-4 text-base text-foreground-3">{user.department}</td>
+      <td className="py-6.5 px-4 text-base text-foreground-3">{user.role}</td>
+      <td className="py-6.5 px-4 text-base text-foreground-3">{user.location}</td>
+      <td className="py-6.5 px-4">
+        <UserStatusBadge status={user.status} />
+      </td>
+      <td className="py-6.5 px-4 text-base text-foreground-2">{user.dateJoined}</td>
+      <td className="py-6.5 px-4">
+        <button
+          onClick={() => onEdit?.(user)}
+          className="text-foreground-3 hover:text-white text-base font-bold transition-colors cursor-pointer"
+        >
+          EDIT
+        </button>
+      </td>
+    </tr>
+  );
 };

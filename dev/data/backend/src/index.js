@@ -5,7 +5,8 @@ const { Server } = require('socket.io');
 const dotenv     = require('dotenv');
 const path       = require('path');
 
-dotenv.config({ path: path.join(__dirname, '../../../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../.env') });	// root env
+// dotenv.config({ path: path.join(__dirname, '../.env') });		// be env 
 const app    = express();
 const port   = process.env.BACKEND_PORT || 3000;
 const server = http.createServer(app);

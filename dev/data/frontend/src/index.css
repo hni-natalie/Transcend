@@ -23,6 +23,12 @@
   /* accent */
   --color-accent-lime: #D0F05C;
   --color-accent-lime-bg: #333628;
+  --color-accent-teal: #68D1BF;
+  --color-accent-teal-bg: #2D3734;
+  --color-accent-gold: #EECA5C;
+  --color-accent-gold-bg: #3A3729;
+  --color-accent-purple: #B4A0FF;
+  --color-accent-purple-bg: #2D2A37;
 
   /* functional */
   --color-border: #2C2C2B;
@@ -30,9 +36,6 @@
   --color-danger: #FF5F5F;
   --color-warning: #FFBF10;
   --color-ring: #D0F05C;
-
-  /* spacing, radii, etc */
-  /* --radius-card: 0.75rem; */
 }
 
 /* BASE */
@@ -77,25 +80,6 @@
   }
 }
 
-/* LAYOUT (frame) */
-@layer components {
-  .app-shell {
-	@apply flex h-screen w-full overflow-hidden bg-background;
-}
-
-  .sidebar {
-    @apply flex flex-col border-r border-border bg-background shrink-0 w-[240px];
-  }
-
-  .main-canvas {
-    @apply flex-1 overflow-y-auto p-6 md:p-10;
-  }
-
-  .page-header {
-    @apply flex items-center justify-between mb-8;
-  }
-}
-
 /* COMPONENTS (atomic) */
 @layer components {
   .brand-logo-lean {
@@ -104,56 +88,70 @@
 	cursor: pointer;
   }
 
-
   /* surfaces - card */
-  .card-base {
-    @apply bg-background-1 border border-border rounded-xl p-4;
-  }
+  /* .card-base {
+    @apply bg-background-1 border border-background-2 rounded-xl p-4;
+  } */
 
 
   /* buttons */
+  .btn-header {
+  	@apply inline-flex items-center justify-center gap-2 text-sm font-bold tracking-wider 
+        px-4 py-1.5 rounded-xl border border-accent-lime 
+        bg-accent-lime-bg text-accent-lime 
+        hover:bg-accent-lime hover:text-black 
+        transition-all cursor-pointer 
+        active:scale-95 disabled:opacity-50;
+  }
+
   .btn-lime {
-	@apply inline-flex items-center justify-center gap-2 text-xs font-bold py-2.5 px-6 rounded-lg 
+	@apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-xl 
         transition-all cursor-pointer active:scale-95 disabled:opacity-50
         bg-accent-lime text-background hover:brightness-110;
-}
+  }
 
   .btn-lime-outline {
+	@apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-xl 
+        transition-all cursor-pointer active:scale-95 disabled:opacity-50
+        bg-accent-lime/5 text-accent-lime border border-accent-lime hover:bg-accent-lime/10;
+  }
+
+  /* .btn-lime-outline {
   @apply bg-accent-lime-bg text-accent-lime border border-accent-lime px-4 py-1.5 rounded-lg
         font-bold text-sm tracking-wider hover:brightness-110 transition-opacity
-}
+} */
 
-  .btn-outline {
-	@apply inline-flex items-center justify-center gap-2 text-xs font-bold py-2.5 px-6 rounded-lg 
+  .btn-lime-outline-solid {
+  	@apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-xl 
         transition-all cursor-pointer active:scale-95 disabled:opacity-50
-        bg-transparent border border-border-2 text-foreground hover:border-foreground-3;
-}
-
-/*   
-  .btn-lime-outline {
-    @apply text-xs font-bold bg-foreground-4-800 text-accent-lime border border-accent-lime p-1 px-8 rounded-lg cursor-pointer focus:outline-none;
-  } 
-
-  .btn-outline {
-    @apply text-xs font-bold bg-foreground-4-800 border border-border-2 p-1 px-8 rounded-lg cursor-pointer focus:outline-none;
-  }
-*/
-
-
-  /* navigation */
-  .nav-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-foreground-3 transition-colors 
-           hover:text-foreground hover:bg-white/5 cursor-pointer;
+        bg-accent-lime/5 text-accent-lime border border-accent-lime/50 
+        hover:bg-accent-lime hover:text-black;
   }
 
-  .nav-item-active {
-    @apply text-accent-lime bg-accent-lime/10 border border-accent-lime/10;
+  .btn-danger {
+  	@apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-lg 
+        transition-all cursor-pointer active:scale-95 disabled:opacity-50
+        bg-red-500 text-black hover:bg-red-600;
+  }
+
+  .btn-danger-outline {
+	@apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-xl
+		transition-all cursor-pointer active:scale-95 disabled:opacity-50
+		bg-danger/10 border border-red-500 text-danger 
+		hover:bg-danger/20 hover:text-danger;
+  }
+
+  .btn-danger-outline-solid {
+ 	 @apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-xl 
+        transition-all cursor-pointer active:scale-95 disabled:opacity-50
+        bg-danger/5 border border-danger/50 text-danger 
+        hover:bg-danger hover:text-black;
   }
 
 
   /* forms */
   .input-base {
-    @apply rounded-xl border border-border-2 bg-background-2 px-4 py-2.5 text-base text-white outline-none transition-colors focus:border-accent-lime;
+    @apply rounded-lg border border-background-2 bg-background-1 px-4 py-2 text-sm text-white outline-none transition-colors focus:border-accent-lime;
   }
 
   .input-label {
@@ -169,7 +167,7 @@
   }
 
   .select-base {
-    @apply w-full appearance-none bg-transparent text-base text-white outline-none;
+    @apply w-full appearance-none bg-transparent text-sm text-white outline-none;
   }
 
   .close-right {
@@ -190,7 +188,7 @@
   }
   
   .avatar-img {
-    @apply h-full w-full rounded-full object-cover border border-border;
+    @apply h-full w-full rounded-full object-cover border border-background-2;
   }
 
   .status-indicator {
@@ -200,10 +198,6 @@
 
 
 @layer utilities {
-  .text-lime { 
-	color: var(--color-accent-lime); 
-  }
-
   /* hide scrollbars for the space/office views if needed */
   .no-scrollbar::-webkit-scrollbar { 
 	display: none; 

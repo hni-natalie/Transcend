@@ -1,5 +1,5 @@
 import { PageHeader, IconSettings } from '@shared';
-// import features
+import { Settings } from '@/features/users/settings/Settings';
 
 export const UserSettings = () => {
   return (
@@ -8,9 +8,7 @@ export const UserSettings = () => {
         icon={<IconSettings className="w-7 h-7" />}
         title="Settings"
       />
-      <div className="flex items-center justify-center h-full">
-        <p className="text-content-2">User Settings coming soon...</p>
-      </div>
+      < Settings />
     </>
   );
 };

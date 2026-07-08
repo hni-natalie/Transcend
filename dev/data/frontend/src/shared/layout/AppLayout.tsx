@@ -12,12 +12,11 @@ export const AppLayout = () => {
   const menuConfig = getMenuForPath(location.pathname);
   
   return (
-    <div className='bg-bg-primary h-screen'>
+    <div className='bg-background h-screen'>
       <div className='flex h-full'>
         <MenuSide conf={menuConfig} />
-        {/* <main className='flex-1 p-8 overflow-auto'> */}
 		<main className='flex-1 pt-6 px-8 overflow-auto'>
-          <Outlet />  {/* ← Page content goes here */}
+          <Outlet />
         </main>
       </div>
     </div>

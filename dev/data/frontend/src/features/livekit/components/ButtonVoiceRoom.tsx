@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import { useLiveKit } from '@features/livekit'
 import { IconMute, IconSpeak } from '@shared/ui/Icons';
-import { useSocket } from '@/features/socketio/SocketContext';
+import { useSocket } from '@/context/SocketContext';
 import { ButtonLoading } from "@/shared/ui/ButtonLoading";
 
 type ButtonVoiceRoomProps = {
