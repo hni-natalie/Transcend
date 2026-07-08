@@ -69,7 +69,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
 	return <LoadingState message="" size="medium" />
   }
 
-  const userChipData = user ? {
+  const userChipData : UserChipItem = user ? {
     name: user.userName,
     email: user.userEmail,
     role: user.roleName,
@@ -150,9 +150,9 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
 			{getLocationDisplay()}
 			</p>
       <p className='text-foreground-3 whitespace-pre'>
-			  <span className="text-xs text-foreground-3/80">LOCAL  </span>
+			  <span className="text-xs text-foreground-3/90">LOCAL  </span>
         <span className="text-base">{timeLabel}   ·   </span>
-        <span className="text-xs text-foreground-3/80">UTC  </span>
+        <span className="text-xs text-foreground-3/90">UTC  </span>
         <span className="text-base">{utcTimeLabel}</span>
       </p>
 		</div>

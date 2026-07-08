@@ -62,10 +62,10 @@ export type UserStatus = 'Online' | 'Offline' | 'Focus' | 'In Meeting' | 'Away';
 /* user chip (for sidebar) */
 export type UserChipItem = {
 	name: User['userName'];
-	email: User['userEmail'];
+	email?: User['userEmail'];
 	role: User['role']['roleName'];
 	photo: string;
-	status?: 'online' | 'focus' | 'in_meeting' | 'away' | 'offline'; 
+	status?: 'online' | 'focus' | 'in_meeting' | 'away' | 'offline';
 };
 
 /* users - list row model */
