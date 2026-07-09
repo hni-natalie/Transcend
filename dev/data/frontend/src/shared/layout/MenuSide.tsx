@@ -196,7 +196,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
               onClick={logout}
               className="relative mr-4 flex h-8 w-8 items-center justify-center text-white/60 hover:text-red-400 transition-colors group"
             >
-              <IconLogout className="h-5 w-5" />
+              <IconLogout className="h-5 w-5 cursor-pointer" />
               <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-white bg-gray-800 rounded-md opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                 Logout
               </span>

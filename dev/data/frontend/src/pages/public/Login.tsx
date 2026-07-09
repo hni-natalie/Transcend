@@ -150,7 +150,9 @@ export const Login = () => {
                 <div className="w-[60%]">
                     {/* Google Login */}
                     <button 
-                        className="btn-outline w-full py-3 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-6"
+                        className="
+							w-full py-3 border border-background-4 bg-background-1 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-6 rounded-lg cursor-pointer
+							hover:bg-accent-lime-bg hover:text-accent-lime transition-colors"
                         onClick={handleGoogleLogin}
                         disabled={!isGoogleSDKLoaded || googleLoading}
                     >
