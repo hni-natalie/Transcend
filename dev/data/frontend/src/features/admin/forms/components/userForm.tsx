@@ -33,8 +33,8 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
         firstName,
         lastName,
         email: user.email,
-        roleId: '',
-        deptId: '',
+        roleId: user.roleId || '',
+        deptId: user.deptId || '',
         location: user.location || '',
         photo: user.photo || '',
         password: '',
@@ -84,8 +84,12 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
 
   useEffect(() => {
     if (isEdit && user && !isLoadingData && departmentOptions.length && roleOptions.length) {
-      const matchedDept = departmentOptions.find(d => d.name === user.department);
-      const matchedRole = roleOptions.find(r => r.name === user.role);
+      const matchedDept = user.deptId
+        ? departmentOptions.find(d => d.id === user.deptId)
+        : departmentOptions.find(d => d.name === user.department);
+      const matchedRole = user.roleId
+        ? roleOptions.find(r => r.id === user.roleId)
+        : roleOptions.find(r => r.name === user.role);
       
       if (matchedDept || matchedRole) {
         setFormData(prev => ({
@@ -216,7 +220,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center">
           <div className="w-5" />
           <h1 className="text-lime font-semibold text-lg">{title}</h1>
           <button 
@@ -224,6 +228,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
             onClick={onClose} 
             className="text-foreground-3 hover:text-white transition-colors cursor-pointer"
           >
+			{/* svg to replace with x icon */}
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -246,7 +251,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
             userId={isEdit && user ? user.userId : undefined}
           />
 
-          <div className="flex gap-3 pt-4 mt-4">
+          <div className="flex gap-3 pt-4">
 			<button
 				type="submit"
 				disabled={isSubmitting}
