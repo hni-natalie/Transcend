@@ -156,12 +156,13 @@ const userService = {
                 userName: true,
                 userStatus: true,
                 createdAt: true,
-				avatarUrl: true,
+                avatarUrl: true,
 				city: true,
 				country: true,
-                role: { select: { roleName: true } },
+                roleId: true,
+                role: { select: { roleId: true, roleName: true } },
                 workspace: { select: { workspaceName: true } },
-                department: { select: { dpName: true } }
+                department: { select: { dpId: true, dpName: true } }
             }
         });
     },

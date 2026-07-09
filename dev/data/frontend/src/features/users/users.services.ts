@@ -75,7 +75,7 @@ export async function fetchRoles(): Promise<Role[]> {
 }
 
 export async function fetchDepartments(): Promise<Department[]> {
-    const response = await apiClient.get<ApiResponse<Department[]>>(API_CONFIG.endpoints.departments);
+    const response = await apiClient.get<ApiResponse<Department[]>>(API_CONFIG.endpoints.departments.data);
     return response.data;
 }
 

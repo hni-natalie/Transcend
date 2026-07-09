@@ -3,7 +3,7 @@ const departmentService = require('../services/department.service');
 const departmentController = {
     async getAllDepartments(req, res) {
         try {
-            const departments = await departmentService.getAllDepartments(req.workspaceId);
+            const departments = await departmentService.getAllDepartments(req.user.workspaceId);
             return res.status(200).json({ success: true, data: departments });
         } catch (error) {
             return res.status(500).json({ success: false, message: error.message });
@@ -12,7 +12,7 @@ const departmentController = {
 
     async getAllDepartmentNames(req, res) {
         try {
-            const departments = await departmentService.getAllDepartmentNames(req.workspaceId);
+            const departments = await departmentService.getAllDepartmentNames(req.user.workspaceId);
             return res.status(200).json({ success: true, data: departments });
         } catch (error) {
             return res.status(500).json({ success: false, message: error.message });
