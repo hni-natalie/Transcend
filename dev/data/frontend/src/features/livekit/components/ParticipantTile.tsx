@@ -16,6 +16,7 @@ import {
 } from '@livekit/components-react';
 import { useAuth } from '@/features/auth';
 import { IconLockLocked, IconScreenShare } from '@/shared';
+import { ParticipantAvatar } from './ParticipantAvatar';
 
 /**
  * The `ParticipantContextIfNeeded` component only creates a `ParticipantContext`
@@ -153,12 +154,13 @@ export const ParticipantTile: (
                   )
                 )}
                 <div className="lk-participant-placeholder">
-                  <div className="avatar-wrap max-h-80 max-w-80 w-full h-full">
+                  {/* <div className="avatar-wrap max-h-80 max-w-80 w-full h-full">
                     <img
                       src={avatarSrc}
                       className="rounded-full w-full h-full object-cover"
                     />
-                  </div>
+                  </div> */}
+                  <ParticipantAvatar/>
                   {/* <ParticipantPlaceholder /> */}
                 </div>
                 <div className="lk-participant-metadata">

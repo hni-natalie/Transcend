@@ -197,10 +197,10 @@
 
   /* livekit class overrides */
   .lk-chat-header {
-    @apply bg-stone-600 flex w-full
+    @apply flex w-full
   }
   .lk-video-conference-inner {
-    @apply justify-center flex flex-col h-full w-full
+    @apply flex flex-col h-full w-full
   }
   .lk-grid-layout-wrapper {
     @apply !flex !h-full !w-full overflow-y-auto
@@ -217,9 +217,6 @@
   .lk-chat {
     @apply flex w-full
   }
-  /* button.lk-close-button.lk-button.lk-chat-toggle {
-    @apply flex w-full justify-end
-  } */
 }
 
 

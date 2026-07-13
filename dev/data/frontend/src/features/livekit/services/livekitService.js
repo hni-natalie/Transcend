@@ -96,8 +96,8 @@ class LiveKitService {
         // emits connected signal to useLiveKit
         await this.connectToRoom(event.detail, mode);
         this.isInitialized = true;
-        this.lkToken = event.detail;
-        console.log('livekit-connect: Successfully joined room: ', this.lkToken);
+        // this.lkToken = event.detail;
+        // console.log('livekit-connect: Successfully joined room: ', this.lkToken);
 
       } catch (error) {
         console.error('Failed to connect:', error);
