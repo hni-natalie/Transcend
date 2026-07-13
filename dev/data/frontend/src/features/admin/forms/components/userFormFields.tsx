@@ -68,7 +68,7 @@ export function UserFormFields({
           value={formData.firstName} 
           onChange={onChange} 
           required 
-          inputStyle="bg-background"
+          className="bg-background"
         />
 
         <InputText 
@@ -78,7 +78,7 @@ export function UserFormFields({
           value={formData.lastName} 
           onChange={onChange} 
           required 
-          inputStyle="bg-background"
+          className="bg-background"
         />
 
         <InputText 
@@ -89,7 +89,7 @@ export function UserFormFields({
           value={formData.email} 
           onChange={onChange} 
           required 
-          inputStyle="bg-background"
+          className="bg-background"
         />
 
         <PasswordField
@@ -97,7 +97,7 @@ export function UserFormFields({
           onChange={onPasswordChange}
           title="Password"
           placeholder="Leave blank to keep current password"
-          inputStyle="bg-background"
+          className="bg-background"
         />
 
         <InputDropdown
@@ -107,7 +107,7 @@ export function UserFormFields({
           value={formData.deptId}
           onChange={onChange}
           disabled={isLoadingData}
-          inputStyle="bg-background"
+          className="bg-background"
           placeholder="Select Department"
         />
 
@@ -119,7 +119,7 @@ export function UserFormFields({
           onChange={onChange}
           required
           disabled={isLoadingData}
-          inputStyle="bg-background"
+          className="bg-background"
           placeholder="Select Role"
         />
 
@@ -129,7 +129,7 @@ export function UserFormFields({
           choices={countryOptions}
           value={formData.location}
           onChange={onChange}
-          inputStyle="bg-background"
+          className="bg-background"
         />
       </div>
     </>

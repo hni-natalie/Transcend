@@ -170,7 +170,7 @@ export const ProfileFormFields = ({
           onChange={onChange}
           disabled={!active}
           placeholder="Select a country"
-          inputStyle={dropdownStyle}
+          className={dropdownStyle}
         />
       </div>
 
@@ -195,7 +195,7 @@ export const ProfileFormFields = ({
           onChange={onChange}
           disabled={!active}
           placeholder="Select a timezone"
-          inputStyle={dropdownStyle}
+          className={dropdownStyle}
         />
       </div>
 

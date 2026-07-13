@@ -13,7 +13,7 @@ export interface User {
 	  role: Role;
     // role: { roleId: string; roleName: string };
     workspace: { workspaceName: string };
-	  department?: { dpName: string } | null;
+	  department?: { dpId?: string; dpName: string } | null;
     avatarUrl?: string | null;
     city?: string;
     country?: string;
@@ -29,6 +29,8 @@ export interface UserAccount {
 	userId: string;
 	username: string;
 	email: string;
+	deptId?: string;
+	roleId?: string;
 	department: string;
 	role: string;
 	location: string;
@@ -106,6 +108,8 @@ export const toUserAccount = (user: User): UserAccount => {
 		userId: user.userId,
         username: user.userName,
         email: user.userEmail,
+        deptId: user.department?.dpId,
+        roleId: user.roleId ?? user.role?.roleId,
         department: user.department?.dpName ?? '-',
         role: user.role?.roleName ?? '-',
         location: user.country ?? '-',

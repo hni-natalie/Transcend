@@ -8,7 +8,7 @@ export interface PasswordFieldProps {
     title?: string;
     placeholder?: string;
     required?: boolean;
-    inputStyle?: string;
+    className?: string;
 }
 
 export const PasswordField = ({
@@ -17,7 +17,7 @@ export const PasswordField = ({
     title = 'Password',
     placeholder = 'Enter password',
     required = false,
-    inputStyle = 'bg-background',
+    className = 'bg-background',
 }: PasswordFieldProps) => {
     const [showPassword, setShowPassword] = useState(false);
     const [showRequirements, setShowRequirements] = useState(false);
@@ -72,12 +72,12 @@ export const PasswordField = ({
                     onBlur={handleBlur}
                     onFocus={handleFocus}
                     required={required}
-                    inputStyle={inputStyle}
+                    className={className}
                 />
                 <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-9.5 text-foreground-3 hover:text-foreground-2 transition-colors cursor-pointer"
+                    className="absolute right-3 top-10.5 text-foreground-3 hover:text-foreground-2 transition-colors cursor-pointer"
                 >
                     {showPassword ? (
                         <IconEyeOff className="w-5 h-5" />
