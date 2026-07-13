@@ -17,6 +17,7 @@ export const ROUTE_PATH = {
 	USER_OFFICE: '/user/office',
 	USER_TASKS: '/user/tasks',
 	USER_MEETINGS: '/user/meetings',
+	USER_VIDEOCALL: '/user/meetings/vid',
 	USER_MESSAGES: '/user/messages',
 	USER_SETTINGS: '/user/settings',
 	} as const;

@@ -194,6 +194,32 @@
   .status-indicator {
     @apply absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-background;
   }
+
+  /* livekit class overrides */
+  .lk-chat-header {
+    @apply bg-stone-600 flex w-full
+  }
+  .lk-video-conference-inner {
+    @apply justify-center flex flex-col h-full w-full
+  }
+  .lk-grid-layout-wrapper {
+    @apply !flex !h-full !w-full overflow-y-auto
+  }
+  .lk-chat-form {
+    @apply flex w-full
+  }
+  .lk-chat-form-input {
+    @apply rounded-lg border border-background-2 bg-background-1 px-4 py-2 text-sm text-white outline-none transition-colors focus:border-accent-lime;
+  }
+  .lk-chat-messages {
+    @apply h-full
+  }
+  .lk-chat {
+    @apply flex w-full
+  }
+  /* button.lk-close-button.lk-button.lk-chat-toggle {
+    @apply flex w-full justify-end
+  } */
 }
 
 

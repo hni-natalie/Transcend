@@ -3,15 +3,20 @@ import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
 import { DashboardData } from './types';
 import { UserBackendStatus } from '@/shared';
+import { useAuth } from '@/features/auth';
+import { useSocket } from '@/context/SocketContext';
 
 export const useDashboard = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isConnected } = useSocket();
+
 
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
+        if (!isConnected) return;
         setIsLoading(true);
         const response = await apiClient.get<DashboardData>(
           API_CONFIG.endpoints.users.userDashboard
@@ -27,7 +32,9 @@ export const useDashboard = () => {
     };
 
     fetchDashboard();
-  }, []);
+    if (!isConnected)
+      setIsLoading(true);
+  }, [isConnected]);
 
   return { data, setData, isLoading, error };
 };
@@ -64,6 +71,7 @@ export const useStatusUpdate = (
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { updateUserStatus } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -78,7 +86,7 @@ export const useStatusUpdate = (
   const updateStatus = async (newStatus: UserBackendStatus) => {
     try {
       setUpdatingStatus(true);
-      await apiClient.patch('/users/status', { status: newStatus });
+      updateUserStatus(newStatus);
 
       setData(prev =>
         prev
