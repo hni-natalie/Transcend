@@ -154,14 +154,7 @@ export const ParticipantTile: (
                   )
                 )}
                 <div className="lk-participant-placeholder">
-                  {/* <div className="avatar-wrap max-h-80 max-w-80 w-full h-full">
-                    <img
-                      src={avatarSrc}
-                      className="rounded-full w-full h-full object-cover"
-                    />
-                  </div> */}
                   <ParticipantAvatar/>
-                  {/* <ParticipantPlaceholder /> */}
                 </div>
                 <div className="lk-participant-metadata">
                   <div className="lk-participant-metadata-item">
