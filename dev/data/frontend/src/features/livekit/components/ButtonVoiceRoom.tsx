@@ -31,7 +31,6 @@ export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room',
   
   const handleJoin = async () => {
     if (joinTo) {
-      console.log('href destination is set: ', joinTo);
       navigate(joinTo, {
         state: { roomName }
       });
@@ -41,7 +40,6 @@ export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room',
   const handleLeave = async () => {
     await disconnect(true);
     if (leaveTo) {
-      console.log('href leaveTo is set: ', leaveTo);
       navigate(leaveTo);
     }
   };
