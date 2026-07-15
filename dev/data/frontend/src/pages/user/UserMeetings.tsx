@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader, IconMeetings } from '@shared';
-import { MeetingColumn } from '@features/meetings';
-import { meetingApi } from '@features/meetings';
+import { meetingApi, MeetingColumn, MeetingDetailsModal } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
 
 type Meeting = {
@@ -30,6 +29,24 @@ type ApiMeeting = {
 		participants: number;
 	};
 	participants?: any[];
+};
+
+type MeetingDetails = {
+  meetTitle: string;
+  meetDesc?: string;
+  meetStart: string;
+  meetEnd: string;
+  createdAt: string;
+  participants: {
+    role: string;
+    attendance: string;
+    user: {
+      userName: string;
+    };
+  }[];
+  _count: {
+    participants: number;
+  };
 };
 
 // ======================
@@ -73,6 +90,7 @@ export const Meetings = () => {
 	const [meetings, setMeetings] = useState<Meeting[]>([]);
 	const [myMeetings, setMyMeetings] = useState<Meeting[]>([]);
 	const [message, setMessage] = useState<string | null>(null);
+	const [selectedMeeting, setSelectedMeeting] = useState<MeetingDetails | null>(null);
 
 	// ======================
 	// FETCH
@@ -154,6 +172,22 @@ export const Meetings = () => {
 	};
 
 	// ======================
+	// VIEW MEETING
+	// ======================	
+	const handleViewMore = async (id: string) => {
+		try {
+			const res = await meetingApi.getMeetingById(id) as {
+			success: boolean;
+			data: MeetingDetails;
+			};
+
+			setSelectedMeeting(res.data);
+		} catch (err) {
+			console.error("Failed to load meeting details:", err);
+		}
+	};
+
+	// ======================
 	// GROUPING (NO OVERLAP)
 	// ======================
 	const grouped = useMemo(() => {
@@ -222,38 +256,47 @@ export const Meetings = () => {
 	)}
 
 	<div className="grid grid-cols-4 gap-3 p-4">
-	<MeetingColumn
-		label="Today"
-		action="join"
-		meetings={grouped.today}
-		onTogglePin={handleTogglePin}
-		onDelete={handleDeleteMeeting}
-	/>
+		<MeetingColumn
+			label="Today"
+			action="join"
+			meetings={grouped.today}
+			onTogglePin={handleTogglePin}
+			onDelete={handleDeleteMeeting}
+			onViewMore={handleViewMore}
+		/>
 
-	<MeetingColumn
-		label="Upcoming"
-		action="join"
-		meetings={grouped.upcoming}
-		onTogglePin={handleTogglePin}
-		onDelete={handleDeleteMeeting}
-	/>
+		<MeetingColumn
+			label="Upcoming"
+			action="join"
+			meetings={grouped.upcoming}
+			onTogglePin={handleTogglePin}
+			onDelete={handleDeleteMeeting}
+			onViewMore={handleViewMore}
+		/>
 
-	<MeetingColumn
-		label="Past"
-		action="transcript"
-		meetings={grouped.past}
-		onTogglePin={handleTogglePin}
-		onDelete={handleDeleteMeeting}
-	/>
+		<MeetingColumn
+			label="Past"
+			action="transcript"
+			meetings={grouped.past}
+			onTogglePin={handleTogglePin}
+			onDelete={handleDeleteMeeting}
+			onViewMore={handleViewMore}
+		/>
 
-	<MeetingColumn
-		label="My Meetings"
-		action="manage"
-		meetings={grouped.mine}
-		onTogglePin={handleTogglePin}
-		onDelete={handleDeleteMeeting}
-	/>
+		<MeetingColumn
+			label="My Meetings"
+			action="manage"
+			meetings={grouped.mine}
+			onTogglePin={handleTogglePin}
+			onDelete={handleDeleteMeeting}
+			onViewMore={handleViewMore}
+		/>
 	</div>
+
+	<MeetingDetailsModal
+		meeting={selectedMeeting}
+		onClose={() => setSelectedMeeting(null)}
+	/>
 	</>
 	);
 };
