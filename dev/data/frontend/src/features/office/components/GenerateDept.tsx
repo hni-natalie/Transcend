@@ -21,19 +21,23 @@ interface GenerateDeptProps {
 }
 
 const getOfficeDept = async () => {
-  const res = await officeService.getAllSpaceNames();
+  const res = await officeService.getAllSpaces();
+
   let departmentNames = [];
   let departmentCount = 0;
+  let officeSpaces = [];
 
-  console.log('received data: ', res);
+  // console.log('received data: ', res);
   // console.log('received data: ', res?.success);
   if (res.success && Array.isArray(res.data)) {
-    departmentNames = res.data;
-    departmentCount = res.data.length;
-    // console.log('Departments:', res.data);
-    // console.log('Length of array:', res.data.length);
+    departmentNames = res.data.map(item => item.spaceName);
+    departmentCount = departmentNames.length;
+    officeSpaces = res.data;
+    // console.log('received spaces: ', officeSpaces);
+    // console.log('Departments:', departmentNames);
+    // console.log('Length of array:', departmentCount);
   }
-  return { departmentNames, departmentCount};
+  return { departmentNames, departmentCount, officeSpaces};
 }
 
 export function GenerateDept({ padding=5, localPlayerRef, room } : GenerateDeptProps) {
@@ -82,13 +86,13 @@ export function GenerateDept({ padding=5, localPlayerRef, room } : GenerateDeptP
 
 
   const [loading, setLoading] = useState(true);
-  const [departmentNames, setDepartmentNames] = useState([]);
+  const [officeSpace, setOfficeSpace] = useState([]);
   const [count, setCount] = useState(0);
   useEffect(() => {
     setLoading(true);
     const fetchData = async () => {
-      const { departmentNames, departmentCount } = await getOfficeDept();
-      setDepartmentNames(departmentNames);
+      const { departmentCount, officeSpaces } = await getOfficeDept();
+      setOfficeSpace(officeSpaces);
       setCount(departmentCount);
       setLoading(false); // ✅ Everything is ready
     };
@@ -127,10 +131,12 @@ export function GenerateDept({ padding=5, localPlayerRef, room } : GenerateDeptP
     const startZ = -canvasHeight / 2 + cellHeight / 2;
     
     // for (let i = 0; i < count; i++) {
-    departmentNames.map((space, i) => {
+      // officeSpaces.map((space, i) => {
+    officeSpace.map((space, i) => {
 
       const col = i % cols;
       const row = Math.floor(i / cols);
+      console.log('space: ', space.spaceName, ', capacity ', space.userCapacity);
       
       // Only create if within the grid bounds
       if (row < rows) {
@@ -139,7 +145,6 @@ export function GenerateDept({ padding=5, localPlayerRef, room } : GenerateDeptP
         
         // Generate unique color for each plane
         const hue = (i / count) * 360;
-
         result.push(
           <mesh
             key={i}
