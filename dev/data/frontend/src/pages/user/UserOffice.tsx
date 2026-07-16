@@ -186,7 +186,7 @@ export function Office({ roomName } : SpaceProps ) {
 				{/* {isConnectedRoom && */}
 				{(roomPlayers.map(( user:Player ) => (
 					<Character
-						key={user.id}
+						key={user.userId}
 	          ref={user.id === localPlayerId ? localPlayerRef : null}
 						id={user.id}
 						name={user.name}

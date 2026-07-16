@@ -122,7 +122,7 @@ const socketService = (io) => {
 
     
     // Generate room-specific token
-    const token = await generateRoomToken(roomName, player.name);
+    const token = await generateRoomToken(roomName, player.id, player.name);
 
     // either setRoomPlayers in existing-room-players or room-joined
     socket.emit('room-joined', {
