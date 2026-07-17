@@ -152,6 +152,7 @@ const meetingService = {
         const allParticipants = [...new Set([userId, ...participants])];
 
         await validateMeeting({
+            userId, 
             participantIds: allParticipants,
             meetStart,
             meetEnd

@@ -1,6 +1,7 @@
 const prisma = require('../../prisma/client');
 
 async function validateMeeting({
+    userId,
     participantIds = [],
     meetStart,
     meetEnd,
@@ -47,8 +48,21 @@ async function validateMeeting({
     
         // If conflicts found
         if (conflicts.length > 0) {
-            const conflictUsers = [ ...new Set(conflicts.map(c => c.user.userName || c.userId)) ];
-            throw new Error(`Meeting conflict detected for: (You) ${conflictUsers.join(', ')}`);
+            const conflictUsers = [
+                ...new Set(
+                    conflicts.map(c => {
+                        if (c.user.userId === userId) {
+                            return `(You) ${c.user.userName}`;
+                        }
+
+                        return c.user.userName || c.userId;
+                    })
+                )
+            ];
+
+            throw new Error(
+                `Meeting conflict detected for: ${conflictUsers.join(', ')}`
+            );
         }
     }
 }
