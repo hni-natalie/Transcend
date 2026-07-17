@@ -134,8 +134,8 @@ export function GenerateDept({ padding=1, localPlayerRef, room } : GenerateDeptP
       .tile(d3.treemapSquarify.ratio(1));
 
       const layout = treemap(root);
-      console.log('Treemap size:', treemap.size());
-      console.log('First leaf:', layout.leaves()[0]);
+      // console.log('Treemap size:', treemap.size());
+      // console.log('First leaf:', layout.leaves()[0]);
 
     // 3. Extract positions (no cols/rows needed!)
     const shrinkFactor = 0.5
