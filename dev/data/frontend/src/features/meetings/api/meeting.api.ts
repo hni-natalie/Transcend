@@ -2,6 +2,7 @@ import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
 
 const base = API_CONFIG.endpoints.meetings;
+const usersBase = API_CONFIG.endpoints.users.base;
 
 export const meetingApi = {
   // =====================
@@ -17,7 +18,6 @@ export const meetingApi = {
   },
 
   createMeeting(data: {
-    workspaceId: string;
     spaceId: string;
     meetTitle: string;
     meetDesc?: string;
@@ -81,5 +81,12 @@ export const meetingApi = {
   toggleMeetingPin(meetId: string) {
     return apiClient.patch(`${base}/pin/${meetId}`);
   },
+
+  // =====================
+  // USERS
+  // =====================
+  allUsers() {
+    return apiClient.get(`${usersBase}`);
+  }
 
 };

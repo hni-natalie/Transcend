@@ -48,7 +48,7 @@ async function validateMeeting({
         // If conflicts found
         if (conflicts.length > 0) {
             const conflictUsers = [ ...new Set(conflicts.map(c => c.user.userName || c.userId)) ];
-            throw new Error(`Meeting conflict detected for: ${conflictUsers.join(', ')}`);
+            throw new Error(`Meeting conflict detected for: (You)${conflictUsers.join(', ')}`);
         }
     }
 }

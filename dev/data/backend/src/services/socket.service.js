@@ -17,9 +17,12 @@ const { apiClient }         = require('../api/api.client.js')
 const { updateSocketId }    = require('./supabase-utils.service.js')
 const players     = new Map();
 const rooms       = new Map();      // Map<roomName, roomPlayers>
+let ioInstance = null;
 
 // socket io setup
 const socketService = (io) => {
+  ioInstance = io;
+
   io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
     // /*debug*/ console.log('Token received:', token ? 'Yes' : 'No');
@@ -211,7 +214,16 @@ const socketService = (io) => {
 // within socket
 }
 
+const getIO = () => {
+    if (!ioInstance) {
+        throw new Error("Socket.IO is not initialized");
+    }
+
+    return ioInstance;
+};
+
 module.exports = {
 	players,
 	socketService,
+  getIO
 };

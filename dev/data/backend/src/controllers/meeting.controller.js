@@ -1,4 +1,5 @@
 const meetingService = require('../services/meeting.service');
+const { getIO } = require("../services/socket.service");
 
 const meetingController = {
     async getAllMeetings(req, res) {
@@ -71,7 +72,6 @@ const meetingController = {
     async createMeeting(req, res) {
         try {
             const {
-                workspaceId,
                 spaceId,
                 meetTitle,
                 meetDesc,
@@ -81,6 +81,7 @@ const meetingController = {
             } = req.body;
 
             const userId = req.user.userId;
+            const workspaceId = req.user.workspaceId;
 
             const meeting = await meetingService.createMeeting({
                 workspaceId,
@@ -92,6 +93,8 @@ const meetingController = {
                 meetEnd,
                 participants
             });
+
+            getIO().emit("meetingUpdated");
 
             return res.status(201).json({ success: true, data: meeting });
         } catch (error) {
@@ -151,6 +154,8 @@ const meetingController = {
                 }
             );
 
+            getIO().emit("meetingUpdated");
+
             return res.status(200).json({ success: true, data: result });
         } catch (error) {
             return res.status(500).json({ success: false, message: error.message });
@@ -168,6 +173,8 @@ const meetingController = {
                 targetUserId
             );
 
+            getIO().emit("meetingUpdated");
+
             return res.status(200).json({ success: true, data: result });
         } catch (error) {
             return res.status(500).json({ success: false, message: error.message });
@@ -180,6 +187,8 @@ const meetingController = {
             const userId = req.user.userId;
 
             const result = await meetingService.deleteMeeting( meetId, userId );
+
+            getIO().emit("meetingUpdated");
 
             return res.status(200).json({ success: true, data: result });
         } catch (error) {

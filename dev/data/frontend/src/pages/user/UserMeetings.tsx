@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { PageHeader, IconMeetings } from '@shared';
-import { meetingApi, MeetingColumn, MeetingDetailsModal } from '@features/meetings';
+import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useSocket } from "@/context/SocketContext";
 
 type Meeting = {
 	id: string;
@@ -32,21 +33,21 @@ type ApiMeeting = {
 };
 
 type MeetingDetails = {
-  meetTitle: string;
-  meetDesc?: string;
-  meetStart: string;
-  meetEnd: string;
-  createdAt: string;
-  participants: {
-    role: string;
-    attendance: string;
-    user: {
-      userName: string;
-    };
-  }[];
-  _count: {
-    participants: number;
-  };
+	meetTitle: string;
+	meetDesc?: string;
+	meetStart: string;
+	meetEnd: string;
+	createdAt: string;
+	participants: {
+		role: string;
+		attendance: string;
+		user: {
+			userName: string;
+		};
+	}[];
+	_count: {
+		participants: number;
+	};
 };
 
 // ======================
@@ -68,11 +69,15 @@ const mapMeeting = (m: ApiMeeting): Meeting => ({
 	id: m.meetId,
 	title: m.meetTitle,
 	description: m.meetDesc ?? '',
-	date: new Date(m.meetStart).toLocaleDateString(),
-	time: new Date(m.meetStart).toLocaleTimeString([], {
-	hour: '2-digit',
-	minute: '2-digit',
-}),
+	date: new Date(m.meetStart).toLocaleDateString('en-MY', {
+		timeZone: 'Asia/Kuala_Lumpur',
+	}),
+
+	time: new Date(m.meetStart).toLocaleTimeString('en-MY', {
+		timeZone: 'Asia/Kuala_Lumpur',
+		hour: '2-digit',
+		minute: '2-digit',
+	}),
 	duration: getDuration(m.meetStart, m.meetEnd),
 	participants: m._count?.participants ?? m.participants?.length ?? 0,
 	pinned: m.pinned,
@@ -87,39 +92,61 @@ const mapMeeting = (m: ApiMeeting): Meeting => ({
 export const Meetings = () => {
 	const { user } = useAuth();
 
-	const [meetings, setMeetings] = useState<Meeting[]>([]);
+	// Meetings the user created OR joined
+	const [joinedMeetings, setJoinedMeetings] = useState<Meeting[]>([]);
+
+	// Meetings created by the user
 	const [myMeetings, setMyMeetings] = useState<Meeting[]>([]);
+
 	const [message, setMessage] = useState<string | null>(null);
 	const [selectedMeeting, setSelectedMeeting] = useState<MeetingDetails | null>(null);
+	const [showScheduleModal, setShowScheduleModal] = useState(false);
 
 	// ======================
 	// FETCH
 	// ======================
+	const loadMeetings = useCallback(async () => {
+		try {
+			if (!user?.userId) return;
+
+			const joinedRes = await meetingApi.getJoinedMeetings(user.userId) as {
+				success: boolean;
+				data: ApiMeeting[];
+			};
+
+			setJoinedMeetings(joinedRes.data.map(mapMeeting));
+
+			const myRes = await meetingApi.getMyMeetings(user.userId) as {
+				success: boolean;
+				data: ApiMeeting[];
+			};
+
+			setMyMeetings(myRes.data.map(mapMeeting));
+		} catch (err) {
+			console.error("Failed to load meetings:", err);
+		}
+	}, [user]);
+
 	useEffect(() => {
-		const load = async () => {
-			try {
-				const res = (await meetingApi.getAllMeetings()) as {
-					success: boolean;
-					data: ApiMeeting[];
-				};
+		loadMeetings();
+	}, [loadMeetings]);
 
-				setMeetings(res.data.map(mapMeeting));
+	const { socket } = useSocket();
 
-				if (user?.userId) {
-					const myRes = (await meetingApi.getMyMeetings(user.userId)) as {
-					success: boolean;
-					data: ApiMeeting[];
-					};
+	useEffect(() => {
+		if (!socket) return;
 
-					setMyMeetings(myRes.data.map(mapMeeting));
-				}
-			} catch (err) {
-				console.error('Failed to load meetings:', err);
-			}
+		const handleMeetingUpdated = () => {
+			console.log("Meeting updated - reloading...");
+			loadMeetings();
 		};
 
-		load();
-	}, [user]);
+		socket.on("meetingUpdated", handleMeetingUpdated);
+
+		return () => {
+			socket.off("meetingUpdated", handleMeetingUpdated);
+		};
+	}, [socket, loadMeetings]);
 
 	// ======================
 	// PIN TOGGLE
@@ -127,21 +154,23 @@ export const Meetings = () => {
 	const handleTogglePin = async (id: string) => {
 		try {
 			const res = (await meetingApi.toggleMeetingPin(id)) as {
-			success: boolean;
-			data: { pinned: boolean };
+				success: boolean;
+				data: { pinned: boolean };
 			};
 
 			const newPinned = res.data.pinned;
 
-			setMeetings(prev =>
-			prev.map(m =>
-				m.id === id ? { ...m, pinned: newPinned } : m
-			));
+			setJoinedMeetings(prev =>
+				prev.map(m =>
+					m.id === id ? { ...m, pinned: newPinned } : m
+				)
+			);
 
 			setMyMeetings(prev =>
-			prev.map(m =>
-				m.id === id ? { ...m, pinned: newPinned } : m
-			));
+				prev.map(m =>
+					m.id === id ? { ...m, pinned: newPinned } : m
+				)
+			);
 		} catch (err) {
 			console.error('Failed to toggle pin:', err);
 		}
@@ -160,8 +189,13 @@ export const Meetings = () => {
 		try {
 			await meetingApi.deleteMeeting(id);
 
-			setMeetings(prev => prev.filter(m => m.id !== id));
-			setMyMeetings(prev => prev.filter(m => m.id !== id));
+			setJoinedMeetings(prev =>
+				prev.filter(m => m.id !== id)
+			);
+
+			setMyMeetings(prev =>
+				prev.filter(m => m.id !== id)
+			);
 
 			setMessage('Meeting deleted successfully');
 
@@ -173,130 +207,122 @@ export const Meetings = () => {
 
 	// ======================
 	// VIEW MEETING
-	// ======================	
+	// ======================
 	const handleViewMore = async (id: string) => {
 		try {
-			const res = await meetingApi.getMeetingById(id) as {
-			success: boolean;
-			data: MeetingDetails;
+			const res = (await meetingApi.getMeetingById(id)) as {
+				success: boolean;
+				data: MeetingDetails;
 			};
 
 			setSelectedMeeting(res.data);
 		} catch (err) {
-			console.error("Failed to load meeting details:", err);
+			console.error('Failed to load meeting details:', err);
 		}
 	};
 
 	// ======================
-	// GROUPING (NO OVERLAP)
+	// GROUPING
 	// ======================
 	const grouped = useMemo(() => {
-	const startOfToday = new Date();
-	startOfToday.setHours(0, 0, 0, 0);
+		const startOfToday = new Date();
+		startOfToday.setHours(0, 0, 0, 0);
 
-	const endOfToday = new Date();
-	endOfToday.setHours(23, 59, 59, 999);
+		const endOfToday = new Date();
+		endOfToday.setHours(23, 59, 59, 999);
 
-	const today = meetings.filter(
-		m =>
-		new Date(m.meetStart) >= startOfToday &&
-		new Date(m.meetStart) <= endOfToday
-	);
+		return {
+			today: joinedMeetings.filter(
+				m =>
+					new Date(m.meetStart) >= startOfToday &&
+					new Date(m.meetStart) <= endOfToday
+			),
 
-	const upcoming = meetings
-	.filter(m => new Date(m.meetStart) > endOfToday)
-	.sort(
-	(a, b) =>
-		new Date(a.meetStart).getTime() -
-		new Date(b.meetStart).getTime()
-	);
+			upcoming: joinedMeetings.filter(
+				m => new Date(m.meetStart) > endOfToday
+			),
 
-	const past = meetings
-	.filter(m => new Date(m.meetStart) < startOfToday)
-	.sort(
-	(a, b) =>
-		new Date(b.meetStart).getTime() -
-		new Date(a.meetStart).getTime()
-	);
+			past: joinedMeetings.filter(
+				m => new Date(m.meetStart) < startOfToday
+			),
 
-	const mine = [...myMeetings].sort(
-		(a, b) =>
-		new Date(b.createdAt).getTime() -
-		new Date(a.createdAt).getTime()
-	);
-
-	return {
-	today,
-	upcoming,
-	past,
-	mine,
-	};
-	}, [meetings, myMeetings]);
+			// Backend already returns this in descending order
+			mine: myMeetings,
+		};
+	}, [joinedMeetings, myMeetings]);
 
 	// ======================
 	// UI
 	// ======================
 	return (
-	<>
-	<PageHeader
-	icon={<IconMeetings className="w-7 h-7" />}
-	title="Meetings"
-	action={
-		<button className="bg-accent-lime-bg text-accent-lime border border-accent-lime px-4 py-1.5 rounded-lg font-bold text-xs tracking-wider hover:opacity-90 transition-opacity">
-		+ Schedule Meeting
-		</button>
-	}
-	/>
+		<>
+			<PageHeader
+				icon={<IconMeetings className="w-7 h-7" />}
+				title="Meetings"
+				action={
+					<button
+						onClick={() => setShowScheduleModal(true)} 
+						className="bg-accent-lime-bg text-accent-lime border border-accent-lime px-4 py-1.5 rounded-lg font-bold text-xs tracking-wider hover:opacity-90 transition-opacity"
+					>
+						+ Schedule Meeting
+					</button>
+				}
+			/>
 
-	{/* ✅ SUCCESS MESSAGE */}
-	{message && (
-	<div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-green-100 text-green-700 text-sm font-medium">
-		{message}
-	</div>
-	)}
+			{message && (
+				<div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-green-100 text-green-700 text-sm font-medium">
+					{message}
+				</div>
+			)}
 
-	<div className="grid grid-cols-4 gap-3 p-4">
-		<MeetingColumn
-			label="Today"
-			action="join"
-			meetings={grouped.today}
-			onTogglePin={handleTogglePin}
-			onDelete={handleDeleteMeeting}
-			onViewMore={handleViewMore}
-		/>
+			<div className="grid grid-cols-4 gap-3 p-4">
+				<MeetingColumn
+					label="Today"
+					action="join"
+					meetings={grouped.today}
+					onTogglePin={handleTogglePin}
+					onDelete={handleDeleteMeeting}
+					onViewMore={handleViewMore}
+				/>
 
-		<MeetingColumn
-			label="Upcoming"
-			action="join"
-			meetings={grouped.upcoming}
-			onTogglePin={handleTogglePin}
-			onDelete={handleDeleteMeeting}
-			onViewMore={handleViewMore}
-		/>
+				<MeetingColumn
+					label="Upcoming"
+					action="join"
+					meetings={grouped.upcoming}
+					onTogglePin={handleTogglePin}
+					onDelete={handleDeleteMeeting}
+					onViewMore={handleViewMore}
+				/>
 
-		<MeetingColumn
-			label="Past"
-			action="transcript"
-			meetings={grouped.past}
-			onTogglePin={handleTogglePin}
-			onDelete={handleDeleteMeeting}
-			onViewMore={handleViewMore}
-		/>
+				<MeetingColumn
+					label="Past"
+					action="transcript"
+					meetings={grouped.past}
+					onTogglePin={handleTogglePin}
+					onDelete={handleDeleteMeeting}
+					onViewMore={handleViewMore}
+				/>
 
-		<MeetingColumn
-			label="My Meetings"
-			action="manage"
-			meetings={grouped.mine}
-			onTogglePin={handleTogglePin}
-			onDelete={handleDeleteMeeting}
-			onViewMore={handleViewMore}
-		/>
-	</div>
+				<MeetingColumn
+					label="Scheduled"
+					action="manage"
+					meetings={grouped.mine}
+					onTogglePin={handleTogglePin}
+					onDelete={handleDeleteMeeting}
+					onViewMore={handleViewMore}
+				/>
+			</div>
 
-	<MeetingDetailsModal
-		meeting={selectedMeeting}
-		onClose={() => setSelectedMeeting(null)}
-	/>
-	</>
+			<MeetingDetailsModal
+				meeting={selectedMeeting}
+				onClose={() => setSelectedMeeting(null)}
+			/>
+
+			<ScheduleMeetingModal
+				open={showScheduleModal}
+				onClose={() => setShowScheduleModal(false)}
+				onCreated={() => {loadMeetings}}
+			/>
+		</>
 	);
 };
