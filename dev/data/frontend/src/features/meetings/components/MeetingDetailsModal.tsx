@@ -1,22 +1,5 @@
 import { useEffect } from 'react';
-
-export type MeetingDetails = {
-  meetTitle: string;
-  meetDesc?: string;
-  meetStart: string;
-  meetEnd: string;
-  createdAt: string;
-  participants: {
-    role: string;
-    attendance: string;
-    user: {
-      userName: string;
-    };
-  }[];
-  _count: {
-    participants: number;
-  };
-};
+import { MeetingDetails } from '../meeting.types';
 
 type Props = {
   meeting: MeetingDetails | null;
@@ -102,8 +85,12 @@ export const MeetingDetailsModal = ({ meeting, onClose }: Props) => {
                     {participant.user.userName}
                   </p>
 
+                  <p className="text-xs text-gray-400">
+                    {participant.user.userEmail} 
+                  </p>
+
                   <p className="text-xs text-gray-400 capitalize">
-                    {participant.role}
+                    {participant.role} 
                   </p>
                 </div>
 

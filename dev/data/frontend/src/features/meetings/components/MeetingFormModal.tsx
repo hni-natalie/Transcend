@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { IconMeetings } from "@shared";
 import { meetingApi } from "@features/meetings";
+import type { MeetingDetails, Participant } from "@features/meetings/meeting.types";
 
 type User = {
     userId: string;
@@ -10,16 +11,22 @@ type User = {
 
 type Props = {
     open: boolean;
-    onClose: () => void;
+    mode: "create" | "edit";
 
-    // optional callback to refresh meetings
+    meeting?: MeetingDetails;
+
+    onClose: () => void;
     onCreated?: () => void;
+    onUpdated?: () => void;
 };
 
 export const ScheduleMeetingModal = ({
     open,
     onClose,
     onCreated,
+    onUpdated,
+    mode,
+    meeting,
 }: Props) => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -28,10 +35,11 @@ export const ScheduleMeetingModal = ({
 
     const [users, setUsers] = useState<User[]>([]);
     const [search, setSearch] = useState("");
-    const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+    const [selectedUsers, setSelectedUsers] = useState<Participant[]>([]);
 
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    
 
     const resetForm = useCallback(() => {
         setTitle("");
@@ -80,17 +88,86 @@ export const ScheduleMeetingModal = ({
         loadUsers();
     }, [open]);
 
+    const toDateTimeLocal = (date: string) => {
+        const d = new Date(date);
+
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+
+        return d.toISOString().slice(0, 16);
+    };
+
+    useEffect(() => {
+        if (!open) return;
+
+        if (mode === "edit" && meeting) {
+            setTitle(meeting.meetTitle);
+            setDescription(meeting.meetDesc ?? "");
+
+            setStart(toDateTimeLocal(meeting.meetStart));
+            setEnd(toDateTimeLocal(meeting.meetEnd));
+
+            setSelectedUsers(
+                meeting.participants.map(p => ({
+                    userId: p.userId,
+                    userName: p.user.userName,
+                    userEmail: p.user.userEmail,
+                    role: p.role,
+                    attendance: p.attendance,
+                }))
+            );
+        } else {
+            resetForm();
+        }
+    }, [open, mode, meeting, resetForm]);
+
     const filteredUsers = useMemo(() => {
         return users.filter((user) =>
         user.userName.toLowerCase().includes(search.toLowerCase())
         );
     }, [users, search]);
 
-    const toggleParticipant = (userId: string) => {
-        setSelectedUsers((prev) =>
-        prev.includes(userId)
-            ? prev.filter((id) => id !== userId)
-            : [...prev, userId]
+    const toggleParticipant = (user: Participant) => {
+        setSelectedUsers(prev => {
+            const exists = prev.some(p => p.userId === user.userId);
+
+            if (exists) {
+                return prev.filter(p => p.userId !== user.userId);
+            }
+
+            return [
+                ...prev,
+                {
+                    ...user,
+                    role: "participant",
+                    attendance: "pending",
+                },
+            ];
+        });
+    };
+
+    const updateRole = (
+        userId: string,
+        role: "organiser" | "participant"
+    ) => {
+        setSelectedUsers(prev =>
+            prev.map(user =>
+                user.userId === userId
+                    ? { ...user, role }
+                    : user
+            )
+        );
+    };
+
+    const updateAttendance = (
+        userId: string,
+        attendance: "present" | "absent" | "pending"
+    ) => {
+        setSelectedUsers(prev =>
+            prev.map(user =>
+                user.userId === userId
+                    ? { ...user, attendance }
+                    : user
+            )
         );
     };
 
@@ -137,19 +214,50 @@ export const ScheduleMeetingModal = ({
         try {
             setLoading(true);
 
-            await meetingApi.createMeeting({
-                spaceId: "97e0e69d-7f35-4b67-9a40-c5641f0eb677",
-                meetTitle: title,
-                meetDesc: description,
-                meetStart: new Date(start).toISOString(),
-                meetEnd: new Date(end).toISOString(),
-                participants: selectedUsers,
-            });
+            if (mode === "create") {
+                const res = await meetingApi.createMeeting({
+                    spaceId: "97e0e69d-7f35-4b67-9a40-c5641f0eb677",
+                    meetTitle: title,
+                    meetDesc: description,
+                    meetStart: new Date(start).toISOString(),
+                    meetEnd: new Date(end).toISOString()
+                });
 
-            alert("Meeting scheduled successfully!");
+                await meetingApi.syncParticipants({
+                    meetId: res.data.meetId,
+                    participants: selectedUsers.map(user => ({
+                        userId: user.userId,
+                        role: user.role,
+                        attendance: user.attendance,
+                    }))
+                });
+
+                alert("Meeting scheduled successfully!");
+                onCreated?.();
+
+            } else if (mode === "edit" && meeting) {
+                await meetingApi.updateMeeting({
+                    meetId: meeting.meetId,
+                    meetTitle: title,
+                    meetDesc: description,
+                    meetStart: new Date(start).toISOString(),
+                    meetEnd: new Date(end).toISOString()
+                });
+
+                await meetingApi.syncParticipants({
+                    meetId: meeting.meetId,
+                    participants: selectedUsers.map(user => ({
+                        userId: user.userId,
+                        role: user.role,
+                        attendance: user.attendance,
+                    }))
+                });
+
+                alert("Meeting updated successfully!");
+                onUpdated?.();
+            }
 
             handleClose();
-            onCreated?.();
 
         } catch (err: any) {
             console.error(err);
@@ -179,8 +287,9 @@ export const ScheduleMeetingModal = ({
             className="flex flex-col gap-y-4 w-full max-w-[480px] max-h-[88vh] overflow-y-auto rounded-[1.5rem] bg-[#1b1b1b] border border-[#242424] px-8 py-7 shadow-2xl text-gray-200"
         >
             <button
-            onClick={handleClose}
-            className="close-right"
+                type="button"
+                onClick={handleClose}
+                className="close-right"
             >
             ✕
             </button>
@@ -234,7 +343,6 @@ export const ScheduleMeetingModal = ({
                 <input
                     type="datetime-local"
                     value={start}
-                    min={new Date().toISOString().slice(0,16)}
                     onChange={(e) => {
                         setStart(e.target.value);
 
@@ -273,27 +381,72 @@ export const ScheduleMeetingModal = ({
                 className="w-full rounded-lg border border-[#333] bg-[#262626] px-4 py-2 outline-none focus:border-accent-lime mb-3"
             />
 
-            {selectedUsers.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-3">
-                {users
-                    .filter((u) => selectedUsers.includes(u.userId))
-                    .map((u) => (
-                    <div
-                        key={u.userId}
-                        className="flex items-center gap-2 rounded-full bg-accent-lime text-black px-3 py-1 text-xs font-medium"
-                    >
-                        {u.userName}
+            {selectedUsers.map(user => (
+                <div
+                    key={user.userId}
+                    className="rounded-lg bg-[#2b2b2b] p-3 mb-2"
+                >
+                    <div className="flex justify-between">
+                        <span>{user.userName}</span>
 
-                        <button
-                        onClick={() => toggleParticipant(u.userId)}
-                        >
-                        ✕
-                        </button>
+                        {user.role !== "organiser" && (
+                            <button onClick={() => toggleParticipant(user)}>
+                                ✕
+                            </button>
+                        )}
                     </div>
-                    ))}
-                </div>
-            )}
 
+                    <div className="mt-2 flex gap-3">
+
+                        <select
+                            value={user.role}
+                            onChange={e =>
+                                updateRole(
+                                    user.userId,
+                                    e.target.value as
+                                        | "organiser"
+                                        | "participant"
+                                )
+                            }
+                        >
+                            <option value="organiser">
+                                Organiser
+                            </option>
+
+                            <option value="participant">
+                                Participant
+                            </option>
+                        </select>
+
+                        <select
+                            value={user.attendance}
+                            onChange={e =>
+                                updateAttendance(
+                                    user.userId,
+                                    e.target.value as
+                                        | "present"
+                                        | "absent"
+                                        | "pending"
+                                )
+                            }
+                        >
+                            <option value="pending">
+                                Pending
+                            </option>
+
+                            <option value="present">
+                                Present
+                            </option>
+
+                            <option value="absent">
+                                Absent
+                            </option>
+                        </select>
+
+                    </div>
+                </div>
+            ))}
+            
             <div className="max-h-52 overflow-y-auto rounded-lg border border-[#333] bg-[#262626]">
                 {filteredUsers.map((user) => (
                 <label
@@ -311,11 +464,15 @@ export const ScheduleMeetingModal = ({
                     </div>
 
                     <input
-                    type="checkbox"
-                    checked={selectedUsers.includes(user.userId)}
-                    onChange={() =>
-                        toggleParticipant(user.userId)
-                    }
+                        type="checkbox"
+                        checked={
+                            selectedUsers.some(
+                                selected => selected.userId === user.userId
+                            )
+                        }
+                        onChange={() =>
+                            toggleParticipant(user as Participant)
+                        }
                     />
                 </label>
                 ))}
@@ -330,6 +487,7 @@ export const ScheduleMeetingModal = ({
 
             <div className="flex justify-end gap-3 pt-2">
             <button
+                type="button"
                 onClick={handleClose}
                 className="rounded-lg border border-gray-600 px-5 py-2 text-sm hover:bg-gray-700 transition"
             >
@@ -339,7 +497,6 @@ export const ScheduleMeetingModal = ({
             <button
                 type="submit"
                 disabled={loading || !isFormValid}
-                onClick={handleSubmit}
                 className="rounded-lg bg-accent-lime px-5 py-2 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50"
             >
                 {loading ? "Creating..." : "Create Meeting"}

@@ -3,6 +3,7 @@ import { PageHeader, IconMeetings } from '@shared';
 import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useSocket } from "@/context/SocketContext";
+import type { MeetingDetails } from '@features/meetings/meeting.types';
 
 type Meeting = {
 	id: string;
@@ -18,6 +19,14 @@ type Meeting = {
 	createdAt: string;
 };
 
+type Participant = {
+    userId: string;
+    userName: string;
+    userEmail: string;
+    role: "organiser" | "participant";
+    attendance: "present" | "absent";
+};
+
 type ApiMeeting = {
 	meetId: string;
 	meetTitle: string;
@@ -29,25 +38,7 @@ type ApiMeeting = {
 	_count?: {
 		participants: number;
 	};
-	participants?: any[];
-};
-
-type MeetingDetails = {
-	meetTitle: string;
-	meetDesc?: string;
-	meetStart: string;
-	meetEnd: string;
-	createdAt: string;
-	participants: {
-		role: string;
-		attendance: string;
-		user: {
-			userName: string;
-		};
-	}[];
-	_count: {
-		participants: number;
-	};
+	participants?: Participant[];
 };
 
 // ======================
@@ -101,6 +92,7 @@ export const Meetings = () => {
 	const [message, setMessage] = useState<string | null>(null);
 	const [selectedMeeting, setSelectedMeeting] = useState<MeetingDetails | null>(null);
 	const [showScheduleModal, setShowScheduleModal] = useState(false);
+	const [editingMeeting, setEditingMeeting] = useState<MeetingDetails | null>(null);
 
 	// ======================
 	// FETCH
@@ -222,6 +214,23 @@ export const Meetings = () => {
 	};
 
 	// ======================
+	// EDIT MEETING
+	// ======================
+	const handleEdit = async (id: string) => {
+		try {
+			const res = (await meetingApi.getMeetingById(id)) as {
+				success: boolean;
+				data: MeetingDetails;
+			};
+
+			setEditingMeeting(res.data);
+			setShowScheduleModal(true);
+		} catch (err) {
+			console.error('Failed to load meeting details:', err);
+		}
+	};
+
+	// ======================
 	// GROUPING
 	// ======================
 	const grouped = useMemo(() => {
@@ -231,22 +240,24 @@ export const Meetings = () => {
 		const endOfToday = new Date();
 		endOfToday.setHours(23, 59, 59, 999);
 
+		const sortAscending = (a: Meeting, b: Meeting) =>
+			new Date(a.meetStart).getTime() - new Date(b.meetStart).getTime();
+
 		return {
 			today: joinedMeetings.filter(
 				m =>
 					new Date(m.meetStart) >= startOfToday &&
 					new Date(m.meetStart) <= endOfToday
-			),
+			).sort(sortAscending),
 
 			upcoming: joinedMeetings.filter(
 				m => new Date(m.meetStart) > endOfToday
-			),
+			).sort(sortAscending),
 
 			past: joinedMeetings.filter(
 				m => new Date(m.meetStart) < startOfToday
 			),
 
-			// Backend already returns this in descending order
 			mine: myMeetings,
 		};
 	}, [joinedMeetings, myMeetings]);
@@ -310,6 +321,7 @@ export const Meetings = () => {
 					onTogglePin={handleTogglePin}
 					onDelete={handleDeleteMeeting}
 					onViewMore={handleViewMore}
+					onEdit={handleEdit}
 				/>
 			</div>
 
@@ -320,8 +332,14 @@ export const Meetings = () => {
 
 			<ScheduleMeetingModal
 				open={showScheduleModal}
-				onClose={() => setShowScheduleModal(false)}
-				onCreated={() => {loadMeetings}}
+				mode={editingMeeting ? "edit" : "create"}
+				meeting={editingMeeting ?? undefined}
+				onClose={() => {
+					setShowScheduleModal(false);
+					setEditingMeeting(null);
+				}}
+				onCreated={loadMeetings}
+				onUpdated={loadMeetings}
 			/>
 		</>
 	);

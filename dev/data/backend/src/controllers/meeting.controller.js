@@ -76,8 +76,7 @@ const meetingController = {
                 meetTitle,
                 meetDesc,
                 meetStart,
-                meetEnd,
-                participants = []
+                meetEnd
             } = req.body;
 
             const userId = req.user.userId;
@@ -90,8 +89,7 @@ const meetingController = {
                 meetTitle,
                 meetDesc,
                 meetStart,
-                meetEnd,
-                participants
+                meetEnd
             });
 
             getIO().emit("meetingUpdated");
@@ -109,8 +107,7 @@ const meetingController = {
                 meetTitle,
                 meetDesc,
                 meetStart,
-                meetEnd,
-                addParticipants = []
+                meetEnd
             } = req.body;
 
             const userId = req.user.userId;
@@ -122,10 +119,11 @@ const meetingController = {
                     meetTitle,
                     meetDesc,
                     meetStart,
-                    meetEnd,
-                    addParticipants
+                    meetEnd
                 }
             );
+
+            getIO().emit("meetingUpdated");
 
             return res.status(200).json({ success: true, data: meeting });
         } catch (error) {
@@ -133,51 +131,33 @@ const meetingController = {
         }
     },
 
-    async updateParticipant(req, res) {
+    async syncParticipants(req, res) {
         try {
             const {
                 meetId,
-                targetUserId,
-                role,
-                attendance 
+                participants
             } = req.body;
 
             const userId = req.user.userId;
 
-            const result = await meetingService.updateParticipant(
+            const result = await meetingService.syncParticipants(
                 meetId,
                 userId,
-                {
-                    userId: targetUserId,
-                    role,
-                    attendance
-                }
+                participants
             );
 
             getIO().emit("meetingUpdated");
 
-            return res.status(200).json({ success: true, data: result });
+            return res.status(200).json({
+                success: true,
+                data: result
+            });
+
         } catch (error) {
-            return res.status(500).json({ success: false, message: error.message });
-        }
-    },
-
-    async removeParticipant(req, res) {
-        try {
-            const { meetId, targetUserId } = req.body;
-            const userId = req.user.userId;
-
-            const result = await meetingService.removeParticipant(
-                meetId,
-                userId,
-                targetUserId
-            );
-
-            getIO().emit("meetingUpdated");
-
-            return res.status(200).json({ success: true, data: result });
-        } catch (error) {
-            return res.status(500).json({ success: false, message: error.message });
+            return res.status(500).json({
+                success: false,
+                message: error.message
+            });
         }
     },
 

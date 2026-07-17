@@ -25,6 +25,7 @@ type Props = {
   onTogglePin?: (id: string) => void;
   onViewMore?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onEdit?: (id: string) => void;
 };
 
 // truncate helper
@@ -41,6 +42,7 @@ export const MeetingColumn = ({
   onTogglePin,
   onViewMore,
   onDelete,
+  onEdit,
 }: Props) => {
   const sortedMeetings = useMemo(() => {
     return [...meetings].sort(
@@ -140,7 +142,10 @@ export const MeetingColumn = ({
                   Start
                 </button>
 
-                <button className="flex-1 border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg">
+                <button 
+                  onClick={() => onEdit?.(meeting.id)}
+                  className="flex-1 border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg"
+                >
                   Edit
                 </button>
 
