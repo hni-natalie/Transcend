@@ -145,7 +145,7 @@ export function Office({ roomName } : SpaceProps ) {
 					minDistance={10}
 					maxDistance={80}
 					minPolarAngle={0}  						// top down 90 deg
-					maxPolarAngle={Math.PI / 24} 	// slight slant, 30 deg tilt
+					maxPolarAngle={Math.PI / 8} 	// slight slant, 30 deg tilt
 					minAzimuthAngle={0}						// min left rotation
 					maxAzimuthAngle={0}						// max right rotation
 				/>
@@ -186,7 +186,7 @@ export function Office({ roomName } : SpaceProps ) {
 				{/* {isConnectedRoom && */}
 				{(roomPlayers.map(( user:Player ) => (
 					<Character
-						key={user.id}
+						key={user.userId}
 	          ref={user.id === localPlayerId ? localPlayerRef : null}
 						id={user.id}
 						name={user.name}

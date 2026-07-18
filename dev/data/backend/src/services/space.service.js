@@ -1,7 +1,7 @@
 const prisma = require('../../prisma/client');
 
 const spaceService = {
-    async getAllSpaces() {
+    async getAllSpaces(workspaceId) {
         return prisma.space.findMany({
             where: { workspaceId },
             orderBy: { spaceName: 'asc' }

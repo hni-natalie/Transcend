@@ -15,10 +15,9 @@ router.patch('/pin/:meetId', meetingController.toggleMeetingPin);
 
 router.post('/', meetingController.createMeeting);
 
-router.put('/', meetingController.updateMeeting);
-router.put('/participant', meetingController.updateParticipant);
+router.patch('/', meetingController.updateMeeting);
+router.patch('/participants', meetingController.syncParticipants);
 
-router.delete('/participant', meetingController.removeParticipant);
 router.delete('/:meetId', meetingController.deleteMeeting);
 
 module.exports = router;

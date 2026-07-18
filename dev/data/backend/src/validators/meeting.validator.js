@@ -1,56 +1,96 @@
 const prisma = require('../../prisma/client');
 
-async function validateMeeting({
+// Validate meeting start & end time
+function validateMeetingTime({
+    meetStart,
+    meetEnd
+}) {
+    if (!meetStart || !meetEnd) {
+        throw new Error("Meeting start and end time are required");
+    }
+
+    const start = new Date(meetStart);
+    const end = new Date(meetEnd);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        throw new Error("Invalid meeting date");
+    }
+
+    if (start >= end) {
+        throw new Error("Meeting end time must be after start time");
+    }
+
+    return {
+        start,
+        end
+    };
+}
+
+// Validate participant schedule conflicts
+async function validateParticipantConflicts({
+    userId,
     participantIds = [],
     meetStart,
     meetEnd,
     excludeMeetId = null
 }) {
+    if (participantIds.length === 0) {
+        return;
+    }
 
-    // Validate required fields
-    if (!meetStart || !meetEnd)
-        throw new Error('Meeting start and end time are required');
+    const { start, end } = validateMeetingTime({
+        meetStart,
+        meetEnd
+    });
 
-    const start = new Date(meetStart);
-    const end = new Date(meetEnd);
-
-    // Validate date format
-    if (isNaN(start) || isNaN(end))
-        throw new Error('Invalid meeting date');
-
-    // Validate time order
-    if (start >= end)
-        throw new Error('Meeting end time must be after start time');
-
-    // Check participant conflicts
-    if (participantIds) {
-        const conflicts = await prisma.meetingParticipant.findMany({
-            where: {
-                userId: { in: participantIds },
-    
-                meet: {
-                    // If excludeMeetId exist, ignore current meeting during update
-                    ...(excludeMeetId && {
-                        meetId: {
-                            not: excludeMeetId
-                        }
-                    }),
-    
-                    // Overlapping logic
-                    meetStart: { lt: end },
-                    meetEnd: { gt: start }
-                }
+    const conflicts = await prisma.meetingParticipant.findMany({
+        where: {
+            userId: {
+                in: participantIds
             },
-            // Prisma automatically joins related tables
-            include: { user: true, meet: true }
-        });
-    
-        // If conflicts found
-        if (conflicts.length > 0) {
-            const conflictUsers = [ ...new Set(conflicts.map(c => c.user.userName || c.userId)) ];
-            throw new Error(`Meeting conflict detected for: ${conflictUsers.join(', ')}`);
+
+            meet: {
+                ...(excludeMeetId && {
+                    meetId: {
+                        not: excludeMeetId
+                    }
+                }),
+
+                meetStart: {
+                    lt: end
+                },
+
+                meetEnd: {
+                    gt: start
+                }
+            }
+        },
+        include: {
+            user: true,
+            meet: true
         }
+    });
+
+    if (conflicts.length > 0) {
+        const conflictUsers = [
+            ...new Set(
+                conflicts.map(c => {
+                    if (c.user.userId === userId) {
+                        return `(You) ${c.user.userName}`;
+                    }
+
+                    return c.user.userName || c.userId;
+                })
+            )
+        ];
+
+        throw new Error(
+            `Meeting conflict detected for: ${conflictUsers.join(", ")}` 
+        );
     }
 }
 
-module.exports = { validateMeeting };
+module.exports = {
+    validateMeetingTime,
+    validateParticipantConflicts
+};
