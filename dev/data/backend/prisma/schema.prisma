@@ -24,6 +24,7 @@ enum AccessLevel {
 }
 
 enum AttendanceStatus {
+  pending
   absent
   present
 }
@@ -250,7 +251,7 @@ model MeetingParticipant {
   userId    String
 
   role       MeetingRole
-  attendance AttendanceStatus @default(present)
+  attendance AttendanceStatus @default(pending)
 
   createdAt DateTime @default(now())
 
