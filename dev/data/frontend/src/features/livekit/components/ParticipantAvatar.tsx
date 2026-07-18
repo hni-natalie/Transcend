@@ -13,7 +13,7 @@ export function ParticipantAvatar() {
   const participant = useParticipantContext();
   const identity = participant?.identity;
 
-	const player = roomPlayers.find(p => p.name === identity);
+	const player = roomPlayers.find(p => p.id === identity);
 	const avatarSrc = player?.photo || null;
 
 	console.log('[ParticipantAvatar] identity: ', identity, ' ', avatarSrc);
