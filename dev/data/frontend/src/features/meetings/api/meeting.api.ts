@@ -2,84 +2,85 @@ import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
 
 const base = API_CONFIG.endpoints.meetings;
+const usersBase = API_CONFIG.endpoints.users.base;
 
 export const meetingApi = {
-  // =====================
-  // CORE MEETINGS
-  // =====================
+    // =====================
+    // CORE MEETINGS
+    // =====================
 
-  getAllMeetings() {
-    return apiClient.get(`${base}`);
-  },
+    getAllMeetings() {
+    	return apiClient.get(`${base}`);
+    },
 
-  getMeetingById(meetId: string) {
-    return apiClient.get(`${base}/${meetId}`);
-  },
+    getMeetingById(meetId: string) {
+    	return apiClient.get(`${base}/${meetId}`);
+    },
 
-  createMeeting(data: {
-    workspaceId: string;
-    spaceId: string;
-    meetTitle: string;
-    meetDesc?: string;
-    meetStart: string;
-    meetEnd: string;
-    participants?: string[];
-  }) {
-    return apiClient.post(`${base}`, data);
-  },
+    createMeeting(data: {
+		spaceId: string;
+		meetTitle: string;
+		meetDesc?: string;
+		meetStart: string;
+		meetEnd: string;
+    }) {
+    	return apiClient.post(`${base}`, data);
+    },
 
-  updateMeeting(data: {
-    meetId: string;
-    meetTitle?: string;
-    meetDesc?: string;
-    meetStart?: string;
-    meetEnd?: string;
-    addParticipants?: string[];
-  }) {
-    return apiClient.put(`${base}`, data);
-  },
+    updateMeeting(data: {
+		meetId: string;
+		meetTitle?: string;
+		meetDesc?: string;
+		meetStart?: string;
+		meetEnd?: string;
+    }) {
+    	return apiClient.patch(`${base}`, data);
+    },
 
-  deleteMeeting(meetId: string) {
-    return apiClient.delete(`${base}/${meetId}`);
-  },
+    deleteMeeting(meetId: string) {
+    	return apiClient.delete(`${base}/${meetId}`);
+    },
 
-  // =====================
-  // USER SCOPES
-  // =====================
+    // =====================
+    // USER SCOPES
+    // =====================
 
-  getMyMeetings(userId: string) {
-    return apiClient.get(`${base}/user/${userId}`);
-  },
+    getMyMeetings(userId: string) {
+    	return apiClient.get(`${base}/user/${userId}`);
+    },
 
-  getJoinedMeetings(userId: string) {
-    return apiClient.get(`${base}/participant/${userId}`);
-  },
+    getJoinedMeetings(userId: string) {
+    	return apiClient.get(`${base}/participant/${userId}`);
+    },
 
-  // =====================
-  // PARTICIPANTS
-  // =====================
+    // =====================
+    // PARTICIPANTS
+    // =====================
 
-  updateParticipant(data: {
-    meetId: string;
-    targetUserId: string;
-    role?: string;
-    attendance?: boolean;
-  }) {
-    return apiClient.patch(`${base}/participant`, data);
-  },
+    syncParticipants(data: {
+		meetId: string;
+		participants: {
+			userId: string;
+			role: "organiser" | "participant";
+			attendance: "present" | "absent" | "pending";
+		}[];
+    }) {
+      	return apiClient.patch(`${base}/participants`, data);
+    },
 
-  removeParticipant(meetId: string, targetUserId: string) {
-    return apiClient.delete(`${base}/participant`, {
-      data: { meetId, targetUserId },
-    });
-  },
+    // =====================
+    // FEATURES
+    // =====================
 
-  // =====================
-  // FEATURES
-  // =====================
+    toggleMeetingPin(meetId: string) {
+      	return apiClient.patch(`${base}/pin/${meetId}`);
+    },
 
-  toggleMeetingPin(meetId: string) {
-    return apiClient.patch(`${base}/pin/${meetId}`);
-  },
+    // =====================
+    // USERS
+    // =====================
+    allUsers() {
+      	return apiClient.get(`${usersBase}`);
+    }
 
 };

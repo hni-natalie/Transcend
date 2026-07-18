@@ -17,9 +17,12 @@ const { apiClient }         = require('../api/api.client.js')
 const { updateSocketId }    = require('./supabase-utils.service.js')
 const players     = new Map();
 const rooms       = new Map();      // Map<roomName, roomPlayers>
+let ioInstance = null;
 
 // socket io setup
 const socketService = (io) => {
+  ioInstance = io;
+
   io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
     // /*debug*/ console.log('Token received:', token ? 'Yes' : 'No');
@@ -122,7 +125,7 @@ const socketService = (io) => {
 
     
     // Generate room-specific token
-    const token = await generateRoomToken(roomName, player.name);
+    const token = await generateRoomToken(roomName, player.id, player.name);
 
     // either setRoomPlayers in existing-room-players or room-joined
     socket.emit('room-joined', {
@@ -211,7 +214,16 @@ const socketService = (io) => {
 // within socket
 }
 
+const getIO = () => {
+    if (!ioInstance) {
+        throw new Error("Socket.IO is not initialized");
+    }
+
+    return ioInstance;
+};
+
 module.exports = {
 	players,
 	socketService,
+  getIO
 };

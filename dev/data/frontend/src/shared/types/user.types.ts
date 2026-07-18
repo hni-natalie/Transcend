@@ -83,6 +83,7 @@ export type Position = {
 
 export type Player = {
 	id: string;
+    userId?: string;
 	name?: string;
 	roomName?: string;
 	position: Position;

@@ -24,6 +24,7 @@ Before running this project, ensure the following is installed:
 - [Fixing positionalAudio with webRTC](https://discourse.threejs.org/t/positionalaudio-setmediastreamsource-with-webrtc-question-not-hearing-any-sound/14301/40)
 - [ThreeJS Positional Audio Documentation](https://threejs.org/docs/#PositionalAudio)
 - [Raycasting move to mouse click](https://github.com/WaelYasmina/spaceship/blob/main/src/js/scripts.js)
+- [d3 for tree layout](https://d3js.org/d3-hierarchy/tree)
 
 ## Team Information
 | Team Member | Role |

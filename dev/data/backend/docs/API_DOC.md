@@ -67,11 +67,11 @@ Most endpoints require a JWT token in the Authorization header:
 ### Meetings 
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|--------|
-| GET | `/meetings` | List departments | Any authenticated |
-| GET | `/meetings/:id` | Get department| Any authenticated |
-| GET | `/meetings/organiser/:userId` | Get department that created by specific user | Any authenticated |
-| GET | `/meetings/participant/:userId` | Get department that inivited by specific user | Any authenticated |
-| POST | `/meetings/` | Create department | Any authenticated |
+| GET | `/meetings` | List meetings | Any authenticated |
+| GET | `/meetings/:id` | Get specific meeting | Any authenticated |
+| GET | `/meetings/organiser/:userId` | Get meetings that created by specific user | Any authenticated |
+| GET | `/meetings/participant/:userId` | Get meetings that inivited by specific user | Any authenticated |
+| POST | `/meetings/` | Create meeting | Any authenticated |
 | PUT | `/meetings/` | Edit meeting | Any authenticated |
 | PUT | `/meetings/participant/` | Edit meeting participant | Any authenticated |
 | DELETE | `/meetings/:meetId` | Delete meeting | Any authenticated |

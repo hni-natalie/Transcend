@@ -1,4 +1,5 @@
 const meetingService = require('../services/meeting.service');
+const { getIO } = require("../services/socket.service");
 
 const meetingController = {
     async getAllMeetings(req, res) {
@@ -71,16 +72,15 @@ const meetingController = {
     async createMeeting(req, res) {
         try {
             const {
-                workspaceId,
                 spaceId,
                 meetTitle,
                 meetDesc,
                 meetStart,
-                meetEnd,
-                participants = []
+                meetEnd
             } = req.body;
 
             const userId = req.user.userId;
+            const workspaceId = req.user.workspaceId;
 
             const meeting = await meetingService.createMeeting({
                 workspaceId,
@@ -89,9 +89,10 @@ const meetingController = {
                 meetTitle,
                 meetDesc,
                 meetStart,
-                meetEnd,
-                participants
+                meetEnd
             });
+
+            getIO().emit("meetingUpdated");
 
             return res.status(201).json({ success: true, data: meeting });
         } catch (error) {
@@ -106,8 +107,7 @@ const meetingController = {
                 meetTitle,
                 meetDesc,
                 meetStart,
-                meetEnd,
-                addParticipants = []
+                meetEnd
             } = req.body;
 
             const userId = req.user.userId;
@@ -119,10 +119,11 @@ const meetingController = {
                     meetTitle,
                     meetDesc,
                     meetStart,
-                    meetEnd,
-                    addParticipants
+                    meetEnd
                 }
             );
+
+            getIO().emit("meetingUpdated");
 
             return res.status(200).json({ success: true, data: meeting });
         } catch (error) {
@@ -130,47 +131,33 @@ const meetingController = {
         }
     },
 
-    async updateParticipant(req, res) {
+    async syncParticipants(req, res) {
         try {
             const {
                 meetId,
-                targetUserId,
-                role,
-                attendance 
+                participants
             } = req.body;
 
             const userId = req.user.userId;
 
-            const result = await meetingService.updateParticipant(
+            const result = await meetingService.syncParticipants(
                 meetId,
                 userId,
-                {
-                    userId: targetUserId,
-                    role,
-                    attendance
-                }
+                participants
             );
 
-            return res.status(200).json({ success: true, data: result });
+            getIO().emit("meetingUpdated");
+
+            return res.status(200).json({
+                success: true,
+                data: result
+            });
+
         } catch (error) {
-            return res.status(500).json({ success: false, message: error.message });
-        }
-    },
-
-    async removeParticipant(req, res) {
-        try {
-            const { meetId, targetUserId } = req.body;
-            const userId = req.user.userId;
-
-            const result = await meetingService.removeParticipant(
-                meetId,
-                userId,
-                targetUserId
-            );
-
-            return res.status(200).json({ success: true, data: result });
-        } catch (error) {
-            return res.status(500).json({ success: false, message: error.message });
+            return res.status(500).json({
+                success: false,
+                message: error.message
+            });
         }
     },
 
@@ -180,6 +167,8 @@ const meetingController = {
             const userId = req.user.userId;
 
             const result = await meetingService.deleteMeeting( meetId, userId );
+
+            getIO().emit("meetingUpdated");
 
             return res.status(200).json({ success: true, data: result });
         } catch (error) {
