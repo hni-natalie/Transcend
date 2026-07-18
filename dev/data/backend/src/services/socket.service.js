@@ -44,7 +44,7 @@ const socketService = (io) => {
   console.log(`Player connected lobby: ${socket.id} ${socket.user.userName}`);
 
   // logout duplicate sessions
-  if (socket.user.userStatus === 'online') {
+  if (socket.user.userStatus !== 'offline') {
     console.log('[socket.service] duplicate login detected! ', socket.user.socketId);
     io.to(socket.user.socketId).emit('force-logout', {
       message: `Logged in at another device, logging out now...`,
@@ -169,7 +169,7 @@ const socketService = (io) => {
       handleLeaveRoom(socket, player, player.roomName)
     players.delete(socket.id);
     socket.broadcast.emit('player-left', { id:socket.id }); // send to all clients globally
-    updateSocketId(null, socket.user.userId, 'offline');
+    updateSocketId(socket.id, socket.user.userId, 'offline');
     socket.emit('online-status', {status: 'offline'});
   });
 

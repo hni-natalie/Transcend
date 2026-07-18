@@ -2,7 +2,7 @@ import React from 'react';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { Landing, Login, Terms, Privacy,
 		AdminDashboard, AdminUserManagement, SpaceManagement, AdminActivity,
-		UserDashboard, Office, OfficeRoom, Tasks, Meetings, Messages, UserSettings 
+		UserDashboard, Office, OfficeRoom, Tasks, Meetings, Messages, UserSettings, UserMeetingRoom 
 		} from '@pages';
 
 export interface RouteConfig {
@@ -125,6 +125,12 @@ export const routes: RouteConfig[] = [
 		path: R.USER_SETTINGS,
 		element: <UserSettings />,
 		title: 'Settings · User · WorkFrom,',
+		requiresAuth: true,
+	},
+	{
+		path: R.USER_VIDEOCALL,
+		element: <UserMeetingRoom />,
+		title: 'Video Call · User · WorkFrom,',
 		requiresAuth: true,
 	},
 ]

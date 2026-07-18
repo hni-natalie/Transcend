@@ -2,11 +2,9 @@ import React, { ReactElement, useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { adminMenuConfig, userMenuConfig } from '@config/menu.config';
 import { useAuth } from '@/features/auth';
-import { authService } from '@features/auth/auth.service';
 import { UserChip } from '@features/users';
 import { MenuConfig, MenuItem, IconCollapse, IconLogout, LoadingState, useUserLocation, UserBackendStatus, UserChipItem  } from '@shared';
 import { useLiveKit } from '@features/livekit'
-import { useSocket } from '@/context/SocketContext';
 import { useUserStatusSync } from '@shared';
 
 const getMenuForPath = ( pathname:string ): MenuConfig => {
