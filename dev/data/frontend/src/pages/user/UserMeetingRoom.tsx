@@ -26,7 +26,7 @@ import '@livekit/components-styles';
 export function UserMeetingRoom() {
   const [room, setRoom] = useState(null);
   const location = useLocation();
-  const { roomName } = location.state || 'Default Meeting';
+  const { roomName, meetingTitle } = location.state || 'Default Meeting';
   // const roomName = '42 Transcend Discussion'
   const { isConnectedRoom, getLivekitRoom } = useLiveKit(roomName);
 
@@ -49,11 +49,11 @@ export function UserMeetingRoom() {
 
       <PageHeader 
       icon={<IconMeetings className="w-7 h-7" />}
-      title={roomName}
+      title={meetingTitle}
       action={
         <ButtonVoiceRoom 
           roomName={roomName} 
-          joinText={`Join ${roomName}`}
+          joinText={`Join ${meetingTitle}`}
           leaveTo={R.USER_MEETINGS}
           showMute={false}
           mode="video"

@@ -14,6 +14,7 @@ type ButtonVoiceRoomProps = {
   joinText?: string;
   leaveText?: string;
   roomName?: string;
+  meetingTitle?: string;
   allowLeave?: boolean;
   mode?: LivekitMode;
   className?: string;
@@ -22,7 +23,7 @@ type ButtonVoiceRoomProps = {
   showMute?: boolean;
 };
 
-export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room', roomName='myroom', allowLeave=true, mode="call", className='', showMute=true, joinTo, leaveTo } : ButtonVoiceRoomProps) {
+export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room', roomName='myroom', meetingTitle='', allowLeave=true, mode="call", className='', showMute=true, joinTo, leaveTo } : ButtonVoiceRoomProps) {
   const { connect, disconnect, isConnectedRoom, isLoading, isMuted, toggleMute, joinCount } = useLiveKit(roomName);
   const { enableSocket, isConnected, localPlayerId } = useSocket();
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room',
   const handleJoin = async () => {
     if (joinTo) {
       navigate(joinTo, {
-        state: { roomName }
+        state: { roomName, meetingTitle }
       });
     }
     await connect(mode);
