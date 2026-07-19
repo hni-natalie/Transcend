@@ -187,7 +187,7 @@ class LiveKitService {
     // --------------------------------------------------------
     await this.setupRoomAudio(remoteParticipants.identity, mediaStream);
     // this.emit('audio-track-subscribed', { id: remoteParticipants.identity });
-    setReadyStreams(remoteParticipants.identity)
+    this.setReadyStreams(remoteParticipants.identity)
 
     // debug
     const tstream = this.mediaStreams.get(remoteParticipants.identity);
@@ -222,7 +222,7 @@ class LiveKitService {
     }
 
     // this.emit('audio-track-unsubscribed', { id: remoteParticipants.identity });
-    deleteReadyStreams(remoteParticipants.identity)
+    this.deleteReadyStreams(remoteParticipants.identity)
   }
 
   handleCall(track, remoteParticipants) {

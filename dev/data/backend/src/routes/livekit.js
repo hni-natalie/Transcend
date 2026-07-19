@@ -4,7 +4,7 @@ const router        = require('express').Router();
 const roomService   = new RoomServiceClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
 
 
-async function generateRoomToken(roomName, participantName) {
+async function generateRoomToken(roomName, participantIdentity, participantName) {
     if (!roomName || !participantName) {
         return res.status(400).json({ error: 'Missing roomName or participantName' });
     }
@@ -12,7 +12,8 @@ async function generateRoomToken(roomName, participantName) {
         LIVEKIT_API_KEY,
         LIVEKIT_API_SECRET,
         {
-            identity: participantName,
+            identity: participantIdentity,
+            name: participantName,
             ttl: '6h', // token expiration
         }
     );
