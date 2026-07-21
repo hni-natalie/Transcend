@@ -54,8 +54,10 @@ export function useLiveKit( roomName:string ) {
     calls socket.emit join-room to backend, backend creates room token
     then route back to connectToRoom in livekitService, create Room() in frontend
   */
+ 
   const connect = async ( mode:LivekitMode ) => {
 
+    console.log("🔥 useLiveKit connect called", { roomName, mode });
     setIsLoading(true)
     setIsMuted(livekitService.audioManager.getMuteState());
     livekitService.init(mode); // init once only
@@ -64,6 +66,7 @@ export function useLiveKit( roomName:string ) {
     // below runs & wait for livekit-connect signal if success
     // handles isLoading state in connectToRoom
     joinRoom(roomName);
+    console.log("🔥 joinRoom emitted");
   };
 
   const createRoom = () => {

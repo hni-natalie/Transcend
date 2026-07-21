@@ -256,66 +256,65 @@ class LiveKitService {
       if (this._room && this._room.state === 'connected') {
         console.warn('Existing room found! Disconnecting before start new connection');
         await this._room.disconnect();
-        await new Promise(resolve => setTimeout(resolve, 500)); // delay
       }
-      else {
-        this._room = new Room();
 
-        /* *************************************************************
-         * Set up Listeners for remote track
-         * *************************************************************/
-        this._room.on(RoomEvent.TrackSubscribed, (track, publication, remoteParticipants) => {
-          console.log(`Track subscribed from ${remoteParticipants.identity}`);
-          
-          if (track.kind === Track.Kind.Audio) {
-            // console.log(`Check audio participant ${remoteParticipants.identity}`);
-            if (mode === "call")
-              this.handleCall(track, remoteParticipants);
-            else if (mode === "room") {
-              this.handleRoom(track, remoteParticipants);
-            }
-          }
-        });
+      this._room = new Room();
+
+      /* *************************************************************
+        * Set up Listeners for remote track
+        * *************************************************************/
+      this._room.on(RoomEvent.TrackSubscribed, (track, publication, remoteParticipants) => {
+        console.log(`Track subscribed from ${remoteParticipants.identity}`);
         
-        this._room.on(RoomEvent.TrackUnsubscribed, (track, publication, remoteParticipants) => {
-          if (track.kind === Track.Kind.Audio) {
-            if (mode === "call")
-              this.handleLeaveCall(track, remoteParticipants);
-            else if (mode === "room")
-              this.handleLeaveRoom(track, remoteParticipants);
+        if (track.kind === Track.Kind.Audio) {
+          // console.log(`Check audio participant ${remoteParticipants.identity}`);
+          if (mode === "call")
+            this.handleCall(track, remoteParticipants);
+          else if (mode === "room") {
+            this.handleRoom(track, remoteParticipants);
           }
-        });
-
-        this._room.on(RoomEvent.TrackMuted, (publication, participant) => {
-          console.log(`${participant.identity} muted their ${publication.kind} track`);
-          // Update UI to show muted state
-        });
-
-        this._room.on(RoomEvent.TrackUnmuted, (publication, participant) => {
-          console.log(`${participant.identity} unmuted their ${publication.kind} track`);
-          // Update UI to show unmuted state
-        });
-
-        // Run once when room connected Check existing participants
-        this._room.once(RoomEvent.Connected, () => {
-          console.log('Room connected, participants in room:', this._room.remoteParticipants);
-        });
-
-        /* *************************************************************
-         * Connect to room
-         * *************************************************************/
-        try {
-          await this._room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
-
-          if (mode === "video")
-            this._room.localParticipant.enableCameraAndMicrophone(); // ###
-          else
-            await this.audioManager.initMicrophone(this._room);
-        } catch (error) {
-          console.error('LiveKit connection failed:', error);
-          window.location.reload();
         }
+      });
+      
+      this._room.on(RoomEvent.TrackUnsubscribed, (track, publication, remoteParticipants) => {
+        if (track.kind === Track.Kind.Audio) {
+          if (mode === "call")
+            this.handleLeaveCall(track, remoteParticipants);
+          else if (mode === "room")
+            this.handleLeaveRoom(track, remoteParticipants);
+        }
+      });
+
+      this._room.on(RoomEvent.TrackMuted, (publication, participant) => {
+        console.log(`${participant.identity} muted their ${publication.kind} track`);
+        // Update UI to show muted state
+      });
+
+      this._room.on(RoomEvent.TrackUnmuted, (publication, participant) => {
+        console.log(`${participant.identity} unmuted their ${publication.kind} track`);
+        // Update UI to show unmuted state
+      });
+
+      // Run once when room connected Check existing participants
+      this._room.once(RoomEvent.Connected, () => {
+        console.log('Room connected, participants in room:', this._room.remoteParticipants);
+      });
+
+      /* *************************************************************
+        * Connect to room
+        * *************************************************************/
+      try {
+        await this._room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
+
+        if (mode === "video")
+          await this._room.localParticipant.enableCameraAndMicrophone();
+        else
+          await this.audioManager.initMicrophone(this._room);
+      } catch (error) {
+        console.error('LiveKit connection failed:', error);
+        window.location.reload();
       }
+
       // this.emit('connected', { room: this._room }); // ###
       console.log('Connected to room:', this._room);
       setTimeout(() => {
@@ -345,17 +344,16 @@ class LiveKitService {
       try {
         await this._room.disconnect();
         this._room = null;
-        await new Promise(resolve => setTimeout(resolve, 1500)); // blocking
-        // this.emit('disconnected', { room: this._room });
-        setTimeout(() => {
-          this.setActivePlane(null);
-          this.setIsConnectedRoom(false);
-          this.setIsLoading(false);
-        }, 2000)
+
+        this.setActivePlane(null);
+        this.setIsConnectedRoom(false);
+        this.setIsLoading(false);
+
         this.audioManager.cleanup();
         this.mediaStreams.clear();
         this.positionalAudios.clear();
-        console.log('Disconnected from room');
+
+        console.log("Disconnected from room");
       } catch (error) {
         console.error('Disconnection failed: ', error, ' reloading page...');
         window.location.reload();

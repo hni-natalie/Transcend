@@ -147,7 +147,7 @@ export const MeetingColumn = ({
                   {/* <button className="flex-1 bg-accent-lime text-surface-primary text-xs font-semibold py-1.5 rounded-lg">
                     Start
                   </button> */}
-                  <ButtonVoiceRoom className='btn-header' joinText='Start' roomName={meeting.id} meetingTitle={meetTitle} mode='video' joinTo={`${R.USER_VIDEOCALL}`}/>
+                  <ButtonVoiceRoom className='btn-header' joinText='Start' roomName={meeting.id} meetingTitle={meeting.title} mode='video' joinTo={`${R.USER_VIDEOCALL}`}/>
 
                 <button 
                   onClick={() => onEdit?.(meeting.id)}
