@@ -10,7 +10,7 @@ import React, { useRef, useState, useEffect, RefObject } from 'react';
 import * as THREE from 'three';
 import { useSocket } from '@/context/SocketContext';
 import { useKeyboard } from '@/context/KeyboardContext';
-import { Player } from '@shared/types/user.types';
+import { Player, getInitials } from '@/shared';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { useTextWidth } from '@/features/office/hooks/useTextWidth';
 
@@ -169,20 +169,34 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 	return (
 		<>
 		{/* plane mesh need rotation as default position = facing z pos */}
-		<mesh
+		<group
 			ref={characterRef} // only for localPlayer
 			position={[position.x, position.y, position.z]}
 			rotation={[-Math.PI / 2, 0, 0]}
 		  onPointerOver={() => setHovered(true)}
 			onPointerOut={() => setHovered(false)}
 		>
-			{/* main circle */}
-			<circleGeometry args={[conf.Player.radius, conf.Player.segments]} />
-			{texture ? (
-			<meshStandardMaterial map={texture} color="#FFFFFF" side={THREE.DoubleSide} />
-			) : (
-				<meshStandardMaterial color={color} side={THREE.DoubleSide} /> 
-			)}
+			<mesh>
+				{/* main circle */}
+				<circleGeometry args={[conf.Player.radius, conf.Player.segments]} />
+				{texture ? (
+				<meshStandardMaterial map={texture} color="#FFFFFF" emissive="#1A1A1A" side={THREE.DoubleSide} />
+				) : (
+					<>
+					<meshStandardMaterial color="#78805E" side={THREE.DoubleSide} /> 
+					<Text
+						color="#D0F05C"
+						position={[0, 0, 0.3]}
+						font="/font/Plus_Jakarta_Sans/PlusJakartaSans-VariableFont_wght.ttf"
+						fontWeight={800}
+					>
+						{getInitials(name)}
+					</Text>
+					</>
+				// ) : (
+					// <meshStandardMaterial color={color} side={THREE.DoubleSide} /> 
+				)}
+			</mesh>
 
 			{/* Ring outline on hover */}
 			{hovered && (
@@ -202,6 +216,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 				</mesh>
 				<Text
 					ref={(ref) => textRef.current[0] = ref}
+					font="/font/Plus_Jakarta_Sans/PlusJakartaSans-VariableFont_wght.ttf"
 					fontSize={0.6}
 					color="white"
 					onSync={() => getTextWidth(0)}
@@ -209,7 +224,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 	  	</group>
 			)}
 
-		</mesh>
+		</group>
 		</>
 	);
 })

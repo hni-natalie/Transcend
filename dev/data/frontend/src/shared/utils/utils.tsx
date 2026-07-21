@@ -1,11 +1,25 @@
-import { DropdownChoice } from '@/shared/types/ui.types';
-
 export function normalizeOptions(departments: string[]) {
   return departments.map(dept => ({
     id: dept.toLowerCase().replace(/\s+/g, '_'),
     name: dept
   }));
 }
+
+export function getInitials( name:string ) {
+  const nameParts = name.trim().split(' ');
+  
+  if (nameParts.length >= 2) {
+    const firstInitial = nameParts[0].charAt(0).toUpperCase();
+    const lastInitial = nameParts[nameParts.length - 1].charAt(0).toUpperCase();
+    return firstInitial + lastInitial;
+  }
+  
+  if (nameParts.length === 1 && nameParts[0].length >= 2) {
+    return nameParts[0].substring(0, 2).toUpperCase();
+  }
+  
+  return name.charAt(0).toUpperCase();
+};
 
 // export const normalizeChoices = (choices: any[]): DropdownChoice[] => 
 //   choices.map(choice => {

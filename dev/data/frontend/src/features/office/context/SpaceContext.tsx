@@ -188,6 +188,7 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 						</mesh>
 						<Text
 							ref={(ref) => textRef.current[i] = ref}
+							font="/font/Plus_Jakarta_Sans/PlusJakartaSans-VariableFont_wght.ttf"
 							fontSize={0.6}
 							color="white"
 							onSync={() => getTextWidth(i)}
