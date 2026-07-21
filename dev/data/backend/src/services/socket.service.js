@@ -64,11 +64,13 @@ const socketService = (io) => {
     id: socket.id,
     userId: socket.user.userId,
     name: socket.user.userName || socket.id, // 'GetUsersNameAPI'
+    dpId: socket.user?.department?.dpId || 'guest',
     roomName: null,
     position: { x:0, y:0, z:0 },
     rotation: { x:-Math.PI/2, y:0, z:0 },
     color: randomHslColor(),
-    photo: socket.user.avatarUrl || null,
+    photo: socket.user.avatarUrl || '',
+    // 'https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg',
     audioEnabled: true,
     speaking: false,
   });
@@ -125,7 +127,7 @@ const socketService = (io) => {
 
     
     // Generate room-specific token
-    const token = await generateRoomToken(roomName, player.id, player.name);
+    const token = await generateRoomToken(roomName, player.id, player.name); // ###
 
     // either setRoomPlayers in existing-room-players or room-joined
     socket.emit('room-joined', {

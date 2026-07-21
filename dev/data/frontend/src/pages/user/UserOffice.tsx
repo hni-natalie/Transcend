@@ -5,9 +5,10 @@ import { PerspectiveCamera, MapControls, SpotLight } from '@react-three/drei';
 import { useSocket } from '@/context/SocketContext';
 import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
-import { GenerateDept, CameraTracking, Character } from '@features/office';
+import { GenerateDept, CameraTracking, SpawnCharacter } from '@features/office';
 import { KeyboardProvider } from '@/context/KeyboardContext';
 import { officeSceneConfig as conf } from '@/config/office.config';
+import { SpaceProvider } from '@/features/office/context/SpaceContext';
 
 // Main Scene
 interface SpaceProps {
@@ -26,10 +27,12 @@ export function Office({ roomName } : SpaceProps ) {
 	const clickPoint = useRef(null);
 	const hasMouseMoved = useRef(false);
 	const hasMouseDown = useRef(false);
+	const listenerRef = useRef<THREE.AudioListener | null>(null);
 	/* ------------- general  ------------- */
   const [error, setError] = useState<string>('');
-	const listenerRef = useRef<THREE.AudioListener | null>(null);
 	const isConnectedRoomRef = useRef(isConnectedRoom);
+	// const { planes } = useOfficeSpace();
+
 
 	const handleUncaughtRejection = async ( event:PromiseRejectionEvent ) => {
 		if (event.reason?.name === 'NegotiationError' ||
@@ -104,12 +107,7 @@ export function Office({ roomName } : SpaceProps ) {
 		// console.log('Mouse up! Mouse move: ', hasMouseMoved.current);
 	};
 
-
-	// for testing only
-	// should remove MenuSide & w-full when live
 	return (
-	// <div className='bg-background-1 h-screen flex gap-0.5'>
-	// <MenuSide />
 	<KeyboardProvider>
 	<div className='flex flex-col h-full'>
       {/* Page Header */}
@@ -128,6 +126,8 @@ export function Office({ roomName } : SpaceProps ) {
 		{/* <div className='bg-background p-8 flex w-full'> */}
 		<div className='flex-1 relative'>
 			<Canvas className=''>
+				<SpaceProvider localPlayerRef={localPlayerRef} roomName={roomName}>
+
 				<PerspectiveCamera 
 				  ref={cameraRef as React.Ref<THREE.PerspectiveCamera>}
 					makeDefault
@@ -143,7 +143,7 @@ export function Office({ roomName } : SpaceProps ) {
 					zoomSpeed={0.5}
 					panSpeed={0.5}
 					minDistance={10}
-					maxDistance={80}
+					maxDistance={50}
 					minPolarAngle={0}  						// top down 90 deg
 					maxPolarAngle={Math.PI / 8} 	// slight slant, 30 deg tilt
 					minAzimuthAngle={0}						// min left rotation
@@ -181,10 +181,12 @@ export function Office({ roomName } : SpaceProps ) {
 					<meshStandardMaterial color="#6E6E6E" metalness={0.5} visible={true} />
 				</mesh>
 
-				<GenerateDept localPlayerRef={localPlayerRef} room={roomName} />
+				<GenerateDept />
 
 				{/* {isConnectedRoom && */}
-				{(roomPlayers.map(( user:Player ) => (
+				<SpawnCharacter roomName={roomName} localPlayerRef={localPlayerRef}/>
+				{/* {(roomPlayers.map(( user:Player ) => (
+					// const planePosition = getPlanePosition(user.dpId);
 					<Character
 						key={user.userId}
 	          ref={user.id === localPlayerId ? localPlayerRef : null}
@@ -192,21 +194,24 @@ export function Office({ roomName } : SpaceProps ) {
 						name={user.name}
 						color={user.color}
 						position={user.position} // need user.position to receive socketio remote pos updates
+						// position={user.position || planePosition} // need user.position to receive socketio remote pos updates
 						photo={user.photo}
 						isLocalPlayer={user.id === localPlayerId}
 						isPlayerAudioReady={isPlayerAudioReady(user.id)}
 						getPositionalAudio={getPositionalAudio}
 						listenerRef={listenerRef}
 					/>
-				)))}
+				)))} */}
 				
 				{/* Grid helper for reference */}
 				{/* <gridHelper args={[20, 20]} /> */}
+			</SpaceProvider>
 			</Canvas>
 			{error && (<div className='text-danger'>{error}</div>)}
 		</div>
 
 	</div>
+
 	</KeyboardProvider>
 	);
 }

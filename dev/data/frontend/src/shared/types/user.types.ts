@@ -92,6 +92,7 @@ export type Player = {
 	photo: string;
 	audioEnabled?: boolean;
 	speaking?: boolean;
+    dpId?: string;
 }
 
 /* **************************************************************

@@ -44,7 +44,10 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 	useEffect(() => { enableSocket(); }, []);
 
 	const speed = conf.Movement.keyboard_speed; //movement speed
-	const texture = (useLoader(THREE.TextureLoader, photo) as THREE.Texture) 
+	
+	let texture = null;
+	if (photo)
+		texture = (useLoader(THREE.TextureLoader, photo) as THREE.Texture);
 
   useEffect(() => {
     if (ref && characterRef.current) {
@@ -58,7 +61,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 
 	// add listener to local player ONLY
   useEffect(() => {
-		if (!isLocalPlayer || !characterRef.current || !listenerRef) return ;
+		if (!isLocalPlayer || !characterRef.current || !listenerRef.current) return ;
 		characterRef.current.add(listenerRef.current);
 		console.log('✅ Listener attached to local player mesh');
 
@@ -71,6 +74,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
   }, [isLocalPlayer, listenerRef]);
 
 	// add positional audio to remote player ONLY
+	// ### if remotePlayer.audioEnabled = false, return
   useEffect(() => {
     if ( !characterRef.current || isLocalPlayer || !listenerRef || !positionalAudioRef || !isPlayerAudioReady ) return;
 		
