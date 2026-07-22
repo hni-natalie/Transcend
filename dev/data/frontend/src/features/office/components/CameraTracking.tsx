@@ -30,27 +30,6 @@ export const CameraTracking = ({ localPlayerRef, controlsRef, isConnectedRoom, c
     }
   }, [controlsRef.current])
 
-  // Track key presses
-  // useEffect(() => {
-  //   const handleKeyDown = ( e:KeyboardEvent ) => {
-  //     if (!isModifierKey(e.code)) {
-  //       isKeyPressed.current = true
-  //     }
-  //   }
-  //   const handleKeyUp = ( e:KeyboardEvent ) => {
-  //     if (!isModifierKey(e.code)) {
-  //       isKeyPressed.current = false
-  //     }
-  //   }
-  //   window.addEventListener('keydown', handleKeyDown)
-  //   window.addEventListener('keyup', handleKeyUp)
-    
-  //   return () => {
-  //     window.removeEventListener('keydown', handleKeyDown)
-  //     window.removeEventListener('keyup', handleKeyUp)
-  //   }
-  // }, [])
-
   // character movement
   useFrame(() => {
 		if (isInteracting || !isConnectedRoom) return ;
@@ -72,9 +51,10 @@ export const CameraTracking = ({ localPlayerRef, controlsRef, isConnectedRoom, c
         if (localPlayerRef.current.position.distanceTo(clickPoint.current) < 0.1) {
           localPlayerRef.current.position.copy(clickPoint.current);
       		socket.emit('player-move', { id:localPlayerId, position:{ x:localPlayerRef.current.position.x, y:0, z:localPlayerRef.current.position.z }});
+          console.log('arrived at clickpoint ', clickPoint.current);
+
           clickPoint.current = null;
           setIsPanning(true);
-          console.log('arrived at clickpoint')
         }
         // 1.2. Update camera to follow player DURING movement
         if (controlsRef.current && !isPanning) {
