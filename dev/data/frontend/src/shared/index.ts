@@ -3,6 +3,7 @@ export { useAvatarUpload } from './hooks/useAvatarUpload'
 export { useRolesAndDepartments } from './hooks/useRolesAndDepartments';
 export { useUserLocation } from './hooks/useUserLocation';
 export { useUserStatusSync } from './hooks/useUserStatusSync'
+export { useUsers } from './hooks/useUsers'
 
 // utils
 export { normalizeOptions } from './utils/normalizeOptions'

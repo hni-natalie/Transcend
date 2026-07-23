@@ -21,7 +21,7 @@ function AppRoutes() {
   const protectedRoutes = routes.filter(route => route.requiresAuth);
 
   return (
-    <div className="w-full min-h-screen flex flex-col bg-background text-foreground overflow-x-hidden">
+    <div className="w-full overflow-x-hidden">
       <Routes>
         {/* Guest-only routes (login page) - redirects if logged in */}
         {guestRoutes.map(route => (
