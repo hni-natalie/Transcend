@@ -4,7 +4,7 @@ const spaceService = require('../services/space.service');
 const spaceController = {
     async getAllSpaces(req, res) {
         try {
-            const spaces = await spaceService.getAllSpaces();
+            const spaces = await spaceService.getAllSpaces(req.workspaceId);
             return res.status(200).json({ success: true, data: spaces });
         } catch (error) {
             return res.status(500).json({ success: false, message: error.message });

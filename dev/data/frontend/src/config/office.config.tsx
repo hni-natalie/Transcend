@@ -11,7 +11,7 @@ export const officeSceneConfig = {
 		click_speed: 0.04,
 	},
 	World: {
-		width: 50,
+		width: 120,
 		height: 50,
 		border: 10, // *0.2
 	},

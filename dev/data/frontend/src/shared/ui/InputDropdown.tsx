@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, ChangeEvent } from 'react';
+import { DropdownChoice } from '@shared/types/ui.types';
 import { IconDown } from './Icons';
 
-export interface DropdownChoice {
-  id: string;
-  name: string;
-}
+// export interface DropdownChoice {
+//   id: string;
+//   name: string;
+// }
 
 interface InputDropdownProps {
   title: string;

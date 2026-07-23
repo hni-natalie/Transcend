@@ -8,6 +8,7 @@ import { livekitService } from '@/features/livekit/services/livekitService';
 import { useLocation } from 'react-router-dom';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useSocket } from '@/context/SocketContext';
+import { LivekitMode } from '@/shared/types/livekit.types';
 import * as THREE from 'three'; //debug
 
 // export function useLiveKit( roomName:string , participantName:string ) {
@@ -53,7 +54,7 @@ export function useLiveKit( roomName:string ) {
     calls socket.emit join-room to backend, backend creates room token
     then route back to connectToRoom in livekitService, create Room() in frontend
   */
-  const connect = async ( mode: "room" | "call" ) => {
+  const connect = async ( mode:LivekitMode ) => {
 
     setIsLoading(true)
     setIsMuted(livekitService.audioManager.getMuteState());
@@ -64,6 +65,10 @@ export function useLiveKit( roomName:string ) {
     // handles isLoading state in connectToRoom
     joinRoom(roomName);
   };
+
+  const createRoom = () => {
+    joinRoom(roomName);
+  }
 
   const disconnect = async ( showLoading:boolean ) => {
     if (showLoading)
@@ -102,6 +107,9 @@ export function useLiveKit( roomName:string ) {
     }
     return livekitService.mediaStreams.get(userId);
   }
+  const getLivekitRoom = () => {
+    return livekitService.lkRoom;
+  }
   const setActivePlane = useCallback(( index:number | null ) => {
       livekitService.setActivePlane(index);
   }, []);
@@ -115,13 +123,14 @@ export function useLiveKit( roomName:string ) {
     livekitService.setIsMuted(status);
   }, []);
 
-  return { connect, disconnect, 
+  return { connect, disconnect,
+          createRoom, 
           toggleMute, setActivePlane,
           isMuted: state.isMuted, isLoading: state.isLoading, joinCount: state.joinCount, 
           activePlane: state.activePlane,
           isConnectedRoom: state.isConnectedRoom,
           isPlayerAudioReady,
-          getMediaStream, getPositionalAudio, getAudioListener
+          getMediaStream, getPositionalAudio, getAudioListener, getLivekitRoom
         };
 }
 

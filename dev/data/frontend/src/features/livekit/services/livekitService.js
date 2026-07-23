@@ -25,7 +25,7 @@ for reference:
 
 class LiveKitService {
   constructor() {
-    this.room = null;
+    this._room = null;
     this.audioElements = new Map();         // map for all audio tracks in room
     this.mediaStreams = new Map();          // map for all media streams in room
     this.positionalAudios = new Map();      // map for all positional audios in room
@@ -48,6 +48,7 @@ class LiveKitService {
   get joinCount() { return this._state.joinCount; }
   get isLoading() { return this._state.isLoading; }
   get readyStreams() { return this._state.readyStreams; }
+  get lkRoom() { return this._room; }
 
   _setState(updates) {
     this._state = { ...this._state, ...updates };
@@ -83,8 +84,8 @@ class LiveKitService {
   }
 
   /*
-    mode must be either "room" || "call"
-    room: spatial audio, call: non spatial audio
+    mode must be either "room" || "call" || "video"
+    room: spatial audio, call: non spatial audio, video: video call
   */
   init( mode ) {
     if (this.isInitialized) return ;
@@ -94,8 +95,9 @@ class LiveKitService {
       try {
         // emits connected signal to useLiveKit
         await this.connectToRoom(event.detail, mode);
-        console.log('livekit-connect: Successfully joined room');
         this.isInitialized = true;
+        // this.lkToken = event.detail;
+        // console.log('livekit-connect: Successfully joined room: ', this.lkToken);
 
       } catch (error) {
         console.error('Failed to connect:', error);
@@ -185,7 +187,7 @@ class LiveKitService {
     // --------------------------------------------------------
     await this.setupRoomAudio(remoteParticipants.identity, mediaStream);
     // this.emit('audio-track-subscribed', { id: remoteParticipants.identity });
-    setReadyStreams(remoteParticipants.identity)
+    this.setReadyStreams(remoteParticipants.identity)
 
     // debug
     const tstream = this.mediaStreams.get(remoteParticipants.identity);
@@ -220,9 +222,8 @@ class LiveKitService {
     }
 
     // this.emit('audio-track-unsubscribed', { id: remoteParticipants.identity });
-    deleteReadyStreams(remoteParticipants.identity)
+    this.deleteReadyStreams(remoteParticipants.identity)
   }
-
 
   handleCall(track, remoteParticipants) {
     const audioElement = track.attach(); // creates HTML audio element so that player voice is heard
@@ -242,8 +243,9 @@ class LiveKitService {
   }
   /*
     mode has to be "room" || "call"
-    room -> creates a room with spatial audio
-    call -> creates a room with default call audio
+    room  -> creates a room with spatial audio
+    call  -> creates a room with default call audio
+    video -> creates a room with audio video
     get token from backend and handle frontend room creation
   */
   async connectToRoom({ token }, mode) {
@@ -251,18 +253,18 @@ class LiveKitService {
 		// console.log('VITE_LIVEKIT_URL: ', import.meta.env.VITE_LIVEKIT_URL)
     try {
       // Reuse existing room if possible
-      if (this.room && this.room.state === 'connected') {
+      if (this._room && this._room.state === 'connected') {
         console.warn('Existing room found! Disconnecting before start new connection');
-        await this.room.disconnect();
+        await this._room.disconnect();
         await new Promise(resolve => setTimeout(resolve, 500)); // delay
       }
       else {
-        this.room = new Room();
+        this._room = new Room();
 
         /* *************************************************************
          * Set up Listeners for remote track
          * *************************************************************/
-        this.room.on(RoomEvent.TrackSubscribed, (track, publication, remoteParticipants) => {
+        this._room.on(RoomEvent.TrackSubscribed, (track, publication, remoteParticipants) => {
           console.log(`Track subscribed from ${remoteParticipants.identity}`);
           
           if (track.kind === Track.Kind.Audio) {
@@ -275,7 +277,7 @@ class LiveKitService {
           }
         });
         
-        this.room.on(RoomEvent.TrackUnsubscribed, (track, publication, remoteParticipants) => {
+        this._room.on(RoomEvent.TrackUnsubscribed, (track, publication, remoteParticipants) => {
           if (track.kind === Track.Kind.Audio) {
             if (mode === "call")
               this.handleLeaveCall(track, remoteParticipants);
@@ -284,40 +286,43 @@ class LiveKitService {
           }
         });
 
-        this.room.on(RoomEvent.TrackMuted, (publication, participant) => {
+        this._room.on(RoomEvent.TrackMuted, (publication, participant) => {
           console.log(`${participant.identity} muted their ${publication.kind} track`);
           // Update UI to show muted state
         });
 
-        this.room.on(RoomEvent.TrackUnmuted, (publication, participant) => {
+        this._room.on(RoomEvent.TrackUnmuted, (publication, participant) => {
           console.log(`${participant.identity} unmuted their ${publication.kind} track`);
           // Update UI to show unmuted state
         });
 
         // Run once when room connected Check existing participants
-        this.room.once(RoomEvent.Connected, () => {
-          console.log('Room connected, participants in room:', this.room.remoteParticipants);
+        this._room.once(RoomEvent.Connected, () => {
+          console.log('Room connected, participants in room:', this._room.remoteParticipants);
         });
 
         /* *************************************************************
          * Connect to room
          * *************************************************************/
         try {
-          await this.room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
-          await this.audioManager.initMicrophone(this.room);
+          await this._room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
+
+          if (mode === "video")
+            this._room.localParticipant.enableCameraAndMicrophone(); // ###
+          else
+            await this.audioManager.initMicrophone(this._room);
         } catch (error) {
           console.error('LiveKit connection failed:', error);
           window.location.reload();
         }
       }
-      // this.emit('connected', { room: this.room }); // ###
-      console.log('Connected to room:', this.room);
+      // this.emit('connected', { room: this._room }); // ###
+      console.log('Connected to room:', this._room);
       setTimeout(() => {
-        console.log('pipak')
         this.setIsConnectedRoom(true);
         this.setIsLoading(false);
       }, 3000)
-      return { success: true, room: this.room };
+      return { success: true, room: this._room };
       
     } catch (error) {
       // should emit error here to standardize ###
@@ -328,20 +333,20 @@ class LiveKitService {
 
   getConnectionStatus() {
     return {
-      isConnected: this.room?.state === 'connected',
-      roomState: this.room?.state || 'disconnected',
-      roomName: this.room?.name || null
+      isConnected: this._room?.state === 'connected',
+      roomState: this._room?.state || 'disconnected',
+      roomName: this._room?.name || null
     };
   }
 
   // cleanup
   async disconnectFromRoom() {
-    if (this.room) {
+    if (this._room) {
       try {
-        await this.room.disconnect();
-        this.room = null;
+        await this._room.disconnect();
+        this._room = null;
         await new Promise(resolve => setTimeout(resolve, 1500)); // blocking
-        // this.emit('disconnected', { room: this.room });
+        // this.emit('disconnected', { room: this._room });
         setTimeout(() => {
           this.setActivePlane(null);
           this.setIsConnectedRoom(false);

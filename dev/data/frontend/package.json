@@ -10,11 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@livekit/components-react": "^2.9.23",
+    "@livekit/components-styles": "^1.2.0",
+    "@livekit/protocol": "^1.50.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@supabase/supabase-js": "^2.108.2",
     "@tailwindcss/vite": "^4.2.2",
     "axios": "^1.15.2",
+    "d3-hierarchy": "^3.1.2",
     "livekit-client": "^2.18.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -25,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@types/d3-hierarchy": "^3.1.7",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",

@@ -1,4 +1,5 @@
 import React from 'react';
+import type { SVGProps } from 'react';
 
 export interface IconProps {
   className?: string;
@@ -852,7 +853,63 @@ export const IconGroup = ({ className }: IconProps) => (
 	  stroke="currentColor" 
 	  stroke-linecap="round"
 	  stroke-linejoin="round"
+	  />
+  </svg>
+);
+
+export const IconChat = ({ className }: IconProps) => (
+  <svg 
+    className={className}
+    xmlns="http://www.w3.org/2000/svg" width={16} height={18} fill="none"
+  >
+    <path
+      fill="currentColor"
+      fillRule="evenodd"
+      d="M0 2.75A2.75 2.75 0 0 1 2.75 0h10.5A2.75 2.75 0 0 1 16 2.75v13.594a.75.75 0 0 1-1.234.572l-3.691-3.12a1.25 1.25 0 0 0-.807-.296H2.75A2.75 2.75 0 0 1 0 10.75zM2.75 1.5c-.69 0-1.25.56-1.25 1.25v8c0 .69.56 1.25 1.25 1.25h7.518c.65 0 1.279.23 1.775.65l2.457 2.077V2.75c0-.69-.56-1.25-1.25-1.25z"
+      clipRule="evenodd"
+    />
+    <path
+      fill="currentColor"
+      fillRule="evenodd"
+      d="M3 4.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"
+      clipRule="evenodd"
     />
   </svg>
 );
 
+export const IconScreenShare = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg" width={20} height={16} fill="none"
+  >
+    <path
+      fill="currentColor"
+      fillRule="evenodd"
+      d="M0 2.75A2.75 2.75 0 0 1 2.75 0h14.5A2.75 2.75 0 0 1 20 2.75v10.5A2.75 2.75 0 0 1 17.25 16H2.75A2.75 2.75 0 0 1 0 13.25zM2.75 1.5c-.69 0-1.25.56-1.25 1.25v10.5c0 .69.56 1.25 1.25 1.25h14.5c.69 0 1.25-.56 1.25-1.25V2.75c0-.69-.56-1.25-1.25-1.25z"
+      clipRule="evenodd"
+    />
+    <path
+      fill="currentColor"
+      fillRule="evenodd"
+      d="M9.47 4.22a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1-1.06 1.06l-.97-.97v4.69a.75.75 0 0 1-1.5 0V6.56l-.97.97a.75.75 0 0 1-1.06-1.06z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
+
+export const IconLockLocked = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg" width={16} height={16} fill="none"
+  >
+    <path
+      fill="currentcolor"
+      fillRule="evenodd"
+      d="M4 6.104V4a4 4 0 1 1 8 0v2.104c1.154.326 2 1.387 2 2.646v4.5A2.75 2.75 0 0 1 11.25 16h-6.5A2.75 2.75 0 0 1 2 13.25v-4.5c0-1.259.846-2.32 2-2.646M5.5 4a2.5 2.5 0 0 1 5 0v2h-5z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
+
+// export const IconChat = ({ className }: IconProps) => (
+// );

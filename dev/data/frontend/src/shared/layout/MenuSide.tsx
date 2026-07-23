@@ -2,12 +2,11 @@ import React, { ReactElement, useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { adminMenuConfig, userMenuConfig } from '@config/menu.config';
 import { useAuth } from '@/features/auth';
-import { authService } from '@features/auth/auth.service';
 import { UserChip } from '@features/users';
 import { MenuConfig, MenuItem, IconCollapse, IconLogout, LoadingState, useUserLocation, UserBackendStatus, UserChipItem  } from '@shared';
 import { useLiveKit } from '@features/livekit'
-import { useSocket } from '@/context/SocketContext';
 import { useUserStatusSync } from '@shared';
+import { useSocket } from '@/context/SocketContext';
 
 const getMenuForPath = ( pathname:string ): MenuConfig => {
   return pathname.startsWith('/admin') ? adminMenuConfig : userMenuConfig;
@@ -42,6 +41,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
   const toggleExpand = () => setIsExpanded(prev => !prev);
   const expandStatus = isExpanded ? 'expanded' : 'collapsed';
 
+  const { isConnected } = useSocket();
   const { connect, isConnectedRoom, isLoading } = useLiveKit("Office");
   const navigate = useNavigate();
   const handleJoinOffice = async ( href:string ) => {
@@ -168,8 +168,8 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
                 <button
                   onClick={() => handleJoinOffice(item.href)}
                   className={`${linkClass({ isActive:location.pathname === item.href })} w-full 
-                              ${isConnectedRoom ? '' : 'cursor-pointer'} `}
-                  disabled={isConnectedRoom || isLoading}
+                              ${isConnectedRoom || !isConnected ? '' : 'cursor-pointer'} `}
+                  disabled={isConnectedRoom || isLoading || !isConnected}
                 >
                   {linkContent(item)}
                 </button>
