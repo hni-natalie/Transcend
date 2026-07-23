@@ -285,9 +285,9 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
 );
 };
 
-const TaskCard = ({ task, onClick, onDelete,}: {
+const TaskCard = ({ task, onEdit, onDelete,}: {
   task: Task;
-  onClick: () => void;
+  onEdit: () => void;
   onDelete: (taskId: string) => void;
 }) => {
   const priority = task.assignedTo?.[0]?.taskPriority;
@@ -305,13 +305,13 @@ const TaskCard = ({ task, onClick, onDelete,}: {
     
   return (
     <div
-      onClick={onClick}
+      // onClick={onClick}
       className="relative p-6 rounded-2xl bg-[#1f1f1f]  shadow-lg hover:border-lime-300 transition-all cursor-pointer"
     >
       <div className="absolute right-6 top-6">
       <button
         onClick={(e) => {
-          e.stopPropagation();
+          // e.stopPropagation();
           setShowMenu(!showMenu);
         }}
         className="text-2xl text-gray-300"
@@ -320,21 +320,33 @@ const TaskCard = ({ task, onClick, onDelete,}: {
       </button>
 
       {showMenu && (
-        <div className="absolute right-0 mt-2 w-32 rounded-xl bg-[#2a2a2a] border border-gray-700 shadow-xl">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-
-              if (window.confirm('Delete this task?')) {
-                onDelete(task.taskId);
-              }
-
-              setShowMenu(false);
-            }}
-            className="w-full px-4 py-3 text-left text-red-400 hover:bg-[#333]"
-          >
-            Delete
+        <div className="absolute right-0 z-10 mt-2 w-24 rounded-xl bg-[#2a2a2a] p-2 shadow-xl">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onEdit();
+                setShowMenu(false);
+              }}
+              className="w-full rounded-xl px-3 py-2 text-white-400 hover:bg-[#333]"
+            >
+            Edit
           </button>
+
+          <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+
+                if (window.confirm("Delete this task?")) {
+                  onDelete(task.taskId);
+                }
+
+                setShowMenu(false);
+              }}
+              className="mt-2 w-full rounded-xl px-3 py-2 text-red-400 hover:bg-[#333]">
+              Delete
+            </button>
         </div>
       )}
     </div>
@@ -358,9 +370,9 @@ const TaskCard = ({ task, onClick, onDelete,}: {
       </p>
 
       <p className="text-lg mb-4">
-        
-        {task.taskStatus === 'done' ? 'Completed on' : 'Due on'}{' '}
-        {displayDate ? new Date(displayDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric',}): 'No due date'}
+       
+        {task.taskStatus != 'done' ? 'Due on :' : 'Completed on :'}{' '}
+        {displayDate ? new Date(displayDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric',}): '-'}
       </p>
 
       <div className="flex items-center">
@@ -411,7 +423,7 @@ const TaskColumn = ({
             <TaskCard
               key={task.taskId}
               task={task}
-              onClick={() => onTaskClick(task.taskId)}
+              onEdit={() => onTaskClick(task.taskId)}
               onDelete={onDelete}
             />
           ))
@@ -514,8 +526,8 @@ export const Tasks = () => {
 
 
       await taskApi.updateTask(taskId, data);
-      setSelectedTask(null);
       await fetchTasks();
+      setSelectedTask(null);
     } 
     catch (err: any) 
     {
