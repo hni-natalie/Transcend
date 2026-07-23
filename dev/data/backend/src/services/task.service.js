@@ -25,7 +25,22 @@ const taskService = {
 				updatedAt: true,
 				assignedTo: {
 					select: {
-						taskPriority: true
+						userId: true,
+						taskPriority: true,
+						user: {
+							select: {
+								userId: true,
+								userName: true,
+								userEmail: true,
+								avatarUrl: true,
+								role: {
+									select :{
+										roleId: true,
+										roleName: true
+									}
+								}
+							}
+						}
 					}
 				}
 			},
