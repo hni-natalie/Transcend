@@ -247,7 +247,7 @@ export const Dashboard = () => {
         </div>
 
         {/* Card 3: Tasks Today */}
-        <div className="bg-background-2 rounded-3xl p-6 space-y-1">
+        <div className="bg-background-1 rounded-3xl p-6 space-y-1">
           <span className="text-base text-foreground font-semibold">Tasks Today</span>
           <div className="mt-10">
             <span className="text-2xl font-semibold text-foreground">{tasksCompleted}</span>
@@ -257,7 +257,7 @@ export const Dashboard = () => {
         </div>
 
         {/* Card 4: Team Presence */}
-        <div className="bg-background-2 rounded-3xl p-6 space-y-1">
+        <div className="bg-background-1 rounded-3xl p-6 space-y-1">
           <span className="text-base text-foreground font-semibold">Team Presence</span>
           <div className="mt-10">
             <span className="text-2xl font-semibold text-foreground">{totalActive}</span>
@@ -307,58 +307,84 @@ export const Dashboard = () => {
           </div>
 
           {/* TRACK 2: MEETINGS */}
-          <div className="space-y-4">
-            <h2 className="text-base font-medium text-foreground ml-6 mb-7">Meetings</h2>
-            <div className="space-y-5">
-              
+		  <div className="space-y-4">
+			<h2 className="text-base font-medium text-foreground ml-6 mb-7">Meetings</h2>
+			<div className="space-y-5">
+				{upcomingMeetings.slice(0, 3).map((meeting, index) => {
+				const isFeatured = index === 0;
+				const meetingDate = new Date(meeting.meetStart);
+				const isToday = meetingDate.toDateString() === now.toDateString();
+				const isTomorrow = new Date(now.getTime() + 86400000).toDateString() === meetingDate.toDateString();
+				
+				const periodLabel = isFeatured
+					? 'Next Up'
+					: meetingDate.toLocaleDateString('en-US', { 
+						weekday: 'short', 
+						month: 'short', 
+						day: 'numeric' 
+					});
 
-              {/* MEETINGS - TO REPLACE MOCK */}
-              {upcomingMeetings.slice(0, 3).map((meeting, idx) => {
-                const isNextUp = idx === 0;
-                const meetingDate = new Date(meeting.meetStart);
-                const period =
-                  isNextUp ? 'Next Up' :
-                  meetingDate.toDateString() === now.toDateString() ? 'Today' : 'Tomorrow';
+				const dateDisplay = meetingDate.toLocaleDateString('en-US', { 
+					weekday: 'short', 
+					month: 'short', 
+					day: 'numeric' 
+				});
 
-                return (
-                  <div
-                    key={meeting.meetId}
-                    className={`p-5 rounded-2xl flex flex-col justify-between transition-all ${
-                      isNextUp ? 'bg-[#27261B] min-h-[145px]' : 'bg-[#222222] min-h-[110px]'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        isNextUp ? 'bg-[#F3C15F]/20 text-[#F3C15F]' : 'bg-[#232422] text-foreground-4'
-                      }`}>
-                        <IconMeetings 
-                          className={`w-5 h-5 ${isNextUp ? 'text-background-2' : 'text-accent-gold'} stroke-2`}
-                        />
-                      </div>
-                      <span className="text-foreground-4 text-[11px] font-normal tracking-wide">{period}</span>
-                    </div>
+				return (
+					<div
+					key={meeting.meetId}
+					className={`p-5 mr-2 rounded-2xl flex flex-col justify-between transition-all ${
+						isFeatured ? 'bg-accent-gold-bg min-h-[180px]' : 'bg-background-2 min-h-[125px]'
+					}`}
+					>
+					<div className="flex justify-between items-center">
+						<div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+						isFeatured ? 'bg-accent-gold text-accent-gold' : 'bg-accent-gold-bg text-foreground-4'
+						}`}>
+						<IconMeetings 
+							className={`w-5 h-5 ${isFeatured ? 'text-background-2' : 'text-accent-gold'} stroke-1.5`}
+						/>
+						</div>
+						<div className="text-right">
+						<span className={`text-base font-normal tracking-wide ${
+							isFeatured ? 'text-foreground-2 font-medium' : 'text-foreground-3'
+						}`}>
+							{periodLabel}
+						</span>
+						{/* Only featured shows date below the label */}
+						{isFeatured && (
+							<p className="text-base text-foreground-3 mt-0.5">
+							{dateDisplay}
+							</p>
+						)}
+						</div>
+					</div>
 
-                    <div className="flex justify-between items-end mt-4 gap-4">
-                      <h3 className={`text-sm font-medium truncate max-w-[150px] ${isNextUp ? 'text-[#F3C15F]' : 'text-foreground-3'}`}>
-                        {meeting.meetTitle}
-                      </h3>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-[11px] font-normal text-foreground-3 leading-tight">
-                          {meetingDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                        <p className="text-[10px] text-foreground-4 mt-0.5 leading-tight">
-                          {meeting.spaceName ?? 'Meeting Room'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              {upcomingMeetings.length === 0 && (
-                <div className="text-left text-foreground-3 px-6 -mt-2">No upcoming meetings</div>
-              )} 
-            </div>
-          </div>
+					<div className="flex justify-between items-end mt-4 gap-4">
+						<h3 className={`text-base font-medium truncate max-w-[170px] ${
+						isFeatured ? 'text-[#F3C15F]' : 'text-accent-gold'
+						}`}>
+						{meeting.meetTitle}
+						</h3>
+						<div className="text-right flex-shrink-0">
+						<p className={`text-base font-normal tracking-wide ${
+							isFeatured ? 'text-[#F3C15F]' : 'text-foreground-3'
+						}`}>
+							{meetingDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+						</p>
+						<p className="text-sm text-foreground-3 mt-0.5 leading-tight">
+							{meeting.spaceName ?? 'Meeting Room'}
+						</p>
+						</div>
+					</div>
+					</div>
+				);
+				})}
+				{upcomingMeetings.length === 0 && (
+				<div className="text-left text-foreground-3 px-6 -mt-2">No upcoming meetings</div>
+				)}
+			</div>
+		  </div>
 
           {/* TRACK 3: WORK TASKBOARD */}
           <div className="space-y-4">
@@ -419,7 +445,7 @@ export const Dashboard = () => {
         </div>
 
         {/* TRACK 4: TEAM CONNECTIVITY */}
-        <div className="bg-background-2 p-6 rounded-3xl flex flex-col h-full -ml-1.5">
+        <div className="bg-background-1 p-6 rounded-3xl flex flex-col h-full -ml-1.5">
           <h2 className="text-base font-semibold text-foreground flex-shrink-0">
             Team · {currentUser.department?.dpName ?? 'Team Members'}
           </h2>
