@@ -37,7 +37,7 @@ export function Settings() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-5 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-5 items-start">
 
       {/* LEFT: Side nav */}
       <SideNav
