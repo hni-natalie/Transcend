@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IconLogin, IconLogout, IconTaskAdd, IconTaskDone, IconMeetings, IconMeetingAdd, TruncatedText, getStatusPriority, getStatusColors } from '@/shared';
-import { mockSpacesProgress, presenceStream, meetingsStream, tasksStream } from '@/shared/lib/mocks/adminDashboardData';
+import { mockSpacesProgress, presenceStream, meetingsStream, tasksStream } from '@/features/admin/dashboard/adminDashboardData';
 import { DbUser, ActivityItem, SpaceRatio } from './types';
 
 
