@@ -107,14 +107,14 @@ export function Sidebar({
 
   if (isLoading) {
     return (
-      <aside className="w-[280px] shrink-0 bg-background flex flex-col mt-4 mb-2 mr-4 min-h-0">
+      <aside className="w-[254px] shrink-0 bg-background flex flex-col mt-4 mb-2 mr-4 min-h-0">
         <LoadingState message="Loading conversations..." size="small" className="flex-1" />
       </aside>
     );
   }
 
   return (
-    <aside className="w-[280px] shrink-0 bg-background flex flex-col mt-4 mb-2 mr-4 min-h-0">
+    <aside className="w-[254px] shrink-0 bg-background flex flex-col mt-4 mb-2 mr-4 min-h-0">
       <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar pb-4">
         {!hasAny ? (
           <EmptyState message="No conversations yet" size="small" />
