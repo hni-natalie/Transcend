@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FilterLayout } from '@shared';
-import { mockActivityLog } from '@/shared/lib/mocks/adminActivityData';
+import { mockActivityLog } from '@/features/admin/activity/adminActivityData';
 
 interface ActivityEvent {
   id: string;
