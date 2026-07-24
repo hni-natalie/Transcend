@@ -5,7 +5,7 @@ import { PerspectiveCamera, MapControls, SpotLight } from '@react-three/drei';
 import { useSocket } from '@/context/SocketContext';
 import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
-import { GenerateDept, CameraTracking, SpawnCharacter } from '@features/office';
+import { GenerateDept, CameraTracking, SpawnCharacter, Character } from '@features/office';
 import { KeyboardProvider } from '@/context/KeyboardContext';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { SpaceProvider } from '@/features/office/context/SpaceContext';

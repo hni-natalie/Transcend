@@ -2,14 +2,12 @@ import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useOfficeSpace } from '@features/office/context/SpaceContext';
 import { useSocket } from '@/context/SocketContext';
-import { Player } from '@shared/types/user.types';
+import { Player, addPosition } from '@shared';
 import { Character } from '@features/office';
 import { useLiveKit } from '@features/livekit';
 
 function getPlanePosition( planeRefs:any, dpId:string ) {
 
-	// console.log('[getPlanePosition] dpId ', dpId);
-  // ✅ Iterate through the Map
   for (const [index, mesh] of planeRefs.current) {
     // console.log(`Plane ${index}:`, mesh.userData);
     // console.log('Access Level:', mesh.userData.accessLevel);
@@ -39,13 +37,13 @@ return (
 	<>
 		{roomPlayers.map(( user:Player ) => {
 			const planePos = getPlanePosition(planeRefs, user.dpId);
-			// console.log('[SpawnCharacter] ', planePos);
+			// console.log('[SpawnCharacter] ', addPosition(planePos, user.position));
 			return (
 				<Character
 					key={user.userId}
 					ref={user.id === localPlayerId ? localPlayerRef : null}
 					// position={user.position} // need user.position to receive socketio remote pos updates
-					position={planePos || user.position} // need user.position to receive socketio remote pos updates
+					position={addPosition(planePos, user.position) || user.position} // need user.position to receive socketio remote pos updates
 					id={user.id}
 					name={user.name}
 					color={user.color}

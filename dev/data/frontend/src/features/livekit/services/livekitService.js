@@ -154,7 +154,7 @@ class LiveKitService {
       const pa = this.positionalAudios.get(key);
       console.log('[audio] panner position:', pa.panner.positionX?.value, pa.panner.positionY?.value, pa.panner.positionZ?.value);
       console.log('[audio] listener position:', this.audioManager.listener.position);
-      console.warn('[audio] positionalAudio parent:', pa.parent?.name ?? 'NO PARENT — not in scene graph');
+      // console.warn('[audio] positionalAudio parent:', pa.parent?.name ?? 'NO PARENT — not in scene graph', '\nkey: ', key);
   }
 
   // this runs everytime when a track is subscribed

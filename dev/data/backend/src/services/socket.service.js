@@ -11,10 +11,11 @@
 // }
 /* **************************************************************** */
 
-const { generateRoomToken } = require('../routes/livekit.js')
-const { randomHslColor }    = require('../utils/color.js');
-const { apiClient }         = require('../api/api.client.js')
-const { updateSocketId }    = require('./supabase-utils.service.js')
+const { generateRoomToken }                = require('../routes/livekit.js')
+const { randomHslColor }                   = require('../utils/color.js');
+const { apiClient }                        = require('../api/api.client.js')
+const { updateSocketId }                   = require('./supabase-utils.service.js')
+const { initializeRoomData, createPlayer } = require('../utils/socket')
 const players     = new Map();
 const rooms       = new Map();      // Map<roomName, roomPlayers>
 let ioInstance = null;
@@ -56,11 +57,11 @@ const socketService = (io) => {
 
   setTimeout(() => {
     updateSocketId(socket.id, socket.user.userId, 'online');
-    socket.emit('online-status', {status: 'online'});
+    socket.emit('online-status', { userId: socket.user.userId, status:'online' });
   }, 2000);
 
   // Initialize player, should this be in db?
-  players.set(socket.id, {
+  players.set(socket.id, createPlayer({
     id: socket.id,
     userId: socket.user.userId,
     name: socket.user.userName || socket.id, // 'GetUsersNameAPI'
@@ -73,7 +74,7 @@ const socketService = (io) => {
     // 'https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg',
     audioEnabled: true,
     speaking: false,
-  });
+  }));
   const player = players.get(socket.id);
 
   // Send current players to new connection
@@ -105,23 +106,30 @@ const socketService = (io) => {
     // ...
     // create if no room
     if (!roomData) {
-      roomData = {
-        name: roomName,
-        users: [],
-        createdAt: Date.now()
-      };
-      rooms.set(roomName, roomData);
+      roomData = await initializeRoomData(rooms, roomName);
+      console.log('created room data: ', roomData);
     }
 
     // Room-size constrains
-    if (roomData.users.length > 3) {
-      socket.emit('room-full', { roomName, maxSize:3 });
+    const roomSize = 20;
+    if (roomData.users.length > roomSize) {
+      socket.emit('room-full', { roomName, maxSize:roomSize });
       console.log('Room Full: current users: ', roomData.users)
       return;
     }
 
     player.roomName = roomName;
-    roomData.users.push(player); // append entire player obj
+
+    if (roomData?.users) {
+      const existingUserIdx = roomData?.users.findIndex(u => u.userId === player.userId);
+      console.log('[socket] existingUserIdx ', existingUserIdx);
+      if (existingUserIdx !== -1)
+        roomData.users[existingUserIdx] = player; // replace
+      else
+        roomData.users.push(player);
+    }
+    else
+      roomData.users.push(player); // append entire player obj
     socket.join(roomName);
     socket.emit('existing-room-players', roomData?.users || []); // send only to client
 

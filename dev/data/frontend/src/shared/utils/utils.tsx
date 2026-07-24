@@ -21,6 +21,16 @@ export function getInitials( name:string ) {
   return name.charAt(0).toUpperCase();
 };
 
+// Helper function
+export function addPosition(pos1, pos2) {
+  // console.log('[AddPosition] ', pos1, ' ', pos2);
+  return {
+    x: (pos1?.x || 0) + (pos2?.x || 0),
+    y: 0,
+    z: (pos1?.z || 0) + (pos2?.z || 0)
+  }
+};
+
 // export const normalizeChoices = (choices: any[]): DropdownChoice[] => 
 //   choices.map(choice => {
 //     if (typeof choice === 'string') {

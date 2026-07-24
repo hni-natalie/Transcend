@@ -46,8 +46,14 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 	const speed = conf.Movement.keyboard_speed; //movement speed
 	
 	let texture = null;
-	if (photo)
-		texture = (useLoader(THREE.TextureLoader, photo) as THREE.Texture);
+	if (photo) {
+		try {
+			texture = (useLoader(THREE.TextureLoader, photo) as THREE.Texture);
+		} catch (error) {
+      // console.warn('Failed to load texture:', error);
+			texture = null;
+		}
+	}
 
   useEffect(() => {
     if (ref && characterRef.current) {
@@ -85,6 +91,8 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 		characterRef.current.name = `player-${id}`;
 		console.log('[audio] characterRef:', characterRef.current);
 		console.log("✅ Positional audio attached to remote player mesh ", id, " ", positionalAudioRef.current.position);
+		console.warn('[audio] positionalAudio parent:', positionalAudioRef.current.parent?.name ?? 'NO PARENT — not in scene graph', '\nkey: ', id);
+
 		// const worldPos = positionalAudioRef.current.getWorldPosition(new THREE.Vector3());
 		// console.log('World position:', worldPos);
 		// --------------------------------------
@@ -186,7 +194,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 					<meshStandardMaterial color="#78805E" side={THREE.DoubleSide} /> 
 					<Text
 						color="#D0F05C"
-						position={[0, 0, 0.3]}
+						position={[0, 0, 0.2]}
 						font="/font/Plus_Jakarta_Sans/PlusJakartaSans-VariableFont_wght.ttf"
 						fontWeight={800}
 					>

@@ -49,6 +49,7 @@ export function ButtonVoiceRoom( { joinText='Join Room', leaveText='Leave Room',
   const finalClassName = className || 'btn-lime-outline'
 
 
+  // debug
   useEffect(() => {
     if (isConnected)
       console.log('local player id: ', localPlayerId)

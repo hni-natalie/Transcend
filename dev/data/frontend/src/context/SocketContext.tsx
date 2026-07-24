@@ -48,6 +48,8 @@ export function SocketProvider ({ children }) {
     socket.on('online-status', (data) => {
       setTimeout(() => {
         setIsConnected(true);
+        // console.log('FE: socketUserId ', data.userId);
+        // setLocalPlayerId(data.userId)
         // setOnlineStatus(data.status);
       }, 1000);
     });

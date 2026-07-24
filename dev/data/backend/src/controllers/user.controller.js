@@ -122,6 +122,25 @@ const userController = {
         }
     },
 
+    async getUsersByStatus(req, res) {
+        try {
+            const status = req.params.status;
+            console.log(`📥 Getting users with status: "${status}"`);
+
+            if (!status) {
+                return res.status(400).json({ error: 'User status required' });
+            }
+            const user = await userService.getUsersByStatus(status);
+            return res.json(user);
+        } catch (error) {
+            if (error.message === 'User not found') {
+                res.status(404).json({ error: error.message });
+            } else {
+                res.status(500).json({ error: error.message });
+            }
+        }
+    },
+
 	async createUser(req, res) {
 		try {
 			const { email, password, name, roleId, dpId } = req.body;

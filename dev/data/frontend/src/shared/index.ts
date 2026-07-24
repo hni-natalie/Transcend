@@ -5,7 +5,7 @@ export { useUserLocation } from './hooks/useUserLocation';
 export { useUserStatusSync } from './hooks/useUserStatusSync'
 
 // utils
-export { normalizeOptions, getInitials } from './utils/utils'
+export * from './utils/utils'
 
 // layout
 export { MenuSide } from './layout/MenuSide';
