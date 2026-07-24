@@ -38,7 +38,8 @@ class LiveKitService {
       isMuted: false,
       joinCount: 0,
       isLoading: false,
-      readyStreams: new Set()
+      readyStreams: new Set(),
+      error: null
     }
   }
 
@@ -49,34 +50,51 @@ class LiveKitService {
   get isLoading() { return this._state.isLoading; }
   get readyStreams() { return this._state.readyStreams; }
   get lkRoom() { return this._room; }
+  get error() { return this._state.error; }
 
   _setState(updates) {
     this._state = { ...this._state, ...updates };
     this.emit('stateChange', this._state);
   }
+  
   getState(){
     return { ...this._state };
   }
+
+  setError(error) {
+    this._setState({ error, isLoading: false, });
+  }
+
+  clearError() {
+    this._setState({ error: null, });
+  }
+
   setActivePlane(index){
       this._setState({ activePlane:index });
   }
+
   setIsConnectedRoom(status){
     this._setState({ isConnectedRoom:status });
   }
+
   setIsLoading(status) {
       this._setState({ isLoading:status });
   }
+
   setIsMuted(status) {
       this._setState({ isMuted:status });
   }
+
   setJoinCount(count) {
       this._setState({ joinCount:count });
   }
+
   setReadyStreams(id) {
     const newSet = new Set(this._state.readyStreams);
     newSet.add(id);
     this._setState({ readyStreams:newSet });
   }
+
   deleteReadyStreams(id) {
     const newSet = new Set(this._state.readyStreams);
     newSet.delete(id);
@@ -249,8 +267,7 @@ class LiveKitService {
     get token from backend and handle frontend room creation
   */
   async connectToRoom({ token }, mode) {
-		// debug
-		// console.log('VITE_LIVEKIT_URL: ', import.meta.env.VITE_LIVEKIT_URL)
+		this.clearError();
     try {
       // Reuse existing room if possible
       if (this._room && this._room.state === 'connected') {
@@ -311,22 +328,41 @@ class LiveKitService {
         else
           await this.audioManager.initMicrophone(this._room);
       } catch (error) {
-        console.error('LiveKit connection failed:', error);
-        window.location.reload();
+        console.error(error);
+      
+        await this._room?.disconnect();
+        this._room = null;
+
+        this.setIsConnectedRoom(false);
+        this.setIsLoading(false);
+        this.setError(error.message || "Unable to connect to meeting.");
+
+        return {
+            success: false,
+            error,
+        };
       }
 
       // this.emit('connected', { room: this._room }); // ###
       console.log('Connected to room:', this._room);
-      setTimeout(() => {
-        this.setIsConnectedRoom(true);
-        this.setIsLoading(false);
-      }, 3000)
+      // setTimeout(() => {
+      //   this.setIsConnectedRoom(true);
+      //   this.setIsLoading(false);
+      // }, 3000)
+      this.setIsConnectedRoom(true);
+      this.setIsLoading(false);
       return { success: true, room: this._room };
       
     } catch (error) {
       // should emit error here to standardize ###
-      console.error('Livekit Service: Connection failed:', error);
-      this.setIsLoading(false);
+      console.error(error);
+
+      this.setError(error.message || "Unexpected LiveKit error.");
+
+      return {
+          success: false,
+          error,
+      };
     }
   }
 

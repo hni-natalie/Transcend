@@ -41,7 +41,7 @@ export function ButtonVoiceRoom({
     isConnectedRoom,
     isLoading,
     isMuted,
-    toggleMute,
+    toggleMute
   } = useLiveKit(roomName);
 
   const { enableSocket, isConnected, localPlayerId } = useSocket();
@@ -56,31 +56,15 @@ export function ButtonVoiceRoom({
 
   useEffect(() => { enableSocket(); }, []);
 
-  useEffect(() => {
-    if (!isClicked.current) return;
+  // useEffect(() => {
+  //   if (!isClicked.current) return;
 
-    if (!hasNavigated.current && isConnectedRoom && joinTo) {
-      hasNavigated.current = true;
-      setIsJoining(false);
+  //   if (!hasNavigated.current && isConnectedRoom && joinTo) {
+  //     hasNavigated.current = true;
+  //     setIsJoining(false);
 
-      const {
-        roomName: selectedRoomName,
-        meetingTitle: selectedMeetingTitle,
-      } = selectedMeeting.current;
-
-      console.log("✅ LiveKit connected, navigating to", {
-        selectedRoomName,
-        selectedMeetingTitle,
-      });
-
-      navigate(joinTo, {
-        state: {
-          roomName: selectedRoomName,
-          meetingTitle: selectedMeetingTitle,
-        },
-      });
-    }
-  }, [isConnectedRoom, joinTo, navigate]);
+  //   }
+  // }, [isConnectedRoom, joinTo, navigate]);
 
   const handleJoin = async () => {
     console.log("🔥 Start button clicked");
@@ -95,6 +79,23 @@ export function ButtonVoiceRoom({
     console.log("Selected meeting:", selectedMeeting.current);
 
     setIsJoining(true);
+
+    const {
+      roomName: selectedRoomName,
+      meetingTitle: selectedMeetingTitle,
+    } = selectedMeeting.current;
+
+    console.log("✅ LiveKit connected, navigating to", {
+      selectedRoomName,
+      selectedMeetingTitle,
+    });
+
+    navigate(joinTo!, {
+        state: {
+          roomName: selectedRoomName,
+          meetingTitle: selectedMeetingTitle,
+        },
+      });
 
     await connect(mode);
 

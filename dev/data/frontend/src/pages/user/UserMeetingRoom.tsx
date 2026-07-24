@@ -18,7 +18,7 @@ export function UserMeetingRoom() {
     meetingTitle: 'Meeting',
   };
 
-  const { isConnectedRoom, getLivekitRoom, disconnect, isLoading } =
+  const { isConnectedRoom, getLivekitRoom, disconnect, isLoading, error } =
     useLiveKit(roomName);
 
   useEffect(() => {
@@ -41,26 +41,41 @@ export function UserMeetingRoom() {
         icon={<IconMeetings className="w-7 h-7" />}
         title={meetingTitle}
         action={
-          isConnectedRoom && (
+          error ? (
             <button
-              onClick={handleLeave}
-              disabled={isLoading}
+              onClick={() => navigate(R.USER_MEETINGS)}
               className="btn-lime-outline"
             >
-              Leave Meeting
+              Return Back
             </button>
+          ) : (
+            isConnectedRoom && (
+              <button
+                onClick={handleLeave}
+                disabled={isLoading}
+                className="btn-lime-outline"
+              >
+                Leave Meeting
+              </button>
+            )
           )
         }
       />
 
-      <div className="flex items-center justify-center h-full overflow-y-auto">
-        {!room ? (
-          <p className="text-foreground-3">
-            Connecting to meeting...
-          </p>
+      <div className="flex items-center justify-center h-full">
+        {error ? (
+          <div className="text-center">
+            <p className="text-red-500 font-semibold">
+              Failed to join meeting
+            </p>
+
+            <p>{error}</p>
+          </div>
+        ) : !room ? (
+          <p>Connecting...</p>
         ) : (
           <RoomContext.Provider value={room}>
-            <VideoConference className="flex h-full w-full justify-center" />
+            <VideoConference />
           </RoomContext.Provider>
         )}
       </div>

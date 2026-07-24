@@ -28,7 +28,7 @@ export function useLiveKit( roomName:string ) {
       
       // Subscribe to ALL state changes
       const unsubscribe = livekitService.onStateChange((newState) => {
-          // console.log('📡 State updated:', newState);
+          console.log('📡 State updated:', newState);
           setState(newState);
       });
       
@@ -58,6 +58,7 @@ export function useLiveKit( roomName:string ) {
   const connect = async ( mode:LivekitMode ) => {
 
     console.log("🔥 useLiveKit connect called", { roomName, mode });
+    livekitService.clearError();
     setIsLoading(true)
     setIsMuted(livekitService.audioManager.getMuteState());
     livekitService.init(mode); // init once only
@@ -133,7 +134,8 @@ export function useLiveKit( roomName:string ) {
           activePlane: state.activePlane,
           isConnectedRoom: state.isConnectedRoom,
           isPlayerAudioReady,
-          getMediaStream, getPositionalAudio, getAudioListener, getLivekitRoom
+          getMediaStream, getPositionalAudio, getAudioListener, getLivekitRoom,
+          error: state.error,
         };
 }
 
