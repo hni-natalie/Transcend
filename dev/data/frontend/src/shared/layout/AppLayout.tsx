@@ -15,10 +15,12 @@ export const AppLayout = () => {
     <div className='bg-background h-screen'>
       <div className='flex h-full'>
         <MenuSide conf={menuConfig} />
-		<main className='flex-1 pt-6 px-8 overflow-auto'>
+		<main className='flex-1 py-6 px-8 overflow-hidden flex flex-col'>
           <Outlet />
         </main>
       </div>
     </div>
   );
 };
+
+// main className='flex-1 pt-6 px-8 overflow-auto'

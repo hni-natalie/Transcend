@@ -9,7 +9,6 @@ datasource db {
 }
 
 // ENUMS
-
 enum UserStatus {
   offline
   online
@@ -55,6 +54,20 @@ enum MeetingStatus {
   scheduled
   started
 }
+
+// TO ADD: Messages
+// enum ConversationType {
+//   direct
+//   group
+// }
+
+// enum AttachmentKind {
+//   pdf
+//   image
+//   document
+//   video
+//   audio
+// }
 
 // MODELS
 
@@ -119,14 +132,18 @@ model User {
   // spacesKeyPerson Space? @relation("SpaceKeyPerson", fields: [spacesKeyPersonId], references: [spaceId])
   keyPersonSpaces Space[] @relation("SpaceKeyPerson")
   
-  createdMeetings Meeting[] @relation("MeetingCreatedBy")
+  createdMeetings 			Meeting[] @relation("MeetingCreatedBy")
+  meetingParticipations 	MeetingParticipant[]
+  pinnedMeetings 			MeetingPin[]
 
-  tasks            Task[]
-  assignedTasks    TaskAssignment[]
+  tasks            			Task[]
+  assignedTasks    			TaskAssignment[]
 
-  meetingParticipations MeetingParticipant[]
-
-  pinnedMeetings MeetingPin[]
+// TO ADD: Messages
+//   createdConversations       Conversation[]            @relation("ConversationCreatedBy")
+//   conversationParticipations ConversationParticipant[]
+//   messages                   Message[]
+//   conversationPins           ConversationPin[]
 }
 
 // WORKSPACE 
@@ -138,12 +155,14 @@ model Workspace {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  users       User[]
-  departments Department[]
-  spaces      Space[]
-  tasks       Task[]
-  meetings    Meeting[]
-  documents   Document[]
+  users      	User[]
+  departments	Department[]
+  spaces     	Space[]
+  tasks      	Task[]
+  meetings   	Meeting[]
+  documents   	Document[]
+// TO ADD : Messages
+//   conversations Conversation[]
 }
 
 // SPACES
@@ -317,3 +336,106 @@ model DocumentChunk {
   @@index([documentId])
   @@unique([documentId, chunkIndex])
 }
+
+// TO ADD: Messages
+// CONVERSATION
+// >>> directKey make sure that direct dms stay unique 
+// eg; A+B = convo 1, B+A = convo1 (userIdA:userIdB)
+// else; A+B = convo1, B+A = convo2
+// for group; directKey can be null
+// model Conversation {
+//   conversationId  String           @id @default(uuid())
+//   workspaceId     String
+//   type            ConversationType
+//   groupName       String?          // only set when type = group
+//   avatarUrl       String?
+//   directKey       String?          @unique
+//   createdByUserId String
+//   createdAt       DateTime         @default(now())
+//   updatedAt       DateTime         @updatedAt
+//   deletedAt       DateTime?
+
+//   workspace   	Workspace                 @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+//   createdBy		User                      @relation("ConversationCreatedBy", fields: [createdByUserId], references: [userId])
+//   participants	ConversationParticipant[]
+//   messages		Message[]
+//   pins			ConversationPin[]
+
+//   @@index([workspaceId])
+//   @@index([workspaceId, type])
+//   @@index([deletedAt])
+// }
+
+// CONVERSATION PARTICIPANT
+// leftAt allows members to be removed without losing their chat history within the group
+// their past messages still referenced via Message.authorId.
+// model ConversationParticipant {
+//   id             String    @id @default(uuid())
+//   conversationId String
+//   userId         String
+//   joinedAt       DateTime  @default(now())
+//   removedAt      DateTime?
+//   lastReadAt     DateTime?
+
+//   conversation Conversation @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
+//   user         User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+//   @@unique([conversationId, userId])
+//   @@index([userId])
+//   @@index([conversationId])
+// }
+
+// MESSAGE
+// model Message {
+//   messageId      String    @id @default(uuid())
+//   conversationId String
+//   authorId       String
+//   text           String?
+//   callNote       String?	// KIV: can remove if not implemented
+//   linkUrl        String?	// FE's message.link 
+//   createdAt      DateTime  @default(now())
+//   updatedAt      DateTime  @updatedAt
+//   deletedAt      DateTime?
+
+//   conversation Conversation       @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
+//   author       User               @relation(fields: [authorId], references: [userId])
+//   attachments  MessageAttachment[]
+
+//   @@index([conversationId, createdAt])
+//   @@index([authorId])
+//   @@index([deletedAt])
+// }
+
+// MESSAGE ATTACHMENT
+// model MessageAttachment {
+//   id          String         @id @default(uuid())
+//   messageId   String
+//   name        String
+//   kind        AttachmentKind
+//   url         String	// how the app access the file (https://storage.example.com/messages/123/abc.pdf)
+//   path        String?	// where the file lives in storage (messages/123/abc.pdf)
+//   mimeType    String?
+//   sizeInBytes Int?		// DB stores raw bits (2000000), FE converts displays correct format (2MB)
+//   createdAt   DateTime       @default(now())
+
+//   message Message @relation(fields: [messageId], references: [messageId], onDelete: Cascade)
+
+//   @@index([messageId])
+// }
+
+// CONVERSATION PIN
+// similar to meetingPin, pin is per user
+// to replace localStorage in useConversations.ts
+// model ConversationPin {
+//   pinId          String   @id @default(uuid())
+//   userId         String
+//   conversationId String
+//   createdAt      DateTime @default(now())
+
+//   user         User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
+//   conversation Conversation @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
+
+//   @@unique([userId, conversationId])
+//   @@index([userId])
+//   @@index([conversationId])
+// }
