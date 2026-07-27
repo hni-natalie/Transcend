@@ -4,6 +4,8 @@ import { RoomContext } from '@livekit/components-react';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useLiveKit, VideoConference } from '@/features/livekit';
 import { PageHeader, IconMeetings } from '@/shared';
+import { useAuth } from '@/features/auth/AuthContext';
+import { meetingApi } from '@/features/meetings/api/meeting.api';
 import '@livekit/components-styles';
 
 export function UserMeetingRoom() {
@@ -13,13 +15,16 @@ export function UserMeetingRoom() {
   const navigate = useNavigate();
   console.log("location state:", location.state);
   
-  const { roomName, meetingTitle } = location.state || {
+  const { roomName, meetingTitle, isHost } = location.state || {
     roomName: '',
     meetingTitle: 'Meeting',
+    isHost: false,
   };
 
   const { isConnectedRoom, getLivekitRoom, disconnect, isLoading, error } =
     useLiveKit(roomName);
+
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!isConnectedRoom) return;
@@ -32,6 +37,12 @@ export function UserMeetingRoom() {
 
   const handleLeave = async () => {
     await disconnect(true);
+
+    if (isHost) {
+      await meetingApi.endMeeting(roomName);
+      console.log("Meeting ended");
+    }
+
     navigate(R.USER_MEETINGS);
   };
 

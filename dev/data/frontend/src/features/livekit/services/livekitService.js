@@ -34,6 +34,7 @@ class LiveKitService {
     this.isInitialized = false;
     this._state = {
       isConnectedRoom: false,
+      currentRoomName: null,
       activePlane: null,
       isMuted: false,
       joinCount: 0,
@@ -63,6 +64,10 @@ class LiveKitService {
 
   setError(error) {
     this._setState({ error, isLoading: false, });
+  }
+
+  setCurrentRoomName(roomName) {
+    this._setState({ currentRoomName: roomName });
   }
 
   clearError() {
@@ -323,8 +328,10 @@ class LiveKitService {
       try {
         await this._room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
 
-        if (mode === "video")
+        if (mode === "video") {
           await this._room.localParticipant.enableCameraAndMicrophone();
+          this.audioManager.setRoom(this._room);
+        }
         else
           await this.audioManager.initMicrophone(this._room);
       } catch (error) {
@@ -343,13 +350,9 @@ class LiveKitService {
         };
       }
 
-      // this.emit('connected', { room: this._room }); // ###
       console.log('Connected to room:', this._room);
-      // setTimeout(() => {
-      //   this.setIsConnectedRoom(true);
-      //   this.setIsLoading(false);
-      // }, 3000)
       this.setIsConnectedRoom(true);
+      this.setCurrentRoomName(this._room.name);
       this.setIsLoading(false);
       return { success: true, room: this._room };
       
@@ -384,7 +387,7 @@ class LiveKitService {
         this.setActivePlane(null);
         this.setIsConnectedRoom(false);
         this.setIsLoading(false);
-
+        this.setCurrentRoomName(null);
         this.audioManager.cleanup();
         this.mediaStreams.clear();
         this.positionalAudios.clear();
@@ -424,7 +427,7 @@ class LiveKitService {
   emit(event, data) {
     if (this.listeners[event]) {
       this.listeners[event].forEach(callback => callback(data));
-      console.log(`📡 emit: Emitting event: ${event}`, data);
+      // console.log(`📡 emit: Emitting event: ${event}`, data);
     } else
     console.log(`📡 emit: No listeners found for ${event}`);
   }

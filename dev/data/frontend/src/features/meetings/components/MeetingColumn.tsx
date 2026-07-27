@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { ButtonVoiceRoom } from '@/features/livekit/components/ButtonVoiceRoom';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
+import type { Meeting } from '@/features/meetings/meeting.types';
 
 import {
   IconCalendar,
@@ -9,21 +10,12 @@ import {
   IconPin,
 } from '@shared';
 
-type Meeting = {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  duration: string;
-  participants: number;
-  pinned?: boolean;
-};
 
 type Props = {
   label: string;
   meetings: Meeting[];
   action: 'join' | 'transcript' | 'manage';
+  userId: string;
 
   onTogglePin?: (id: string) => void;
   onViewMore?: (id: string) => void;
@@ -46,6 +38,7 @@ export const MeetingColumn = ({
   onViewMore,
   onDelete,
   onEdit,
+  userId,
 }: Props) => {
   const sortedMeetings = useMemo(() => {
     return [...meetings].sort(
@@ -79,6 +72,7 @@ export const MeetingColumn = ({
       ) : (
         sortedMeetings.map((meeting) => {
           const meetTitle = truncateWords(meeting.title, 3);
+          const isHost = meeting.createdByUserId === userId;
 
           return (
             <div
@@ -135,11 +129,35 @@ export const MeetingColumn = ({
 
               {/* Actions */}
               {action === 'join' ? (
-                <button className="w-full bg-accent-lime text-surface-primary text-xs font-semibold py-1.5 rounded-lg hover:opacity-90 transition-opacity">
-                  Join Meeting
-                </button>
+                meeting.status === "started" ? (
+                  <ButtonVoiceRoom
+                    joinText={isHost ? "Start Meeting" : "Join Meeting"}
+                    roomName={meeting.id}
+                    meetingTitle={meeting.title}
+                    mode="video"
+                    joinTo={R.USER_VIDEOCALL}
+                    isHost={isHost}
+                  />
+                ) : isHost ? (
+                  <ButtonVoiceRoom
+                    joinText="Start Meeting"
+                    roomName={meeting.id}
+                    meetingTitle={meeting.title}
+                    mode="video"
+                    joinTo={R.USER_VIDEOCALL}
+                    isHost={true}
+                    className="w-full border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg hover:bg-accent-lime/10 transition-colors cursor-pointer"
+                  />
+                ) : (
+                  <button
+                    disabled
+                    className="w-full border border-gray-400 text-gray-400 text-xs font-semibold py-1.5 rounded-lg"
+                  >
+                    Waiting for host
+                  </button>
+                )
               ) : action === 'transcript' ? (
-                <button className="w-full border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg hover:bg-accent-lime/10 transition-colors">
+                <button className="w-full border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg hover:bg-accent-lime/10 transition-colors cursor-pointer">
                   View Transcript
                 </button>
               ) : (
@@ -147,18 +165,26 @@ export const MeetingColumn = ({
                   {/* <button className="flex-1 bg-accent-lime text-surface-primary text-xs font-semibold py-1.5 rounded-lg">
                     Start
                   </button> */}
-                  <ButtonVoiceRoom className='btn-header' joinText='Start' roomName={meeting.id} meetingTitle={meeting.title} mode='video' joinTo={`${R.USER_VIDEOCALL}`}/>
+                  <ButtonVoiceRoom 
+                    className='btn-header' 
+                    joinText='Start' 
+                    roomName={meeting.id} 
+                    meetingTitle={meeting.title} 
+                    mode='video' 
+                    joinTo={`${R.USER_VIDEOCALL}`}
+                    isHost={true}
+                  />
 
                 <button 
                   onClick={() => onEdit?.(meeting.id)}
-                  className="flex-1 border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg"
+                  className="flex-1 border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg cursor-pointer hover:bg-accent-lime/10 transition-colors"
                 >
                   Edit
                 </button>
 
                   <button
                     onClick={() => onDelete?.(meeting.id)}
-                    className="flex-1 border border-red-500 text-red-400 text-xs font-semibold py-1.5 rounded-lg hover:bg-red-500/10"
+                    className="flex-1 border border-red-500 text-red-400 text-xs font-semibold py-1.5 rounded-lg hover:bg-red-500/10 cursor-pointer transition-colors"
                   >
                     Delete
                   </button>

@@ -9,6 +9,7 @@ import { IconMute, IconSpeak } from "@shared/ui/Icons";
 import { useSocket } from "@/context/SocketContext";
 import { ButtonLoading } from "@/shared/ui/ButtonLoading";
 import { LivekitMode } from "@/shared/types/livekit.types";
+import { meetingApi } from "@/features/meetings/api/meeting.api";
 
 type ButtonVoiceRoomProps = {
   joinText?: string;
@@ -21,6 +22,7 @@ type ButtonVoiceRoomProps = {
   joinTo?: string;
   leaveTo?: string;
   showMute?: boolean;
+  isHost?: boolean;
 };
 
 export function ButtonVoiceRoom({
@@ -34,37 +36,29 @@ export function ButtonVoiceRoom({
   showMute = true,
   joinTo,
   leaveTo,
+  isHost = false,
 }: ButtonVoiceRoomProps) {
   const {
     connect,
     disconnect,
     isConnectedRoom,
+    currentRoomName,
     isLoading,
     isMuted,
-    toggleMute
+    toggleMute,
   } = useLiveKit(roomName);
 
   const { enableSocket, isConnected, localPlayerId } = useSocket();
   const navigate = useNavigate();
   const isClicked = useRef(false);
   const hasNavigated = useRef(false);
-  const selectedMeeting = useRef({
-    roomName,
-    meetingTitle,
-  });
+  const selectedMeeting = useRef({ roomName, meetingTitle });
   const [isJoining, setIsJoining] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => { enableSocket(); }, []);
 
-  // useEffect(() => {
-  //   if (!isClicked.current) return;
-
-  //   if (!hasNavigated.current && isConnectedRoom && joinTo) {
-  //     hasNavigated.current = true;
-  //     setIsJoining(false);
-
-  //   }
-  // }, [isConnectedRoom, joinTo, navigate]);
+  const isCurrentRoom = isConnectedRoom && currentRoomName === roomName;
 
   const handleJoin = async () => {
     console.log("🔥 Start button clicked");
@@ -75,6 +69,11 @@ export function ButtonVoiceRoom({
       roomName,
       meetingTitle,
     };
+
+    if (isHost) {
+      await meetingApi.startMeeting(roomName);
+      console.log("Meeting status changed to started");
+    }
 
     console.log("Selected meeting:", selectedMeeting.current);
 
@@ -94,6 +93,7 @@ export function ButtonVoiceRoom({
         state: {
           roomName: selectedRoomName,
           meetingTitle: selectedMeetingTitle,
+          isHost: isHost,
         },
       });
 
@@ -103,8 +103,15 @@ export function ButtonVoiceRoom({
   };
 
   const handleLeave = async () => {
+    setIsLeaving(true);
     isClicked.current = false;
     hasNavigated.current = false;
+
+    if (isHost) {
+      await meetingApi.endMeeting(roomName);
+      console.log("Meeting status changed to scheduled");
+    }
+
     await disconnect(true);
 
     if (leaveTo) navigate(leaveTo);
@@ -126,7 +133,7 @@ export function ButtonVoiceRoom({
 
   return (
     <nav className="flex justify-center items-center">
-      {!isConnectedRoom ? (
+      {!isCurrentRoom ? (
         <button
           onClick={handleJoin}
           className={finalClassName}
@@ -143,17 +150,21 @@ export function ButtonVoiceRoom({
           {allowLeave && (
             <button
               onClick={handleLeave}
-              disabled={isLoading}
-              className={finalClassName}
+              disabled={ isLoading || isLeaving }
+              className={`${finalClassName} flex-1`}
             >
-              {leaveText}
+              {isLeaving ? (
+                <ButtonLoading isLoading={isLeaving} />
+              ) : (
+                leaveText
+              )}
             </button>
           )}
 
           {showMute && (
             <button
               onClick={toggleMute}
-              disabled={isLoading}
+              disabled={ isLoading || isLeaving }
               className={`${isMuted ? "btn-outline" : finalClassName} rounded-full transition-colors duration-500 p-1`}
             >
               {isMuted ? (

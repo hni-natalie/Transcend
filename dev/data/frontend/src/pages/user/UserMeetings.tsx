@@ -3,21 +3,7 @@ import { PageHeader, IconMeetings } from '@shared';
 import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useSocket } from "@/context/SocketContext";
-import type { MeetingDetails } from '@features/meetings/meeting.types';
-
-type Meeting = {
-	id: string;
-	title: string;
-	description: string;
-	date: string;
-	time: string;
-	duration: string;
-	participants: number;
-	pinned: boolean;
-	meetStart: string;
-	meetEnd: string;
-	createdAt: string;
-};
+import type { MeetingDetails, Meeting } from '@features/meetings/meeting.types';
 
 type Participant = {
     userId: string;
@@ -30,11 +16,13 @@ type Participant = {
 type ApiMeeting = {
 	meetId: string;
 	meetTitle: string;
+	createdByUserId?: string;
 	meetDesc?: string;
 	meetStart: string;
 	meetEnd: string;
 	pinned: boolean;
 	createdAt: string;
+	status: "scheduled" | "started";
 	_count?: {
 		participants: number;
 	};
@@ -60,6 +48,7 @@ const mapMeeting = (m: ApiMeeting): Meeting => ({
 	id: m.meetId,
 	title: m.meetTitle,
 	description: m.meetDesc ?? '',
+	createdByUserId: m.createdByUserId ?? '', // Assuming createdByUserId is part of ApiMeeting
 	date: new Date(m.meetStart).toLocaleDateString('en-MY', {
 		timeZone: 'Asia/Kuala_Lumpur',
 	}),
@@ -69,6 +58,7 @@ const mapMeeting = (m: ApiMeeting): Meeting => ({
 		hour: '2-digit',
 		minute: '2-digit',
 	}),
+	status: m.status ?? "scheduled",
 	duration: getDuration(m.meetStart, m.meetEnd),
 	participants: m._count?.participants ?? m.participants?.length ?? 0,
 	pinned: m.pinned,
@@ -234,32 +224,57 @@ export const Meetings = () => {
 	// GROUPING
 	// ======================
 	const grouped = useMemo(() => {
-		const startOfToday = new Date();
-		startOfToday.setHours(0, 0, 0, 0);
+	const now = new Date(
+		new Date().toLocaleString("en-US", {
+			timeZone: "Asia/Kuala_Lumpur",
+		})
+	);
 
-		const endOfToday = new Date();
-		endOfToday.setHours(23, 59, 59, 999);
+	const sortAscending = (a: Meeting, b: Meeting) =>
+		new Date(a.meetStart).getTime() -
+		new Date(b.meetStart).getTime();
 
-		const sortAscending = (a: Meeting, b: Meeting) =>
-			new Date(a.meetStart).getTime() - new Date(b.meetStart).getTime();
 
-		return {
-			today: joinedMeetings.filter(
-				m =>
-					new Date(m.meetStart) >= startOfToday &&
-					new Date(m.meetStart) <= endOfToday
-			).sort(sortAscending),
+	return {
+		// Today + not finished yet
+		today: joinedMeetings
+			.filter(m => {
+				const start = new Date(m.meetStart);
+				const end = new Date(m.meetEnd);
 
-			upcoming: joinedMeetings.filter(
-				m => new Date(m.meetStart) > endOfToday
-			).sort(sortAscending),
+				return (
+					start.toDateString() === now.toDateString() &&
+					end > now
+				);
+			})
+			.sort(sortAscending),
 
-			past: joinedMeetings.filter(
-				m => new Date(m.meetStart) < startOfToday
+
+		// Future meetings
+		upcoming: joinedMeetings
+			.filter(m => {
+				const start = new Date(m.meetStart);
+
+				return start > now;
+			})
+			.sort(sortAscending),
+
+
+		// Already ended
+		past: joinedMeetings
+			.filter(m => {
+				const end = new Date(m.meetEnd);
+
+				return end <= now;
+			})
+			.sort((a, b) =>
+				new Date(b.meetStart).getTime() -
+				new Date(a.meetStart).getTime()
 			),
 
-			mine: myMeetings,
-		};
+
+		mine: myMeetings,
+	};
 	}, [joinedMeetings, myMeetings]);
 
 	// ======================
@@ -291,6 +306,7 @@ export const Meetings = () => {
 					label="Today"
 					action="join"
 					meetings={grouped.today}
+					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
 					onDelete={handleDeleteMeeting}
 					onViewMore={handleViewMore}
@@ -300,6 +316,7 @@ export const Meetings = () => {
 					label="Upcoming"
 					action="join"
 					meetings={grouped.upcoming}
+					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
 					onDelete={handleDeleteMeeting}
 					onViewMore={handleViewMore}
@@ -309,6 +326,7 @@ export const Meetings = () => {
 					label="Past"
 					action="transcript"
 					meetings={grouped.past}
+					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
 					onDelete={handleDeleteMeeting}
 					onViewMore={handleViewMore}
@@ -318,6 +336,7 @@ export const Meetings = () => {
 					label="Scheduled"
 					action="manage"
 					meetings={grouped.mine}
+					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
 					onDelete={handleDeleteMeeting}
 					onViewMore={handleViewMore}
