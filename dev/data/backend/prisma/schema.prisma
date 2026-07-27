@@ -50,6 +50,11 @@ enum DocumentType {
   meeting_summary
 }
 
+enum MeetingStatus {
+  scheduled
+  started
+}
+
 // TO ADD: Messages
 // enum ConversationType {
 //   direct
@@ -245,6 +250,7 @@ model Meeting {
   meetDesc  String?
   meetStart DateTime
   meetEnd   DateTime
+  status    MeetingStatus @default(scheduled)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

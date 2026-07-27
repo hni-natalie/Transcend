@@ -20,4 +20,7 @@ router.patch('/participants', meetingController.syncParticipants);
 
 router.delete('/:meetId', meetingController.deleteMeeting);
 
+router.patch('/:meetId/start', meetingController.startMeeting);
+router.patch('/:meetId/end', meetingController.endMeeting);
+
 module.exports = router;

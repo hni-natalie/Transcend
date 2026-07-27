@@ -201,6 +201,40 @@ const meetingController = {
                 message: err.message
             });
         }
+    }, 
+
+    async startMeeting(req, res) { 
+        try {
+            const { meetId } = req.params;
+            const userId = req.user.userId;
+
+            const updatedMeeting = await meetingService.startMeeting(meetId, userId);
+
+            getIO().emit("meetingUpdated");
+
+            return res.status(200).json({ success: true, data: updatedMeeting });
+        } catch (err) {
+            return res.status(400).json({
+                message: err.message
+            });
+        }
+    },
+
+    async endMeeting(req, res) {
+        try {
+            const { meetId } = req.params;
+            const userId = req.user.userId;
+
+            const updatedMeeting = await meetingService.endMeeting(meetId, userId);
+
+            getIO().emit("meetingUpdated");
+
+            return res.status(200).json({ success: true, data: updatedMeeting });
+        } catch (err) {
+            return res.status(400).json({
+                message: err.message
+            });
+        }
     }
 };
 

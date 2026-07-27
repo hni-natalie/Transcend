@@ -18,21 +18,21 @@ export const meetingApi = {
     },
 
     createMeeting(data: {
-		spaceId: string;
-		meetTitle: string;
-		meetDesc?: string;
-		meetStart: string;
-		meetEnd: string;
+      spaceId: string;
+      meetTitle: string;
+      meetDesc?: string;
+      meetStart: string;
+      meetEnd: string;
     }) {
     	return apiClient.post(`${base}`, data);
     },
 
     updateMeeting(data: {
-		meetId: string;
-		meetTitle?: string;
-		meetDesc?: string;
-		meetStart?: string;
-		meetEnd?: string;
+      meetId: string;
+      meetTitle?: string;
+      meetDesc?: string;
+      meetStart?: string;
+      meetEnd?: string;
     }) {
     	return apiClient.patch(`${base}`, data);
     },
@@ -81,6 +81,17 @@ export const meetingApi = {
     // =====================
     allUsers() {
       	return apiClient.get(`${usersBase}`);
-    }
+    },
+
+    // =====================
+    // LIVEKIT
+    // =====================
+    startMeeting(meetId: string) {
+      return apiClient.patch(`${base}/${meetId}/start`);
+    },
+
+    endMeeting(meetId: string) {
+      return apiClient.patch(`${base}/${meetId}/end`);
+    },
 
 };

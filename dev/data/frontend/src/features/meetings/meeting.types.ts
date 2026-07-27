@@ -4,6 +4,7 @@ export type MeetingDetails = {
     meetDesc?: string;
     meetStart: string;
     meetEnd: string;
+    status: "scheduled" | "started";
 
     participants: {
         userId: string;
@@ -27,4 +28,21 @@ export type Participant = {
     userEmail: string;
     role: "organiser" | "participant";
     attendance: "present" | "absent" | "pending";
+};
+
+
+export type Meeting = {
+	id: string;
+	title: string;
+	description: string;
+	date: string;
+	time: string;
+	duration: string;
+	participants: number;
+	pinned: boolean;
+	meetStart: string;
+	meetEnd: string;
+	createdAt: string;
+    status: "scheduled" | "started";
+    createdByUserId: string;
 };
