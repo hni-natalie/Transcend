@@ -23,9 +23,25 @@ const taskService = {
 				taskStatus: true,
 				createdAt: true,
 				updatedAt: true,
+				completedDate: true,
 				assignedTo: {
 					select: {
-						taskPriority: true
+						userId: true,
+						taskPriority: true,
+						user: {
+							select: {
+								userId: true,
+								userName: true,
+								userEmail: true,
+								avatarUrl: true,
+								role: {
+									select :{
+										roleId: true,
+										roleName: true
+									}
+								}
+							}
+						}
 					}
 				}
 			},
@@ -101,10 +117,12 @@ const taskService = {
 
 	async updateTask(taskId, userId, updateData) {
 		const { taskTitle, taskDesc, taskStatus, dueDate, taskPriority } = updateData;
-
 		const task = await prisma.task.findUnique({ where: { taskId } });
+
 		if (!task) throw new Error('Task not found');
 		if (task.createdByUserId !== userId) throw new Error('Unauthorized to update this task');
+		if (taskStatus == 'done')
+			updateData.completedDate = new Date();
 
 		await prisma.task.update({
 			where: { taskId },
@@ -113,6 +131,7 @@ const taskService = {
 				taskDesc: taskDesc,
 				taskStatus,
 				dueDate,
+				completedDate: updateData.completedDate
 			}
 		});
 

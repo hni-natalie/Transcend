@@ -16,6 +16,16 @@ export type Task = {
 		userId: string;
 		taskPriority: 'low' | 'medium' | 'high';
 		assignedDate: string;
+		user:{
+			userId: string;
+			userName: string;
+			userEmail?: string;
+			avatarUrl?: string;
+			role?: {
+				roleId: string;
+				roleName: string;
+			}
+		}
 	}[];
 }
 
