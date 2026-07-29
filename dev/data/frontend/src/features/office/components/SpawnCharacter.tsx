@@ -28,7 +28,7 @@ function getPlanePosition( planeRefs:any, dpId:string ) {
 export function SpawnCharacter({ roomName, localPlayerRef }) {
 
 const { planeRefs } = useOfficeSpace();
-const { roomPlayers, localPlayerId } = useSocket();
+const { roomPlayers, localPlayerId, lastKnownPositions, roomObjs } = useSocket();
 const { getPositionalAudio, isPlayerAudioReady } = useLiveKit(roomName);
 const listenerRef = useRef<THREE.AudioListener | null>(null);
 
@@ -41,10 +41,10 @@ return (
 			return (
 				<Character
 					key={user.userId}
-					ref={user.id === localPlayerId ? localPlayerRef : null}
-					// position={user.position} // need user.position to receive socketio remote pos updates
+					ref={user.id === localPlayerId ? localPlayerRef : null} // null for remote players
 					position={addPosition(planePos, user.position) || user.position} // need user.position to receive socketio remote pos updates
 					id={user.id}
+					userId={user.userId}
 					name={user.name}
 					color={user.color}
 					photo={user.photo}

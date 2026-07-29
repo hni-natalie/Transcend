@@ -61,6 +61,7 @@ const socketService = (io) => {
   }, 2000);
 
   // Initialize player, should this be in db?
+  // players.set(socket.user.userId, createPlayer({
   players.set(socket.id, createPlayer({
     id: socket.id,
     userId: socket.user.userId,
@@ -81,16 +82,31 @@ const socketService = (io) => {
   socket.emit('existing-players', Array.from(players.values()));
   
   // Broadcast entire new player object to everyone else
-  socket.broadcast.emit('player-joined', players.get(socket.id));
+  socket.broadcast.emit('player-joined', players.get(socket.user.userId));
   
   // Handle position updates
   socket.on('player-move', (data) => {
-    if (player && player.roomName) {
-      player.position = data.position;
-      player.rotation = data.rotation;
+    const target = Array.from(players.values()).find(p => p.userId === data.userId);
+    // target = players.get(data.id)
+    // console.log('[player-move] target! ', target, ' ', data.userId);
+    if (target && target.roomName) {
+      target.position = data.position;
+      // target.rotation = data.rotation;
 
       // emit position in room name
-      socket.to(player.roomName).emit('player-moved', data);
+      socket.to(target.roomName).emit('player-moved', data);
+    }
+  });
+  socket.on('object-move', (data) => {
+    const target = Array.from(players.values()).find(p => p.userId === data.userId);
+    // target = players.get(data.id)
+    // console.log('[player-move] target! ', target, ' ', data.userId);
+    if (target && target.roomName) {
+      target.position = data.position;
+      // target.rotation = data.rotation;
+
+      // emit position in room name
+      socket.to(target.roomName).emit('object-moved', data);
     }
   });
 

@@ -2,15 +2,19 @@
 	Character with spatial audio configured
 	Spatial audio enable audio panning from left/right
 	when A is at left/right position of B
+
+	local player socket.emits their position to backend when moving
+	3D components position emits their position when on collision/moved
 */
 
 import { useFrame, useLoader } from '@react-three/fiber';
+import { useBox, useContactMaterial } from '@react-three/cannon';
 import { Text } from '@react-three/drei';
-import React, { useRef, useState, useEffect, RefObject } from 'react';
+import React, { useRef, useState, useEffect, useCallback, RefObject } from 'react';
 import * as THREE from 'three';
 import { useSocket } from '@/context/SocketContext';
 import { useKeyboard } from '@/context/KeyboardContext';
-import { Player, getInitials } from '@/shared';
+import { Player, Position, getInitials } from '@/shared';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { useTextWidth } from '@/features/office/hooks/useTextWidth';
 
@@ -21,24 +25,67 @@ interface CharacterProps extends Player {
 	getPositionalAudio: (userId: string) => THREE.PositionalAudio;
 }
 
-const fetchUserPhoto = async () => {
-	// const response = await fetch('/api/user/photo')
-	// const data = await response.json()
-	// return (data.photoUrl)
-	return ('https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg');
-}
-
 // 2D Circle Character Component + Movement handling
-// export function Character(
-export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
-	{ id, name, position, color="#D0F05C", photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps,
+export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
+	{ userId, id, name, position, color="#D0F05C", photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps,
 	ref) => {
 
-	const characterRef = useRef<THREE.Mesh>(null);
-  const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
+	const { lastKnownPositions } = useSocket();
+
+	useContactMaterial('playerMaterial', 'playerMaterial', {
+		friction: 0.3,
+		restitution: 0.5,        				// 0 no bounce - 1 elastic
+		contactEquationStiffness: 1,   	// lower = softer push
+		contactEquationRelaxation: 400, // higher = softer/slower correction
+	});
+  const [characterRef, api] = useBox(() => ({
+    mass: 1,
+	  type: 'Dynamic',
+  	linearDamping: 0.1,
+    position: [position.x, position.y, position.z],
+		rotation: [-Math.PI / 2, 0, 0],
+		fixedRotation: true,
+  	allowSleep: false,
+	  // material: 'playerMaterial',
+    args: [conf.Player.radius * 2, conf.Player.radius * 2, conf.Player.radius * 2], // Match circle size
+	  userData: { userId },
+	  onCollide: (e) => handleCollision(e)
+  }));
+
+	useEffect(() => {
+		let lastEmit = 0;
+		const THROTTLE_MS = 500;
+
+		const unsubscribe = api.position.subscribe((p) => {
+			const now = Date.now();
+			if (now - lastEmit < THROTTLE_MS) return;
+			lastEmit = now;
+	    lastKnownPositions.current[userId] = {x:p[0], y:0, z:p[2]};
+			
+			// console.log('current physics position:', userId, ' ', lastKnownPositions.current[userId]);
+			// console.log('all list: ', lastKnownPositions.current);
+		});
+		return unsubscribe;
+	}, [api]);
+
+	const handleCollision = useCallback(( e:any ) => {
+		if (!isLocalPlayer) return ; // only localPlayer emit collision pos
+	  const hitId = e.body?.userData?.userId;
+		if (hitId) {
+			console.log('collided with', hitId);
+			console.log('_current physics position:', lastKnownPositions.current[hitId]);
+			// console.log('_all:', lastKnownPositions.current);
+
+			socket.emit('object-move', { userId:hitId, position: lastKnownPositions.current[hitId] }); //broadcast
+		}
+		// else
+		// 	console.log('** collided with', e.body);
+	}, [isLocalPlayer])
+
+	const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
 	const [hovered, setHovered] = useState(false);
 	const { keys } = useKeyboard();
-	const { textRef, textWidth, getTextWidth, setTextWidth } = useTextWidth();
+	const { textRef, textWidth, getTextWidth } = useTextWidth();
 
 	const { enableSocket, isConnected, socket } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
@@ -55,6 +102,7 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 		}
 	}
 
+	// only propagate forward ref is isLocalPlayer
   useEffect(() => {
     if (ref && characterRef.current) {
       if (typeof ref === 'function') {
@@ -80,7 +128,6 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
   }, [isLocalPlayer, listenerRef]);
 
 	// add positional audio to remote player ONLY
-	// ### if remotePlayer.audioEnabled = false, return
   useEffect(() => {
     if ( !characterRef.current || isLocalPlayer || !listenerRef || !positionalAudioRef || !isPlayerAudioReady ) return;
 		
@@ -115,13 +162,29 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
   //   }
   // });
 
+	// update remote player position from socket outside
+	useEffect(() => {
+		if (isLocalPlayer) return; // local player drives itself via input, not props
+		api.position.set(position.x, position.y, position.z);
+	}, [position, isLocalPlayer]);
+
+  // useEffect(() => {
+  //   const handleMove = (data: { id: string; position: { x: number; y: number; z: number } }) => {
+  //     if (data.id !== id) return;
+  //     api.position.set(data.position.x, 0, data.position.z);
+  //   };
+
+  //   socket.on('player-move', handleMove);
+  //   return () => socket.off('player-move', handleMove);
+  // }, [id, api, socket]);
 
 	/*
 		Calls this function to update position every frame for local player
 	  delta is from useFrame
 	*/
 	const movement = new THREE.Vector3(0, 0, 0);
-	const newPos = new THREE.Vector3();
+	const newPos = new THREE.Vector3(0,0,0);
+
 	const worldWidth = conf.World.width + conf.World.border;
 	const worldHeight = conf.World.height + conf.World.border;
 
@@ -164,9 +227,10 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 							 newPos.z > boundaries.maxZ ? boundaries.maxZ * 0.98 : 
 							 newPos.z;
 
-		characterRef.current.position.set(newPos.x, 0, newPos.z);
+		characterRef.current.position.set(newPos.x, 0, newPos.z); // local
+		api.position.set(newPos.x, 0, newPos.z);
 
-		socket.emit('player-move', { id:id, position: { x:newPos.x, y:0, z:newPos.z }});
+		socket.emit('player-move', { userId:userId, position: { x:newPos.x, y:0, z:newPos.z }}); //broadcast
 		// Optional: Rotate 3D character to face movement direction
 		// if (movement.x !== 0 || movement.z !== 0) {
 		// 	const angle = Math.atan2(movement.x, movement.z);
@@ -178,9 +242,8 @@ export const Character = React.forwardRef<THREE.Mesh, CharacterProps>((
 		<>
 		{/* plane mesh need rotation as default position = facing z pos */}
 		<group
-			ref={characterRef} // only for localPlayer
-			position={[position.x, position.y, position.z]}
-			rotation={[-Math.PI / 2, 0, 0]}
+			ref={characterRef} // localPlayer=characterRef
+			// ref={ref ? characterRef : remoteRef} // localPlayer=characterRef
 		  onPointerOver={() => setHovered(true)}
 			onPointerOut={() => setHovered(false)}
 		>

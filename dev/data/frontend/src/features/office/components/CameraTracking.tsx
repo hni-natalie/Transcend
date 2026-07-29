@@ -43,6 +43,9 @@ export const CameraTracking = ({ localPlayerRef, controlsRef, isConnectedRoom, c
       }
       // 1. Handle move by mouseClick
       if (clickPoint.current) {
+        if (localPlayerRef.current.position)
+    		  // console.log('[Camera] charac pos: ', localPlayerRef.current.position);
+   
         setIsPanning(false);
         localPlayerRef.current.position.lerp(clickPoint.current, conf.Movement.click_speed); // Move smoothly towards target 4% every frame
     		socket.emit('player-move', { id:localPlayerId, position:{ x:localPlayerRef.current.position.x, y:0, z:localPlayerRef.current.position.z }});

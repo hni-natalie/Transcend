@@ -21,7 +21,7 @@ interface TreemapData {
 interface SpaceProviderProps {
 	children: React.ReactNode | React.ReactNode[];
 	padding?: number;
-	localPlayerRef?: React.RefObject<THREE.Mesh | null>;
+	localPlayerRef?: React.RefObject<THREE.Group | null>;
 	roomName: string;
 }
 

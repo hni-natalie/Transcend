@@ -58,6 +58,8 @@ const randomPosition = ( range=10 ) => {
     };
 }
 
+// ### fetch roomObjects here, from db i guess
+// admin setting -> db, then fetch db -> room
 const initializeRoomData = async (rooms, roomName) => {
   const roomData = {
     name: roomName,
@@ -98,4 +100,4 @@ const initializeRoomData = async (rooms, roomName) => {
   return roomData
 }
 
-module.exports = { initializeRoomData, createPlayer };
+module.exports = { initializeRoomData, createPlayer, randomPosition };
