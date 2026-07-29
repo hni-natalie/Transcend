@@ -313,7 +313,7 @@ class LiveKitService {
             await this.audioManager.initMicrophone(this._room);
         } catch (error) {
           console.error('LiveKit connection failed:', error);
-          window.location.reload();
+          // window.location.reload();
         }
       }
       // this.emit('connected', { room: this._room }); // ###

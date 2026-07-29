@@ -1,6 +1,7 @@
 // const { apiClient }         = require('../api/api.client.js')
 const { apiClient } 				=	require("../api/api.client.js");
 const { randomHslColor }    = require('../utils/color.js');
+const { v4:uuidv4 }         = require('uuid')
 
 
 /* ***************************************************************** */
@@ -58,12 +59,42 @@ const randomPosition = ( range=10 ) => {
     };
 }
 
+const fetchRoomObjs = async() => {
+  // implement from db or admin config
+  // placeholder atm
+  const mockObjects = [];
+  const count = 2; // Number of mock objects
+  
+  for (let i = 0; i < count; i++) {
+    const userId = uuidv4();
+    // console.log('random pos: ', randomPosition(2));
+
+    mockObjects.push(
+      createPlayer({
+        id: i + 1,
+        userId: userId,
+        name: `Obj-${userId}`,
+        dpId: 'guest',
+        roomName: 'Office',
+        position: { x:0, y:0, z:i },
+        // position: randomPosition(1),
+        rotation: { x:-Math.PI/2, y:0, z:0 },
+        color: randomHslColor(),
+        photo: '',
+        audioEnabled: true,
+        speaking: false,
+      }));
+  }
+  return mockObjects; // Return array
+}
+
 // ### fetch roomObjects here, from db i guess
 // admin setting -> db, then fetch db -> room
 const initializeRoomData = async (rooms, roomName) => {
   const roomData = {
     name: roomName,
     users: [],
+    objects: [],
     createdAt: Date.now()
   };
 
@@ -73,10 +104,13 @@ const initializeRoomData = async (rooms, roomName) => {
   if (roomName === 'Office'){
 
     const activeUsers = await apiClient.get('/users/status/online');
+    const existingObjs = await fetchRoomObjs();
+
     const count = activeUsers.length;
     console.log('num of active users: ', count);
 		const trimUser = activeUsers.slice(0, 5);
     // console.log('[socket-service] active users: ', trimUser);
+    console.log('[socket-service] active objs: ', existingObjs);
 
     // trimUser.forEach(user => {
     activeUsers.forEach(user => {
@@ -95,6 +129,7 @@ const initializeRoomData = async (rooms, roomName) => {
       });
       roomData.users.push(existingPlayer);
     });
+    roomData.objects.push(...existingObjs);
   }
   rooms.set(roomName, roomData);
   return roomData

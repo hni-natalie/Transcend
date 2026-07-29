@@ -15,9 +15,9 @@ const { generateRoomToken }                = require('../routes/livekit.js')
 const { randomHslColor }                   = require('../utils/color.js');
 const { apiClient }                        = require('../api/api.client.js')
 const { updateSocketId }                   = require('./supabase-utils.service.js')
-const { initializeRoomData, createPlayer } = require('../utils/socket')
+const { initializeRoomData, createPlayer, randomPosition } = require('../utils/socket')
 const players     = new Map();
-const rooms       = new Map();      // Map<roomName, roomPlayers>
+const rooms       = new Map();      // Map<roomName, roomPlayers> : Map<roomName, [roomPlayers, roomObjects]>
 let ioInstance = null;
 
 // socket io setup
@@ -61,18 +61,16 @@ const socketService = (io) => {
   }, 2000);
 
   // Initialize player, should this be in db?
-  // players.set(socket.user.userId, createPlayer({
   players.set(socket.id, createPlayer({
     id: socket.id,
     userId: socket.user.userId,
-    name: socket.user.userName || socket.id, // 'GetUsersNameAPI'
+    name: socket.user.userName || socket.id,
     dpId: socket.user?.department?.dpId || 'guest',
     roomName: null,
     position: { x:0, y:0, z:0 },
     rotation: { x:-Math.PI/2, y:0, z:0 },
     color: randomHslColor(),
     photo: socket.user.avatarUrl || '',
-    // 'https://images.pexels.com/photos/36393879/pexels-photo-36393879.jpeg',
     audioEnabled: true,
     speaking: false,
   }));
@@ -98,15 +96,15 @@ const socketService = (io) => {
     }
   });
   socket.on('object-move', (data) => {
-    const target = Array.from(players.values()).find(p => p.userId === data.userId);
-    // target = players.get(data.id)
-    // console.log('[player-move] target! ', target, ' ', data.userId);
-    if (target && target.roomName) {
-      target.position = data.position;
-      // target.rotation = data.rotation;
+    let roomData = rooms.get(data.roomName);
+    if (!roomData) return;
 
+    const target = Array.from(roomData.objects.values()).find(p => p.userId === data.userId);
+    if (target) {
+      target.position = data.position;
       // emit position in room name
       socket.to(target.roomName).emit('object-moved', data);
+      console.log('[object-move] object! ', target, ' ', data.userId);
     }
   });
 
@@ -148,6 +146,7 @@ const socketService = (io) => {
       roomData.users.push(player); // append entire player obj
     socket.join(roomName);
     socket.emit('existing-room-players', roomData?.users || []); // send only to client
+    socket.emit('existing-room-objects', roomData?.objects || []);
 
     
     // Generate room-specific token

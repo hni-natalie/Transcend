@@ -27,7 +27,7 @@ interface CharacterProps extends Player {
 
 // 2D Circle Character Component + Movement handling
 export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
-	{ userId, id, name, position, color="#D0F05C", photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps,
+	{ userId, id, name, position, color="#D0F05C", roomName='Office', photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps,
 	ref) => {
 
 	const { lastKnownPositions } = useSocket();
@@ -73,10 +73,10 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 	  const hitId = e.body?.userData?.userId;
 		if (hitId) {
 			console.log('collided with', hitId);
-			console.log('_current physics position:', lastKnownPositions.current[hitId]);
+			// console.log('_current physics position:', lastKnownPositions.current[hitId]);
 			// console.log('_all:', lastKnownPositions.current);
 
-			socket.emit('object-move', { userId:hitId, position: lastKnownPositions.current[hitId] }); //broadcast
+			socket.emit('object-move', { userId:hitId, roomName:roomName, position: lastKnownPositions.current[hitId] }); //broadcast
 		}
 		// else
 		// 	console.log('** collided with', e.body);
