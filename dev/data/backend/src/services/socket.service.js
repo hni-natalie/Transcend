@@ -104,7 +104,7 @@ const socketService = (io) => {
       target.position = data.position;
       // emit position in room name
       socket.to(target.roomName).emit('object-moved', data);
-      console.log('[object-move] object! ', target, ' ', data.userId);
+      // console.log('[object-move] object! ', target, ' ', data.userId);
     }
   });
 

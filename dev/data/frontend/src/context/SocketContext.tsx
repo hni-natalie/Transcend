@@ -89,7 +89,7 @@ export function SocketProvider ({ children }) {
           ? {...p, position: data.position}
           : p
       ));
-      console.log(`Player ${data.userId} moved to:`, data.position);
+      // console.log(`Player ${data.userId} moved to:`, data.position);
     });
 
     socket.on('object-moved', (data) => {

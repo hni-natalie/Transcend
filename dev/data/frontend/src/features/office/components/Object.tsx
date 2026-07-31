@@ -41,7 +41,7 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
 		rotation: [-Math.PI / 2, 0, 0],
 		fixedRotation: true,
   	allowSleep: false,
-    args: [conf.Player.radius * 2.5, conf.Player.radius * 2.5, conf.Player.radius * 2.5], // Match circle size
+    args: [conf.Player.radius * 3, conf.Player.radius * 3, conf.Player.radius * 3], // Match circle size
 	  userData: { userId },
   }));
 

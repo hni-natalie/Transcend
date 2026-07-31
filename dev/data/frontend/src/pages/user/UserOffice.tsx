@@ -157,13 +157,14 @@ export function Office({ roomName } : SpaceProps ) {
 					<GenerateDept />
 					<SpawnObject roomName={roomName} />
 
-					<SpawnCharacter roomName={roomName} localPlayerRef={localPlayerRef}/>
+					<SpawnCharacter roomName={roomName} listenerRef={listenerRef} ref={localPlayerRef}/>
 					{/* {(roomPlayers.map(( user:Player ) => (
 						// const planePosition = getPlanePosition(user.dpId);
 						<Character
 							key={user.userId}
 							ref={user.id === localPlayerId ? localPlayerRef : null}
 							id={user.id}
+							userId={user.userId}
 							name={user.name}
 							color={user.color}
 							position={user.position} // need user.position to receive socketio remote pos updates

@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import React, { RefObject, useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { useOfficeSpace } from '@features/office/context/SpaceContext';
 import { useSocket } from '@/context/SocketContext';
@@ -25,36 +25,43 @@ function getPlanePosition( planeRefs:any, dpId:string ) {
   }
 };
 
-export function SpawnCharacter({ roomName, localPlayerRef }) {
+interface SpawnCharacterProps {
+	roomName: string;
+	listenerRef: RefObject<THREE.AudioListener>;
+}
 
-const { planeRefs } = useOfficeSpace();
-const { roomPlayers, localPlayerId, lastKnownPositions, roomObjs } = useSocket();
-const { getPositionalAudio, isPlayerAudioReady } = useLiveKit(roomName);
-const listenerRef = useRef<THREE.AudioListener | null>(null);
+// export function SpawnCharacter({ roomName, localPlayerRef }) {
+export const SpawnCharacter = React.forwardRef<THREE.Object3D, SpawnCharacterProps>((
+	{ roomName, listenerRef } : SpawnCharacterProps,
+	ref) => {
 
+	const { planeRefs } = useOfficeSpace();
+	const { roomPlayers, localPlayerId } = useSocket();
+	const { getPositionalAudio, isPlayerAudioReady } = useLiveKit(roomName);
+	// const listenerRef = useRef<THREE.AudioListener | null>(null);
 
-return (
-	<>
-		{roomPlayers.map(( user:Player ) => {
-			const planePos = getPlanePosition(planeRefs, user.dpId);
-			// console.log('[SpawnCharacter] ', addPosition(planePos, user.position));
-			return (
-				<Character
-					key={user.userId}
-					ref={user.id === localPlayerId ? localPlayerRef : null} // null for remote players
-					position={addPosition(planePos, user.position) || user.position} // need user.position to receive socketio remote pos updates
-					id={user.id}
-					userId={user.userId}
-					name={user.name}
-					color={user.color}
-					photo={user.photo}
-					isLocalPlayer={user.id === localPlayerId}
-					isPlayerAudioReady={isPlayerAudioReady(user.id)}
-					getPositionalAudio={getPositionalAudio}
-					listenerRef={listenerRef}
-				/>
-			);
-		})}
+	return (
+		<>
+			{roomPlayers.map(( user:Player ) => {
+				const planePos = getPlanePosition(planeRefs, user.dpId);
+				// console.log('[SpawnCharacter] ', addPosition(planePos, user.position));
+				return (
+					<Character
+						key={user.userId}
+						ref={user.id === localPlayerId ? ref : null} // null for remote players
+						position={addPosition(planePos, user.position) || user.position} // need user.position to receive socketio remote pos updates
+						id={user.id}
+						userId={user.userId}
+						name={user.name}
+						color={user.color}
+						photo={user.photo}
+						isLocalPlayer={user.id === localPlayerId}
+						isPlayerAudioReady={isPlayerAudioReady(user.id)}
+						getPositionalAudio={getPositionalAudio}
+						listenerRef={listenerRef}
+					/>
+				);
+			})}
 		</>
 	)
-}
+})
