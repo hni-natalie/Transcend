@@ -34,6 +34,7 @@ const uploadRoutes		= require('./routes/upload.routes');
 const spaceRoutes		= require('./routes/space.routes');
 const taskRoutes		= require('./routes/task.routes');
 const meetingRoutes		= require('./routes/meeting.routes');
+const messageRoutes		= require('./routes/message.routes');
 
 /* *************************************************
 * all used routes
@@ -50,6 +51,7 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/spaces', spaceRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/messages', messageRoutes);
 
 // start server
 server.listen(port, () => {
