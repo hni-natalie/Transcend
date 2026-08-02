@@ -15,8 +15,9 @@ export function UserMeetingRoom() {
   const navigate = useNavigate();
   console.log("location state:", location.state);
   
-  const { roomName, meetingTitle, isHost } = location.state || {
+  const { meetId, roomName, meetingTitle, isHost } = location.state || {
     roomName: '',
+    meetId: '',
     meetingTitle: 'Meeting',
     isHost: false,
   };
@@ -86,7 +87,7 @@ export function UserMeetingRoom() {
           <p>Connecting...</p>
         ) : (
           <RoomContext.Provider value={room}>
-            <VideoConference />
+            <VideoConference meetId={meetId}/>
           </RoomContext.Provider>
         )}
       </div>

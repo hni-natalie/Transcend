@@ -2,6 +2,7 @@ import { type ChatMessage, type ChatOptions } from '@livekit/components-core';
 import * as React from 'react';
 import { cloneSingleChild } from '../utils/utils';
 import { useMaybeLayoutContext, useChat, ChatToggle, ChatCloseIcon, ChatEntry, MessageFormatter } from '@livekit/components-react';
+import { meetingApi } from '@/features/meetings/api/meeting.api';
 
 /** @public */
 export interface ChatProps extends React.HTMLAttributes<HTMLDivElement>, ChatOptions {

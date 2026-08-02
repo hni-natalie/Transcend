@@ -23,6 +23,7 @@ type ButtonVoiceRoomProps = {
   leaveTo?: string;
   showMute?: boolean;
   isHost?: boolean;
+  meetId?: string;
 };
 
 export function ButtonVoiceRoom({
@@ -37,6 +38,7 @@ export function ButtonVoiceRoom({
   joinTo,
   leaveTo,
   isHost = false,
+  meetId = "",
 }: ButtonVoiceRoomProps) {
   const {
     connect,
@@ -52,7 +54,7 @@ export function ButtonVoiceRoom({
   const navigate = useNavigate();
   const isClicked = useRef(false);
   const hasNavigated = useRef(false);
-  const selectedMeeting = useRef({ roomName, meetingTitle });
+  const selectedMeeting = useRef({ roomName, meetId, meetingTitle });
   const [isJoining, setIsJoining] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
@@ -67,6 +69,7 @@ export function ButtonVoiceRoom({
 
     selectedMeeting.current = {
       roomName,
+      meetId,
       meetingTitle,
     };
 
@@ -81,11 +84,13 @@ export function ButtonVoiceRoom({
 
     const {
       roomName: selectedRoomName,
+      meetId: selectedMeetId,
       meetingTitle: selectedMeetingTitle,
     } = selectedMeeting.current;
 
     console.log("✅ LiveKit connected, navigating to", {
       selectedRoomName,
+      selectedMeetId,
       selectedMeetingTitle,
     });
 
@@ -93,6 +98,7 @@ export function ButtonVoiceRoom({
         state: {
           roomName: selectedRoomName,
           meetingTitle: selectedMeetingTitle,
+          meetId: selectedMeetId,
           isHost: isHost,
         },
       });

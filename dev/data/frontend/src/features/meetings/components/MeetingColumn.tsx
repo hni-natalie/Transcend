@@ -21,6 +21,8 @@ type Props = {
   onViewMore?: (id: string) => void;
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
+  onViewRecording?: (id: string) => void;
+  onViewTranscript?: (id: string) => void;
 };
 
 // truncate helper
@@ -34,11 +36,13 @@ export const MeetingColumn = ({
   label,
   meetings,
   action,
+  userId,
   onTogglePin,
   onViewMore,
   onDelete,
   onEdit,
-  userId,
+  onViewRecording,
+  onViewTranscript,
 }: Props) => {
   const sortedMeetings = useMemo(() => {
     return [...meetings].sort(
@@ -134,6 +138,7 @@ export const MeetingColumn = ({
                     joinText={isHost ? "Start Meeting" : "Join Meeting"}
                     roomName={meeting.id}
                     meetingTitle={meeting.title}
+                    meetId={meeting.id}
                     mode="video"
                     joinTo={R.USER_VIDEOCALL}
                     isHost={isHost}
@@ -143,6 +148,7 @@ export const MeetingColumn = ({
                     joinText="Start Meeting"
                     roomName={meeting.id}
                     meetingTitle={meeting.title}
+                    meetId={meeting.id}
                     mode="video"
                     joinTo={R.USER_VIDEOCALL}
                     isHost={true}
@@ -157,9 +163,21 @@ export const MeetingColumn = ({
                   </button>
                 )
               ) : action === 'transcript' ? (
-                <button className="w-full border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg hover:bg-accent-lime/10 transition-colors cursor-pointer">
-                  View Transcript
-                </button>
+                <div className="flex gap-2">
+                  <button
+                      onClick={() => onViewRecording?.(meeting.id)}
+                      className="flex-1 border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg hover:bg-accent-lime/10 transition-colors cursor-pointer"
+                  >
+                      Recordings
+                  </button>
+
+                  <button
+                      onClick={() => onViewTranscript?.(meeting.id)}
+                      className="flex-1 border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg hover:bg-accent-lime/10 transition-colors cursor-pointer"
+                  >
+                      Transcript
+                  </button>
+              </div>
               ) : (
                 <div className="flex gap-2">
                   {/* <button className="flex-1 bg-accent-lime text-surface-primary text-xs font-semibold py-1.5 rounded-lg">
@@ -169,6 +187,7 @@ export const MeetingColumn = ({
                     className='btn-header' 
                     joinText='Start' 
                     roomName={meeting.id} 
+                    meetId={meeting.id}
                     meetingTitle={meeting.title} 
                     mode='video' 
                     joinTo={`${R.USER_VIDEOCALL}`}

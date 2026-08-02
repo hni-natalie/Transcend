@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { PageHeader, IconMeetings } from '@shared';
-import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal } from '@features/meetings';
+import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal, RecordingModal } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useSocket } from "@/context/SocketContext";
-import type { MeetingDetails, Meeting } from '@features/meetings/meeting.types';
+import type { MeetingDetails, Meeting, Recording } from '@features/meetings/meeting.types';
 
 type Participant = {
     userId: string;
@@ -83,6 +83,8 @@ export const Meetings = () => {
 	const [selectedMeeting, setSelectedMeeting] = useState<MeetingDetails | null>(null);
 	const [showScheduleModal, setShowScheduleModal] = useState(false);
 	const [editingMeeting, setEditingMeeting] = useState<MeetingDetails | null>(null);
+	const [showRecordingModal, setShowRecordingModal] = useState(false);
+	const [recordings, setRecordings] = useState<Recording[]>([]);
 
 	// ======================
 	// FETCH
@@ -109,9 +111,7 @@ export const Meetings = () => {
 		}
 	}, [user]);
 
-	useEffect(() => {
-		loadMeetings();
-	}, [loadMeetings]);
+	useEffect(() => { loadMeetings(); }, [loadMeetings]);
 
 	const { socket } = useSocket();
 
@@ -221,6 +221,26 @@ export const Meetings = () => {
 	};
 
 	// ======================
+	// VIEW TRANSCRIPT
+	// ======================
+	const handleViewRecording = async (meetId: string) => {
+		try {
+			const res = await meetingApi.getRecordings(meetId) as {
+				success: boolean;
+				recordings: Recording[];
+			};
+
+			console.log("Recording API response:", res);
+
+			setRecordings(res.recordings);
+			setShowRecordingModal(true);
+
+		} catch (err) {
+			console.error( "Failed to load recordings:", err );
+		}
+	};
+
+	// ======================
 	// GROUPING
 	// ======================
 	const grouped = useMemo(() => {
@@ -308,7 +328,6 @@ export const Meetings = () => {
 					meetings={grouped.today}
 					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
-					onDelete={handleDeleteMeeting}
 					onViewMore={handleViewMore}
 				/>
 
@@ -318,7 +337,6 @@ export const Meetings = () => {
 					meetings={grouped.upcoming}
 					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
-					onDelete={handleDeleteMeeting}
 					onViewMore={handleViewMore}
 				/>
 
@@ -328,8 +346,8 @@ export const Meetings = () => {
 					meetings={grouped.past}
 					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
-					onDelete={handleDeleteMeeting}
 					onViewMore={handleViewMore}
+					onViewRecording={handleViewRecording}
 				/>
 
 				<MeetingColumn
@@ -348,6 +366,16 @@ export const Meetings = () => {
 				meeting={selectedMeeting}
 				onClose={() => setSelectedMeeting(null)}
 			/>
+
+			{showRecordingModal && (
+				<RecordingModal
+					recordings={recordings}
+					onClose={() => {
+						setShowRecordingModal(false);
+						setRecordings([]);
+					}}
+				/>
+			)}
 
 			<ScheduleMeetingModal
 				open={showScheduleModal}

@@ -410,7 +410,9 @@ const meetingService = {
             where: { meetId },
             data: { status: 'scheduled' }
         });
-    }
+    },
+
+    
 }
 
 module.exports = meetingService;
