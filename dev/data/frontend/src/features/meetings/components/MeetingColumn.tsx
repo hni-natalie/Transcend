@@ -78,6 +78,14 @@ export const MeetingColumn = ({
           const meetTitle = truncateWords(meeting.title, 3);
           const isHost = meeting.createdByUserId === userId;
 
+          // console.log("Meeting:", {
+          //   meetingId: meeting.id,
+          //   title: meeting.title,
+          //   createdByUserId: meeting.createdByUserId,
+          //   currentUserId: userId,
+          //   isHost,
+          // });
+
           return (
             <div
               key={meeting.id}

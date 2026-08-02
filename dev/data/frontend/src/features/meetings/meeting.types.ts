@@ -61,3 +61,13 @@ export type Recording = {
     fileUrl: string | null;
     createdAt: string;
 };
+
+
+export type MeetingChatMessage = {
+  id: string;
+  meetId: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  createdAt: string;
+}

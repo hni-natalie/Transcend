@@ -20,10 +20,10 @@ export class AudioManager {
 			await this.listener.context.resume();
 			console.log("handleJoin: Audio listener status: ", this.listener.context.state);
 		}
-    else {
-      //debug
-	    console.error("handleJoin: Audio listener already running: ", this.listener.context.state);
-		}
+    // else {
+    //   //debug
+	  //   console.error("handleJoin: Audio listener already running: ", this.listener.context.state);
+		// }
   }
 
   // Initialize microphone and audio context

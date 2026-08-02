@@ -72,10 +72,6 @@ export function ControlBar({
   meetId,
   ...props
 }: ControlBarProps) {
-
-  console.log("ControlBar meetId:", meetId);
-  console.log("ControlBar controls:", controls);
-
   const [isChatOpen, setIsChatOpen] = React.useState(false);
   const layoutContext = useMaybeLayoutContext();
   React.useEffect(() => {

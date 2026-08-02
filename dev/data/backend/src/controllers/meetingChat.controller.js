@@ -4,7 +4,14 @@ const meetingChatController = {
 
     async createChatMessage(req, res) {
         try {
-            const { meetId, senderId, senderName, message } = req.body;
+            console.log("CONTROLLER PARAMS:", req.params);
+            console.log("CONTROLLER BODY:", req.body);
+            const { meetId } = req.params;
+            const {
+                senderId,
+                senderName,
+                message
+            } = req.body;
 
             if (!meetId || !message) {
                 return res.status(400).json({

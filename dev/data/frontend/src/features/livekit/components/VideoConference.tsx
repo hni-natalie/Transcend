@@ -63,10 +63,10 @@ export function VideoConference({
 
   const tracks = useTracks(
     [
-      { source: Track.Source.Camera, withPlaceholder: true },
+      { source: Track.Source.Camera, withPlaceholder: false },
       { source: Track.Source.ScreenShare, withPlaceholder: false },
     ],
-    { updateOnlyOn: [RoomEvent.ActiveSpeakersChanged], onlySubscribed: false },
+    { onlySubscribed: false },
   );
 
   const widgetUpdate = (state: WidgetState) => {
@@ -81,7 +81,11 @@ export function VideoConference({
     .filter((track) => track.publication.source === Track.Source.ScreenShare);
 
   const focusTrack = usePinnedTracks(layoutContext)?.[0];
-  const carouselTracks = tracks.filter((track) => !isEqualTrackRef(track, focusTrack));
+  const carouselTracks = React.useMemo(() => {
+    return tracks.filter(
+      (track) => !isEqualTrackRef(track, focusTrack)
+    );
+  }, [tracks, focusTrack]);
 
   React.useEffect(() => {
     // If screen share tracks are published, and no pin is set explicitly, auto set the screen share.
@@ -136,7 +140,7 @@ export function VideoConference({
           <div className="lk-video-conference-inner">
             {!focusTrack ? (
               <div className="lk-grid-layout-wrapper">
-                <GridLayout tracks={tracks}>
+                <GridLayout tracks={React.useMemo(() => tracks, [tracks])}>
                   <ParticipantTile />
                 </GridLayout>
               </div>
@@ -153,6 +157,7 @@ export function VideoConference({
             <ControlBar meetId={meetId} controls={{ chat: true, recording: true, settings: !!SettingsComponent }} />
           </div>
           <Chat
+            meetId={meetId}
             style={{
 							display: widgetState.showChat ? 'flex' : 'none', 
 							flexDirection: 'column',
