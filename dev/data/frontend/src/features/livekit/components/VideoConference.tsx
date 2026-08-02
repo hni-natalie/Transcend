@@ -20,6 +20,7 @@ import { Chat, ControlBar, ParticipantTile } from '@/features/livekit';
  * @public
  */
 export interface VideoConferenceProps extends React.HTMLAttributes<HTMLDivElement> {
+  meetId: string;
   chatMessageFormatter?: MessageFormatter;
   chatMessageEncoder?: MessageEncoder;
   chatMessageDecoder?: MessageDecoder;
@@ -46,6 +47,7 @@ export interface VideoConferenceProps extends React.HTMLAttributes<HTMLDivElemen
  * @public
  */
 export function VideoConference({
+  meetId,
   chatMessageFormatter,
   chatMessageDecoder,
   chatMessageEncoder,
@@ -121,7 +123,10 @@ export function VideoConference({
   ]);
 
   return (
-    <div className="lk-video-conference" {...props}>
+    <div 
+      className="lk-video-conference" 
+      {...props}
+    >
       {isWeb() && (
         <LayoutContextProvider
           value={layoutContext}
@@ -145,7 +150,7 @@ export function VideoConference({
                 </FocusLayoutContainer>
               </div>
             )}
-            <ControlBar controls={{ chat: true, settings: !!SettingsComponent }} />
+            <ControlBar meetId={meetId} controls={{ chat: true, recording: true, settings: !!SettingsComponent }} />
           </div>
           <Chat
             style={{

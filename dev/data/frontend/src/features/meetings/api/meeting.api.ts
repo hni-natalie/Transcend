@@ -3,6 +3,7 @@ import { API_CONFIG } from '@api/api.config';
 
 const base = API_CONFIG.endpoints.meetings;
 const usersBase = API_CONFIG.endpoints.users.base;
+const recordingsBase = API_CONFIG.endpoints.recordings;
 
 export const meetingApi = {
     // =====================
@@ -94,4 +95,29 @@ export const meetingApi = {
       return apiClient.patch(`${base}/${meetId}/end`);
     },
 
+    // =====================
+    // RECORDING
+    // =====================
+    startRecording(meetId: string) {
+      return apiClient.post(`${recordingsBase}/start`, { meetId });
+    },
+    
+    stopRecording(meetId: string) {
+      return apiClient.patch(`${recordingsBase}/stop/${meetId}`);
+    },
+
+    finalizeRecordings() {
+      return apiClient.post(`${recordingsBase}/finalize`);
+    },
+
+    getRecordings(meetId: string) {
+      return apiClient.get(`${recordingsBase}/${meetId}`);
+    },
+
+    // =====================
+    // Meeting Chat
+    // ===================== 
+    createChatMessage(meetId: string, message: string) {
+      return apiClient.post(`${base}/${meetId}/chat`, { message });
+    },
 };

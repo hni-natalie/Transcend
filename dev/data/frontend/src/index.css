@@ -195,27 +195,42 @@
     @apply absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-background;
   }
 
-  /* livekit class overrides */
-  .lk-chat-header {
-    @apply flex w-full
+  /* LiveKit class overrides */
+  .lk-video-conference {
+    @apply flex h-screen w-full;
   }
+
   .lk-video-conference-inner {
-    @apply flex flex-col h-full w-full
+    @apply flex flex-col flex-1 min-h-0 w-full;
   }
-  .lk-grid-layout-wrapper {
-    @apply !flex !h-full !w-full overflow-y-auto
+
+  .lk-grid-layout-wrapper,
+  .lk-focus-layout-wrapper {
+    @apply flex-1 min-h-0 overflow-y-auto;
   }
+
+  .lk-control-bar {
+    @apply sticky bottom-0 z-50 shrink-0 bg-background-1;
+  }
+
+  .lk-chat {
+    @apply flex w-full;
+  }
+
+  .lk-chat-header {
+    @apply flex w-full;
+  }
+
   .lk-chat-form {
-    @apply flex w-full
+    @apply flex w-full;
   }
+
   .lk-chat-form-input {
     @apply rounded-lg border border-background-2 bg-background-1 px-4 py-2 text-sm text-white outline-none transition-colors focus:border-accent-lime;
   }
+
   .lk-chat-messages {
-    @apply h-full
-  }
-  .lk-chat {
-    @apply flex w-full
+    @apply h-full overflow-y-auto;
   }
 }
 

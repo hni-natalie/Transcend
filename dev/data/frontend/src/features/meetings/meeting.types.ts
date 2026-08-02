@@ -46,3 +46,18 @@ export type Meeting = {
     status: "scheduled" | "started";
     createdByUserId: string;
 };
+
+
+export type Recording = {
+    recordingId: string;
+    meetId: string;
+    status: 
+        | "starting"
+        | "active"
+        | "stopped"
+        | "completed"
+        | "failed";
+    filename: string;
+    fileUrl: string | null;
+    createdAt: string;
+};
