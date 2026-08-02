@@ -63,7 +63,7 @@ export function VideoConference({
 
   const tracks = useTracks(
     [
-      { source: Track.Source.Camera, withPlaceholder: false },
+      { source: Track.Source.Camera, withPlaceholder: true },
       { source: Track.Source.ScreenShare, withPlaceholder: false },
     ],
     { onlySubscribed: false },
@@ -81,11 +81,7 @@ export function VideoConference({
     .filter((track) => track.publication.source === Track.Source.ScreenShare);
 
   const focusTrack = usePinnedTracks(layoutContext)?.[0];
-  const carouselTracks = React.useMemo(() => {
-    return tracks.filter(
-      (track) => !isEqualTrackRef(track, focusTrack)
-    );
-  }, [tracks, focusTrack]);
+  const carouselTracks = tracks.filter((track) => !isEqualTrackRef(track, focusTrack));
 
   React.useEffect(() => {
     // If screen share tracks are published, and no pin is set explicitly, auto set the screen share.
@@ -140,7 +136,7 @@ export function VideoConference({
           <div className="lk-video-conference-inner">
             {!focusTrack ? (
               <div className="lk-grid-layout-wrapper">
-                <GridLayout tracks={React.useMemo(() => tracks, [tracks])}>
+                <GridLayout tracks={tracks}>
                   <ParticipantTile />
                 </GridLayout>
               </div>
