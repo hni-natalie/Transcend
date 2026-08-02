@@ -85,6 +85,7 @@ export const Meetings = () => {
 	const [editingMeeting, setEditingMeeting] = useState<MeetingDetails | null>(null);
 	const [showRecordingModal, setShowRecordingModal] = useState(false);
 	const [recordings, setRecordings] = useState<Recording[]>([]);
+	const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
 
 	// ======================
 	// FETCH
@@ -221,7 +222,7 @@ export const Meetings = () => {
 	};
 
 	// ======================
-	// VIEW TRANSCRIPT
+	// VIEW RECORDING
 	// ======================
 	const handleViewRecording = async (meetId: string) => {
 		try {
@@ -233,6 +234,7 @@ export const Meetings = () => {
 			console.log("Recording API response:", res);
 
 			setRecordings(res.recordings);
+			setSelectedMeetingId(meetId);
 			setShowRecordingModal(true);
 
 		} catch (err) {
@@ -241,60 +243,62 @@ export const Meetings = () => {
 	};
 
 	// ======================
+	// VIEW TRANSCRIPT
+	// ======================
+	
+
+	// ======================
 	// GROUPING
 	// ======================
 	const grouped = useMemo(() => {
-	const now = new Date(
-		new Date().toLocaleString("en-US", {
-			timeZone: "Asia/Kuala_Lumpur",
-		})
-	);
-
-	const sortAscending = (a: Meeting, b: Meeting) =>
-		new Date(a.meetStart).getTime() -
-		new Date(b.meetStart).getTime();
-
-
-	return {
-		// Today + not finished yet
-		today: joinedMeetings
-			.filter(m => {
-				const start = new Date(m.meetStart);
-				const end = new Date(m.meetEnd);
-
-				return (
-					start.toDateString() === now.toDateString() &&
-					end > now
-				);
+		const now = new Date(
+			new Date().toLocaleString("en-US", {
+				timeZone: "Asia/Kuala_Lumpur",
 			})
-			.sort(sortAscending),
+		);
 
+		const isToday = (date: Date) =>
+			date.toDateString() === now.toDateString();
 
-		// Future meetings
-		upcoming: joinedMeetings
-			.filter(m => {
-				const start = new Date(m.meetStart);
+		const sortAscending = (a: Meeting, b: Meeting) =>
+			new Date(a.meetStart).getTime() -
+			new Date(b.meetStart).getTime();
 
-				return start > now;
-			})
-			.sort(sortAscending),
+		return {
+			// Any meeting today that hasn't ended
+			today: joinedMeetings
+				.filter((m) => {
+					const start = new Date(m.meetStart);
+					const end = new Date(m.meetEnd);
 
+					return isToday(start) && end > now;
+				})
+				.sort(sortAscending),
 
-		// Already ended
-		past: joinedMeetings
-			.filter(m => {
-				const end = new Date(m.meetEnd);
+			// Starts after today
+			upcoming: joinedMeetings
+				.filter((m) => {
+					const start = new Date(m.meetStart);
 
-				return end <= now;
-			})
-			.sort((a, b) =>
-				new Date(b.meetStart).getTime() -
-				new Date(a.meetStart).getTime()
-			),
+					return !isToday(start) && start > now;
+				})
+				.sort(sortAscending),
 
+			// Already ended
+			past: joinedMeetings
+				.filter((m) => {
+					const end = new Date(m.meetEnd);
 
-		mine: myMeetings,
-	};
+					return end <= now;
+				})
+				.sort(
+					(a, b) =>
+						new Date(b.meetStart).getTime() -
+						new Date(a.meetStart).getTime()
+				),
+
+			mine: myMeetings,
+		};
 	}, [joinedMeetings, myMeetings]);
 
 	// ======================
@@ -321,7 +325,8 @@ export const Meetings = () => {
 				</div>
 			)}
 
-			<div className="grid grid-cols-4 gap-3 p-4">
+			<div className="flex-1 overflow-y-auto p-4">
+				<div className="grid grid-cols-4 gap-3">
 				<MeetingColumn
 					label="Today"
 					action="join"
@@ -360,6 +365,7 @@ export const Meetings = () => {
 					onViewMore={handleViewMore}
 					onEdit={handleEdit}
 				/>
+				</div>
 			</div>
 
 			<MeetingDetailsModal
@@ -369,6 +375,7 @@ export const Meetings = () => {
 
 			{showRecordingModal && (
 				<RecordingModal
+					meetId={selectedMeetingId ?? ""}
 					recordings={recordings}
 					onClose={() => {
 						setShowRecordingModal(false);

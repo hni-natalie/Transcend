@@ -13,7 +13,7 @@ export function UserMeetingRoom() {
 
   const location = useLocation();
   const navigate = useNavigate();
-  console.log("location state:", location.state);
+  // console.log("location state:", location.state);
   
   const { meetId, roomName, meetingTitle, isHost } = location.state || {
     roomName: '',

@@ -28,7 +28,7 @@ export function useLiveKit( roomName:string ) {
       
       // Subscribe to ALL state changes
       const unsubscribe = livekitService.onStateChange((newState) => {
-          console.log('📡 State updated:', newState);
+          // console.log('📡 State updated:', newState);
           setState(newState);
       });
       

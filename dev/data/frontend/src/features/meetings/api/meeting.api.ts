@@ -117,7 +117,18 @@ export const meetingApi = {
     // =====================
     // Meeting Chat
     // ===================== 
-    createChatMessage(meetId: string, message: string) {
-      return apiClient.post(`${base}/${meetId}/chat`, { message });
+    createChatMessage(
+      meetId: string,
+      data: {
+        senderId: string;
+        senderName: string;
+        message: string;
+      }
+    ) {
+      return apiClient.post(`${base}/${meetId}/chat`, data);
+    },
+
+    getChatMessages(meetId: string) {
+      return apiClient.get(`${base}/${meetId}/chat`);
     },
 };
