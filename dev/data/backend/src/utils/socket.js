@@ -35,6 +35,7 @@ const createPlayer = ({
   photo = '',
   audioEnabled = true,
   speaking = false,
+  ownership = { ownerId: null, timestamp: null },
 } = {}) => {
   return {
     id,
@@ -48,6 +49,7 @@ const createPlayer = ({
     photo,
     audioEnabled,
     speaking,
+    ownership,
   };
 }
 
@@ -82,6 +84,10 @@ const fetchRoomObjs = async() => {
         photo: '',
         audioEnabled: true,
         speaking: false,
+        ownership: {
+          ownerId: null,
+          timestamp: null,
+        },
       }));
   }
   return mockObjects; // Return array

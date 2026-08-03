@@ -81,6 +81,11 @@ export type Position = {
 	z:number,
 }
 
+export type Ownership = {
+  ownerId: string | null;
+  timestamp: number | null;
+};
+
 export type Player = {
 	id: string;
     userId?: string;
@@ -93,6 +98,7 @@ export type Player = {
 	audioEnabled?: boolean;
 	speaking?: boolean;
     dpId?: string;
+    ownership?: Ownership;
 }
 
 /* **************************************************************

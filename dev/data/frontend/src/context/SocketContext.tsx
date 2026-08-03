@@ -26,7 +26,6 @@ export function SocketProvider ({ children }) {
   const [currentRoom, setCurrentRoom] = useState<String>(null);
   const [roomPlayers, setRoomPlayers] = useState< Player[] >([]);
   const [roomObjs, setRoomObjs] = useState< Player[] >([]);
-  const lastKnownPositions = useRef<Record<string, Position>>({});
 
   useEffect(() => {
   const token = getToken();
@@ -98,8 +97,38 @@ export function SocketProvider ({ children }) {
           ? {...p, position: data.position}
           : p
       ));
-      console.log(`Object ${data.userId} moved to:`, data.position);
+      // console.log(`Object ${data.userId} moved to:`, data.position);
     });
+
+    socket.on('object-acquired', (data) => {
+      console.log('[object-acquired] ', data.objectId);
+      setRoomObjs(prev => prev.map(p => 
+        p.userId === data.objectId 
+          ? {...p,
+          ownership: {
+            ...p.ownership,
+            ownerId: data.ownerId,
+            timestamp: data.timestamp
+          }
+        }
+        : p
+      ));
+      console.log('[object-acquired] ', data.objectId, ' by ', data.ownerId);
+    })
+    socket.on('object-released', (data) => {
+      setRoomObjs(prev => prev.map(p => 
+        p.userId === data.objectId 
+          ? {...p,
+          ownership: {
+            ...p.ownership,
+            ownerId: null,
+            timestamp: null
+          }
+        }
+        : p
+      ));
+      console.log('[object-released] ', data.objectId);
+    })
 
     /* Events: Room */
     // socket.on('existing-room-players', (players) => {
@@ -164,14 +193,16 @@ export function SocketProvider ({ children }) {
     return () => {
       if (socket && !shouldConnect) {
         socket.off('existing-players');
-        socket.off('existing-room-objects');
         socket.off('player-joined');
         socket.off('player-left');
         socket.off('player-moved');
         socket.off('object-moved');
+        socket.off('object-acquired');
+        socket.off('object-released');
         socket.off('room-joined');
         socket.off('player-joined-room');
         socket.off('existing-room-players');
+        socket.off('existing-room-objects');
         socket.off('player-left-room');
         socket.off('room-full');
         socket.off('connect_error');
@@ -258,7 +289,7 @@ export function SocketProvider ({ children }) {
     enableSocket,
     isConnected,
     socket,
-    lastKnownPositions,
+    shouldConnect,
     // onlineStatus,
     // setOnlineStatus,
     

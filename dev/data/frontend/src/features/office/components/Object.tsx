@@ -7,7 +7,7 @@
 	3D components position emits their position when on collision/moved
 */
 
-import { useLoader } from '@react-three/fiber';
+import { useLoader, useFrame } from '@react-three/fiber';
 import { useBox, useContactMaterial, useCylinder } from '@react-three/cannon';
 import { Text } from '@react-three/drei';
 import React, { useRef, useState, useEffect, useCallback, RefObject } from 'react';
@@ -24,7 +24,7 @@ interface ObjectProps extends Player {
 }
 
 export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
-	{ userId, id, name, position, color="#D0F05C", type='Dynamic', photo } : ObjectProps,
+	{ userId, id, name, position={ x:0, y:0, z:0 }, color="#D0F05C", type='Dynamic', photo, ownership } : ObjectProps,
 	ref) => {
 
 	useContactMaterial('objMaterial', 'objMaterial', {
@@ -37,7 +37,7 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
     mass: 1,
 	  type: type,
   	linearDamping: 0.1,
-	  // material: 'objMaterial',
+	  material: 'objMaterial',
     position: [position.x, position.y, position.z],
 		rotation: [-Math.PI / 2, 0, 0],
 		fixedRotation: true,
@@ -46,10 +46,10 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
 	  userData: { userId },
   }));
 
-  const { registerObject, unregisterObject, hasChangedRef } = usePosition();
 	const [hovered, setHovered] = useState(false);
+	const { registerObject, unregisterObject, hasChangedRef, lockSystem } = usePosition();
 	const { textRef, textWidth, getTextWidth } = useTextWidth();
-	const { enableSocket, socket } = useSocket();
+	const { enableSocket, socket, localPlayerId } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
 
 	let texture = null;
@@ -79,26 +79,22 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
 
 	// update position from values set outside
 	useEffect(() => {
-		if (hasChangedRef.current[userId]) return ;
+		// if (hasChangedRef.current[userId]) return ;
+
+		// if im colliding with this object, do not update
+		// only update objects that remote update
+		
+		if (lockSystem.isOwnedBy(userId, localPlayerId)) return ;
+		// if (ownership?.ownerId === localPlayerId) {
+		// 	console.log('[Object] is owner!');
+		// 	return ;
+		// }
+		// else
+		console.log('[Object] not owner:', ownership?.ownerId, ' local: ', localPlayerId);
 		api.position.set(position.x, position.y, position.z);
-		console.log('[Object] set update position: ', position);
-	}, [position]);
 
-	// useEffect(() => {
-	// 	const handleServerUpdate = (data) => {
-	// 		if (data.userId !== userId) return ;
-	// 		console.log('Object id ', data.userId);
-	// 		api.velocity.set(0, 0, 0);
-	// 		api.angularVelocity.set(0, 0, 0);
-	// 		api.position.set(data.position.x, data.position.y, data.position.z);
-	// 		console.log('[Object] set update position: ', position);
-	// 	}
-	// 	socket.on('object-moved', handleServerUpdate);
-	// 	return () => {
-	// 		socket.off('object-moved', handleServerUpdate);
-	// 	} 
-	// }, [socket]);
-
+		console.log(localPlayerId, ' [Object] set update position: ', position);
+	}, [position, ownership?.ownerId]);
 
 	/*
 		WIP -

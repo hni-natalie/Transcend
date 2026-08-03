@@ -22,6 +22,7 @@ export function SpawnObject({ roomName }) {
 						name={object.name}
 						color={object.color}
 						photo={null}
+						ownership={object.ownership}
 					/>
 				);
 			})}

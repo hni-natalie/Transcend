@@ -110,6 +110,26 @@ const socketService = (io) => {
       // console.log('[object-move] object! ', data.position, ' ', data.userId);
     }
   });
+  socket.on('object-acquire', (data) => {
+    let roomData = rooms.get(data.roomName);
+    if (!roomData) return;
+    
+    // data.roomName, data.objectId, data.ownerId
+    const target = Array.from(roomData.objects.values()).find(p => p.userId === data.objectId);
+    if (!target) return ;
+
+    target.ownership.ownerId = data.ownerId;
+    target.ownership.timestamp = data.timestamp;
+    io.in(data.roomName).emit('object-acquired', { objectId:data.objectId, ownerId:data.ownerId, timestamp:data.timestamp });
+    console.log('Backend [object-acquire] ', data.objectId, ' owned: ', data.ownerId);
+    // socket.to(target.roomName).emit('object-acquired', { objectId:data.objectId, ownerId:data.ownerId, timestamp });
+  });
+  socket.on('object-release', (data) => {
+    let roomData = rooms.get(data.roomName);
+    if (!roomData) return;
+    io.in(data.roomName).emit('object-released', { objectId:data.objectId });
+    console.log('Backend [object-released] ', data.objectId);
+  });
 
   // Event handler for joining rooms
   socket.on('join-room', async ({ roomName }) => {
