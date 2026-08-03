@@ -85,14 +85,8 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
 		// only update objects that remote update
 		
 		if (lockSystem.isOwnedBy(userId, localPlayerId)) return ;
-		// if (ownership?.ownerId === localPlayerId) {
-		// 	console.log('[Object] is owner!');
-		// 	return ;
-		// }
-		// else
-		console.log('[Object] not owner:', ownership?.ownerId, ' local: ', localPlayerId);
-		api.position.set(position.x, position.y, position.z);
 
+		api.position.set(position.x, position.y, position.z);
 		console.log(localPlayerId, ' [Object] set update position: ', position);
 	}, [position, ownership?.ownerId]);
 

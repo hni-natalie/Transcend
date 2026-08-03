@@ -122,7 +122,6 @@ const socketService = (io) => {
     target.ownership.timestamp = data.timestamp;
     io.in(data.roomName).emit('object-acquired', { objectId:data.objectId, ownerId:data.ownerId, timestamp:data.timestamp });
     console.log('Backend [object-acquire] ', data.objectId, ' owned: ', data.ownerId);
-    // socket.to(target.roomName).emit('object-acquired', { objectId:data.objectId, ownerId:data.ownerId, timestamp });
   });
   socket.on('object-release', (data) => {
     let roomData = rooms.get(data.roomName);

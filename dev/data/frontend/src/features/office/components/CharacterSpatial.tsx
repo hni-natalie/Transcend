@@ -150,16 +150,6 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 		api.position.set(position.x, position.y, position.z);
 	}, [position, isLocalPlayer]);
 
-  // useEffect(() => {
-  //   const handleMove = (data: { id: string; position: { x: number; y: number; z: number } }) => {
-  //     if (data.id !== id) return;
-  //     api.position.set(data.position.x, 0, data.position.z);
-  //   };
-
-  //   socket.on('player-move', handleMove);
-  //   return () => socket.off('player-move', handleMove);
-  // }, [id, api, socket]);
-
 	/*
 		Calls this function to update position every frame for local player
 	  delta is from useFrame
@@ -225,7 +215,6 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 		{/* plane mesh need rotation as default position = facing z pos */}
 		<group
 			ref={characterRef} // localPlayer=characterRef
-			// ref={ref ? characterRef : remoteRef} // localPlayer=characterRef
 		  onPointerOver={() => setHovered(true)}
 			onPointerOut={() => setHovered(false)}
 		>

@@ -115,12 +115,11 @@ const initializeRoomData = async (rooms, roomName) => {
     console.log('num of active users: ', count);
 		const trimUser = activeUsers.slice(0, 3);
     // console.log('[socket-service] active users: ', trimUser);
-    console.log('[socket-service] active objs: ', existingObjs);
 
-    trimUser.forEach(user => {
-    // activeUsers.forEach(user => {
+    // trimUser.forEach(user => {
+    activeUsers.forEach(user => {
       const existingPlayer = createPlayer({
-        id: user.userId, // socket.id
+        id: user.userId,
         userId: user.userId,
         name: user.userName || null,
 		    dpId: user?.department?.dpId || 'guest',
