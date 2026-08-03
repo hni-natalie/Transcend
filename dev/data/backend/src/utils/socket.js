@@ -66,18 +66,17 @@ const fetchRoomObjs = async() => {
   const count = 2; // Number of mock objects
   
   for (let i = 0; i < count; i++) {
-    const userId = uuidv4();
+    const objectId = uuidv4();
     // console.log('random pos: ', randomPosition(2));
 
     mockObjects.push(
       createPlayer({
-        id: i + 1,
-        userId: userId,
-        name: `Obj-${userId}`,
+        id: i,
+        userId: objectId,
+        name: `Obj-${objectId}`,
         dpId: 'guest',
         roomName: 'Office',
-        position: { x:0, y:0, z:i },
-        // position: randomPosition(1),
+        position: randomPosition(5),
         rotation: { x:-Math.PI/2, y:0, z:0 },
         color: randomHslColor(),
         photo: '',
@@ -108,12 +107,12 @@ const initializeRoomData = async (rooms, roomName) => {
 
     const count = activeUsers.length;
     console.log('num of active users: ', count);
-		const trimUser = activeUsers.slice(0, 5);
+		const trimUser = activeUsers.slice(0, 3);
     // console.log('[socket-service] active users: ', trimUser);
     console.log('[socket-service] active objs: ', existingObjs);
 
-    // trimUser.forEach(user => {
-    activeUsers.forEach(user => {
+    trimUser.forEach(user => {
+    // activeUsers.forEach(user => {
       const existingPlayer = createPlayer({
         id: user.userId, // socket.id
         userId: user.userId,

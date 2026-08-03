@@ -80,7 +80,7 @@ const socketService = (io) => {
   socket.emit('existing-players', Array.from(players.values()));
   
   // Broadcast entire new player object to everyone else
-  socket.broadcast.emit('player-joined', players.get(socket.user.userId));
+  socket.broadcast.emit('player-joined', players.get(socket.id));
   
   // Handle position updates
   socket.on('player-move', (data) => {
@@ -88,7 +88,7 @@ const socketService = (io) => {
     // target = players.get(data.id)
     // console.log('[player-move] target! ', target, ' ', data.userId);
     if (target && target.roomName) {
-      target.position = data.position;
+      target.position = data.position; // ### this means user pos not updated?
       // target.rotation = data.rotation;
 
       // emit position in room name
@@ -102,9 +102,12 @@ const socketService = (io) => {
     const target = Array.from(roomData.objects.values()).find(p => p.userId === data.userId);
     if (target) {
       target.position = data.position;
-      // emit position in room name
+      // emit to everyone include sender
       socket.to(target.roomName).emit('object-moved', data);
-      // console.log('[object-move] object! ', target, ' ', data.userId);
+      // socket.emit('object-moved', data);
+      // io.in(target.roomName).emit('object-moved', data);
+
+      // console.log('[object-move] object! ', data.position, ' ', data.userId);
     }
   });
 
@@ -121,7 +124,7 @@ const socketService = (io) => {
     // create if no room
     if (!roomData) {
       roomData = await initializeRoomData(rooms, roomName);
-      console.log('created room data: ', roomData);
+      console.log('[socket.service] new room!');
     }
 
     // Room-size constrains
@@ -147,7 +150,7 @@ const socketService = (io) => {
     socket.join(roomName);
     socket.emit('existing-room-players', roomData?.users || []); // send only to client
     socket.emit('existing-room-objects', roomData?.objects || []);
-
+    // console.log('[existing-room-objects] ', roomData?.objects);
     
     // Generate room-specific token
     const token = await generateRoomToken(roomName, player.id, player.name); // ###

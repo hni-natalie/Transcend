@@ -17,26 +17,27 @@ import { useKeyboard } from '@/context/KeyboardContext';
 import { Player, Position, getInitials } from '@/shared';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { useTextWidth } from '@/features/office/hooks/useTextWidth';
+import { usePosition } from '@/context';
 
 interface ObjectProps extends Player {
 	type?: 'Kinematic' | 'Dynamic';
 }
 
 export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
-	{ userId, id, name, position={ x:0, y:0, z:0 }, color="#D0F05C", type='Dynamic', photo } : ObjectProps,
+	{ userId, id, name, position, color="#D0F05C", type='Dynamic', photo } : ObjectProps,
 	ref) => {
 
 	useContactMaterial('objMaterial', 'objMaterial', {
 		friction: 0.8,
-		restitution: 0.4,        				// 0 no bounce - 1 elastic
-		contactEquationStiffness: 1,   	// lower = softer push
-		contactEquationRelaxation: 400, // higher = softer/slower correction
+		restitution: 0.05,        				// 0 no bounce - 1 elastic
+		contactEquationStiffness: 0.5,   	// lower = softer push
+		contactEquationRelaxation: 500, // higher = softer/slower correction
 	});
   const [objectRef, api] = useBox(() => ({
     mass: 1,
 	  type: type,
   	linearDamping: 0.1,
-	  material: 'objMaterial',
+	  // material: 'objMaterial',
     position: [position.x, position.y, position.z],
 		rotation: [-Math.PI / 2, 0, 0],
 		fixedRotation: true,
@@ -45,12 +46,10 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
 	  userData: { userId },
   }));
 
-	const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
+  const { registerObject, unregisterObject, hasChangedRef } = usePosition();
 	const [hovered, setHovered] = useState(false);
-	const { keys } = useKeyboard();
-	const { textRef, textWidth, getTextWidth, setTextWidth } = useTextWidth();
-
-	const { enableSocket, isConnected, socket } = useSocket();
+	const { textRef, textWidth, getTextWidth } = useTextWidth();
+	const { enableSocket, socket } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
 
 	let texture = null;
@@ -73,6 +72,34 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
     }
   }, [ref]);
 
+  useEffect(() => {
+    registerObject(userId, api);
+    return () => unregisterObject(userId);
+  }, [userId, api]);
+
+	// update position from values set outside
+	useEffect(() => {
+		if (hasChangedRef.current[userId]) return ;
+		api.position.set(position.x, position.y, position.z);
+		console.log('[Object] set update position: ', position);
+	}, [position]);
+
+	// useEffect(() => {
+	// 	const handleServerUpdate = (data) => {
+	// 		if (data.userId !== userId) return ;
+	// 		console.log('Object id ', data.userId);
+	// 		api.velocity.set(0, 0, 0);
+	// 		api.angularVelocity.set(0, 0, 0);
+	// 		api.position.set(data.position.x, data.position.y, data.position.z);
+	// 		console.log('[Object] set update position: ', position);
+	// 	}
+	// 	socket.on('object-moved', handleServerUpdate);
+	// 	return () => {
+	// 		socket.off('object-moved', handleServerUpdate);
+	// 	} 
+	// }, [socket]);
+
+
 	/*
 		WIP -
 		Calls this function to update position every frame for local player
@@ -89,11 +116,6 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
 			minZ: -worldHeight/2 + conf.Player.radius,
 			maxZ: worldHeight/2 - conf.Player.radius
 	};
-
-	// update position from values set outside
-	useEffect(() => {
-		api.position.set(position.x, position.y, position.z);
-	}, [position]);
 
 	return (
 		<>

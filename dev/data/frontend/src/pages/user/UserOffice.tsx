@@ -7,7 +7,7 @@ import { useSocket } from '@/context/SocketContext';
 import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
 import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject } from '@features/office';
-import { KeyboardProvider } from '@/context/KeyboardContext';
+import { KeyboardProvider, PositionProvider } from '@/context';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { SpaceProvider } from '@/features/office/context/SpaceContext';
 
@@ -32,8 +32,6 @@ export function Office({ roomName } : SpaceProps ) {
 	/* ------------- general  ------------- */
   const [error, setError] = useState<string>('');
 	const isConnectedRoomRef = useRef(isConnectedRoom);
-	// const { planes } = useOfficeSpace();
-
 
 	const handleUncaughtRejection = async ( event:PromiseRejectionEvent ) => {
 		if (event.reason?.name === 'NegotiationError' ||
@@ -112,6 +110,7 @@ export function Office({ roomName } : SpaceProps ) {
 			<Physics>
 
 				<SpaceProvider localPlayerRef={localPlayerRef} roomName={roomName}>
+				<PositionProvider roomName={roomName}>
 					<PerspectiveCamera 
 						ref={cameraRef as React.Ref<THREE.PerspectiveCamera>}
 						makeDefault
@@ -179,6 +178,8 @@ export function Office({ roomName } : SpaceProps ) {
 					
 					{/* Grid helper for reference */}
 					{/* <gridHelper args={[20, 20]} /> */}
+
+				</PositionProvider>
 				</SpaceProvider>
 			</Physics>
 			</Canvas>

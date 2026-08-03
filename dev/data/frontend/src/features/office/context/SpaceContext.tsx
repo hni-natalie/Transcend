@@ -1,3 +1,6 @@
+/*
+	Handling all planes in Scene
+*/
 import * as THREE from 'three';
 import * as d3 from 'd3-hierarchy';
 import { createContext, useContext, useMemo, useState, useEffect, useRef } from 'react';

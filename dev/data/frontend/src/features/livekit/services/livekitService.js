@@ -390,7 +390,7 @@ class LiveKitService {
   emit(event, data) {
     if (this.listeners[event]) {
       this.listeners[event].forEach(callback => callback(data));
-      console.log(`📡 emit: Emitting event: ${event}`, data);
+      // console.log(`📡 emit: Emitting event: ${event}`, data);
     } else
     console.log(`📡 emit: No listeners found for ${event}`);
   }

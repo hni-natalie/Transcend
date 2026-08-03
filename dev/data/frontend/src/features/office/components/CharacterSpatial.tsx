@@ -12,8 +12,7 @@ import { useBox, useContactMaterial } from '@react-three/cannon';
 import { Text } from '@react-three/drei';
 import React, { useRef, useState, useEffect, useCallback, RefObject } from 'react';
 import * as THREE from 'three';
-import { useSocket } from '@/context/SocketContext';
-import { useKeyboard } from '@/context/KeyboardContext';
+import { useSocket, useKeyboard, usePosition } from '@/context';
 import { Player, Position, getInitials } from '@/shared';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { useTextWidth } from '@/features/office/hooks/useTextWidth';
@@ -30,7 +29,7 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 	{ userId, id, name, position, color="#D0F05C", roomName='Office', photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps,
 	ref) => {
 
-	const { lastKnownPositions } = useSocket();
+	const { lastKnownPositionsRef } = usePosition();
 
 	useContactMaterial('playerMaterial', 'playerMaterial', {
 		friction: 0.3,
@@ -52,34 +51,32 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 	  onCollide: (e) => handleCollision(e)
   }));
 
-	useEffect(() => {
-		let lastEmit = 0;
-		const THROTTLE_MS = 500;
+	// useEffect(() => {
+	// 	let lastEmit = 0;
+	// 	const THROTTLE_MS = 500;
 
-		const unsubscribe = api.position.subscribe((p) => {
-			const now = Date.now();
-			if (now - lastEmit < THROTTLE_MS) return;
-			lastEmit = now;
-	    lastKnownPositions.current[userId] = {x:p[0], y:0, z:p[2]};
+	// 	const unsubscribe = api.position.subscribe((p) => {
+	// 		const now = Date.now();
+	// 		if (now - lastEmit < THROTTLE_MS) return;
+	// 		lastEmit = now;
+	//     lastKnownPositionsRef.current[userId] = {x:p[0], y:0, z:p[2]};
 			
-			// console.log('current physics position:', userId, ' ', lastKnownPositions.current[userId]);
-			// console.log('all list: ', lastKnownPositions.current);
-		});
-		return unsubscribe;
-	}, [api]);
+	// 		// console.log('current physics position:', userId, ' ', lastKnownPositionsRef.current[userId]);
+	// 		// console.log('all list: ', lastKnownPositionsRef.current);
+	// 	});
+	// 	return unsubscribe;
+	// }, [api]);
 
 	const handleCollision = useCallback(( e:any ) => {
 		if (!isLocalPlayer) return ; // only localPlayer emit collision pos
-	  const hitId = e.body?.userData?.userId;
-		if (hitId) {
-			console.log('collided with', hitId);
-			// console.log('_current physics position:', lastKnownPositions.current[hitId]);
-			// console.log('_all:', lastKnownPositions.current);
+	  const objectId = e.body?.userData?.userId;
+		if (objectId) {
+			console.log('collided with', objectId, ' ', lastKnownPositionsRef.current[objectId]);
+			// console.log('_current physics position:', lastKnownPositionsRef.current[objectId]);
+		// 	// console.log('_all:', lastKnownPositionsRef.current);
 
-			socket.emit('object-move', { userId:hitId, roomName:roomName, position: lastKnownPositions.current[hitId] }); //broadcast
+		// 	// socket.emit('object-move', { userId:objectId, roomName:roomName, position:lastKnownPositionsRef.current[objectId] });
 		}
-		// else
-		// 	console.log('** collided with', e.body);
 	}, [isLocalPlayer])
 
 	const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);

@@ -69,8 +69,8 @@ export function SocketProvider ({ children }) {
     });
     socket.on('existing-room-objects', (objects) => {
       // console.log('[existing-room-objects] test ', objects[0]);
-      // console.log('[existing-room-objects] all: ', objects);
       setRoomObjs(objects);
+      console.log('[existing-room-objects] all: ', objects);
     });
 
     socket.on('player-joined', (data) => {
