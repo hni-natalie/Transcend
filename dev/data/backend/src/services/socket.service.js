@@ -103,7 +103,7 @@ const socketService = (io) => {
     if (target) {
       target.position = data.position;
       // emit to everyone include sender
-      socket.to(target.roomName).emit('object-moved', data);
+      io.in(target.roomName).emit('object-moved', data);
       // socket.emit('object-moved', data);
       // io.in(target.roomName).emit('object-moved', data);
 
