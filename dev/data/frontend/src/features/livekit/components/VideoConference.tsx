@@ -15,6 +15,7 @@ import {
 import { useCreateLayoutContext } from '@livekit/components-react';
 import { usePinnedTracks, useTracks } from '@livekit/components-react';
 import { Chat, ControlBar, ParticipantTile } from '@/features/livekit';
+import { Rnd } from "react-rnd";
 
 /**
  * @public
@@ -133,15 +134,15 @@ export function VideoConference({
           // onPinChange={handleFocusStateChange}
           onWidgetChange={widgetUpdate}
         >
-          <div className="lk-video-conference-inner">
+          <div className="lk-video-conference-inner flex flex-1 min-w-0 min-h-0">
             {!focusTrack ? (
-              <div className="lk-grid-layout-wrapper">
+              <div className="lk-grid-layout-wrapper flex-1 min-w-0 min-h-0">
                 <GridLayout tracks={tracks}>
                   <ParticipantTile />
                 </GridLayout>
               </div>
             ) : (
-              <div className="lk-focus-layout-wrapper">
+              <div className="lk-focus-layout-wrapper flex-1 min-w-0 min-h-0">
                 <FocusLayoutContainer>
                   <CarouselLayout tracks={carouselTracks}>
                     <ParticipantTile />
@@ -152,18 +153,36 @@ export function VideoConference({
             )}
             <ControlBar meetId={meetId} controls={{ chat: true, recording: true, settings: !!SettingsComponent }} />
           </div>
-          <Chat
-            meetId={meetId}
+          <div
             style={{
-							display: widgetState.showChat ? 'flex' : 'none', 
-							flexDirection: 'column',
-							maxWidth: '300px',
-							width: '100%'
-						}}
-            messageFormatter={chatMessageFormatter}
-            messageEncoder={chatMessageEncoder}
-            messageDecoder={chatMessageDecoder}
-          />
+              visibility: widgetState.showChat ? 'visible' : 'hidden',
+              pointerEvents: 'none', // wrapper never intercepts clicks
+              position: 'absolute',
+              inset: 0,
+              zIndex: 50,
+            }}
+          >
+            <Rnd
+              style={{ pointerEvents: widgetState.showChat ? 'auto' : 'none' }} // only the box itself is clickable
+              default={{
+                x: 20,
+                y: 80,
+                width: window.innerWidth < 640 ? window.innerWidth - 40 : 320,
+                height: window.innerWidth < 640 ? window.innerHeight - 160 : 400,
+              }}
+              minWidth={260}
+              minHeight={300}
+              bounds="window"
+            >
+              <Chat
+                meetId={meetId}
+                className="h-full w-full"
+                messageFormatter={chatMessageFormatter}
+                messageEncoder={chatMessageEncoder}
+                messageDecoder={chatMessageDecoder}
+              />
+            </Rnd>
+          </div>
           {SettingsComponent && (
             <div
               className="lk-settings-menu-modal"

@@ -74,7 +74,7 @@ export function UserMeetingRoom() {
         }
       />
 
-      <div className="flex items-center justify-center h-full">
+      <div className="flex flex-1 min-h-0 min-w-0">
         {error ? (
           <div className="text-center">
             <p className="text-red-500 font-semibold">

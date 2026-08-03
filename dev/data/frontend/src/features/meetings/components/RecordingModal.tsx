@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { MeetingChatMessage } from '../meeting.types';
 import { meetingApi } from '../api/meeting.api';
 
+
 type Props = {
     meetId: string;
     recordings?: Recording[];
