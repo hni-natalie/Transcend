@@ -11,15 +11,19 @@ export class AudioManager {
     this.listener = new THREE.AudioListener;
   }
 
+  setRoom(room) {
+    this.room = room;
+  }
+
   async resumeListener() {
 		if (this.listener.context.state === 'suspended') {
 			await this.listener.context.resume();
 			console.log("handleJoin: Audio listener status: ", this.listener.context.state);
 		}
-    else {
-      //debug
-	    console.error("handleJoin: Audio listener already running: ", this.listener.context.state);
-		}
+    // else {
+    //   //debug
+	  //   console.error("handleJoin: Audio listener already running: ", this.listener.context.state);
+		// }
   }
 
   // Initialize microphone and audio context
@@ -46,11 +50,7 @@ export class AudioManager {
       return false;
     }
     this.isMuted = !this.isMuted;
-    
-    if (!this.isMuted) // mute == 0
-      this.localPublication.unmute();
-    else
-      this.localPublication.mute();
+    this.room.localParticipant.setMicrophoneEnabled(!this.isMuted);
     
     console.log(this.isMuted ? '🔴 Muted (others cannot hear you)' : '🟢 Unmuted (others can hear you)');
     return this.isMuted;

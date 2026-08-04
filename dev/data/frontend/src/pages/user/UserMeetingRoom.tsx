@@ -1,75 +1,96 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { RoomContext } from '@livekit/components-react';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
-import { useLocation } from 'react-router-dom';
-import { Track } from 'livekit-client';
-import { useMemo } from 'react';
-import { RoomContext, ParticipantTile, useTracks } from '@livekit/components-react';
-import { ButtonVoiceRoom, useLiveKit, VideoConference } from '@/features/livekit';
+import { useLiveKit, VideoConference } from '@/features/livekit';
 import { PageHeader, IconMeetings } from '@/shared';
+import { useAuth } from '@/features/auth/AuthContext';
+import { meetingApi } from '@/features/meetings/api/meeting.api';
 import '@livekit/components-styles';
-
-// function VideoConferenceUI() {
-//   const tracks = useTracks([
-//     { source: Track.Source.Camera, withPlaceholder: true },
-//     { source: Track.Source.ScreenShare, withPlaceholder: false },
-//   ]);
-
-//   return (
-//     <div className="grid grid-cols-2 gap-4 p-4">
-//       {tracks.map((track) => (
-//         <ParticipantTile key={track.participant.identity} trackRef={track} />
-//       ))}
-//     </div>
-//   );
-// }
 
 export function UserMeetingRoom() {
   const [room, setRoom] = useState(null);
+
   const location = useLocation();
-  const { roomName } = location.state || 'Default Meeting';
-  // const roomName = '42 Transcend Discussion'
-  const { isConnectedRoom, getLivekitRoom } = useLiveKit(roomName);
+  const navigate = useNavigate();
+  // console.log("location state:", location.state);
+  
+  const { meetId, roomName, meetingTitle, isHost } = location.state || {
+    roomName: '',
+    meetId: '',
+    meetingTitle: 'Meeting',
+    isHost: false,
+  };
 
-  console.log('[UserMeetingRoom] room: ', roomName);
+  const { isConnectedRoom, getLivekitRoom, disconnect, isLoading, error } =
+    useLiveKit(roomName);
+
+  const { user } = useAuth();
+
   useEffect(() => {
-    if (!isConnectedRoom) return ;
-    const livekitRoom = getLivekitRoom();
-    setRoom(livekitRoom);
-
-  }, [isConnectedRoom])
+    if (!isConnectedRoom) return;
+    setRoom(getLivekitRoom());
+  }, [isConnectedRoom, getLivekitRoom]);
 
   useEffect(() => {
-    if (!room) return ;
-    console.log('Room exists!!!!');
+    if (room) console.log('Room exists!');
+  }, [room]);
 
-  }, [room])
+  const handleLeave = async () => {
+    await disconnect(true);
+
+    if (isHost) {
+      await meetingApi.endMeeting(roomName);
+      console.log("Meeting ended");
+    }
+
+    navigate(R.USER_MEETINGS);
+  };
+
   return (
-  <>
-  	<div className='flex flex-col h-full'>
-
-      <PageHeader 
-      icon={<IconMeetings className="w-7 h-7" />}
-      title={roomName}
-      action={
-        <ButtonVoiceRoom 
-          roomName={roomName} 
-          joinText={`Join ${roomName}`}
-          leaveTo={R.USER_MEETINGS}
-          showMute={false}
-          mode="video"
-        />
-      }
+    <div className="flex flex-col h-full">
+      <PageHeader
+        icon={<IconMeetings className="w-7 h-7" />}
+        title={meetingTitle}
+        action={
+          error ? (
+            <button
+              onClick={() => navigate(R.USER_MEETINGS)}
+              className="btn-lime-outline"
+            >
+              Return Back
+            </button>
+          ) : (
+            isConnectedRoom && (
+              <button
+                onClick={handleLeave}
+                disabled={isLoading}
+                className="btn-lime-outline"
+              >
+                Leave Meeting
+              </button>
+            )
+          )
+        }
       />
-      <div className="flex items-center justify-center h-full overflow-y-auto">
-      {!room ? (
-          <p className="text-foreground-3">Vid meetings coming soon...</p>
+
+      <div className="flex items-center justify-center h-full">
+        {error ? (
+          <div className="text-center">
+            <p className="text-red-500 font-semibold">
+              Failed to join meeting
+            </p>
+
+            <p>{error}</p>
+          </div>
+        ) : !room ? (
+          <p>Connecting...</p>
         ) : (
-        <RoomContext.Provider value={room}>
-          <VideoConference className='flex h-full w-full justify-center'/>
-        </RoomContext.Provider>
-      )}
+          <RoomContext.Provider value={room}>
+            <VideoConference meetId={meetId}/>
+          </RoomContext.Provider>
+        )}
       </div>
     </div>
-  </>
   );
 }

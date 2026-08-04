@@ -415,7 +415,7 @@ export const SideNav = ({ activeSection, isGoogleUser, onSelect }: SideNavProps)
   <div className="flex flex-col gap-4 sticky">
     <button
       onClick={() => onSelect('profile')}
-      className={`mt-11 px-9 text-left text-base font-semibold tracking-wide rounded-xl transition-all duration-200 cursor-pointer ${
+      className={`mt-10 px-9 text-left text-base font-semibold tracking-wide rounded-xl transition-all duration-200 cursor-pointer ${
         activeSection === 'profile' ? 'text-accent-lime' : 'text-foreground-3 hover:text-foreground'
       }`}
     >

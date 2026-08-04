@@ -160,6 +160,8 @@ CREATE TABLE "Document" (
     CONSTRAINT "Document_pkey" PRIMARY KEY ("id")
 );
 
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- CreateTable
 CREATE TABLE "DocumentChunk" (
     "id" TEXT NOT NULL,

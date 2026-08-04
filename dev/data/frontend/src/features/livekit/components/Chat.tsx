@@ -2,10 +2,13 @@ import { type ChatMessage, type ChatOptions } from '@livekit/components-core';
 import * as React from 'react';
 import { cloneSingleChild } from '../utils/utils';
 import { useMaybeLayoutContext, useChat, ChatToggle, ChatCloseIcon, ChatEntry, MessageFormatter } from '@livekit/components-react';
+import { meetingApi } from '@/features/meetings/api/meeting.api';
+import { useRoomContext } from '@livekit/components-react';
 
 /** @public */
 export interface ChatProps extends React.HTMLAttributes<HTMLDivElement>, ChatOptions {
   messageFormatter?: MessageFormatter;
+  meetId: string;
 }
 
 /**
@@ -39,8 +42,10 @@ export function Chat({
   messageDecoder,
   messageEncoder,
   channelTopic,
+  meetId,
   ...props
 }: ChatProps) {
+  const room = useRoomContext();
   const ulRef = React.useRef<HTMLUListElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -56,9 +61,36 @@ export function Chat({
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (inputRef.current && inputRef.current.value.trim() !== '') {
-      await send(inputRef.current.value);
-      inputRef.current.value = '';
-      inputRef.current.focus();
+      const message = inputRef.current.value;
+      await send(message);
+
+      console.log("Saving chat message:", {
+        meetId,
+        senderId: room.localParticipant.identity,
+        senderName:
+          room.localParticipant.name ??
+          room.localParticipant.identity,
+        message,
+      });
+
+      if (meetId) {
+        await meetingApi.createChatMessage(
+          meetId,
+          {
+            senderId: room.localParticipant.identity,
+
+            senderName:
+              room.localParticipant.name ??
+              room.localParticipant.identity,
+
+            message,
+          }
+        );
+    }
+
+
+    inputRef.current.value = '';
+    inputRef.current.focus();
     }
   }
 

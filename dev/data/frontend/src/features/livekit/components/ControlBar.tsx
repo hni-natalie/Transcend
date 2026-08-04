@@ -6,6 +6,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { supportsScreenSharing } from '@livekit/components-core';
 import { mergeProps } from '@features/livekit/utils/mergeProps';
 import { IconChat } from '@/shared';
+import { RecordingButton } from './RecordingButton';
 
 /** @public */
 export type ControlBarControls = {
@@ -15,6 +16,7 @@ export type ControlBarControls = {
   screenShare?: boolean;
   leave?: boolean;
   settings?: boolean;
+  recording?: boolean;
 };
 
 const trackSourceToProtocol = (source: Track.Source) => {
@@ -43,6 +45,7 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
    * @alpha
    */
   saveUserChoices?: boolean;
+  meetId?: string;
 }
 
 /**
@@ -66,6 +69,7 @@ export function ControlBar({
   controls,
   saveUserChoices = true,
   onDeviceError,
+  meetId,
   ...props
 }: ControlBarProps) {
   const [isChatOpen, setIsChatOpen] = React.useState(false);
@@ -166,6 +170,7 @@ export function ControlBar({
           </div>
         </div>
       )}
+
       {visibleControls.camera && (
         <div className="lk-button-group">
           <TrackToggle
@@ -186,6 +191,7 @@ export function ControlBar({
           </div>
         </div>
       )}
+
       {visibleControls.screenShare && browserSupportsScreenSharing && (
         <TrackToggle
           source={Track.Source.ScreenShare}
@@ -197,6 +203,11 @@ export function ControlBar({
           {showText && (isScreenShareEnabled ? 'Stop screen share' : 'Share screen')}
         </TrackToggle>
       )}
+
+      {visibleControls.recording && meetId && (
+        <RecordingButton meetId={meetId}/>
+      )}
+
       {visibleControls.chat && (
         <ChatToggle>
           {showIcon && <IconChat />}

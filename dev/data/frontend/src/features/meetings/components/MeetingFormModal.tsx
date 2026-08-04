@@ -298,7 +298,7 @@ export const ScheduleMeetingModal = ({
             <IconMeetings className="w-8 h-8 text-white" />
 
             <h1 className="text-3xl font-medium text-accent-lime">
-                Schedule Meeting
+                {mode === "edit" ? "Update Meeting" : "Schedule Meeting"}
             </h1>
             </div>
 
@@ -499,7 +499,14 @@ export const ScheduleMeetingModal = ({
                 disabled={loading || !isFormValid}
                 className="rounded-lg bg-accent-lime px-5 py-2 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50"
             >
-                {loading ? "Creating..." : "Create Meeting"}
+                {loading
+                    ? mode === "edit"
+                        ? "Updating..."
+                        : "Creating..."
+                    : mode === "edit"
+                        ? "Update Meeting"
+                        : "Create Meeting"
+                }
             </button>
             </div>
         </form>

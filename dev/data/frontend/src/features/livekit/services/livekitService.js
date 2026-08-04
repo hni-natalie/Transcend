@@ -34,11 +34,13 @@ class LiveKitService {
     this.isInitialized = false;
     this._state = {
       isConnectedRoom: false,
+      currentRoomName: null,
       activePlane: null,
       isMuted: false,
       joinCount: 0,
       isLoading: false,
-      readyStreams: new Set()
+      readyStreams: new Set(),
+      error: null
     }
   }
 
@@ -49,34 +51,55 @@ class LiveKitService {
   get isLoading() { return this._state.isLoading; }
   get readyStreams() { return this._state.readyStreams; }
   get lkRoom() { return this._room; }
+  get error() { return this._state.error; }
 
   _setState(updates) {
     this._state = { ...this._state, ...updates };
     this.emit('stateChange', this._state);
   }
+  
   getState(){
     return { ...this._state };
   }
+
+  setError(error) {
+    this._setState({ error, isLoading: false, });
+  }
+
+  setCurrentRoomName(roomName) {
+    this._setState({ currentRoomName: roomName });
+  }
+
+  clearError() {
+    this._setState({ error: null, });
+  }
+
   setActivePlane(index){
       this._setState({ activePlane:index });
   }
+
   setIsConnectedRoom(status){
     this._setState({ isConnectedRoom:status });
   }
+
   setIsLoading(status) {
       this._setState({ isLoading:status });
   }
+
   setIsMuted(status) {
       this._setState({ isMuted:status });
   }
+
   setJoinCount(count) {
       this._setState({ joinCount:count });
   }
+
   setReadyStreams(id) {
     const newSet = new Set(this._state.readyStreams);
     newSet.add(id);
     this._setState({ readyStreams:newSet });
   }
+
   deleteReadyStreams(id) {
     const newSet = new Set(this._state.readyStreams);
     newSet.delete(id);
@@ -249,85 +272,101 @@ class LiveKitService {
     get token from backend and handle frontend room creation
   */
   async connectToRoom({ token }, mode) {
-		// debug
-		// console.log('VITE_LIVEKIT_URL: ', import.meta.env.VITE_LIVEKIT_URL)
+		this.clearError();
     try {
       // Reuse existing room if possible
       if (this._room && this._room.state === 'connected') {
         console.warn('Existing room found! Disconnecting before start new connection');
         await this._room.disconnect();
-        await new Promise(resolve => setTimeout(resolve, 500)); // delay
       }
-      else {
-        this._room = new Room();
 
-        /* *************************************************************
-         * Set up Listeners for remote track
-         * *************************************************************/
-        this._room.on(RoomEvent.TrackSubscribed, (track, publication, remoteParticipants) => {
-          console.log(`Track subscribed from ${remoteParticipants.identity}`);
-          
-          if (track.kind === Track.Kind.Audio) {
-            // console.log(`Check audio participant ${remoteParticipants.identity}`);
-            if (mode === "call")
-              this.handleCall(track, remoteParticipants);
-            else if (mode === "room") {
-              this.handleRoom(track, remoteParticipants);
-            }
-          }
-        });
+      this._room = new Room();
+
+      /* *************************************************************
+        * Set up Listeners for remote track
+        * *************************************************************/
+      this._room.on(RoomEvent.TrackSubscribed, (track, publication, remoteParticipants) => {
+        console.log(`Track subscribed from ${remoteParticipants.identity}`);
         
-        this._room.on(RoomEvent.TrackUnsubscribed, (track, publication, remoteParticipants) => {
-          if (track.kind === Track.Kind.Audio) {
-            if (mode === "call")
-              this.handleLeaveCall(track, remoteParticipants);
-            else if (mode === "room")
-              this.handleLeaveRoom(track, remoteParticipants);
+        if (track.kind === Track.Kind.Audio) {
+          // console.log(`Check audio participant ${remoteParticipants.identity}`);
+          if (mode === "call")
+            this.handleCall(track, remoteParticipants);
+          else if (mode === "room") {
+            this.handleRoom(track, remoteParticipants);
           }
-        });
-
-        this._room.on(RoomEvent.TrackMuted, (publication, participant) => {
-          console.log(`${participant.identity} muted their ${publication.kind} track`);
-          // Update UI to show muted state
-        });
-
-        this._room.on(RoomEvent.TrackUnmuted, (publication, participant) => {
-          console.log(`${participant.identity} unmuted their ${publication.kind} track`);
-          // Update UI to show unmuted state
-        });
-
-        // Run once when room connected Check existing participants
-        this._room.once(RoomEvent.Connected, () => {
-          console.log('Room connected, participants in room:', this._room.remoteParticipants);
-        });
-
-        /* *************************************************************
-         * Connect to room
-         * *************************************************************/
-        try {
-          await this._room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
-
-          if (mode === "video")
-            this._room.localParticipant.enableCameraAndMicrophone(); // ###
-          else
-            await this.audioManager.initMicrophone(this._room);
-        } catch (error) {
-          console.error('LiveKit connection failed:', error);
-          // window.location.reload();
         }
+      });
+      
+      this._room.on(RoomEvent.TrackUnsubscribed, (track, publication, remoteParticipants) => {
+        if (track.kind === Track.Kind.Audio) {
+          if (mode === "call")
+            this.handleLeaveCall(track, remoteParticipants);
+          else if (mode === "room")
+            this.handleLeaveRoom(track, remoteParticipants);
+        }
+      });
+
+      this._room.on(RoomEvent.TrackMuted, (publication, participant) => {
+        console.log(`${participant.identity} muted their ${publication.kind} track`);
+        // Update UI to show muted state
+      });
+
+      this._room.on(RoomEvent.TrackUnmuted, (publication, participant) => {
+        console.log(`${participant.identity} unmuted their ${publication.kind} track`);
+        // Update UI to show unmuted state
+      });
+
+      // Run once when room connected Check existing participants
+      this._room.once(RoomEvent.Connected, () => {
+        console.log('Room connected, participants in room:', this._room.remoteParticipants);
+      });
+
+      /* *************************************************************
+        * Connect to room
+        * *************************************************************/
+      try {
+        await this._room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
+
+        if (mode === "video") {
+          await this._room.localParticipant.enableCameraAndMicrophone();
+          this.audioManager.setRoom(this._room);
+        }
+        else
+          await this.audioManager.initMicrophone(this._room);
+      } catch (error) {
+        console.error(error);
+      
+        await this._room?.disconnect();
+        this._room = null;
+
+        this.setIsConnectedRoom(false);
+        this.setIsLoading(false); // ###
+        this.setError(error.message || "Unable to connect to meeting.");
+        // window.location.reload();
+
+        return {
+            success: false,
+            error,
+        };
       }
-      // this.emit('connected', { room: this._room }); // ###
+
       console.log('Connected to room:', this._room);
-      setTimeout(() => {
-        this.setIsConnectedRoom(true);
-        this.setIsLoading(false);
-      }, 3000)
+      this.setIsConnectedRoom(true);
+      this.setCurrentRoomName(this._room.name);
+      this.setIsLoading(false);
       return { success: true, room: this._room };
       
     } catch (error) {
       // should emit error here to standardize ###
-      console.error('Livekit Service: Connection failed:', error);
+      console.error(error);
       this.setIsLoading(false);
+      this.setError(error.message || "Unexpected LiveKit error.");
+
+      return {
+          success: false,
+          error,
+      };
     }
   }
 
@@ -345,17 +384,16 @@ class LiveKitService {
       try {
         await this._room.disconnect();
         this._room = null;
-        await new Promise(resolve => setTimeout(resolve, 1500)); // blocking
-        // this.emit('disconnected', { room: this._room });
-        setTimeout(() => {
-          this.setActivePlane(null);
-          this.setIsConnectedRoom(false);
-          this.setIsLoading(false);
-        }, 2000)
+
+        this.setActivePlane(null);
+        this.setIsConnectedRoom(false);
+        this.setIsLoading(false);
+        this.setCurrentRoomName(null);
         this.audioManager.cleanup();
         this.mediaStreams.clear();
         this.positionalAudios.clear();
-        console.log('Disconnected from room');
+
+        console.log("Disconnected from room");
       } catch (error) {
         console.error('Disconnection failed: ', error, ' reloading page...');
         window.location.reload();
@@ -390,7 +428,7 @@ class LiveKitService {
   emit(event, data) {
     if (this.listeners[event]) {
       this.listeners[event].forEach(callback => callback(data));
-      // console.log(`📡 emit: Emitting event: ${event}`, data);
+      console.log(`📡 emit: Emitting event: ${event}`, data);
     } else
     console.log(`📡 emit: No listeners found for ${event}`);
   }

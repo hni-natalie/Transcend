@@ -234,14 +234,36 @@ export function SocketProvider ({ children }) {
     backend will return token & details in signal room-joined
     frontend then dispatch signal livekit-connect
   */
-  const joinRoom = useCallback(( roomName:string ) => {
-    if (socket && isConnected) {
+  const joinRoom = useCallback((roomName: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (!socket || !isConnected) {
+        console.error('Socket not connected, cannot join room');
+        reject(new Error('Not connected to server. Please reload and try again.'));
+        return;
+      }
+
       console.log(`Requesting to join room: ${roomName}`);
+
+      const cleanup = () => {
+        clearTimeout(timeout);
+        socket.off('room-joined', onJoined);
+      };
+
+      const timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error('Join room timed out. Please try again.'));
+      }, 10000);
+
+      const onJoined = (data: { roomName: string }) => {
+        if (data.roomName !== roomName) return; // ignore events for other rooms
+        cleanup();
+        resolve();
+      };
+
+      socket.once('room-joined', onJoined);
+
       socket.emit('join-room', { roomName });
-    } else {
-      console.error('Socket not connected, cannot join room');
-      window.location.reload();
-    }
+    });
   }, [socket, isConnected]);
 
   // Function to leave current room

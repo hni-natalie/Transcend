@@ -117,10 +117,10 @@ export const CalendarGrid = ({ calendarDays, monthYear }: CalendarGridProps) => 
       <span>Thu</span><span>Fri</span><span>Sat</span>
     </div>
 
-    <div className="grid grid-cols-7 p-3 gap-x-2.5 gap-y-7.5 text-center text-base mt-2">
+    <div className="grid grid-cols-7 p-3 gap-x-2.5 gap-y-7.5 text-center text-base mt-2 cursor-default">
       {calendarDays.map((d, index) => {
         let cellClass =
-          'rounded-full flex items-center justify-center mx-auto transition-all cursor-pointer w-full aspect-square ';
+          'rounded-full flex items-center justify-center mx-auto transition-all w-full aspect-square ';
 
         if (d.type === 'prev-month' || d.type === 'next-month') {
           cellClass += 'bg-[#1A1B19]/40 text-foreground-4/20';

@@ -1,4 +1,4 @@
-import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd } from '@shared';
+import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, UserChipItem, User } from '@shared';
 import { useEffect, useMemo, useState } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
@@ -10,6 +10,11 @@ type TaskMember = {
   userId: string;
   userName: string;
   userEmail?: string;
+  role?: {
+    roleId: string;
+    roleName: string;
+  };
+  avatarUrl?: string;
 };
 
 const taskStatusOptions : DropdownChoice[] = [
@@ -140,40 +145,43 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
     useEffect(() => {
     const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem("token");
+      // const token = localStorage.getItem("token");
 
-      // Force status to empty so backend does NOT use task status like "focus"
-      const params = new URLSearchParams();
-      params.append("status", "offline");
+      // // Force status to empty so backend does NOT use task status like "focus"
+      // const params = new URLSearchParams();
+      // params.append("status", "offline");
 
-      const url = `/api/users?${params.toString()}`;
+      // const url = `/api/users?${params.toString()}`;
 
-      console.log("Fetching users from:", url);
+      // console.log("Fetching users from:", url);
 
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // const res = await fetch(url, {
+      //   method: "GET",
+      //   headers: {
+      //     Authorization: `Bearer ${token}`,
+      //   },
+      // });
 
-      const data = await res.json();
+      // const data = await res.json();
 
-      console.log("Fetched users:", data);
+      // console.log("Fetched users:", data);
 
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to fetch users");
-      }
+      // if (!res.ok) {
+      //   throw new Error(data.error || "Failed to fetch users");
+      // }
 
-      if (Array.isArray(data)) {
-        setUsers(data);
-      } else if (Array.isArray(data.users)) {
-        setUsers(data.users);
-      } else if (Array.isArray(data.data)) {
-        setUsers(data.data);
-      } else {
-        setUsers([]);
-      }
+      // if (Array.isArray(data)) {
+      //   setUsers(data);
+      // } else if (Array.isArray(data.users)) {
+      //   setUsers(data.users);
+      // } else if (Array.isArray(data.data)) {
+      //   setUsers(data.data);
+      // } else {
+      //   setUsers([]);
+      // }
+      const res = (await taskApi.allUsers())as TaskMember[];
+      setUsers(res);
+
     } catch (err) {
       console.error("Failed to fetch users:", err);
       setUsers([]);
@@ -264,50 +272,6 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
         onUserToggle={toggleUser}
       />
 
-      {/* Task Members Dropdown */}
-      {/* <div className="relative">
-        <label className="mb-3 block text-2xl font-bold text-gray-400">
-          Task Members
-        </label>
-
-        <button
-          type="button"
-          onClick={() => setMemberOpen(!memberOpen)}
-          className="flex w-full items-center justify-between rounded-2xl border-2 border-[#5a5a5a] bg-transparent px-6 py-4 text-left text-2xl text-gray-200 outline-none focus:border-lime-300"
-        >
-          <span className="truncate">{selectedText}</span>
-          <span className="text-2xl text-white">{memberOpen ? "⌃" : "⌄"}</span>
-        </button>
-
-        {memberOpen && (
-          <div className="absolute z-20 mt-2 w-full max-h-72 overflow-y-auto rounded-2xl border-2 border-[#5a5a5a] bg-[#1b1b1b] p-3 shadow-2xl">
-            {users.length === 0 ? (
-              <p className="px-4 py-3 text-xl text-gray-400">
-                No users found
-              </p>
-            ) : (
-              users.map((user) => (
-                <label
-                  key={user.userId}
-                  className="flex cursor-pointer items-center gap-4 rounded-2xl px-4 py-3 text-xl text-gray-200 hover:bg-[#2a2a2a]"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedUserIds.includes(user.userId)}
-                    onChange={() => toggleUser(user.userId)}
-                    className="h-5 w-5 accent-lime"
-                  />
-
-                  <div>
-                    <p>{user.userName}</p>
-                    <p className="text-sm text-gray-400">{user.userEmail}</p>
-                  </div>
-                </label>
-              ))
-            )}
-          </div>
-        )}
-      </div> */}
 
       <button
         onClick={handleSubmit}
@@ -321,26 +285,33 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
 );
 };
 
-
-
-const TaskCard = ({ task, onClick, onDelete,}: {
+const TaskCard = ({ task, onEdit, onDelete,}: {
   task: Task;
-  onClick: () => void;
+  onEdit: () => void;
   onDelete: (taskId: string) => void;
 }) => {
   const priority = task.assignedTo?.[0]?.taskPriority;
   const [showMenu, setShowMenu] = useState(false);
-  const displayDate = task.taskStatus === 'done' ? task.completedDate: task.dueDate;
+  const displayDate = task.taskStatus === 'done' ? task.completedDate: task.dueDate;  
 
+  const assignedUsersChips: UserChipItem[] = (task.assignedTo ?? [])
+    .filter((assignment) => assignment.user)
+    .map((assignment) => ({
+      name: assignment.user.userName,
+      email: assignment.user.userEmail,
+      role: assignment.user.role?.roleName ?? "Unknown",
+      photo: assignment.user.avatarUrl || "/default-avatar.png",
+    }));
+    
   return (
     <div
-      onClick={onClick}
+      // onClick={onClick}
       className="relative p-6 rounded-2xl bg-[#1f1f1f]  shadow-lg hover:border-lime-300 transition-all cursor-pointer"
     >
       <div className="absolute right-6 top-6">
       <button
         onClick={(e) => {
-          e.stopPropagation();
+          // e.stopPropagation();
           setShowMenu(!showMenu);
         }}
         className="text-2xl text-gray-300"
@@ -349,21 +320,33 @@ const TaskCard = ({ task, onClick, onDelete,}: {
       </button>
 
       {showMenu && (
-        <div className="absolute right-0 mt-2 w-32 rounded-xl bg-[#2a2a2a] border border-gray-700 shadow-xl">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-
-              if (window.confirm('Delete this task?')) {
-                onDelete(task.taskId);
-              }
-
-              setShowMenu(false);
-            }}
-            className="w-full px-4 py-3 text-left text-red-400 hover:bg-[#333]"
-          >
-            Delete
+        <div className="absolute right-0 z-10 mt-2 w-24 rounded-xl bg-[#2a2a2a] p-2 shadow-xl">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onEdit();
+                setShowMenu(false);
+              }}
+              className="w-full rounded-xl px-3 py-2 text-white-400 hover:bg-[#333]"
+            >
+            Edit
           </button>
+
+          <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+
+                if (window.confirm("Delete this task?")) {
+                  onDelete(task.taskId);
+                }
+
+                setShowMenu(false);
+              }}
+              className="mt-2 w-full rounded-xl px-3 py-2 text-red-400 hover:bg-[#333]">
+              Delete
+            </button>
         </div>
       )}
     </div>
@@ -387,15 +370,26 @@ const TaskCard = ({ task, onClick, onDelete,}: {
       </p>
 
       <p className="text-lg mb-4">
-        
-        {task.taskStatus === 'done' ? 'Completed on' : 'Due on'}{' '}
-        {displayDate ? new Date(displayDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric',}): 'No due date'}
+       
+        {task.taskStatus != 'done' ? 'Due on :' : 'Completed on :'}{' '}
+        {displayDate ? new Date(displayDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric',}): '-'}
       </p>
 
-      <div className="flex -space-x-2">
-        <div className="w-10 h-10 rounded-full bg-yellow-300" />
-        <div className="w-10 h-10 rounded-full bg-teal-300" />
-        <div className="w-10 h-10 rounded-full bg-lime-300" />
+      <div className="flex items-center">
+        {assignedUsersChips.map((user, index) => (
+          <img
+            key={user.email ?? `${user.name}-${index}`}
+            src={user.photo}
+            alt={`${user.name}'s avatar`}
+            title={user.name}
+            className={`w-10 h-10 rounded-full object-cover border-2 border-[#1f1f1f] ${
+              index > 0 ? "-ml-3" : ""
+            }`}
+            onError={(event) => {
+              event.currentTarget.src = "/default-avatar.png";
+            }}
+          />
+        ))}
       </div>
     </div>
   );
@@ -429,7 +423,7 @@ const TaskColumn = ({
             <TaskCard
               key={task.taskId}
               task={task}
-              onClick={() => onTaskClick(task.taskId)}
+              onEdit={() => onTaskClick(task.taskId)}
               onDelete={onDelete}
             />
           ))
@@ -532,8 +526,8 @@ export const Tasks = () => {
 
 
       await taskApi.updateTask(taskId, data);
-      setSelectedTask(null);
       await fetchTasks();
+      setSelectedTask(null);
     } 
     catch (err: any) 
     {
@@ -565,7 +559,9 @@ export const Tasks = () => {
   }, []);
 
   const groupedTasks = useMemo(() => {
+    const now = Date.now();
     return {
+      backlog: tasks.filter((task) => (!task.dueDate || new Date(task.dueDate).getTime() < now) && (task.taskStatus === 'not_started' || task.taskStatus === 'in_progress')),
       upcoming: tasks.filter((task) => task.taskStatus === 'not_started'),
       inProgress: tasks.filter((task) => task.taskStatus === 'in_progress'),
       done: tasks.filter((task) => task.taskStatus === 'done'),
@@ -596,7 +592,13 @@ export const Tasks = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 p-6">
+        <TaskColumn
+          title="Backlog"
+          tasks={groupedTasks.backlog}
+          onTaskClick={handleTaskClick}
+          onDelete={handleDeleteTask}
+        />
         <TaskColumn
           title="Upcoming"
           tasks={groupedTasks.upcoming}
