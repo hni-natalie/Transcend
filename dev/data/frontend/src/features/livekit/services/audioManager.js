@@ -7,7 +7,6 @@ export class AudioManager {
     this.room = null;
     this.mediaStream = null;
     this.isMuted = false;
-    this.localPublication = null;
     this.listener = new THREE.AudioListener;
   }
 
@@ -27,21 +26,6 @@ export class AudioManager {
   }
 
   // Initialize microphone and audio context
-  async initMicrophone(room) {
-    try {
-      this.room = room;
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // publish to livekit
-      const audioTrack = new LocalAudioTrack(this.mediaStream.getAudioTracks()[0]);
-      this.localPublication = await this.room.localParticipant.publishTrack(audioTrack);
-      return true;
-
-    } catch (error) {
-      console.error('Microphone error:', error);
-      throw error;
-    }
-  }
 
   // Toggle mute/unmute
   toggleMute() {
@@ -70,10 +54,6 @@ export class AudioManager {
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
-    }
-    if (this.localPublication && this.localPublication.track) {
-      this.localPublication.track.stop();
-      this.localPublication = null;
     }
     this.isMuted = false;
   }
