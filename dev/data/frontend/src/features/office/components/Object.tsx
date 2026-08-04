@@ -87,7 +87,7 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
 		if (lockSystem.isOwnedBy(userId, localPlayerId)) return ;
 
 		api.position.set(position.x, position.y, position.z);
-		console.log(localPlayerId, ' [Object] set update position: ', position);
+		// console.log(localPlayerId, ' [Object] set update position: ', position);
 	}, [position, ownership?.ownerId]);
 
 	/*

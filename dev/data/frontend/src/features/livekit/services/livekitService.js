@@ -322,6 +322,11 @@ class LiveKitService {
         console.log('Room connected, participants in room:', this._room.remoteParticipants);
       });
 
+      this._room.on(RoomEvent.Disconnected, () => {
+        console.log('Disconnected from room');
+
+      });
+
       /* *************************************************************
         * Connect to room
         * *************************************************************/
@@ -332,8 +337,10 @@ class LiveKitService {
           await this._room.localParticipant.enableCameraAndMicrophone();
           this.audioManager.setRoom(this._room);
         }
-        else
-          await this.audioManager.initMicrophone(this._room);
+        else {
+          await this._room.localParticipant.setMicrophoneEnabled(true);
+          this.audioManager.setRoom(this._room);
+        }
       } catch (error) {
         console.error(error);
       
@@ -382,6 +389,8 @@ class LiveKitService {
   async disconnectFromRoom() {
     if (this._room) {
       try {
+        await this._room.localParticipant.setCameraEnabled(false);
+        await this._room.localParticipant.setMicrophoneEnabled(false);
         await this._room.disconnect();
         this._room = null;
 
@@ -428,7 +437,7 @@ class LiveKitService {
   emit(event, data) {
     if (this.listeners[event]) {
       this.listeners[event].forEach(callback => callback(data));
-      console.log(`📡 emit: Emitting event: ${event}`, data);
+      // console.log(`📡 emit: Emitting event: ${event}`, data);
     } else
     console.log(`📡 emit: No listeners found for ${event}`);
   }

@@ -36,14 +36,14 @@ export const PositionProvider = ({ children, roomName }) => {
       const lock = locksRef.current.get(objectId);
 
       if (lock && !lockSystem.isLockExpired(objectId)) {
-        console.log('[PositionContext] lock occupied! by ', ownerId);
+        // console.log('[PositionContext] lock occupied! by ', ownerId);
         return false;
       }
       const timestamp = Date.now();
       socket.emit('object-acquire', { roomName, objectId, ownerId, timestamp });
 
       locksRef.current.set(objectId, { ownerId, timestamp:Date.now() });
-      console.log('[PositionContext] 🟢 ******* lock acquired! *******');
+      // console.log('[PositionContext] 🟢 ******* lock acquired! *******');
       return true;
     },
     isOwnedBy: (objectId: string, userId: string): boolean => {
@@ -53,7 +53,7 @@ export const PositionProvider = ({ children, roomName }) => {
     isLockExpired: (objectId: string, maxAgeMs: number = 5000): boolean => {
       const lock = locksRef.current.get(objectId);
       if (!lock) return true;
-      console.log('[PositionContext] lock elapsed: ', Date.now() - lock.timestamp)
+      // console.log('[PositionContext] lock elapsed: ', Date.now() - lock.timestamp)
       return Date.now() - lock.timestamp > maxAgeMs;
     },
   }
@@ -104,7 +104,6 @@ export const PositionProvider = ({ children, roomName }) => {
       else {
         if (!isMovingRef.current[userId]) return ;
         isMovingRef.current[userId] = false;
-        // console.log('stopped! ', userId);
       }
     })
 
@@ -141,7 +140,7 @@ export const PositionProvider = ({ children, roomName }) => {
       let hasStaleLocks = false;
       
       // Check each object for stale ownership
-      console.log('[PositionContext] timeout ', roomObjs);
+      // console.log('[PositionContext] timeout ', roomObjs);
 
       for (const [objectId, lock] of Array.from(locksRef.current)) {
         if (now - lock.timestamp > LOCKS_TIMEOUT) {
@@ -152,7 +151,7 @@ export const PositionProvider = ({ children, roomName }) => {
       roomObjs.forEach(obj => {
         if (obj.ownership?.ownerId && obj.ownership?.timestamp) {
           const elapsed = now - obj.ownership.timestamp;
-          console.log('[PositionContext] timeout elapsed ', elapsed);
+          // console.log('[PositionContext] timeout elapsed ', elapsed);
           
           // If lock has expired
           if (elapsed > LOCKS_TIMEOUT) {

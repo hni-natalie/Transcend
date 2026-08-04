@@ -5,7 +5,7 @@ import { Physics } from '@react-three/cannon';
 import { PerspectiveCamera, MapControls, SpotLight, Plane } from '@react-three/drei';
 import { useSocket } from '@/context/SocketContext';
 import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
-import { useLiveKit, isAudioSupported, ButtonVoiceRoom } from '@features/livekit';
+import { useLiveKit, isAudioSupported, ButtonVoiceSpace } from '@features/livekit';
 import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject } from '@features/office';
 import { KeyboardProvider, PositionProvider } from '@/context';
 import { officeSceneConfig as conf } from '@/config/office.config';
@@ -96,7 +96,7 @@ export function Office({ roomName } : SpaceProps ) {
         icon={<IconOffice className="w-7 h-7" />}
         title={roomName}
         action={
-          <ButtonVoiceRoom 
+          <ButtonVoiceSpace 
             roomName={roomName} 
             joinText={`Join ${roomName} Room`}
 						mode="room"
