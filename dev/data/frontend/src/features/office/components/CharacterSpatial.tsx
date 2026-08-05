@@ -55,12 +55,10 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 		if (!isLocalPlayer) return ; // only localPlayer emit collision pos
 	  const objectId = e.body?.userData?.userId;
 		if (objectId) {
-			console.log('collided with', objectId, ' ', lastKnownPositionsRef.current[objectId]);
+		// 	console.log('collided with', objectId, ' ', lastKnownPositionsRef.current[objectId]);
 			if (!lockSystem.acquireObj(objectId, id)) return ;
 		// console.log('_current physics position:', lastKnownPositionsRef.current[objectId]);
 		// console.log('_all:', lastKnownPositionsRef.current);
-
-			// socket.emit('object-move', { userId:objectId, roomName:roomName, position:lastKnownPositionsRef.current[objectId] });
 		}
 	}, [isLocalPlayer])
 

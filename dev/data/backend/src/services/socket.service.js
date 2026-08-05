@@ -143,7 +143,7 @@ const socketService = (io) => {
     // create if no room
     if (!roomData) {
       roomData = await initializeRoomData(rooms, roomName);
-      console.log('[socket.service] new room!');
+      // console.log('[socket.service] new room!');
     }
 
     // Room-size constrains
@@ -237,7 +237,7 @@ const socketService = (io) => {
       console.log('Backend: leave-room, user count bf: ', roomData.users.length)
       roomData.users = roomData.users.filter(u => u.id !== player.id); // remove user from room
       console.log('Backend: leave-room, user count af: ', roomData.users.length)
-      console.log('Backend: leave-room, users now: ', roomData.users)
+      // console.log('Backend: leave-room, users now: ', roomData.users)
 
       socket.leave(roomName);
       player.roomName = null;
