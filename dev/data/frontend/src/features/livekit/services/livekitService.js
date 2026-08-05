@@ -322,11 +322,6 @@ class LiveKitService {
         console.log('Room connected, participants in room:', this._room.remoteParticipants);
       });
 
-      this._room.on(RoomEvent.Disconnected, () => {
-        console.log('Disconnected from room');
-
-      });
-
       /* *************************************************************
         * Connect to room
         * *************************************************************/
