@@ -13,10 +13,10 @@ export function ParticipantAvatar() {
   const participant = useParticipantContext();
   const identity = participant?.identity;
 
-	const player = roomPlayers.find(p => p.id === identity);
+	const player = roomPlayers.find(p => p.id === identity); // ###
 	const avatarSrc = player?.photo || null;
 
-	console.log('[ParticipantAvatar] identity: ', identity, ' ', avatarSrc);
+	// console.log('[ParticipantAvatar] identity: ', identity, ' ', avatarSrc);
 
 	return (
 		<div className="avatar-wrap max-h-80 max-w-80 w-full h-full aspect-square p-8">

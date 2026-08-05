@@ -1,4 +1,5 @@
 export { ButtonVoiceRoom } from './components/ButtonVoiceRoom'
+export { ButtonVoiceSpace } from './components/ButtonVoiceSpace'
 export { VideoConference } from './components/VideoConference'
 export { Chat } from './components/Chat'
 export { ControlBar } from './components/ControlBar'

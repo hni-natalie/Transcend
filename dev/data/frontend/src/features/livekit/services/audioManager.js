@@ -7,8 +7,11 @@ export class AudioManager {
     this.room = null;
     this.mediaStream = null;
     this.isMuted = false;
-    this.localPublication = null;
     this.listener = new THREE.AudioListener;
+  }
+
+  setRoom(room) {
+    this.room = room;
   }
 
   async resumeListener() {
@@ -16,28 +19,13 @@ export class AudioManager {
 			await this.listener.context.resume();
 			console.log("handleJoin: Audio listener status: ", this.listener.context.state);
 		}
-    else {
-      //debug
-	    console.error("handleJoin: Audio listener already running: ", this.listener.context.state);
-		}
+    // else {
+    //   //debug
+	  //   console.error("handleJoin: Audio listener already running: ", this.listener.context.state);
+		// }
   }
 
   // Initialize microphone and audio context
-  async initMicrophone(room) {
-    try {
-      this.room = room;
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // publish to livekit
-      const audioTrack = new LocalAudioTrack(this.mediaStream.getAudioTracks()[0]);
-      this.localPublication = await this.room.localParticipant.publishTrack(audioTrack);
-      return true;
-
-    } catch (error) {
-      console.error('Microphone error:', error);
-      throw error;
-    }
-  }
 
   // Toggle mute/unmute
   toggleMute() {
@@ -46,11 +34,7 @@ export class AudioManager {
       return false;
     }
     this.isMuted = !this.isMuted;
-    
-    if (!this.isMuted) // mute == 0
-      this.localPublication.unmute();
-    else
-      this.localPublication.mute();
+    this.room.localParticipant.setMicrophoneEnabled(!this.isMuted);
     
     console.log(this.isMuted ? '🔴 Muted (others cannot hear you)' : '🟢 Unmuted (others can hear you)');
     return this.isMuted;
@@ -70,10 +54,6 @@ export class AudioManager {
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
-    }
-    if (this.localPublication && this.localPublication.track) {
-      this.localPublication.track.stop();
-      this.localPublication = null;
     }
     this.isMuted = false;
   }

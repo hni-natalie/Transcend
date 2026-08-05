@@ -45,27 +45,46 @@ enum MeetingRole {
   participant
 }
 
+enum MeetingStatus {
+  scheduled
+  started
+}
+
 enum DocumentType {
   faq
   meeting_summary
 }
 
-// TO ADD: Messages
-// enum ConversationType {
-//   direct
-//   group
-// }
+enum RecordingStatus {
+  starting
+  active
+  completed
+  failed
+  stopped
+}
 
-// enum AttachmentKind {
-//   pdf
-//   image
-//   document
-//   video
-//   audio
-// }
+// TO ADD: Messages
+enum ConversationType {
+  direct
+  group
+}
+
+enum AttachmentKind {
+  pdf
+  image
+  document
+  video
+  audio
+}
+
+enum ActivityType {
+  presence
+  space
+  task
+  meeting
+}
 
 // MODELS
-
 // ROLE
 model Role {
   roleId    String   @id @default(uuid())
@@ -134,11 +153,13 @@ model User {
   tasks            			Task[]
   assignedTasks    			TaskAssignment[]
 
+  activityLogs 				Activity[]
+
 // TO ADD: Messages
-//   createdConversations       Conversation[]            @relation("ConversationCreatedBy")
-//   conversationParticipations ConversationParticipant[]
-//   messages                   Message[]
-//   conversationPins           ConversationPin[]
+  createdConversations       Conversation[]            @relation("ConversationCreatedBy")
+  conversationParticipations ConversationParticipant[]
+  messages                   Message[]
+  conversationPins           ConversationPin[]
 }
 
 // WORKSPACE 
@@ -156,11 +177,12 @@ model Workspace {
   tasks      	Task[]
   meetings   	Meeting[]
   documents   	Document[]
+  activityLogs 	Activity[]
 // TO ADD : Messages
-//   conversations Conversation[]
+  conversations Conversation[]
 }
 
-// SPACES
+// SPACESm 
 // for permission; add in be (canUserAccessSpace(user, space))
 // @@unique([workspaceId, spaceName]) - spacename is now unique, diff workspace can hv same name
 model Space {
@@ -245,6 +267,7 @@ model Meeting {
   meetDesc  String?
   meetStart DateTime
   meetEnd   DateTime
+  status    MeetingStatus @default(scheduled)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -254,9 +277,10 @@ model Meeting {
 
   createdBy User @relation("MeetingCreatedBy", fields: [createdByUserId], references: [userId])
 
-  participants MeetingParticipant[]
-
-  pinnedBy MeetingPin[]
+  participants          MeetingParticipant[]
+  pinnedBy              MeetingPin[]
+  recording             Recording[]
+  meetingChatMessages   MeetingChatMessage[]
 
   @@index([workspaceId])
   @@index([spaceId])
@@ -337,99 +361,148 @@ model DocumentChunk {
 // eg; A+B = convo 1, B+A = convo1 (userIdA:userIdB)
 // else; A+B = convo1, B+A = convo2
 // for group; directKey can be null
-// model Conversation {
-//   conversationId  String           @id @default(uuid())
-//   workspaceId     String
-//   type            ConversationType
-//   groupName       String?          // only set when type = group
-//   avatarUrl       String?
-//   directKey       String?          @unique
-//   createdByUserId String
-//   createdAt       DateTime         @default(now())
-//   updatedAt       DateTime         @updatedAt
-//   deletedAt       DateTime?
+model Conversation {
+  conversationId  String           @id @default(uuid())
+  workspaceId     String
+  type            ConversationType
+  groupName       String?          // only set when type = group
+  avatarUrl       String?
+  directKey       String?          @unique
+  createdByUserId String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
 
-//   workspace   	Workspace                 @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
-//   createdBy		User                      @relation("ConversationCreatedBy", fields: [createdByUserId], references: [userId])
-//   participants	ConversationParticipant[]
-//   messages		Message[]
-//   pins			ConversationPin[]
+  workspace   	Workspace                 @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+  createdBy		User                      @relation("ConversationCreatedBy", fields: [createdByUserId], references: [userId])
+  participants	ConversationParticipant[]
+  messages		Message[]
+  pins			ConversationPin[]
 
-//   @@index([workspaceId])
-//   @@index([workspaceId, type])
-//   @@index([deletedAt])
-// }
+  @@index([workspaceId])
+  @@index([workspaceId, type])
+  @@index([deletedAt])
+}
 
 // CONVERSATION PARTICIPANT
 // leftAt allows members to be removed without losing their chat history within the group
 // their past messages still referenced via Message.authorId.
-// model ConversationParticipant {
-//   id             String    @id @default(uuid())
-//   conversationId String
-//   userId         String
-//   joinedAt       DateTime  @default(now())
-//   removedAt      DateTime?
-//   lastReadAt     DateTime?
+model ConversationParticipant {
+  id             String    @id @default(uuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime  @default(now())
+  removedAt      DateTime?
+  lastReadAt     DateTime?
 
-//   conversation Conversation @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
-//   user         User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
-//   @@unique([conversationId, userId])
-//   @@index([userId])
-//   @@index([conversationId])
-// }
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@index([conversationId])
+}
 
 // MESSAGE
-// model Message {
-//   messageId      String    @id @default(uuid())
-//   conversationId String
-//   authorId       String
-//   text           String?
-//   callNote       String?	// KIV: can remove if not implemented
-//   linkUrl        String?	// FE's message.link 
-//   createdAt      DateTime  @default(now())
-//   updatedAt      DateTime  @updatedAt
-//   deletedAt      DateTime?
+model Message {
+  messageId      String    @id @default(uuid())
+  conversationId String
+  authorId       String
+  text           String?
+  callNote       String?	// KIV: can remove if not implemented
+  linkUrl        String?	// FE's message.link 
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
 
-//   conversation Conversation       @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
-//   author       User               @relation(fields: [authorId], references: [userId])
-//   attachments  MessageAttachment[]
+  conversation Conversation       @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
+  author       User               @relation(fields: [authorId], references: [userId])
+  attachments  MessageAttachment[]
 
-//   @@index([conversationId, createdAt])
-//   @@index([authorId])
-//   @@index([deletedAt])
-// }
+  @@index([conversationId, createdAt])
+  @@index([authorId])
+  @@index([deletedAt])
+}
 
 // MESSAGE ATTACHMENT
-// model MessageAttachment {
-//   id          String         @id @default(uuid())
-//   messageId   String
-//   name        String
-//   kind        AttachmentKind
-//   url         String	// how the app access the file (https://storage.example.com/messages/123/abc.pdf)
-//   path        String?	// where the file lives in storage (messages/123/abc.pdf)
-//   mimeType    String?
-//   sizeInBytes Int?		// DB stores raw bits (2000000), FE converts displays correct format (2MB)
-//   createdAt   DateTime       @default(now())
+model MessageAttachment {
+  id          String         @id @default(uuid())
+  messageId   String
+  name        String
+  kind        AttachmentKind
+  url         String	// how the app access the file (https://storage.example.com/messages/123/abc.pdf)
+  path        String?	// where the file lives in storage (messages/123/abc.pdf)
+  mimeType    String?
+  sizeInBytes Int?		// DB stores raw bits (2000000), FE converts displays correct format (2MB)
+  createdAt   DateTime       @default(now())
 
-//   message Message @relation(fields: [messageId], references: [messageId], onDelete: Cascade)
+  message Message @relation(fields: [messageId], references: [messageId], onDelete: Cascade)
 
-//   @@index([messageId])
-// }
+  @@index([messageId])
+}
 
 // CONVERSATION PIN
 // similar to meetingPin, pin is per user
 // to replace localStorage in useConversations.ts
-// model ConversationPin {
-//   pinId          String   @id @default(uuid())
-//   userId         String
-//   conversationId String
-//   createdAt      DateTime @default(now())
+model ConversationPin {
+  pinId          String   @id @default(uuid())
+  userId         String
+  conversationId String
+  createdAt      DateTime @default(now())
 
-//   user         User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
-//   conversation Conversation @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
 
-//   @@unique([userId, conversationId])
-//   @@index([userId])
-//   @@index([conversationId])
-// }
+  @@unique([userId, conversationId])
+  @@index([userId])
+  @@index([conversationId])
+}
+
+model Activity {
+  activityId		String		@id @default(uuid())
+  workspaceId		String
+  userId			String
+  type			ActivityType
+  action			String
+  contextTitle	String? 
+  contextDetails	String?
+  createdAt		DateTime	@default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, type])
+  @@index([userId])
+}
+
+model Recording {
+  recordingId String          @id @default(uuid())
+  meetId      String          
+  egressId    String
+  filename    String
+  status      RecordingStatus @default(starting)
+  fileUrl     String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  Meeting     Meeting         @relation(fields: [meetId], references: [meetId], onDelete: Cascade)
+
+  @@index([egressId])
+  @@index([meetId])
+}
+
+model MeetingChatMessage {
+  id        String   @id @default(uuid())
+
+  meetId    String
+  senderId  String
+  senderName String
+  message   String
+
+  createdAt DateTime @default(now())
+
+  meeting Meeting @relation(fields: [meetId], references: [meetId], onDelete: Cascade)
+
+  @@index([meetId])
+}

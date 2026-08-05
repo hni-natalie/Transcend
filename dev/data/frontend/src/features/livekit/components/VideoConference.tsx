@@ -20,6 +20,7 @@ import { Chat, ControlBar, ParticipantTile } from '@/features/livekit';
  * @public
  */
 export interface VideoConferenceProps extends React.HTMLAttributes<HTMLDivElement> {
+  meetId: string;
   chatMessageFormatter?: MessageFormatter;
   chatMessageEncoder?: MessageEncoder;
   chatMessageDecoder?: MessageDecoder;
@@ -46,6 +47,7 @@ export interface VideoConferenceProps extends React.HTMLAttributes<HTMLDivElemen
  * @public
  */
 export function VideoConference({
+  meetId,
   chatMessageFormatter,
   chatMessageDecoder,
   chatMessageEncoder,
@@ -64,7 +66,7 @@ export function VideoConference({
       { source: Track.Source.Camera, withPlaceholder: true },
       { source: Track.Source.ScreenShare, withPlaceholder: false },
     ],
-    { updateOnlyOn: [RoomEvent.ActiveSpeakersChanged], onlySubscribed: false },
+    { onlySubscribed: false },
   );
 
   const widgetUpdate = (state: WidgetState) => {
@@ -121,7 +123,10 @@ export function VideoConference({
   ]);
 
   return (
-    <div className="lk-video-conference" {...props}>
+    <div 
+      className="lk-video-conference" 
+      {...props}
+    >
       {isWeb() && (
         <LayoutContextProvider
           value={layoutContext}
@@ -145,9 +150,10 @@ export function VideoConference({
                 </FocusLayoutContainer>
               </div>
             )}
-            <ControlBar controls={{ chat: true, settings: !!SettingsComponent }} />
+            <ControlBar meetId={meetId} controls={{ chat: true, recording: true, settings: !!SettingsComponent }} />
           </div>
           <Chat
+            meetId={meetId}
             style={{
 							display: widgetState.showChat ? 'flex' : 'none', 
 							flexDirection: 'column',

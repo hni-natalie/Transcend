@@ -68,7 +68,6 @@ router.post('/create-room', async (req, res) => {
   res.json({ room });
 });
 
-
 module.exports = {
     router,
     generateRoomToken

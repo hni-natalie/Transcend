@@ -6,7 +6,7 @@ export { useUserStatusSync } from './hooks/useUserStatusSync'
 export { useUsers } from './hooks/useUsers'
 
 // utils
-export { normalizeOptions } from './utils/normalizeOptions'
+export * from './utils/utils'
 
 // layout
 export { MenuSide } from './layout/MenuSide';

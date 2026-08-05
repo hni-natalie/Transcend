@@ -3,6 +3,7 @@ import { API_CONFIG } from '@api/api.config';
 
 const base = API_CONFIG.endpoints.meetings;
 const usersBase = API_CONFIG.endpoints.users.base;
+const recordingsBase = API_CONFIG.endpoints.recordings;
 
 export const meetingApi = {
     // =====================
@@ -18,21 +19,21 @@ export const meetingApi = {
     },
 
     createMeeting(data: {
-		spaceId: string;
-		meetTitle: string;
-		meetDesc?: string;
-		meetStart: string;
-		meetEnd: string;
+      spaceId: string;
+      meetTitle: string;
+      meetDesc?: string;
+      meetStart: string;
+      meetEnd: string;
     }) {
     	return apiClient.post(`${base}`, data);
     },
 
     updateMeeting(data: {
-		meetId: string;
-		meetTitle?: string;
-		meetDesc?: string;
-		meetStart?: string;
-		meetEnd?: string;
+      meetId: string;
+      meetTitle?: string;
+      meetDesc?: string;
+      meetStart?: string;
+      meetEnd?: string;
     }) {
     	return apiClient.patch(`${base}`, data);
     },
@@ -81,6 +82,53 @@ export const meetingApi = {
     // =====================
     allUsers() {
       	return apiClient.get(`${usersBase}`);
-    }
+    },
 
+    // =====================
+    // LIVEKIT
+    // =====================
+    startMeeting(meetId: string) {
+      return apiClient.patch(`${base}/${meetId}/start`);
+    },
+
+    endMeeting(meetId: string) {
+      return apiClient.patch(`${base}/${meetId}/end`);
+    },
+
+    // =====================
+    // RECORDING
+    // =====================
+    startRecording(meetId: string) {
+      return apiClient.post(`${recordingsBase}/start`, { meetId });
+    },
+    
+    stopRecording(meetId: string) {
+      return apiClient.patch(`${recordingsBase}/stop/${meetId}`);
+    },
+
+    finalizeRecordings() {
+      return apiClient.post(`${recordingsBase}/finalize`);
+    },
+
+    getRecordings(meetId: string) {
+      return apiClient.get(`${recordingsBase}/${meetId}`);
+    },
+
+    // =====================
+    // Meeting Chat
+    // ===================== 
+    createChatMessage(
+      meetId: string,
+      data: {
+        senderId: string;
+        senderName: string;
+        message: string;
+      }
+    ) {
+      return apiClient.post(`${base}/${meetId}/chat`, data);
+    },
+
+    getChatMessages(meetId: string) {
+      return apiClient.get(`${base}/${meetId}/chat`);
+    },
 };

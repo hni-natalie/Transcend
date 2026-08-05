@@ -7,6 +7,7 @@ const path       = require('path');
 
 dotenv.config({ path: path.join(__dirname, '../../../.env') });	// root env
 // dotenv.config({ path: path.join(__dirname, '../.env') });		// be env 
+
 const app    = express();
 const port   = process.env.BACKEND_PORT || 3000;
 const server = http.createServer(app);
@@ -19,6 +20,28 @@ const io     = new Server(server, {
 console.log('Socket.IO created with path:', io.path());
 const multiplayer = require('./services/socket.service')
 multiplayer.socketService(io)
+
+
+/* *************************************************
+  * cron job to check recording status every minute
+  * *************************************************/
+const cron = require('node-cron');
+const recordingService = require('./services/recording.service');
+
+cron.schedule('* * * * *', async () => {
+    try {
+        console.log('[CRON] Checking recording status...');
+
+        await recordingService.finalizeRecordings();
+
+        console.log('[CRON] Recording check completed');
+    } catch (error) {
+        console.error(
+            '[CRON] Recording finalize failed:',
+            error
+        );
+    }
+});
 
 /* *************************************************
  * import routes
@@ -34,6 +57,8 @@ const uploadRoutes		= require('./routes/upload.routes');
 const spaceRoutes		= require('./routes/space.routes');
 const taskRoutes		= require('./routes/task.routes');
 const meetingRoutes		= require('./routes/meeting.routes');
+const recordingRoutes	= require('./routes/recording.routes');
+const messageRoutes		= require('./routes/message.routes');
 
 /* *************************************************
 * all used routes
@@ -50,6 +75,8 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/spaces', spaceRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/recordings', recordingRoutes);
+app.use('/api/messages', messageRoutes);
 
 // start server
 server.listen(port, () => {

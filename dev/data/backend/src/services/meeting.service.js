@@ -372,7 +372,47 @@ const meetingService = {
 
     async getAllMeetingPin() {
         return prisma.meetingPin.findMany({});
-    }
+    },
+
+    async startMeeting(meetId, userId) {
+        const meeting = await prisma.meeting.findUnique({
+            where: { meetId }
+        });
+
+        if (!meeting) {
+            throw new Error('Meeting not found');
+        }
+
+        if (meeting.createdByUserId !== userId) {
+            throw new Error('Unauthorized to start this meeting');
+        }
+
+        return prisma.meeting.update({
+            where: { meetId },
+            data: { status: 'started' }
+        });
+    }, 
+
+    async endMeeting(meetId, userId) {
+        const meeting = await prisma.meeting.findUnique({
+            where: { meetId }
+        });
+        
+        if (!meeting) {
+            throw new Error('Meeting not found');
+        }
+
+        if (meeting.createdByUserId !== userId) {
+            throw new Error('Unauthorized to end this meeting');
+        }
+
+        return prisma.meeting.update({
+            where: { meetId },
+            data: { status: 'scheduled' }
+        });
+    },
+
+    
 }
 
 module.exports = meetingService;

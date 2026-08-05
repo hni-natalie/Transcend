@@ -39,6 +39,7 @@ export function useLiveKit( roomName:string ) {
   useEffect(() => {
       isConnectedRef.current = state.isConnectedRoom;
   }, [state.isConnectedRoom]);
+
   useEffect(() => {
     const currentPath = location.pathname;
 
@@ -54,8 +55,11 @@ export function useLiveKit( roomName:string ) {
     calls socket.emit join-room to backend, backend creates room token
     then route back to connectToRoom in livekitService, create Room() in frontend
   */
+ 
   const connect = async ( mode:LivekitMode ) => {
 
+    console.log("🔥 useLiveKit connect called", { roomName, mode });
+    livekitService.clearError();
     setIsLoading(true)
     setIsMuted(livekitService.audioManager.getMuteState());
     livekitService.init(mode); // init once only
@@ -64,6 +68,7 @@ export function useLiveKit( roomName:string ) {
     // below runs & wait for livekit-connect signal if success
     // handles isLoading state in connectToRoom
     joinRoom(roomName);
+    console.log("🔥 joinRoom emitted");
   };
 
   const createRoom = () => {
@@ -74,7 +79,7 @@ export function useLiveKit( roomName:string ) {
     if (showLoading)
       setIsLoading(true);
     leaveRoom(roomName); // emit leave-room signal to backend
-    await livekitService.disconnectFromRoom(); // frontend cleanup
+    await livekitService.disconnectFromRoom(); // frontend cleanup, setLoading false 
   };
 
   const toggleMute = () => {
@@ -129,8 +134,10 @@ export function useLiveKit( roomName:string ) {
           isMuted: state.isMuted, isLoading: state.isLoading, joinCount: state.joinCount, 
           activePlane: state.activePlane,
           isConnectedRoom: state.isConnectedRoom,
+          currentRoomName: state.currentRoomName,
           isPlayerAudioReady,
-          getMediaStream, getPositionalAudio, getAudioListener, getLivekitRoom
+          getMediaStream, getPositionalAudio, getAudioListener, getLivekitRoom,
+          error: state.error,
         };
 }
 

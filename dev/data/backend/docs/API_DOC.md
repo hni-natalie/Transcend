@@ -76,3 +76,7 @@ Most endpoints require a JWT token in the Authorization header:
 | PUT | `/meetings/participant/` | Edit meeting participant | Any authenticated |
 | DELETE | `/meetings/:meetId` | Delete meeting | Any authenticated |
 | DELETE | `/meetings/participant` | Delete participant from meeting | Any authenticated |
+
+### Recordings 
+Egress, which is a built-in service provided by LiveKit, is used to record meetings 
+ 
