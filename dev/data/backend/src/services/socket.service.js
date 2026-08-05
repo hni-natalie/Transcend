@@ -11,12 +11,13 @@
 // }
 /* **************************************************************** */
 
-const { generateRoomToken } = require('../routes/livekit.js')
-const { randomHslColor }    = require('../utils/color.js');
-const { apiClient }         = require('../api/api.client.js')
-const { updateSocketId }    = require('./supabase-utils.service.js')
+const { generateRoomToken }                = require('../routes/livekit.js')
+const { randomHslColor }                   = require('../utils/color.js');
+const { apiClient }                        = require('../api/api.client.js')
+const { updateSocketId }                   = require('./supabase-utils.service.js')
+const { initializeRoomData, createPlayer, randomPosition } = require('../utils/socket')
 const players     = new Map();
-const rooms       = new Map();      // Map<roomName, roomPlayers>
+const rooms       = new Map();      // Map<roomName, roomPlayers> : Map<roomName, [roomPlayers, roomObjects]>
 let ioInstance = null;
 
 // socket io setup
@@ -56,22 +57,23 @@ const socketService = (io) => {
 
   setTimeout(() => {
     updateSocketId(socket.id, socket.user.userId, 'online');
-    socket.emit('online-status', {status: 'online'});
+    socket.emit('online-status', { userId: socket.user.userId, status:'online' });
   }, 2000);
 
   // Initialize player, should this be in db?
-  players.set(socket.id, {
+  players.set(socket.id, createPlayer({
     id: socket.id,
     userId: socket.user.userId,
-    name: socket.user.userName || socket.id, // 'GetUsersNameAPI'
+    name: socket.user.userName || socket.id,
+    dpId: socket.user?.department?.dpId || 'guest',
     roomName: null,
     position: { x:0, y:0, z:0 },
     rotation: { x:-Math.PI/2, y:0, z:0 },
     color: randomHslColor(),
-    photo: socket.user.avatarUrl || null,
+    photo: socket.user.avatarUrl || '',
     audioEnabled: true,
     speaking: false,
-  });
+  }));
   const player = players.get(socket.id);
 
   // Send current players to new connection
@@ -82,13 +84,50 @@ const socketService = (io) => {
   
   // Handle position updates
   socket.on('player-move', (data) => {
-    if (player && player.roomName) {
-      player.position = data.position;
-      player.rotation = data.rotation;
+    const target = Array.from(players.values()).find(p => p.userId === data.userId);
+    // target = players.get(data.id)
+    // console.log('[player-move] target! ', target, ' ', data.userId);
+    if (target && target.roomName) {
+      target.position = data.position; // ### this means user pos not updated?
+      // target.rotation = data.rotation;
 
       // emit position in room name
-      socket.to(player.roomName).emit('player-moved', data);
+      socket.to(target.roomName).emit('player-moved', data);
     }
+  });
+  socket.on('object-move', (data) => {
+    let roomData = rooms.get(data.roomName);
+    if (!roomData) return;
+
+    const target = Array.from(roomData.objects.values()).find(p => p.userId === data.userId);
+    if (target) {
+      target.position = data.position;
+      // emit to everyone include sender
+      io.in(target.roomName).emit('object-moved', data);
+      // socket.emit('object-moved', data);
+      // io.in(target.roomName).emit('object-moved', data);
+
+      // console.log('[object-move] object! ', data.position, ' ', data.userId);
+    }
+  });
+  socket.on('object-acquire', (data) => {
+    let roomData = rooms.get(data.roomName);
+    if (!roomData) return;
+    
+    // data.roomName, data.objectId, data.ownerId
+    const target = Array.from(roomData.objects.values()).find(p => p.userId === data.objectId);
+    if (!target) return ;
+
+    target.ownership.ownerId = data.ownerId;
+    target.ownership.timestamp = data.timestamp;
+    io.in(data.roomName).emit('object-acquired', { objectId:data.objectId, ownerId:data.ownerId, timestamp:data.timestamp });
+    console.log('Backend [object-acquire] ', data.objectId, ' owned: ', data.ownerId);
+  });
+  socket.on('object-release', (data) => {
+    let roomData = rooms.get(data.roomName);
+    if (!roomData) return;
+    io.in(data.roomName).emit('object-released', { objectId:data.objectId });
+    console.log('Backend [object-released] ', data.objectId);
   });
 
   // Event handler for joining rooms
@@ -103,29 +142,37 @@ const socketService = (io) => {
     // ...
     // create if no room
     if (!roomData) {
-      roomData = {
-        name: roomName,
-        users: [],
-        createdAt: Date.now()
-      };
-      rooms.set(roomName, roomData);
+      roomData = await initializeRoomData(rooms, roomName);
+      // console.log('[socket.service] new room!');
     }
 
     // Room-size constrains
-    if (roomData.users.length > 3) {
-      socket.emit('room-full', { roomName, maxSize:3 });
+    const roomSize = 20;
+    if (roomData.users.length > roomSize) {
+      socket.emit('room-full', { roomName, maxSize:roomSize });
       console.log('Room Full: current users: ', roomData.users)
       return;
     }
 
     player.roomName = roomName;
-    roomData.users.push(player); // append entire player obj
+
+    if (roomData?.users) {
+      const existingUserIdx = roomData?.users.findIndex(u => u.userId === player.userId);
+      console.log('[socket] existingUserIdx ', existingUserIdx);
+      if (existingUserIdx !== -1)
+        roomData.users[existingUserIdx] = player; // replace
+      else
+        roomData.users.push(player);
+    }
+    else
+      roomData.users.push(player); // append entire player obj
     socket.join(roomName);
     socket.emit('existing-room-players', roomData?.users || []); // send only to client
-
+    socket.emit('existing-room-objects', roomData?.objects || []);
+    // console.log('[existing-room-objects] ', roomData?.objects);
     
     // Generate room-specific token
-    const token = await generateRoomToken(roomName, player.id, player.name);
+    const token = await generateRoomToken(roomName, player.id, player.name); // ###
 
     // either setRoomPlayers in existing-room-players or room-joined
     socket.emit('room-joined', {
@@ -190,7 +237,7 @@ const socketService = (io) => {
       console.log('Backend: leave-room, user count bf: ', roomData.users.length)
       roomData.users = roomData.users.filter(u => u.id !== player.id); // remove user from room
       console.log('Backend: leave-room, user count af: ', roomData.users.length)
-      console.log('Backend: leave-room, users now: ', roomData.users)
+      // console.log('Backend: leave-room, users now: ', roomData.users)
 
       socket.leave(roomName);
       player.roomName = null;

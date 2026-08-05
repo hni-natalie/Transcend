@@ -3,7 +3,7 @@
   export as useKeyboard(), KeyboardProvider
 */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 
 const KeyboardContext    = createContext(null);
 export const useKeyboard = () => useContext(KeyboardContext);
@@ -54,10 +54,74 @@ export function KeyboardProvider ({ children }) {
 		return (keys.Shift || keys.Control || keys.Alt || keys.Meta);
 	}
 
+	/* ***********************************************
+	 * Mouse logics
+	 * ***********************************************/
+  const isDragging = useRef(false);
+  const isMouseDown = useRef(false);
+  const hasMouseMoved = useRef(false);
+  const startPosition = useRef({ x: 0, y: 0 });
+	
+	const handlePointerDown = (e: PointerEvent) => {
+		isMouseDown.current = true;
+		hasMouseMoved.current = false;
+		startPosition.current = { x: e.clientX, y: e.clientY };
+		isDragging.current = false;
+		// console.log('mouse ddddown!');
+	};
+
+	const handlePointerMove = (e: PointerEvent) => {
+		if (!isMouseDown.current) return;
+		
+		// Check if mouse has moved significantly (threshold for drag)
+		const dx = e.clientX - startPosition.current.x;
+		const dy = e.clientY - startPosition.current.y;
+		const distance = Math.sqrt(dx * dx + dy * dy);
+		
+		if (distance > 2) { // 5px threshold
+			hasMouseMoved.current = true;
+			isDragging.current = true;
+			// console.log('mouse ddddrag!');
+		}
+	};
+
+	const handlePointerUp = (e: PointerEvent) => {
+		// Only trigger click if mouse didn't move
+		if (!isMouseDown.current)
+			return ;
+		// if (isDragging.current)
+		// 	console.log('✅ mouse drag detected!');
+		// else
+		// 	console.log('✅ mouse click detected!');
+		reset();
+		// console.log('mouse pointer up!');
+	};
+  const reset = useCallback(() => {
+    isMouseDown.current = false;
+    hasMouseMoved.current = false;
+    isDragging.current = false;
+  }, []);
+
+	useEffect(() => {
+    // ✅ Attach listeners
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+
+    // ✅ Cleanup
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, []);
+
 	const value = {
 		keys,
 		isMoveKey,
-		isModifierKey
+		isModifierKey,
+		isDragging,
+		isMouseDown
 	};
 
 	return (

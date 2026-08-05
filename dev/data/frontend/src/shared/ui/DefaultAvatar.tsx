@@ -1,3 +1,5 @@
+import { getInitials } from "@shared";
+
 interface DefaultAvatarProps {
   name: string;
   email?: string;
@@ -16,23 +18,23 @@ export const DefaultAvatar = ({
   textColor = '#D0F05C',
 }: DefaultAvatarProps) => {
 
-  const getInitials = () => {
-    const nameParts = name.trim().split(' ');
+  // const getInitials = () => {
+  //   const nameParts = name.trim().split(' ');
     
-    if (nameParts.length >= 2) {
-      const firstInitial = nameParts[0].charAt(0).toUpperCase();
-      const lastInitial = nameParts[nameParts.length - 1].charAt(0).toUpperCase();
-      return firstInitial + lastInitial;
-    }
+  //   if (nameParts.length >= 2) {
+  //     const firstInitial = nameParts[0].charAt(0).toUpperCase();
+  //     const lastInitial = nameParts[nameParts.length - 1].charAt(0).toUpperCase();
+  //     return firstInitial + lastInitial;
+  //   }
     
-    if (nameParts.length === 1 && nameParts[0].length >= 2) {
-      return nameParts[0].substring(0, 2).toUpperCase();
-    }
+  //   if (nameParts.length === 1 && nameParts[0].length >= 2) {
+  //     return nameParts[0].substring(0, 2).toUpperCase();
+  //   }
     
-    return name.charAt(0).toUpperCase();
-  };
+  //   return name.charAt(0).toUpperCase();
+  // };
 
-  const initials = getInitials();
+  const initials = getInitials(name);
 
  return (
     <svg className={className} viewBox="0 0 100 100">

@@ -12,6 +12,7 @@ router.get('/me', userController.getCurrentUser);                   // view own 
 router.put('/me', userController.updateCurrentUser);                // edit own profile
 // router.put('/me/avatar', userController.updateAvatar);              // upload avatar
 router.patch('/status', authMiddleware, userController.updateUserStatus);
+router.get('/status/:status', userController.getUsersByStatus);            // get user with target status
 
 // admin dashboard specific aggregates (Add this here!)
 router.get('/dashboard/metrics', requireAdmin, userController.getDashboardMetrics)

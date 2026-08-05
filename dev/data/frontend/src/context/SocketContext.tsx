@@ -4,9 +4,10 @@
 */
 
 import { io, Socket } from 'socket.io-client';
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { Player } from '@shared/types/user.types';
 import { useAuth } from '@/features/auth/AuthContext';
+import { Position } from '@shared';
 
 const SocketContext     = createContext(null);
 export const useSocket  = () => useContext(SocketContext);
@@ -24,6 +25,7 @@ export function SocketProvider ({ children }) {
   
   const [currentRoom, setCurrentRoom] = useState<String>(null);
   const [roomPlayers, setRoomPlayers] = useState< Player[] >([]);
+  const [roomObjs, setRoomObjs] = useState< Player[] >([]);
 
   useEffect(() => {
   const token = getToken();
@@ -48,6 +50,8 @@ export function SocketProvider ({ children }) {
     socket.on('online-status', (data) => {
       setTimeout(() => {
         setIsConnected(true);
+        // console.log('FE: socketUserId ', data.userId);
+        // setLocalPlayerId(data.userId)
         // setOnlineStatus(data.status);
       }, 1000);
     });
@@ -62,6 +66,12 @@ export function SocketProvider ({ children }) {
       setPlayers(players);
       console.log('[existing-players] currently online: ', players);
     });
+    socket.on('existing-room-objects', (objects) => {
+      // console.log('[existing-room-objects] test ', objects[0]);
+      setRoomObjs(objects);
+      console.log('[existing-room-objects] all: ', objects);
+    });
+
     socket.on('player-joined', (data) => {
       setPlayers(prev => [...prev, data]);
       console.log(`Player ${data.id || data.name} joined`);
@@ -73,14 +83,52 @@ export function SocketProvider ({ children }) {
     });
 
     socket.on('player-moved', (data) => {
-      // setPlayers(prev => prev.map(p => 
       setRoomPlayers(prev => prev.map(p => 
-        p.id === data.id 
+        p.userId === data.userId 
           ? {...p, position: data.position}
           : p
       ));
-      // console.log(`Player ${data.id} moved to:`, data.position);
+      // console.log(`Player ${data.userId} moved to:`, data.position);
     });
+
+    socket.on('object-moved', (data) => {
+      setRoomObjs(prev => prev.map(p => 
+        p.userId === data.userId 
+          ? {...p, position: data.position}
+          : p
+      ));
+      // console.log(`Object ${data.userId} moved to:`, data.position);
+    });
+
+    socket.on('object-acquired', (data) => {
+      console.log('[object-acquired] ', data.objectId);
+      setRoomObjs(prev => prev.map(p => 
+        p.userId === data.objectId 
+          ? {...p,
+          ownership: {
+            ...p.ownership,
+            ownerId: data.ownerId,
+            timestamp: data.timestamp
+          }
+        }
+        : p
+      ));
+      console.log('[object-acquired] ', data.objectId, ' by ', data.ownerId);
+    })
+    socket.on('object-released', (data) => {
+      setRoomObjs(prev => prev.map(p => 
+        p.userId === data.objectId 
+          ? {...p,
+          ownership: {
+            ...p.ownership,
+            ownerId: null,
+            timestamp: null
+          }
+        }
+        : p
+      ));
+      console.log('[object-released] ', data.objectId);
+    })
 
     /* Events: Room */
     // socket.on('existing-room-players', (players) => {
@@ -103,7 +151,7 @@ export function SocketProvider ({ children }) {
     // update when new player joins
     socket.on('player-joined-room', (data) => {
       setRoomPlayers(prev => [...prev, data.player]);
-      console.log(`User ${data.player.name}, id:${data.player.id} joined ${data.roomName}`);
+      console.log(`User ${data.player.name}, sockId:${data.player.id} joined ${data.roomName}`);
     });
 
     // existing players
@@ -148,13 +196,19 @@ export function SocketProvider ({ children }) {
         socket.off('player-joined');
         socket.off('player-left');
         socket.off('player-moved');
+        socket.off('object-moved');
+        socket.off('object-acquired');
+        socket.off('object-released');
         socket.off('room-joined');
         socket.off('player-joined-room');
         socket.off('existing-room-players');
+        socket.off('existing-room-objects');
         socket.off('player-left-room');
         socket.off('room-full');
         socket.off('connect_error');
         socket.off('connect');
+        socket.off('online-status');
+        socket.off('force-logout');
         socket.disconnect();
       }
     }
@@ -257,6 +311,7 @@ export function SocketProvider ({ children }) {
     enableSocket,
     isConnected,
     socket,
+    shouldConnect,
     // onlineStatus,
     // setOnlineStatus,
     
@@ -276,6 +331,8 @@ export function SocketProvider ({ children }) {
     joinRoom,
     leaveRoom,
     fetchRoomPlayers,
+    roomObjs,
+    setRoomObjs,
 
     /* Chat methods */
     // messages,
