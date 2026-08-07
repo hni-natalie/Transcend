@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { PageHeader, IconMeetings } from '@shared';
-import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal, RecordingModal } from '@features/meetings';
+import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal, RecordingModal, MeetingChatModal } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useSocket } from "@/context/SocketContext";
-import type { MeetingDetails, Meeting, Recording } from '@features/meetings/meeting.types';
+import type { MeetingDetails, Meeting, Recording, MeetingChatMessage } from '@features/meetings/meeting.types';
 
 type Participant = {
     userId: string;
@@ -86,6 +86,8 @@ export const Meetings = () => {
 	const [showRecordingModal, setShowRecordingModal] = useState(false);
 	const [recordings, setRecordings] = useState<Recording[]>([]);
 	const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+	const [showChatModal, setShowChatModal] = useState(false);
+	const [chatMessages, setChatMessages] = useState<MeetingChatMessage[]>([]);
 
 	// ======================
 	// FETCH
@@ -231,8 +233,6 @@ export const Meetings = () => {
 				recordings: Recording[];
 			};
 
-			console.log("Recording API response:", res);
-
 			setRecordings(res.recordings);
 			setSelectedMeetingId(meetId);
 			setShowRecordingModal(true);
@@ -243,9 +243,21 @@ export const Meetings = () => {
 	};
 
 	// ======================
-	// VIEW TRANSCRIPT
+	// VIEW CHAT HISTORY
 	// ======================
-	
+	const handleViewChat = async (meetId: string) => {
+		try {
+			const res = await meetingApi.getChatMessages(meetId) as {
+				data: MeetingChatMessage[];
+			};
+
+			setChatMessages(res.data);
+			setShowChatModal(true);
+
+		} catch (err) {
+			console.error("Failed to load chat:", err);
+		}
+	};
 
 	// ======================
 	// GROUPING
@@ -353,6 +365,7 @@ export const Meetings = () => {
 					onTogglePin={handleTogglePin}
 					onViewMore={handleViewMore}
 					onViewRecording={handleViewRecording}
+					onViewChat={handleViewChat}	
 				/>
 
 				<MeetingColumn
@@ -372,6 +385,16 @@ export const Meetings = () => {
 				meeting={selectedMeeting}
 				onClose={() => setSelectedMeeting(null)}
 			/>
+
+			{showChatModal && (
+				<MeetingChatModal
+					messages={chatMessages}
+					onClose={() => {
+					setShowChatModal(false);
+					setChatMessages([]);
+					}}
+				/>
+			)}
 
 			{showRecordingModal && (
 				<RecordingModal

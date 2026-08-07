@@ -22,7 +22,7 @@ type Props = {
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
   onViewRecording?: (id: string) => void;
-  onViewTranscript?: (id: string) => void;
+  onViewChat?: (id: string) => void;
 };
 
 // truncate helper
@@ -42,7 +42,7 @@ export const MeetingColumn = ({
   onDelete,
   onEdit,
   onViewRecording,
-  onViewTranscript,
+  onViewChat,
 }: Props) => {
   const sortedMeetings = useMemo(() => {
     return [...meetings].sort(
@@ -77,14 +77,6 @@ export const MeetingColumn = ({
         sortedMeetings.map((meeting) => {
           const meetTitle = truncateWords(meeting.title, 3);
           const isHost = meeting.createdByUserId === userId;
-
-          // console.log("Meeting:", {
-          //   meetingId: meeting.id,
-          //   title: meeting.title,
-          //   createdByUserId: meeting.createdByUserId,
-          //   currentUserId: userId,
-          //   isHost,
-          // });
 
           return (
             <div
@@ -180,10 +172,10 @@ export const MeetingColumn = ({
                   </button>
 
                   <button
-                      onClick={() => onViewTranscript?.(meeting.id)}
+                      onClick={() => onViewChat?.(meeting.id)}
                       className="flex-1 border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg hover:bg-accent-lime/10 transition-colors cursor-pointer"
                   >
-                      Transcript
+                      Chat
                   </button>
               </div>
               ) : (

@@ -1,5 +1,6 @@
 import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
+import { RecordingStatusResponse } from '../meeting.types';
 
 const base = API_CONFIG.endpoints.meetings;
 const usersBase = API_CONFIG.endpoints.users.base;
@@ -112,6 +113,10 @@ export const meetingApi = {
 
     getRecordings(meetId: string) {
       return apiClient.get(`${recordingsBase}/${meetId}`);
+    },
+
+    getRecordingStatus(meetId: string) {
+      return apiClient.get<RecordingStatusResponse>(`${recordingsBase}/status/${meetId}`);
     },
 
     // =====================

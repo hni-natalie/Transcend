@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { IconRecording } from '@/shared';
 import { meetingApi } from '@/features/meetings/api/meeting.api';
+import { useRoomContext } from '@livekit/components-react';
 
 interface RecordingButtonProps { meetId: string; }
 
 export function RecordingButton({ meetId }: RecordingButtonProps) {
+  const room = useRoomContext();
+
   const [isRecording, setIsRecording] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -15,11 +18,30 @@ export function RecordingButton({ meetId }: RecordingButtonProps) {
       if (!isRecording) {
         await meetingApi.startRecording(meetId);
         setIsRecording(true);
+
+        await room.localParticipant.publishData(
+        new TextEncoder().encode(
+          JSON.stringify({
+            type: 'RECORDING_STARTED',
+          })
+        ),
+        { reliable: true, }
+      );
+
         return;
       }
 
       await meetingApi.stopRecording(meetId);
       setIsRecording(false);
+
+      await room.localParticipant.publishData(
+        new TextEncoder().encode(
+          JSON.stringify({
+            type: 'RECORDING_STOPPED',
+          })
+        ),
+        { reliable: true, }
+      );
 
     } catch (error) {
       console.error('Recording error:', error);

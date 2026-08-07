@@ -36,4 +36,6 @@ module.exports = {
     SUPABASE_S3_BUCKET: process.env.SUPABASE_S3_BUCKET,
     SUPABASE_S3_REGION: process.env.SUPABASE_S3_REGION,
     SUPABASE_PUBLIC_URL: process.env.SUPABASE_PUBLIC_URL,
+    // Google API Key
+    GOOGLE_AI_API_KEY: readSecret('google_ai_api_key'),
 };

@@ -1,24 +1,21 @@
 import type { Recording } from '../meeting.types';
-import { MeetingChatModal } from "./MeetingChatModal";
+import { SummaryModal } from './SummaryModal';
 import { useState } from "react";
-import type { MeetingChatMessage } from '../meeting.types';
-import { meetingApi } from '../api/meeting.api';
+
 
 type Props = {
-    meetId: string;
     recordings?: Recording[];
-    chats?: MeetingChatMessage[];
     onClose: () => void;
 };
 
 export const RecordingModal = ({
-    meetId,
     recordings = [],
-    chats = [],
     onClose,
 }: Props) => {
-    const [showChat, setShowChat] = useState(false);
-    const [chatMessages, setChatMessages] = useState<MeetingChatMessage[]>([]);
+    const [selectedSummary, setSelectedSummary] = useState<{
+        summary: string | null;
+        status: string;
+    } | null>(null);
     
     return (
         <>
@@ -38,36 +35,6 @@ export const RecordingModal = ({
                             ✕
                         </button>
                     </div>
-
-                    {/* Meeting Chat */}
-                    <button
-                        onClick={async () => {
-                            const res = await meetingApi.getChatMessages(meetId) as { data: MeetingChatMessage[] };
-
-                            console.log("Fetched chat messages:", res.data);
-
-                            if (res.data.length === 0) {
-                                alert("No chat history available for this meeting.");
-                                return;
-                            }
-
-                            setChatMessages(res.data);
-                            setShowChat(true);
-                        }}
-                        className="
-                            border border-accent-lime 
-                            text-accent-lime 
-                            text-sm font-medium
-                            px-4 py-2 
-                            rounded-lg
-                            transition-colors duration-200
-                            hover:bg-accent-lime
-                            hover:text-black
-                            mb-3
-                        "
-                    >
-                        Open Chat History
-                    </button>
 
                     {/* Empty State */}
                     {recordings.length === 0 ? (
@@ -102,14 +69,30 @@ export const RecordingModal = ({
                                     </p>
 
                                     {recording.fileUrl ? (
-                                        <a
-                                            href={recording.fileUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-accent-lime text-sm hover:underline"
-                                        >
-                                            Open Recording
-                                        </a>
+                                        <div className="flex gap-2">
+                                            {recording.fileUrl && (
+                                                <a
+                                                    href={recording.fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-accent-lime text-sm hover:underline"
+                                                >
+                                                    Open Recording
+                                                </a>
+                                            )}
+
+                                            <button
+                                                onClick={() =>
+                                                    setSelectedSummary({
+                                                        summary: recording.summary ?? null,
+                                                        status: recording.summaryStatus,
+                                                    })
+                                                }
+                                                className="text-accent-lime text-sm hover:underline"
+                                            >
+                                                Summary
+                                            </button>
+                                        </div>
                                     ) : (
                                         <p className="text-sm text-red-400">
                                             Recording unavailable
@@ -123,13 +106,13 @@ export const RecordingModal = ({
                 </div>
             </div>
 
-            {showChat && (
-                <MeetingChatModal
-                    messages={chatMessages}
-                    onClose={() => setShowChat(false)}
+            {selectedSummary !== null && (
+                <SummaryModal
+                    summary={selectedSummary.summary}
+                    summaryStatus={selectedSummary.status as "pending" | "completed" | "failed"}
+                    onClose={() => setSelectedSummary(null)}
                 />
             )}
-
         </>
     );
 };

@@ -48,9 +48,14 @@ export const MeetingChatModal = ({
                                     </p>
 
                                     <p className="text-xs text-text-secondary">
-                                        {new Date(
-                                            msg.createdAt
-                                        ).toLocaleTimeString()}
+                                        {new Date(msg.createdAt).toLocaleString("en-MY", {
+                                            timeZone: "Asia/Kuala_Lumpur",
+                                            day: "2-digit",
+                                            month: "short",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
                                     </p>
                                 </div>
 

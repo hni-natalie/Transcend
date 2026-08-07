@@ -1,6 +1,8 @@
 const prisma = require('../../prisma/client');
-const { RecordingStatus } = require('@prisma/client');
+const { RecordingStatus, SummaryStatus } = require('@prisma/client');
 const { getIO } = require("../services/socket.service");
+const whisperService = require('./whisper.service');
+const googleAIService = require('./googleAI.service');
 
 const {
     LIVEKIT_API_KEY,
@@ -153,33 +155,40 @@ const recordingService = {
 
 
     async finalizeRecordings() {
-        const recordings =
-            await prisma.recording.findMany({
-                where: {
-                    status: {
-                        in: [
-                            RecordingStatus.starting,
-                            RecordingStatus.active,
-                            RecordingStatus.stopped,
-                        ],
+        const recordings = await prisma.recording.findMany({
+            where: {
+                OR: [
+                    {
+                        status: {
+                            in: [
+                                RecordingStatus.starting,
+                                RecordingStatus.active,
+                                RecordingStatus.stopped,
+                            ],
+                        },
                     },
-                },
-            });
+                    {
+                        status: RecordingStatus.completed,
+                        summaryStatus: {
+                            in: [
+                                SummaryStatus.pending,
+                                SummaryStatus.failed,
+                            ],
+                        },
+                    },
+                ],
+            },
+        });
 
         for (const recording of recordings) {
-            const list =
-                await egressClient.listEgress({
+            const list = await egressClient.listEgress({
                     egressId: recording.egressId,
                 });
 
             const egress = list[0];
+            if (!egress) continue;
 
-            if (!egress) {
-                continue;
-            }
-
-            const status =
-                mapEgressStatus(egress.status);
+            const status = mapEgressStatus(egress.status);
 
             console.log('==============================');
             console.log('Recording ID:', recording.recordingId);
@@ -192,8 +201,47 @@ const recordingService = {
             const updateData = { status, };
 
             if (status === RecordingStatus.completed) {
-                updateData.fileUrl =
-                    `${PUBLIC_URL}/${recording.filename}`;
+                const fileUrl = `${PUBLIC_URL}/${recording.filename}`;
+
+                await prisma.recording.update({
+                    where: { recordingId: recording.recordingId },
+                    data: { status, fileUrl },
+                });
+
+                if (recording.summaryStatus !== SummaryStatus.completed) {
+                    try {
+                        await prisma.recording.update({
+                            where: { recordingId: recording.recordingId },
+                            data: {
+                                summaryStatus: SummaryStatus.processing,
+                            },
+                        });
+
+                        const transcript = await whisperService.transcribe(fileUrl);
+                        console.log("[WHISPER] Transcript:", transcript);
+
+                        const summary = await googleAIService.generateSummary(transcript);
+
+                        await prisma.recording.update({
+                            where: { recordingId: recording.recordingId },
+                            data: {
+                                summary: JSON.stringify(summary),
+                                summaryStatus: SummaryStatus.completed,
+                            },
+                        });
+
+                    } catch(error) {
+                        console.error("[SUMMARY] Failed:", error);
+
+                        await prisma.recording.update({
+                            where: { recordingId: recording.recordingId },
+                            data: {
+                                summaryStatus: SummaryStatus.failed,
+                            },
+                        });
+                    }
+                }
+                continue;
             }
 
             const updatedRecording =
@@ -214,6 +262,7 @@ const recordingService = {
         }
     },
 
+ 
     async getRecordings(meetId) {
         return prisma.recording.findMany({
             where: {
@@ -227,10 +276,27 @@ const recordingService = {
                 meetId: true,
                 status: true,
                 fileUrl: true,
+                summary: true,
+                summaryStatus: true,
                 createdAt: true,
             },
         });
-    }
+    },
+
+
+    async getRecordingStatus(meetId) {
+        const recording =
+            await prisma.recording.findFirst({
+                where: { 
+                    meetId, 
+                    status: { in: [RecordingStatus.starting, RecordingStatus.active] } 
+                },
+            });
+
+        if (!recording) return null;
+
+        return { status: recording.status };
+    },
 
 };
 

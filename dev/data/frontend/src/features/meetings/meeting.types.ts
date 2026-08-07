@@ -59,6 +59,8 @@ export type Recording = {
         | "failed";
     filename: string;
     fileUrl: string | null;
+    summary: string | null;
+    summaryStatus: "pending" | "completed" | "failed";
     createdAt: string;
 };
 
@@ -70,4 +72,18 @@ export type MeetingChatMessage = {
   senderName: string;
   message: string;
   createdAt: string;
+}
+
+export type RecordingStatus =
+  | 'starting'
+  | 'active'
+  | 'completed'
+  | 'failed'
+  | 'stopped';
+
+export interface RecordingStatusResponse {
+  success: boolean;
+  status: {
+    status: RecordingStatus;
+  } | null;
 }
