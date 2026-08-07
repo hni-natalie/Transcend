@@ -36,8 +36,9 @@ ${transcript}
         `;
 
         const result = await model.generateContent(prompt);
+        const text = result.response.text();
 
-        return result.response.text();
+        return JSON.parse(text);
     },
 };
 

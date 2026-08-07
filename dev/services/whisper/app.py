@@ -26,7 +26,7 @@ async def transcribe(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, temp_file)
         temp_file.close()
 
-        segments, info = model.transcribe(temp_file.name)
+        segments, info = model.transcribe(temp_file.name, language="en")
 
         transcript = " ".join(segment.text for segment in segments)
 

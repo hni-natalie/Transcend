@@ -276,10 +276,27 @@ const recordingService = {
                 meetId: true,
                 status: true,
                 fileUrl: true,
+                summary: true,
+                summaryStatus: true,
                 createdAt: true,
             },
         });
-    }
+    },
+
+
+    async getRecordingStatus(meetId) {
+        const recording =
+            await prisma.recording.findFirst({
+                where: { 
+                    meetId, 
+                    status: { in: [RecordingStatus.starting, RecordingStatus.active] } 
+                },
+            });
+
+        if (!recording) return null;
+
+        return { status: recording.status };
+    },
 
 };
 

@@ -81,6 +81,18 @@ const recordingController = {
             return res.status(500).json({ success: false, message: error.message, });
         }
     },
+
+    async getRecordingStatus(req, res) {
+        try {
+            const { meetId } = req.params;
+            
+            const status = await recordingService.getRecordingStatus(meetId); 
+
+            return res.json({ success: true, status, });
+        } catch (error) {
+            return res.status(500).json({ success: false, message: error.message, });
+        }
+    },
 };
 
 module.exports = recordingController;

@@ -4,4 +4,5 @@ export { MeetingDetailsModal } from "./components/MeetingDetailsModal";
 export { ScheduleMeetingModal } from "./components/MeetingFormModal";
 export { RecordingModal } from "./components/RecordingModal";
 export { MeetingChatModal } from "./components/MeetingChatModal";
+export { SummaryModal } from "./components/SummaryModal";
 export type { MeetingDetails } from "./meeting.types";
