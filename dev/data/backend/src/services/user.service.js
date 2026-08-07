@@ -190,6 +190,30 @@ const userService = {
         return user;
     },
     
+    async getUsersByStatus(userStatus) {
+        const user = await prisma.user.findMany({
+            where: {
+                userStatus
+            },
+            select: {
+                userId: true,
+                userEmail: true,
+                userName: true,
+                userStatus: true,
+                createdAt: true,
+                updatedAt: true,
+                avatarUrl: true,
+                city: true,
+                country: true,
+                role: { select: { roleId: true, roleName: true } },
+                workspace: { select: { workspaceId: true, workspaceName: true } },
+                department: { select: { dpId: true, dpName: true } }
+            }
+        });
+        if (!user) throw new Error('User not found');
+        return user;
+    },
+
     async updateUserProfile(userId, profileData) {
         const allowedFields = ['userName', 'userEmail', 'avatarUrl', 'city', 'country', 'timezone'];
         

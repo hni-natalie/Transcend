@@ -28,7 +28,7 @@ export function useUserStatusSync() {
     const fetchStatus = async () => {
       try {
         const status = await getUserStatus();
-        console.log('[UserStatusSync] current status: ', status, ' ', previousStatusRef.current, ' ', user.userStatus);
+        // console.log('[UserStatusSync] current status: ', status, ' ', previousStatusRef.current, ' ', user.userStatus);
 				if (status !== previousStatusRef.current) {
         	updateUserStatus(status);
 					previousStatusRef.current = status;

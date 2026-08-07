@@ -55,8 +55,6 @@ export function ButtonVoiceRoom({
   const isClicked = useRef(false);
   const hasNavigated = useRef(false);
   const selectedMeeting = useRef({ roomName, meetId, meetingTitle });
-  const [isJoining, setIsJoining] = useState(false);
-  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => { enableSocket(); }, []);
 
@@ -80,8 +78,6 @@ export function ButtonVoiceRoom({
 
     console.log("Selected meeting:", selectedMeeting.current);
 
-    setIsJoining(true);
-
     const {
       roomName: selectedRoomName,
       meetId: selectedMeetId,
@@ -94,14 +90,16 @@ export function ButtonVoiceRoom({
       selectedMeetingTitle,
     });
 
-    navigate(joinTo!, {
-        state: {
-          roomName: selectedRoomName,
-          meetingTitle: selectedMeetingTitle,
-          meetId: selectedMeetId,
-          isHost: isHost,
-        },
-      });
+    if (joinTo) {
+      navigate(joinTo, {
+          state: {
+            roomName: selectedRoomName,
+            meetingTitle: selectedMeetingTitle,
+            meetId: selectedMeetId,
+            isHost: isHost,
+          },
+        });
+    }
 
     await connect(mode);
 
@@ -109,7 +107,6 @@ export function ButtonVoiceRoom({
   };
 
   const handleLeave = async () => {
-    setIsLeaving(true);
     isClicked.current = false;
     hasNavigated.current = false;
 
@@ -117,9 +114,9 @@ export function ButtonVoiceRoom({
       await meetingApi.endMeeting(roomName);
       console.log("Meeting status changed to scheduled");
     }
-
+  
     await disconnect(true);
-
+  
     if (leaveTo) navigate(leaveTo);
   };
 
@@ -127,6 +124,7 @@ export function ButtonVoiceRoom({
     await disconnect(false);
   };
 
+  // cleanup when page refresh/close
   useEffect(() => {
     window.addEventListener("beforeunload", handleBeforeUnload);
 
@@ -143,10 +141,10 @@ export function ButtonVoiceRoom({
         <button
           onClick={handleJoin}
           className={finalClassName}
-          disabled={!isConnected || isJoining}
+          disabled={!isConnected || isLoading}
         >
-          {isJoining ? (
-            <ButtonLoading isLoading={isJoining} />
+          {isLoading ? (
+            <ButtonLoading isLoading={isLoading} />
           ) : (
             joinText
           )}
@@ -156,11 +154,11 @@ export function ButtonVoiceRoom({
           {allowLeave && (
             <button
               onClick={handleLeave}
-              disabled={ isLoading || isLeaving }
+              disabled={ isLoading }
               className={`${finalClassName} flex-1`}
             >
-              {isLeaving ? (
-                <ButtonLoading isLoading={isLeaving} />
+              {isLoading ? (
+                <ButtonLoading isLoading={isLoading} />
               ) : (
                 leaveText
               )}
@@ -170,7 +168,7 @@ export function ButtonVoiceRoom({
           {showMute && (
             <button
               onClick={toggleMute}
-              disabled={ isLoading || isLeaving }
+              disabled={ isLoading }
               className={`${isMuted ? "btn-outline" : finalClassName} rounded-full transition-colors duration-500 p-1`}
             >
               {isMuted ? (
