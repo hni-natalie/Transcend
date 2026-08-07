@@ -67,8 +67,23 @@ services:
       - livekit_api_secret
       - supabase_s3_access_key
       - supabase_s3_secret_key
+      - google_ai_api_key
     volumes:
       - backend_app:/app:nocopy
+    networks:
+      - app-network
+
+  whisper:
+    build: ./${SERV_DIR}/whisper
+    container_name: t_whisper
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - app-network
 
@@ -106,3 +121,5 @@ secrets:
     file: ./secrets/supabase_s3_access_key.txt
   supabase_s3_secret_key:
     file: ./secrets/supabase_s3_secret_key.txt
+  google_ai_api_key:
+    file: ./secrets/google_ai_api_key.txt

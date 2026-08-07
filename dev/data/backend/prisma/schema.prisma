@@ -63,6 +63,13 @@ enum RecordingStatus {
   stopped
 }
 
+enum SummaryStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
 // TO ADD: Messages
 enum ConversationType {
   direct
@@ -483,6 +490,8 @@ model Recording {
   filename    String
   status      RecordingStatus @default(starting)
   fileUrl     String?
+  summaryStatus SummaryStatus @default(pending)
+  summary  String? 
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   
