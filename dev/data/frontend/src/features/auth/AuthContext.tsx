@@ -11,7 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   googleLogin: (idToken: string) => Promise<AuthUser>; 
   login: (email: string, password: string) => Promise<AuthUser>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUserStatus: (status: UserBackendStatus) => Promise<void>;
 }
 
@@ -78,11 +78,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return authUser; 
   };
 
-  const logout = () => {
-    removeToken();
-    setUser(null);
-    window.location.href = '/login';
-  };
+  const logout = async () => {
+    try {
+        await apiClient.post('/auth/logout');
+    } catch (error) {
+        console.error('Logout request failed:', error);
+    } finally {
+        removeToken();
+        setUser(null);
+        window.location.href = '/login';
+    }
+};
+
+// local state only
+//   const logout = () => {
+//     removeToken();
+//     setUser(null);
+//     window.location.href = '/login';
+//   };
 
   return (
     <AuthContext.Provider

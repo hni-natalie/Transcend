@@ -5,6 +5,8 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { OAuth2Client } = require('google-auth-library');
+const { logPresenceActivity } = require('../utils/activity');
+
 
 const JWT_SECRET = fs.readFileSync('/run/secrets/jwt_secret', 'utf8').trim();
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '1d';
@@ -60,6 +62,13 @@ router.post('/login', async (req, res) => {
         JWT_SECRET,
         { expiresIn: JWT_EXPIRY }
         );
+
+		await logPresenceActivity({
+			workspaceId: user.workspaceId,
+			userId: user.userId,
+			action: 'logged in',
+		});
+
 
         res.json({
         token,
@@ -155,6 +164,13 @@ router.post('/google', async (req, res) => {
             { expiresIn: JWT_EXPIRY }
         );
 
+		await logPresenceActivity({
+			workspaceId: user.workspaceId,
+			userId: user.userId,
+			action: 'logged in',
+		});
+
+
         res.json({
             token,
             user: {
@@ -238,7 +254,25 @@ router.get('/me', authMiddleware, async (req, res) => {
 
 // POST /auth/logout — logout (client just discards token)
 router.post('/logout', authMiddleware, async (req, res) => {
-    res.json({ message: 'Logged out successfully' });
+    try {
+        await prisma.user.update({
+            where: { userId: req.user.userId },
+            data: { userStatus: 'offline' }
+        });
+
+        await logPresenceActivity({
+            workspaceId: req.user.workspaceId,
+            userId: req.user.userId,
+            action: 'logged out',
+        });
+
+        const { getIO } = require('../services/socket.service');
+        getIO().emit('user-status-changed', { userId: req.user.userId, status: 'offline' });
+
+        res.json({ message: 'Logged out successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;
