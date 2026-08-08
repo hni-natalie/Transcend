@@ -186,6 +186,7 @@ router.get('/me', authMiddleware, async (req, res) => {
                 userId: true,
                 userName: true,
                 userEmail: true,
+				workspaceId: true,
                 roleId: true,
                 role: {
                     select: { roleName: true }
@@ -213,6 +214,7 @@ router.get('/me', authMiddleware, async (req, res) => {
 
         res.json({
             socketId: user.socketId,
+			workspaceId: user.workspaceId,
             userId: user.userId,
             userName: user.userName,
             userEmail: user.userEmail,
