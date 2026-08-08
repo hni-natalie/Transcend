@@ -15,6 +15,8 @@ const { generateRoomToken } = require('../routes/livekit.js')
 const { randomHslColor }    = require('../utils/color.js');
 const { apiClient }         = require('../api/api.client.js')
 const { updateSocketId }    = require('./supabase-utils.service.js')
+const prisma 				= require('../../prisma/client');
+const { logSpaceActivity, logMeetingActivity } = require('../utils/activity');
 const players     = new Map();
 const rooms       = new Map();      // Map<roomName, roomPlayers>
 let ioInstance = null;
@@ -43,6 +45,21 @@ const socketService = (io) => {
 	io.on('connection', (socket) => {
   console.log(`Player connected lobby: ${socket.id} ${socket.user.userName}`);
 
+  // dashboard subscribes to live occupancy updates
+  socket.on('subscribe-dashboard', () => {
+    socket.join('dashboard-viewers');
+    const snapshot = Array.from(rooms.entries()).map(([roomName, data]) => ({
+      roomName,
+      count: data.users.length,
+    }));
+    socket.emit('space-occupancy-snapshot', snapshot);
+  });
+
+  socket.on('unsubscribe-dashboard', () => {
+    socket.leave('dashboard-viewers');
+  });
+  // 
+
   // logout duplicate sessions
   if (socket.user.userStatus !== 'offline') {
     console.log('[socket.service] duplicate login detected! ', socket.user.socketId);
@@ -57,6 +74,7 @@ const socketService = (io) => {
   setTimeout(() => {
     updateSocketId(socket.id, socket.user.userId, 'online');
     socket.emit('online-status', {status: 'online'});
+	io.emit('user-status-changed', { userId: socket.user.userId, status: 'online' });
   }, 2000);
 
   // Initialize player, should this be in db?
@@ -143,6 +161,34 @@ const socketService = (io) => {
       participantCount: roomData.users.length
     });
     console.log(`${player.name} joined room: ${player.roomName}`);
+
+	// added for dashboard
+	emitOccupancyUpdate(roomName); 
+
+	const space = await prisma.space.findUnique({ where: { spaceId: roomName }, select: { spaceName: true } });
+	if (space) {
+		await logSpaceActivity({
+			workspaceId: socket.user.workspaceId,
+			userId: socket.user.userId,
+			action: 'entered a department',
+			spaceName: space.spaceName,
+		});
+	} else {
+		const meeting = await prisma.meeting.findUnique({ where: { meetId: roomName }, select: { meetTitle: true } });
+		if (meeting) {
+			await logMeetingActivity({
+				workspaceId: socket.user.workspaceId,
+				userId: socket.user.userId,
+				action: 'joined a meeting',
+				contextTitle: meeting.meetTitle,
+				spaceName: undefined, // no space context needed here, or fetch if you want it
+				date: new Date(),
+			});
+			
+			const userService = require('./user.service');
+			await userService.updateUserStatus(socket.user.userId, 'in_meeting');
+		}
+	}
   });
 
 	// Get existing players in room
@@ -157,10 +203,27 @@ const socketService = (io) => {
   });
 
   // Handle leaving specific room
-  socket.on('leave-room', ({ roomName }) => {
+  socket.on('leave-room', async ({ roomName }) => {
     if (!player) { console.log('player not found'); return; }
     handleLeaveRoom(socket, player, roomName);
+
+	const space = await prisma.space.findUnique({ where: { spaceId: roomName }, select: { spaceName: true } });
+    if (space) {
+        await logSpaceActivity({
+            workspaceId: socket.user.workspaceId,
+            userId: socket.user.userId,
+            action: 'left a department',
+            spaceName: space.spaceName,
+        });
+    } else {
+        const meeting = await prisma.meeting.findUnique({ where: { meetId: roomName }, select: { meetTitle: true } });
+        if (meeting) {
+			const userService = require('./user.service');
+            await userService.updateUserStatus(socket.user.userId, 'online');
+        }
+    }
   });
+
 	
   // Handle disconnection
   socket.on('disconnect', () => {
@@ -171,11 +234,18 @@ const socketService = (io) => {
     socket.broadcast.emit('player-left', { id:socket.id }); // send to all clients globally
     updateSocketId(socket.id, socket.user.userId, 'offline');
     socket.emit('online-status', {status: 'offline'});
+	io.emit('user-status-changed', { userId: socket.user.userId, status: 'offline' });
   });
 
   /* *****************************************************************
    * Setup Socket Functions
    * ****************************************************************/
+
+  function emitOccupancyUpdate(roomName) {
+    const roomData = rooms.get(roomName);
+    const count = roomData ? roomData.users.length : 0;
+    io.to('dashboard-viewers').emit('space-occupancy-changed', { roomName, count });
+  }
 
   function handleLeaveRoom(socket, player, roomName) {
     if (!player) return ;
@@ -207,6 +277,9 @@ const socketService = (io) => {
         rooms.delete(roomName);
         console.log(`Room ${roomName} closed.`);
       }
+
+	  // added for dashboard
+	  emitOccupancyUpdate(roomName); 
     }
   }
   // within io

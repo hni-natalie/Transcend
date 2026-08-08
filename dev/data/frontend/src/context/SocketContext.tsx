@@ -20,10 +20,16 @@ export function SocketProvider ({ children }) {
   const [players, setPlayers] = useState< Player[] >([]);
   const [localPlayerId, setLocalPlayerId] = useState<String>(null);
   // const [onlineStatus, setOnlineStatus] = useState('offline')
-  const [messages, setMessages] = useState([]);
+  // const [messages, setMessages] = useState([]);
+  
+  // status sync across pages
+  const [userStatuses, setUserStatuses] = useState<Record<string, string>>({});
   
   const [currentRoom, setCurrentRoom] = useState<String>(null);
   const [roomPlayers, setRoomPlayers] = useState< Player[] >([]);
+  
+  // for dashboard
+  const [roomOccupancy, setRoomOccupancy] = useState<Record<string, number>>({});
 
   useEffect(() => {
   const token = getToken();
@@ -127,6 +133,27 @@ export function SocketProvider ({ children }) {
         detail: { type: 'full', message: `Room ${data.roomName} is full` }
       }));
     });
+
+	// syncs all user status across pages
+	// socket.on('user-status-changed', (data: { userId: string; status: string }) => {
+	//   setUserStatuses((prev) => ({ ...prev, [data.userId]: data.status }));
+	// });
+
+	socket.on('user-status-changed', (data) => {
+	  console.log('[SocketContext] received user-status-changed:', data); // TEMP
+	  setUserStatuses((prev) => ({ ...prev, [data.userId]: data.status }));
+	});
+
+	// for admin's dashboard; office and space occupancy mapping
+	socket.on('space-occupancy-snapshot', (snapshot: { roomName: string; count: number }[]) => {
+	  const map: Record<string, number> = {};
+	  snapshot.forEach((s) => { map[s.roomName] = s.count; });
+	  setRoomOccupancy(map);
+	});
+
+	socket.on('space-occupancy-changed', (data: { roomName: string; count: number }) => {
+	  setRoomOccupancy((prev) => ({ ...prev, [data.roomName]: data.count }));
+	});
   
   /* Events: Chat */
     // socket.on('chat-message', (messageData) => {
@@ -155,6 +182,9 @@ export function SocketProvider ({ children }) {
         socket.off('room-full');
         socket.off('connect_error');
         socket.off('connect');
+		socket.off('user-status-changed');
+		socket.off('space-occupancy-snapshot');
+		socket.off('space-occupancy-changed');
         socket.disconnect();
       }
     }
@@ -228,6 +258,19 @@ export function SocketProvider ({ children }) {
     socket.emit('request-room-players', { roomName });
   }
 
+  // added for dashboard
+  const subscribeDashboard = useCallback(() => {
+	if (socket && isConnected) {
+	  socket.emit('subscribe-dashboard');
+	}
+  }, [socket, isConnected]);
+
+  const unsubscribeDashboard = useCallback(() => {
+	if (socket && isConnected) {
+	  socket.emit('unsubscribe-dashboard');
+	}
+  }, [socket, isConnected]);
+
 
   // const sendMessage = (text, senderName) => {
   //   if (socket && text.trim()) {
@@ -259,6 +302,7 @@ export function SocketProvider ({ children }) {
     socket,
     // onlineStatus,
     // setOnlineStatus,
+	userStatuses,
     
     /* Player methods */
     players,
@@ -282,6 +326,11 @@ export function SocketProvider ({ children }) {
     // sendMessage,
     // clearMessages,
     // addSystemMessage,
+
+	/* Dashboard methods */
+	roomOccupancy,
+    subscribeDashboard,
+    unsubscribeDashboard,
   };
 
   return (
