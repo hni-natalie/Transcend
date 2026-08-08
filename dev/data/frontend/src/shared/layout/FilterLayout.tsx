@@ -17,6 +17,12 @@ export interface FilterLayoutProps {
   onFilterSelect: (value: string) => void;
   filterOptions: string[];
   getFilterLabel: () => string;
+  showDateFilter?: boolean;
+  dateRangeValue?: string;
+  dateRangeOptions?: { label: string; value: string }[];
+  onDateRangeChange?: (value: string) => void;
+  customRange?: { startDate: string; endDate: string };
+  onCustomRangeChange?: (range: { startDate: string; endDate: string }) => void;
   children: ReactNode;
   isLoading?: boolean;
   emptyMessage?: string;
@@ -49,6 +55,12 @@ export const FilterLayout = ({
   onFilterSelect,
   filterOptions,
   getFilterLabel,
+  showDateFilter = false,
+  dateRangeValue = 'all',
+  dateRangeOptions = [],
+  onDateRangeChange,
+  customRange = { startDate: '', endDate: '' },
+  onCustomRangeChange,
   children,
   isLoading = false,
   emptyMessage = 'No items found',
@@ -68,9 +80,11 @@ export const FilterLayout = ({
   totalPages = 1,
 }: FilterLayoutProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [showPerPageDropdown, setShowPerPageDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const perPageRef = useRef<HTMLDivElement>(null);
+  const dateFilterRef = useRef<HTMLDivElement>(null);
 
   // closes filter dropdown if click outside
   useEffect(() => {
@@ -94,6 +108,17 @@ export const FilterLayout = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+   // closes date filter dropdown if click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dateFilterRef.current && !dateFilterRef.current.contains(event.target as Node)) {
+        setShowDateDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   if (isLoading) {
     return <LoadingState message="Loading..." size="full" />;
   }
@@ -105,10 +130,9 @@ export const FilterLayout = ({
         {/* HEADER */}
         <div className="flex-shrink-0">
           <div className="p-6 pb-4 flex items-center justify-between gap-4">
-            
-            {/* TABS */}
+            {/* LEFT SIDE: TABS */}
             {showFilters && (
-              <div className="flex items-center gap-1 text-base">
+              <div className="flex items-center gap-1 text-base flex-shrink-0">
                 {filterTabs.map((tab) => (
                   <div key={tab.value} className="relative flex items-center">
                     <button
@@ -182,23 +206,108 @@ export const FilterLayout = ({
               </div>
             )}
 
-            {/* SEARCH */}
-            {showSearch && (
-              <div className="relative w-80">
-                <input
-                  type="text"
-                  placeholder={searchPlaceholder}
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full bg-background-2 border border-background-3 rounded-lg pl-9 pr-4 py-1.5 text-base text-white placeholder-foreground-3 focus:outline-none focus:border-background-2 transition-colors"
-                />
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-foreground-3">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+            {/* RIGHT SIDE: DATE FILTER + SEARCH */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {/* DATE RANGE FILTER */}
+              {showDateFilter && (
+                <div className="relative" ref={dateFilterRef}>
+                  <button
+                    onClick={() => setShowDateDropdown(!showDateDropdown)}
+                    className="bg-background-2 border border-background-3 rounded-lg px-3 py-1.5 text-base text-foreground flex items-center gap-2 cursor-pointer hover:bg-background-3 transition-colors whitespace-nowrap"
+                  >
+                    <span>
+                      {dateRangeValue === 'custom' && customRange.startDate && customRange.endDate
+                        ? `${customRange.startDate} → ${customRange.endDate}`
+                        : dateRangeOptions.find((o) => o.value === dateRangeValue)?.label ?? 'All Time'}
+                    </span>
+                    <svg
+                      className={`w-4 h-4 transition-transform duration-200 ${showDateDropdown ? 'rotate-180' : ''}`}
+                      fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {showDateDropdown && (
+                    <div className="absolute top-full right-0 mt-1 min-w-[220px] bg-background-2 border border-background-3 rounded-lg shadow-lg z-50 py-1">
+                      {dateRangeOptions.map((option) =>
+                        option.value === 'custom' ? (
+                          <div key={option.value} className="px-4 py-2 border-t border-background-3 mt-1 pt-2">
+                            <button
+                              onClick={() => onDateRangeChange?.('custom')}
+                              className={`w-full text-left text-sm mb-2 cursor-pointer ${
+                                dateRangeValue === 'custom' ? 'text-accent-lime font-medium' : 'text-white'
+                              }`}
+                            >
+                              {option.label}
+                            </button>
+
+                            {dateRangeValue === 'custom' && (
+                              <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="date"
+                                  value={customRange.startDate}
+                                  onChange={(e) =>
+                                    onCustomRangeChange?.({ ...customRange, startDate: e.target.value })
+                                  }
+                                  className="bg-background-3 text-white text-sm rounded px-2 py-1 border border-background-3 focus:outline-none focus:border-accent-lime"
+                                />
+                                <input
+                                  type="date"
+                                  value={customRange.endDate}
+                                  onChange={(e) =>
+                                    onCustomRangeChange?.({ ...customRange, endDate: e.target.value })
+                                  }
+                                  className="bg-background-3 text-white text-sm rounded px-2 py-1 border border-background-3 focus:outline-none focus:border-accent-lime"
+                                />
+                                <button
+                                  onClick={() => setShowDateDropdown(false)}
+                                  disabled={!customRange.startDate || !customRange.endDate}
+                                  className="bg-accent-lime text-black text-sm rounded px-2 py-1 mt-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            key={option.value}
+                            onClick={() => {
+                              onDateRangeChange?.(option.value);
+                              setShowDateDropdown(false);
+                            }}
+                            className={`w-full text-left px-4 py-2 text-sm hover:bg-background-3 transition-colors cursor-pointer ${
+                              dateRangeValue === option.value ? 'text-accent-lime font-medium' : 'text-white'
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        )
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* SEARCH */}
+              {showSearch && (
+                <div className="relative w-80">
+                  <input
+                    type="text"
+                    placeholder={searchPlaceholder}
+                    value={searchQuery}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    className="w-full bg-background-2 border border-background-3 rounded-lg pl-9 pr-4 py-1.5 text-base text-white placeholder-foreground-3 focus:outline-none focus:border-background-2 transition-colors"
+                  />
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-foreground-3">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="border-b border-background-3" />
