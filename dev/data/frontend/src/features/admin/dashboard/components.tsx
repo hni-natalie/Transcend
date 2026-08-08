@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { IconLogin, IconLogout, IconTaskAdd, IconTaskDone, IconMeetings, IconMeetingAdd, TruncatedText, getStatusPriority, getStatusColors } from '@/shared';
-import { mockSpacesProgress, presenceStream, meetingsStream, tasksStream } from '@/features/admin/dashboard/adminDashboardData';
-import { DbUser, ActivityItem, SpaceRatio } from './types';
+import { DbUser, ActivityItem, SpaceRatio, SpaceWithOccupancy } from './types';
 
 
 // empty state
@@ -22,8 +21,8 @@ export interface MetricsRingProps {
   focusCount: number;
   inMeetingCount: number;
   totalCount: number;
-  attendancePercentage: string;
-  checkedInPercentage: string;
+  activePercentage: string;      // was attendancePercentage
+  attendancePercentage: string;  // was checkedInPercentage
   absentPercentage: string;
 }
 
@@ -50,15 +49,15 @@ export const MetricsRing = ({
   focusCount,
   inMeetingCount,
   totalCount,
+  activePercentage,
   attendancePercentage,
-  checkedInPercentage,
   absentPercentage,
 }: MetricsRingProps) => {
   const ringCircumference = 263.8;
 
   return (
     <>
-      <div className="flex justify-center mb-10 mt-0">
+      <div className="flex justify-center mb-8 mt-0">
         <div className="relative w-115 h-115">
           {/* Outer Ring - available */}
           <svg className="absolute w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -110,15 +109,15 @@ export const MetricsRing = ({
         </div>
       </div>
 
-      <div className="flex justify-between text-center mb-10">
+      <div className="flex justify-between text-center mb-8">
         <MetricItem value={availableCount} label="Available" color="bg-accent-lime" />
         <MetricItem value={focusCount} label="Focus" color="bg-accent-teal" />
         <MetricItem value={inMeetingCount} label="In meeting" color="bg-accent-gold" />
       </div>
 
-      <div className="flex justify-between text-center mb-5">
+      <div className="flex justify-between text-center mb-4">
+        <MetricItem value={activePercentage + '%'} label="Active" />
         <MetricItem value={attendancePercentage + '%'} label="Attendance" />
-        <MetricItem value={checkedInPercentage + '%'} label="Checked In" />
         <MetricItem value={absentPercentage + '%'} label="Absent" />
       </div>
     </>
@@ -278,55 +277,113 @@ export const DepartmentStats = ({ getDepartmentRatio }: DepartmentStatsProps) =>
 
 
 // mock components to replace with socket events
-// OFFICE (mock)
 interface OfficeRoom {
-  name: string;
+  code: string;
+  spaceName: string;
   colSpanClass: string;
   rowSpanClass: string;
-  bgClass: string;
-  textClass?: string;
 }
 
 const OFFICE_ROOMS: OfficeRoom[] = [
-  { name: 'AV', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
-  { name: 'GL', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-2', bgClass: 'bg-accent-lime-bg' },
-  { name: 'LOH', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
-  { name: 'DL', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-2', bgClass: 'bg-accent-lime', textClass: 'text-black' },
-  { name: 'CL', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
-  { name: 'MS', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
-  { name: 'LG', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1', bgClass: 'bg-background-1' },
-  { name: 'MM', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
-  { name: 'POH', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-2', bgClass: 'bg-accent-lime', textClass: 'text-black' },
-  { name: 'ML', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-2', bgClass: 'bg-background-4' },
-  { name: 'PT', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-2', bgClass: 'bg-background-1' },
-  { name: 'TH', colSpanClass: 'col-span-4', rowSpanClass: 'row-span-2', bgClass: 'bg-background-4' },
+  { code: 'AV',  spaceName: 'Audit Vault',     	 colSpanClass: 'col-span-1', rowSpanClass: 'row-span-1' },
+  { code: 'MS',  spaceName: 'Meeting Room S',    colSpanClass: 'col-span-1', rowSpanClass: 'row-span-1' },
+  { code: 'GL',  spaceName: 'Growth Lab',        colSpanClass: 'col-span-1', rowSpanClass: 'row-span-2' },
+  { code: 'TH',  spaceName: 'Town Hall',         colSpanClass: 'col-span-5', rowSpanClass: 'row-span-2' },
+  { code: 'LOH', spaceName: 'Logistics Ops Hub', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1' },
+  { code: 'POH', spaceName: 'People Ops Hub',    colSpanClass: 'col-span-1', rowSpanClass: 'row-span-2' },
+  { code: 'ML',  spaceName: 'Meeting Room L',    colSpanClass: 'col-span-2', rowSpanClass: 'row-span-2' },
+  { code: 'CL',  spaceName: 'Creative Lab',      colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1' },
+  { code: 'DL',  spaceName: 'Dev Lab',           colSpanClass: 'col-span-3', rowSpanClass: 'row-span-2' },
+  { code: 'MM',  spaceName: 'Meeting Room M',    colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1' },
 ];
 
-export const OfficeMap = () => {
+const getOccupancyStyle = (space: SpaceWithOccupancy | undefined) => {
+  const count = space?.currentOccupancy ?? 0;
+
+  if (!space || count === 0) {
+    return { bgClass: 'bg-background-1', textClass: 'text-foreground-1' };
+  }
+
+  const capacity = Number(space.userCapacity);
+  const atCapacity = !isNaN(capacity) && capacity > 0 && count >= capacity;
+  return atCapacity
+    ? { bgClass: 'bg-accent-lime', textClass: 'text-black' }
+    : { bgClass: 'bg-accent-lime-bg', textClass: 'text-foreground-1' };
+};
+
+export const OfficeMap = ({ spaces }: { spaces: SpaceWithOccupancy[] }) => {
+  const spacesByName = new Map(spaces.map(s => [s.spaceName, s]));
+
   return (
     <div className="col-span-8 bg-background-2 rounded-3xl p-6 flex flex-col">
       <div className="text-mc text-foreground font-semibold font-main mb-6">Office</div>
-      <div className="flex-1 grid grid-cols-8 grid-rows-4 gap-2.5">
-        {OFFICE_ROOMS.map((room) => (
-          <div
-            key={room.name}
-            className={`${room.colSpanClass} ${room.rowSpanClass} ${room.bgClass} rounded-lg p-3 flex items-start justify-start`}
-          >
-            <span className={`text-xs font-medium ${room.textClass || 'text-foreground-1'}`}>
-              {room.name}
-            </span>
-          </div>
-        ))}
+      <div className="my-3 flex-1 grid grid-cols-8 grid-rows-4 gap-1.5">
+        {OFFICE_ROOMS.map((room) => {
+          const space = spacesByName.get(room.spaceName);
+          const style = getOccupancyStyle(space);
+
+          return (
+            <div
+              key={room.code}
+              className={`${room.colSpanClass} ${room.rowSpanClass} ${style.bgClass} rounded-lg p-3 flex items-start justify-start transition-colors duration-300`}
+            >
+              <span className={`text-sm font-bold ${style.textClass}`}>
+                {room.code}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 };
 
 
-// SPACES (mock)
+// interface OfficeRoom {
+//   name: string;
+//   colSpanClass: string;
+//   rowSpanClass: string;
+//   bgClass: string;
+//   textClass?: string;
+// }
+
+// const OFFICE_ROOMS: OfficeRoom[] = [
+//   { name: 'AV', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
+//   { name: 'MS', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
+//   { name: 'GL', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-2', bgClass: 'bg-accent-lime-bg' },
+//   { name: 'TH', colSpanClass: 'col-span-5', rowSpanClass: 'row-span-2', bgClass: 'bg-background-1' },
+//   { name: 'LOH', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
+//   { name: 'POH', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-2', bgClass: 'bg-accent-lime', textClass: 'text-black' },
+//   { name: 'ML', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-2', bgClass: 'bg-background-1' },
+//   { name: 'CL', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
+//   { name: 'DL', colSpanClass: 'col-span-3', rowSpanClass: 'row-span-2', bgClass: 'bg-accent-lime', textClass: 'text-black' },
+//   { name: 'MM', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1', bgClass: 'bg-background-1' },
+// ];
+
+// export const OfficeMap = () => {
+//   return (
+//     <div className="col-span-8 bg-background-2 rounded-3xl p-6 flex flex-col">
+//       <div className="text-mc text-foreground font-semibold font-main mb-6">Office</div>
+//       <div className="my-3 flex-1 grid grid-cols-8 grid-rows-4 gap-1.5">
+//         {OFFICE_ROOMS.map((room) => (
+//           <div
+//             key={room.name}
+//             className={`${room.colSpanClass} ${room.rowSpanClass} ${room.bgClass} rounded-lg p-3 flex items-start justify-start`}
+//           >
+//             <span className={`text-sm font-bold ${room.textClass || 'text-foreground-1'}`}>
+//               {room.name}
+//             </span>
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// };
+
+// SPACES
 const SpaceRatioBar = ({ space }: { space: SpaceRatio }) => {
   const percent = space.max > 0 ? (space.count / space.max) * 100 : 0;
-  
+
   return (
     <div className="flex items-center gap-4">
       <span className="text-foreground-2 text-base w-36 shrink-0">{space.name}</span>
@@ -341,9 +398,16 @@ const SpaceRatioBar = ({ space }: { space: SpaceRatio }) => {
   );
 };
 
-export const SpacesProgress = () => {
-  const sharedSpaces = mockSpacesProgress.filter(space => space.group === 'shared');
-  const departmentSpaces = mockSpacesProgress.filter(space => space.group === 'department');
+const toSpaceRatio = (s: SpaceWithOccupancy): SpaceRatio => ({
+  name: s.spaceName,
+  count: s.currentOccupancy,
+  max: Number(s.userCapacity) || 0,
+  group: s.accessLevel === 'department' ? 'department' : 'shared',
+});
+
+export const SpacesProgress = ({ spaces }: { spaces: SpaceWithOccupancy[] }) => {
+  const sharedSpaces = spaces.filter(s => s.accessLevel !== 'department').map(toSpaceRatio);
+  const departmentSpaces = spaces.filter(s => s.accessLevel === 'department').map(toSpaceRatio);
 
   return (
     <div className="col-span-8 bg-background-2 rounded-3xl p-6 pb-8 flex flex-col">
@@ -365,7 +429,50 @@ export const SpacesProgress = () => {
 };
 
 
-// ACTIVITY (mock)
+// SPACES (mock)
+// const SpaceRatioBar = ({ space }: { space: SpaceRatio }) => {
+//   const percent = space.max > 0 ? (space.count / space.max) * 100 : 0;
+  
+//   return (
+//     <div className="flex items-center gap-4">
+//       <span className="text-foreground-2 text-base w-36 shrink-0">{space.name}</span>
+//       <span className="text-foreground-3 text-sm w-10 shrink-0 text-right">{space.count}/{space.max}</span>
+//       <div className="flex-1 h-2.5 bg-background-3 rounded-full overflow-hidden">
+//         <div
+//           className="h-full bg-accent-lime rounded-full transition-all"
+//           style={{ width: `${percent}%` }}
+//         />
+//       </div>
+//     </div>
+//   );
+// };
+
+// // export const SpacesProgress = ({ spaces }: { spaces: SpaceWithOccupancy[] }) => {
+// export const SpacesProgress = () => {
+//   const sharedSpaces = mockSpacesProgress.filter(space => space.group === 'shared');
+//   const departmentSpaces = mockSpacesProgress.filter(space => space.group === 'department');
+
+//   return (
+//     <div className="col-span-8 bg-background-2 rounded-3xl p-6 pb-8 flex flex-col">
+//       <div className="text-md text-foreground font-semibold font-main mb-6">Spaces</div>
+//       <div className="flex-1 flex flex-col gap-4">
+//         <div className="space-y-2">
+//           {sharedSpaces.map((space) => (
+//             <SpaceRatioBar key={space.name} space={space} />
+//           ))}
+//         </div>
+//         <div className="space-y-2 pt-5">
+//           {departmentSpaces.map((space) => (
+//             <SpaceRatioBar key={space.name} space={space} />
+//           ))}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+
+// ACTIVITY
 interface ActivityItemRowProps {
   item: ActivityItem;
   iconColor: string;
@@ -406,13 +513,13 @@ const ActivityItemRow = ({
 };
 
 
-// PRESENCE STREAM (mock)
-export const PresenceStream = () => {
+// PRESENCE STREAM
+export const PresenceStream = ({ items }: { items: ActivityItem[] }) => {
   return (
     <div className="bg-background-2 rounded-3xl pt-6 px-6 pb-10">
       <div className="text-md font-semibold font-main tracking-wider text-foreground mb-8">Presence</div>
       <div className="space-y-6">
-        {presenceStream.map((item) => {
+        {items.map((item) => {
           const isLogin = item.action.toLowerCase().includes('logged in') || 
                          item.action.toLowerCase().includes('signed in');
           return (
@@ -432,13 +539,13 @@ export const PresenceStream = () => {
 };
 
 
-// TASKS STREAM (mock)
-export const TasksStream = () => {
+// TASKS STREAM
+export const TasksStream = ({ items }: { items: ActivityItem[] }) => {
   return (
     <div className="bg-background-2 rounded-3xl p-6">
       <div className="text-md font-semibold font-main tracking-wider text-foreground mb-8">Tasks</div>
       <div className="space-y-6">
-        {tasksStream.map((item) => {
+        {items.map((item) => {
           const isDone = item.action.toLowerCase().includes('completed') || 
                         item.action.toLowerCase().includes('done');
           return (
@@ -458,23 +565,22 @@ export const TasksStream = () => {
 };
 
 
-// MEETINGS STREAM (mock)
-export const MeetingsStream = () => {
+// MEETINGS STREAM
+export const MeetingsStream = ({ items }: { items: ActivityItem[] }) => {
   return (
     <div className="bg-background-2 rounded-3xl p-6">
       <div className="text-md font-semibold font-main tracking-wider text-foreground mb-10">Meetings</div>
       <div className="space-y-6">
-        {meetingsStream.map((item) => {
-          const isStarted = item.action.toLowerCase().includes('started') || 
-                           item.action.toLowerCase().includes('began');
+        {items.map((item) => {
+          const isScheduled = item.action.toLowerCase().includes('scheduled');
           return (
             <ActivityItemRow
               key={item.id}
               item={item}
               iconColor="bg-accent-gold"
-              iconBg={isStarted ? 'bg-accent-gold' : 'bg-accent-gold-bg'}
-              IconComponent={isStarted ? IconMeetings : IconMeetingAdd}
-              iconClassName={isStarted ? 'w-6 h-6 text-background-2' : 'w-6 h-6 text-accent-gold'}
+              iconBg={isScheduled ? 'bg-accent-gold-bg' : 'bg-accent-gold'}
+              IconComponent={isScheduled ? IconMeetingAdd : IconMeetings}
+              iconClassName={isScheduled ? 'w-6 h-6 text-accent-gold' : 'w-6 h-6 text-background-2'}
             />
           );
         })}
@@ -484,13 +590,17 @@ export const MeetingsStream = () => {
 };
 
 
-// ACTIVITY STREAMS - container (filled with mocks)
-export const ActivityStreams = () => {
+// ACTIVITY STREAM
+export const ActivityStreams = ({ presenceItems, tasksItems, meetingsItems, }: {
+  presenceItems: ActivityItem[];
+  tasksItems: ActivityItem[];
+  meetingsItems: ActivityItem[];
+}) => {
   return (
     <div className="grid grid-cols-3 gap-4">
-      <PresenceStream />
-      <TasksStream />
-      <MeetingsStream />
+      <PresenceStream items={presenceItems} />
+      <TasksStream items={tasksItems} />
+      <MeetingsStream items={meetingsItems} />
     </div>
   );
 };

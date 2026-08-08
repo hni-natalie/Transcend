@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
+import { ButtonVoiceRoom } from '@/features/livekit/components/ButtonVoiceRoom';
 import { IconMeetings, IconTasks, LoadingState } from '@shared';
 import { FeaturedMember, TeamMember } from './types';
 import { FeaturedMemberRow, MemberRow, CalendarGrid, StatusDropdown } from './components';
@@ -142,7 +144,7 @@ export const Dashboard = () => {
     <div className="">
 
       {/* TOP METRICS HORIZON GRID (4 Cards) */}
-      <div className="grid grid-cols-4 gap-4 mt-4 mb-10">
+      <div className="grid grid-cols-4 gap-4 mt-4 mb-4">
 
         {/* Card 1: Status with Dropdown */}
         <div className="flex items-start gap-5 ml-7">
@@ -224,26 +226,44 @@ export const Dashboard = () => {
             </span>
           </div>
 
-          <div className="flex-1 space-y-0.5">
-            <span className="text-sm text-foreground-4 uppercase tracking-wider font-semibold">Upcoming</span>
-            <div className="relative group/tooltip flex items-center gap-1.5 cursor-pointer w-fit">
-              <span className="text-2xl font-semibold text-accent-gold mt-1">Meeting</span>
-              <svg className="w-5 h-5 text-foreground-3 mt-2" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
-              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2.5 hidden group-hover/tooltip:block bg-background-3 text-foreground text-[10px] font-medium px-2 py-1 rounded shadow-md whitespace-nowrap z-50">
-                Join
-              </div>
-            </div>
-            <p className="text-base text-foreground-3 mt-7">
-              {nextMeeting?.meetTitle ?? 'No upcoming meetings'}
-            </p>
-            <p className="text-base text-foreground-3">
-              {nextMeeting
-                ? `${new Date(nextMeeting.meetStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · ${nextMeeting.spaceName ?? 'Meeting Room'}`
-                : ''}
-            </p>
-          </div>
+		  <div className="flex-1 space-y-0.5">
+			<span className="text-sm text-foreground-4 uppercase tracking-wider font-semibold">Upcoming</span>
+
+			{/* Meeting title/content - now in its own block */}
+			<div className="mt-1">
+				{nextMeeting ? (
+				<div className="relative group/tooltip flex items-center gap-1.5 cursor-pointer w-fit">
+					<span className="text-2xl font-semibold text-accent-gold">Meeting</span>
+					<svg className="w-5 h-5 text-foreground-3 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+					<path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+					</svg>
+					<div className="absolute left-full top-1/2 -translate-y-1/2 ml-2.5 hidden group-hover/tooltip:block bg-background-3 text-foreground text-[10px] font-medium px-2 py-1 rounded shadow-md whitespace-nowrap z-50">
+					Join
+					</div>
+					<ButtonVoiceRoom
+					joinText=""
+					roomName={nextMeeting.meetId}
+					meetingTitle={nextMeeting.meetTitle}
+					mode="video"
+					joinTo={R.USER_VIDEOCALL}
+					isHost={nextMeeting.role === 'organiser'}
+					className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+					/>
+				</div>
+				) : (
+				<span className="text-2xl font-semibold text-foreground-4">No Meeting</span>
+				)}
+			</div>
+
+			<p className="text-base text-foreground-3 mt-7">
+				{nextMeeting?.meetTitle ?? 'No upcoming meetings'}
+			</p>
+			<p className="text-base text-foreground-3">
+				{nextMeeting
+				? `${new Date(nextMeeting.meetStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · ${nextMeeting.spaceName ?? 'Meeting Room'}`
+				: ''}
+			</p>
+		  </div>
         </div>
 
         {/* Card 3: Tasks Today */}
@@ -271,14 +291,14 @@ export const Dashboard = () => {
       <div className="grid grid-cols-4 gap-6 items-start">
 
         {/* CONSOLIDATED OPERATIONAL DECK (Columns 1–3) */}
-        <div className="col-span-3 bg-background-1 p-6 rounded-3xl grid grid-cols-3 gap-6 items-start">
+        <div className="col-span-3 bg-background-1 p-6 pt-8 rounded-3xl grid grid-cols-3 gap-6 items-start">
 
           {/* TRACK 1: CALENDAR OVERVIEW */}
           <div className="space-y-10">
             <CalendarGrid calendarDays={calendarDays} monthYear={monthYear} />
 
             {/* Stats Quantifiers */}
-            <div className="space-y-3 p-3 pt-4 mb-16">
+            <div className="space-y-3 p-3 pt-4">
               <div className="grid grid-cols-3 gap-20">
                 {[
                   { value: getMeetingsToday(meetings, now),      label: 'Meetings\nToday' },
@@ -393,7 +413,7 @@ export const Dashboard = () => {
               
 
 
-              {/* TASKS - TO REPLACE MOCK */}
+              {/* TASKS */}
               {sortedTasks.slice(0, 3).map((task, index) => {
                 const isHigh   = task.taskPriority === 'high';
                 const isMedium = task.taskPriority === 'medium';
@@ -445,7 +465,7 @@ export const Dashboard = () => {
         </div>
 
         {/* TRACK 4: TEAM CONNECTIVITY */}
-        <div className="bg-background-1 p-6 rounded-3xl flex flex-col h-full -ml-1.5">
+        <div className="bg-background-1 p-6 pt-8 rounded-3xl flex flex-col h-full -ml-1.5">
           <h2 className="text-base font-semibold text-foreground flex-shrink-0">
             Team · {currentUser.department?.dpName ?? 'Team Members'}
           </h2>
@@ -465,104 +485,3 @@ export const Dashboard = () => {
     </div>
   );
 };
-
-
-
-// <></>
-
-// 				{/* MOCK FEATURED MEETING */}
-// 				<div className="p-5 rounded-2xl flex flex-col justify-between transition-all bg-accent-gold-bg min-h-[180px]">
-// 				<div className="flex justify-between items-center">
-// 					<div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#F3C15F]/20 text-[#F3C15F]">
-// 					<IconMeetings className="w-5 h-5 text-background-2 stroke-2" />
-// 					</div>
-// 					<span className="text-foreground-4 text-[11px] font-normal tracking-wide">Next Up</span>
-// 				</div>
-// 				<div className="flex justify-between items-end mt-4 gap-4">
-// 					<h3 className="text-sm font-medium truncate max-w-[150px] text-[#F3C15F]">Leadership Sync</h3>
-// 					<div className="text-right flex-shrink-0">
-// 					<p className="text-[11px] font-normal text-foreground-3 leading-tight">2:30 PM</p>
-// 					<p className="text-[10px] text-foreground-4 mt-0.5 leading-tight">The Town Hall</p>
-// 					</div>
-// 				</div>
-// 				</div>
-
-// 				{/* MOCK REGULAR MEETING 1 */}
-// 				<div className="p-5 rounded-2xl flex flex-col justify-between transition-all bg-[#222222] min-h-[125px]">
-// 				<div className="flex justify-between items-center">
-// 					<div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#232422] text-foreground-4">
-// 					<IconMeetings className="w-5 h-5 text-accent-gold stroke-2" />
-// 					</div>
-// 					<span className="text-foreground-4 text-[11px] font-normal tracking-wide">Tomorrow</span>
-// 				</div>
-// 				<div className="flex justify-between items-end mt-4 gap-4">
-// 					<h3 className="text-sm font-medium truncate max-w-[150px] text-foreground-3">Design Review</h3>
-// 					<div className="text-right flex-shrink-0">
-// 					<p className="text-[11px] font-normal text-foreground-3 leading-tight">10:00 AM</p>
-// 					<p className="text-[10px] text-foreground-4 mt-0.5 leading-tight">Creative Lab</p>
-// 					</div>
-// 				</div>
-// 				</div>
-
-// 				{/* MOCK REGULAR MEETING 2 */}
-// 				<div className="p-5 rounded-2xl flex flex-col justify-between transition-all bg-[#222222] min-h-[125px]">
-// 				<div className="flex justify-between items-center">
-// 					<div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#232422] text-foreground-4">
-// 					<IconMeetings className="w-5 h-5 text-accent-gold stroke-2" />
-// 					</div>
-// 					<span className="text-foreground-4 text-[11px] font-normal tracking-wide">In 2 days</span>
-// 				</div>
-// 				<div className="flex justify-between items-end mt-4 gap-4">
-// 					<h3 className="text-sm font-medium truncate max-w-[150px] text-foreground-3">Sprint Planning</h3>
-// 					<div className="text-right flex-shrink-0">
-// 					<p className="text-[11px] font-normal text-foreground-3 leading-tight">9:30 AM</p>
-// 					<p className="text-[10px] text-foreground-4 mt-0.5 leading-tight">Dev Lab</p>
-// 					</div>
-// 				</div>
-// 				</div>
-
-//               {/* MOCK FEATURED TASK */}
-// 				<div className="p-5 mr-2 rounded-2xl flex flex-col justify-between transition-all bg-accent-teal-bg min-h-[180px]">
-// 				<div className="flex justify-between items-center">
-// 					<div className="w-12 h-12 rounded-full flex items-center justify-center bg-accent-teal text-accent-teal">
-// 					<IconTasks className="w-5 h-5 text-background-2 stroke-2" />
-// 					</div>
-// 					<span className="text-foreground-2 font-medium text-base tracking-wide">Due Today</span>
-// 				</div>
-// 				<div className="flex justify-between items-end mt-4 gap-4">
-// 					<h3 className="text-base font-medium truncate max-w-[170px] text-accent-teal">
-// 					Complete Q4 Performance Review
-// 					</h3>
-// 					<span className="text-base font-normal tracking-wide flex-shrink-0 text-[#EF4444]">High</span>
-// 				</div>
-// 				</div>
-
-// 				{/* MOCK REGULAR TASK 1 */}
-// 				<div className="p-5 mr-2 rounded-2xl flex flex-col justify-between transition-all bg-background-2 min-h-[125px]">
-// 				<div className="flex justify-between items-center">
-// 					<div className="w-12 h-12 rounded-full flex items-center justify-center bg-accent-teal-bg text-foreground-4">
-// 					<IconTasks className="w-5 h-5 text-accent-teal stroke-2" />
-// 					</div>
-// 					<span className="text-foreground-3 text-base font-normal tracking-wide">Due Tomorrow</span>
-// 				</div>
-// 				<div className="flex justify-between items-end mt-4 gap-4">
-// 					<h3 className="text-base font-medium truncate max-w-[170px] text-accent-teal">Update Documentation</h3>
-// 					<span className="text-base font-normal tracking-wide flex-shrink-0 text-[#F3C15F]">Medium</span>
-// 				</div>
-// 				</div>
-
-// 				{/* MOCK REGULAR TASK 2 */}
-// 				<div className="p-5 mr-2 rounded-2xl flex flex-col justify-between transition-all bg-background-2 min-h-[125px]">
-// 				<div className="flex justify-between items-center">
-// 					<div className="w-12 h-12 rounded-full flex items-center justify-center bg-accent-teal-bg text-foreground-4">
-// 					<IconTasks className="w-5 h-5 text-accent-teal stroke-2" />
-// 					</div>
-// 					<span className="text-foreground-3 text-base font-normal tracking-wide">Due In 3 Days</span>
-// 				</div>
-// 				<div className="flex justify-between items-end mt-4 gap-4">
-// 					<h3 className="text-base font-medium truncate max-w-[170px] text-accent-teal">Review Pull Requests</h3>
-// 					<span className="text-base font-normal tracking-wide flex-shrink-0 text-foreground-3">Low</span>
-// 				</div>
-// 				</div>
-
-// <></>

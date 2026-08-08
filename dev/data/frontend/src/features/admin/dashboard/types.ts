@@ -1,7 +1,10 @@
+import type { UserBackendStatus } from '@shared/types/user.types';
+import type { Space } from '@/shared/types/space.types';
+
 export interface DbUser {
   id: string;
   name: string;
-  status: 'online' | 'focus' | 'in_meeting' | 'away' | 'offline';
+  status: UserBackendStatus;
   department: string;
   avatarUrl?: string | null;
 }
@@ -13,6 +16,10 @@ export interface DashboardMetricsResponse {
 export interface DepartmentRatio {
   active: number;
   total: number;
+}
+
+export interface SpaceWithOccupancy extends Space {
+  currentOccupancy: number;
 }
 
 export interface SpaceRatio {
