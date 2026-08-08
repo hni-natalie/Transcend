@@ -1,6 +1,7 @@
 const prisma = require('../../prisma/client');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const { getIO } = require('./socket.service');
 const { validatePassword } = require('../utils/password');
 
 const userService = {
@@ -446,12 +447,11 @@ const userService = {
 		if (currentUser?.userStatus === status) {
 			return { userId, userStatus: status, unchanged: true };
 		}
-		
-		await prisma.user.update({
-			where: { userId },
-			data: { userStatus: status }
-		});
-		
+
+
+		await prisma.user.update({ where: { userId }, data: { userStatus: status } });
+		  console.log('[user.service] broadcasting user-status-changed:', userId, status); // debug
+		  getIO().emit('user-status-changed', { userId, status });
 		return { userId, userStatus: status };
 	}
 };
