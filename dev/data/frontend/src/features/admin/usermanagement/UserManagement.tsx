@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
+import { useSocket } from '@/context/SocketContext';
 import { fetchAllUsers, deleteUser } from '@features/users';
 import { toUserList, UserTableRow, FilterLayout, ErrorState } from '@shared';
 import { UserTable } from './components/UserTable';
@@ -24,9 +25,10 @@ export const UserManagement = ({
   const [activeFilter, setActiveFilter] = useState('All');
   const [filterValue, setFilterValue] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage, setPerPage] = useState(20);
 
   const { showToast } = useToast();
+  const { userStatuses } = useSocket();
 
   // Load users
   const loadUsers = async () => {
@@ -56,6 +58,11 @@ export const UserManagement = ({
     setCurrentPage(1);
   }, [searchQuery, activeFilter, filterValue]);
 
+  const usersWithLiveStatus = users.map(u => ({
+    ...u,
+    status: userStatuses[u.userId] ?? u.status,
+  }));
+
   // Delete handler
   const handleDeleteUser = async (userId: string, username: string) => {
     try {
@@ -72,12 +79,12 @@ export const UserManagement = ({
 
   // Filter helpers
   const getUniqueDepartments = () => {
-    const depts = new Set(users.map(u => u.department).filter(Boolean));
+    const depts = new Set(usersWithLiveStatus.map(u => u.department).filter(Boolean));
     return Array.from(depts).sort();
   };
 
   const getUniqueRoles = () => {
-    const roles = new Set(users.map(u => u.role).filter(Boolean));
+    const roles = new Set(usersWithLiveStatus.map(u => u.role).filter(Boolean));
     return Array.from(roles).sort();
   };
 
@@ -113,7 +120,7 @@ export const UserManagement = ({
   ];
 
   // Filter logic
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = usersWithLiveStatus.filter(user => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesSearch = 
