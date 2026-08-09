@@ -35,7 +35,8 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
         email: user.email,
         roleId: user.roleId || '',
         deptId: user.deptId || '',
-        location: user.location || '',
+		userTitle: user.userTitle || '',
+        // location: user.location || '',
         photo: user.photo || '',
         password: '',
       };
@@ -47,7 +48,8 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
       email: '',
       roleId: '',
       deptId: '',
-      location: '',
+	  userTitle: '',
+    //   location: '',
       photo: '',
       password: '',
     };
@@ -135,7 +137,8 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
         email: formData.email,
         roleId: formData.roleId,
         dpId: formData.deptId || undefined,
-        country: formData.location || undefined,
+		userTitle: formData.userTitle || undefined,
+        // country: formData.location || undefined,
         avatarUrl: formData.photo || undefined,
       };
 
@@ -166,6 +169,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
         roleId: formData.roleId,
         workspaceId: '',
         dpId: formData.deptId || undefined,
+		userTitle: formData.userTitle || undefined,
         password: formData.password || undefined,
       };
 

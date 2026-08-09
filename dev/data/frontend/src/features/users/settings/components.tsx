@@ -201,17 +201,7 @@ export const ProfileFormFields = ({
 
       {/* ROW 3 - title, row, dp (all read only) */}
       {[
-        {
-          label: (
-            <>
-              Title
-              <span className="text-xs text-foreground-4 ml-2">(to add to schema)</span>
-            </>
-          ),
-          name: 'title',
-          value: profile.title,
-          placeholder: 'Title',
-        },
+        { label: 'Title',      name: 'title',      value: profile.title,      placeholder: 'No title assigned' },
         { label: 'Role',       name: 'role',       value: profile.role,       placeholder: '' },
         { label: 'Department', name: 'department', value: profile.department, placeholder: '' },
       ].map(({ label, name, value, placeholder }) => (
