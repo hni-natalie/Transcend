@@ -213,6 +213,7 @@ router.get('/me', authMiddleware, async (req, res) => {
                         dpName: true 
                     }
                 },
+                userTitle: true,
                 userStatus: true,
                 avatarUrl: true,
 				authProvider: true,
@@ -235,8 +236,9 @@ router.get('/me', authMiddleware, async (req, res) => {
             userName: user.userName,
             userEmail: user.userEmail,
             roleId: user.roleId,
-            roleName: user.role.roleName,
+            role: { roleName: user.role.roleName }, 
 			department: user.department,
+            userTitle: user.userTitle,
             userStatus: user.userStatus,
             avatarUrl: user.avatarUrl ?? null,
 			authProvider: user.authProvider ?? 'email',

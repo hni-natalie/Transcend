@@ -160,6 +160,7 @@ const userService = {
                 avatarUrl: true,
 				city: true,
 				country: true,
+				userTitle: true,
                 roleId: true,
                 role: { select: { roleId: true, roleName: true } },
                 workspace: { select: { workspaceName: true } },
@@ -181,6 +182,7 @@ const userService = {
                 avatarUrl: true,
 				city: true,
 				country: true,
+				userTitle: true,
                 role: { select: { roleId: true, roleName: true } },
                 workspace: { select: { workspaceId: true, workspaceName: true } },
                 department: { select: { dpId: true, dpName: true } }
@@ -229,7 +231,7 @@ const userService = {
     },
     
     async updateUserByAdmin(userId, updateData) {
-        const { name, email, roleId, dpId, status, password, city, country, avatarUrl } = updateData;
+        const { name, email, roleId, dpId, status, password, city, country, avatarUrl, userTitle } = updateData;
         
         const user = await prisma.user.findUnique({ where: { userId } });
         if (!user) throw new Error('User not found');
@@ -242,6 +244,7 @@ const userService = {
             userStatus: status
         };
 
+		if (userTitle !== undefined) data.userTitle = userTitle;
 		if (city !== undefined) data.city = city;
     	if (country !== undefined) data.country = country;
         if (avatarUrl !== undefined) data.avatarUrl = avatarUrl;
@@ -330,6 +333,7 @@ const userService = {
                 roleId,
                 workspaceId,
                 dpId,
+				userTitle,
                 authProvider: 'email',
                 emailVerified: false,
                 userStatus: 'offline'
