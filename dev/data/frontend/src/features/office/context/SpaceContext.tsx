@@ -98,20 +98,16 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 			const { departmentCount, officeSpaces } = await getOfficeDept();
 			setOfficeSpace(officeSpaces);
 			setCount(departmentCount);
-			setLoading(false); // ✅ Everything is ready
+			setLoading(false);
 		};
 		fetchData();
 	}, []);
 
-
 	const canvasWidth = conf.World.width;
 	const canvasHeight = conf.World.height;
-	const planes = useMemo(() => {
-
-		const result = [];
-		// console.log('Office space dpId: ', officeSpace.departmentId);
-		
-		// 1. Prepare data for treemap
+	
+	// 1. Prepare data for treemap
+	const treemapData = useMemo(() => {
 		const root = d3.stratify<TreemapData>()
 			.id(d => d.id)
 			.parentId(d => d.parentId || null)
@@ -123,7 +119,7 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 						value: p.userCapacity,  // Use capacity as the area!
 				}))
 			])
-			.sum(d => Math.sqrt(d.value ?? 0));   // <-- required, without this all leaf values are 0/undefined
+			.sum(d => Math.sqrt(d.value ?? 0));   // without this all leaf values are 0/undefined
 			// .sum(d => Math.log((d.value ?? 0) + 1)); // lesser diff between large & small
 
 		// 2. Create treemap layout (this replaces cols/rows)
@@ -132,15 +128,17 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 			.padding(padding)
 			.tile(d3.treemapSquarify.ratio(1));
 
-			const layout = treemap(root);
-			// console.log('Treemap size:', treemap.size());
-			// console.log('First leaf:', layout.leaves()[0]);
+		const layout = treemap(root);
+		// console.log('Treemap size:', treemap.size());
+		// console.log('First leaf:', layout.leaves()[0]);
+		return layout;
+	}, [officeSpace, canvasWidth, canvasHeight])
 
-		// 3. Extract positions (no cols/rows needed!)
+	const positionedPlanes = useMemo(() => {
+		// 3. Extract positions
 		const shrinkFactor = 0.5
-		const positionedPlanes = layout.leaves().map(( leaf:any, i ) => {
+		return treemapData.leaves().map(( leaf:any, i ) => {
 			const planeData = officeSpace.find(p => p.spaceId === leaf.data.id);
-			// console.log('planeData : ', planeData);
 			return {
 					...planeData,
 					index: i,
@@ -150,13 +148,28 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 					height: (leaf.y1 - leaf.y0) * shrinkFactor,
 			};
 		});
+	},[treemapData, officeSpace, canvasWidth, canvasHeight])
 
+	const planes = useMemo(() => {
+		
+		const result = [];
 		// 4. Create meshes at calculated positions
+		const loader = new THREE.TextureLoader();
+		const tileSize = 10;
+		
 		positionedPlanes.forEach((plane, i) => {
 			const hue = (i / count) * 360;
+			// const texture = loader.load('/texture/grass.png');
+			const texture = loader.load('/texture/marble/marble-roughness.png');
 			// const planeId = plane.departmentId;
 			// console.log('planeId: ', planeId);
 			// console.log('plane: ', plane.spaceName, 'size: ', plane.width, ' ', plane.height, ' ', plane.depth)
+
+				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+				texture.repeat.set(
+					plane.width / tileSize,
+					plane.height / tileSize
+				);
 			result.push(
 				<mesh
 					key={i}
@@ -175,39 +188,76 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 					{/* office floor plane */}
 					<planeGeometry args={[plane.width, plane.height]} />
 					<meshStandardMaterial
-						color={activePlane === i ? `hsl(${hue}, 50%, 60%)` : `hsl(${hue}, 20%, 50%)`}
+						color={`hsl(${hue}, 5%, 50%)`}
+						map={texture}
 						side={THREE.DoubleSide}
 						roughness={0.4}
 						metalness={0.2}
 						emissive={`hsl(${hue}, 70%, 10%)`}
 					/>
-					{/* Text on hover */}
-					{hoveredIndex === i && (
-					<group position={[0, plane.height*-0.4, 0.2]} >
-						{/* Rectangle Background Mesh */}
-						<mesh position={[0, 0, -0.1]}>
-							<planeGeometry args={[textWidth[i], 0.9]} />
-							<meshStandardMaterial color="#1D2307" opacity={0.5} transparent />
-						</mesh>
-						<Text
-							ref={(ref) => textRef.current[i] = ref}
-							font="/font/Plus_Jakarta_Sans/PlusJakartaSans-VariableFont_wght.ttf"
-							fontSize={0.6}
-							color="white"
-							onSync={() => getTextWidth(i)}
-						>{plane.spaceName}</Text>
-					</group>
-					)}
 				</mesh>
 			);
 	}) // map
 	return result;
-	}, [count, canvasWidth, canvasHeight, activePlane, hoveredIndex, textWidth]);
+	}, [count, canvasWidth, canvasHeight, positionedPlanes]);
+
+	const activeOverlay = useMemo(() => {
+		if (activePlane === null) return null;
+		const plane = positionedPlanes[activePlane];
+		const hue = (activePlane / count) * 360;
+
+		if (!plane) return null;
+			
+		return (
+			<mesh
+					position={[plane.x, -0.48, plane.z]}
+					rotation={[-Math.PI / 2, 0, 0]}
+			>
+				<planeGeometry args={[plane.width, plane.height]} />
+				<meshStandardMaterial
+					color={`hsl(${hue}, 50%, 60%)`}
+					transparent
+					opacity={0.2}
+					side={THREE.DoubleSide}
+				/>
+			</mesh>
+		);
+	}, [activePlane, positionedPlanes]);
+
+	const hoverOverlay = useMemo(() => {
+		if (hoveredIndex === null) return null;
+    const plane = positionedPlanes[hoveredIndex];
+
+		return (
+		<group
+			name='text-on-hover'
+			position={[plane.x, 0.1, plane.z]}
+			rotation={[-Math.PI / 2, 0, 0]}
+		>
+			<mesh name='rec-bg' position={[0, 0, -0.1]}>
+				<planeGeometry args={[textWidth[hoveredIndex], 0.9]} />
+				<meshStandardMaterial color="#FFFFFF" opacity={0.5} transparent />
+			</mesh>
+			<Text
+				ref={(ref) => textRef.current[hoveredIndex] = ref}
+				font="/font/Plus_Jakarta_Sans/PlusJakartaSans-VariableFont_wght.ttf"
+				fontSize={0.6}
+				color="white"
+				onSync={() => getTextWidth(hoveredIndex)}
+			>
+				{plane.spaceName}
+			</Text>
+
+		</group>
+		)
+	}, [hoveredIndex, textWidth])
 
 	const value = {
 		planes,
 		loading,
-		planeRefs
+		planeRefs,
+		hoverOverlay,
+		activeOverlay,
 	};
 
   return (

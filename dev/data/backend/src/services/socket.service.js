@@ -147,10 +147,10 @@ const socketService = (io) => {
     }
 
     // Room-size constrains
-    const roomSize = 20;
+    const roomSize = 30;
     if (roomData.users.length > roomSize) {
       socket.emit('room-full', { roomName, maxSize:roomSize });
-      console.log('Room Full: current users: ', roomData.users)
+      console.log('Room Full: current users: ', roomData.users.length)
       return;
     }
 

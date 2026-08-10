@@ -54,7 +54,7 @@ export const CameraTracking = ({ localPlayerRef, controlsRef, isConnectedRoom, c
         if (localPlayerRef.current.position.distanceTo(clickPoint.current) < 0.1) {
           localPlayerRef.current.position.copy(clickPoint.current);
       		socket.emit('player-move', { id:localPlayerId, position:{ x:localPlayerRef.current.position.x, y:0, z:localPlayerRef.current.position.z }});
-          console.log('arrived at clickpoint ', clickPoint.current);
+          // console.log('arrived at clickpoint ', clickPoint.current);
 
           clickPoint.current = null;
           setIsPanning(true);

@@ -170,6 +170,8 @@ export function SocketProvider ({ children }) {
     // Room full error
     socket.on('room-full', (data) => {
       console.warn(`Room ${data.roomName} is full (max: ${data.maxSize})`);
+			alert("Room is fully occupied, please wait and retry later.");
+
       // You might want to show a notification to user
       window.dispatchEvent(new CustomEvent('room-error', { 
         detail: { type: 'full', message: `Room ${data.roomName} is full` }

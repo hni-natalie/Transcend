@@ -132,6 +132,7 @@ class LiveKitService {
     
     window.addEventListener('room-error', (event) => {
       console.log('Error! ', event.detail);
+      this._setState.isLoading = false;
     });
   }
 
