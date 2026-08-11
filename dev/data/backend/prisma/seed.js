@@ -122,8 +122,8 @@ async function main() {
         where: { userEmail: 'superuser@workfrom.com' },
         update: { 
             userPassword: adminHash, 
-            userStatus: 'online',
-            userTitle: 'System Administrator'
+            // userStatus: 'online',
+            // userTitle: 'System Administrator'
         },
         create: {
             userEmail: 'superuser@workfrom.com',
@@ -152,10 +152,13 @@ async function main() {
             where: { userEmail: gu.email },
             update: { 
                 userName: gu.name, 
-                userStatus: gu.status, 
+                // userStatus: gu.status, 
                 dpId: depts.hr.dpId, 
                 roleId: roles.member.roleId,
-                userTitle: 'HR Executive'
+                userTitle: 'HR Executive',
+				// city: 'Kuala Lumpur',
+				// country: 'Malaysia',
+				// timezone: 'Asia/Kuala_Lumpur'
             },
             create: {
                 userEmail: gu.email,
@@ -166,7 +169,10 @@ async function main() {
                 workspaceId: wsId,
                 dpId: depts.hr.dpId,
                 authProvider: 'google',
-                emailVerified: true
+                emailVerified: true,
+				city: 'Kuala Lumpur',
+				country: 'Malaysia',
+				timezone: 'Asia/Kuala_Lumpur'
             }
         });
     }
@@ -180,43 +186,43 @@ async function main() {
         [depts.design.dpId]: 'Design'
     };
 
-    const operationalStaffMatrix = [
-        // ACCOUNTS
-        { email: 'accounts.mgr@workfrom.com', name: 'Sarah Jenkins', dept: depts.accounts.dpId, role: roles.manager.roleId, status: 'online' },
-        { email: 'accounts.lead@workfrom.com', name: 'David Miller', dept: depts.accounts.dpId, role: roles.leader.roleId, status: 'online' },
-        { email: 'accounts.staff1@workfrom.com', name: 'Emily Warren', dept: depts.accounts.dpId, role: roles.member.roleId, status: 'in_meeting' },
+const operationalStaffMatrix = [
+    // ACCOUNTS
+    { email: 'accounts.mgr@workfrom.com', name: 'Sarah Jenkins', dept: depts.accounts.dpId, role: roles.manager.roleId, status: 'online', city: 'London', country: 'United Kingdom', timezone: 'Europe/London' },
+    { email: 'accounts.lead@workfrom.com', name: 'David Miller', dept: depts.accounts.dpId, role: roles.leader.roleId, status: 'online', city: 'Dublin', country: 'Ireland', timezone: 'Europe/Dublin' },
+    { email: 'accounts.staff1@workfrom.com', name: 'Emily Warren', dept: depts.accounts.dpId, role: roles.member.roleId, status: 'away', city: 'Sydney', country: 'Australia', timezone: 'Australia/Sydney' },
 
-        // MARKETING
-        { email: 'marketing.mgr@workfrom.com', name: 'Olivia Martinez', dept: depts.marketing.dpId, role: roles.manager.roleId, status: 'online' },
-        { email: 'marketing.lead@workfrom.com', name: 'Lucas Davies', dept: depts.marketing.dpId, role: roles.leader.roleId, status: 'focus' },
-        { email: 'marketing.staff1@workfrom.com', name: 'Chloe Fraser', dept: depts.marketing.dpId, role: roles.member.roleId, status: 'offline' },
-        { email: 'marketing.staff2@workfrom.com', name: 'Ethan Burke', dept: depts.marketing.dpId, role: roles.member.roleId, status: 'offline' },
-        { email: 'marketing.staff3@workfrom.com', name: 'Amara Okafor', dept: depts.marketing.dpId, role: roles.member.roleId, status: 'offline' },
+    // MARKETING
+    { email: 'marketing.mgr@workfrom.com', name: 'Olivia Martinez', dept: depts.marketing.dpId, role: roles.manager.roleId, status: 'online', city: 'Barcelona', country: 'Spain', timezone: 'Europe/Madrid' },
+    { email: 'marketing.lead@workfrom.com', name: 'Lucas Davies', dept: depts.marketing.dpId, role: roles.leader.roleId, status: 'focus', city: 'Amsterdam', country: 'Netherlands', timezone: 'Europe/Amsterdam' },
+    { email: 'marketing.staff1@workfrom.com', name: 'Chloe Fraser', dept: depts.marketing.dpId, role: roles.member.roleId, status: 'offline', city: 'Cape Town', country: 'South Africa', timezone: 'Africa/Johannesburg' },
+    { email: 'marketing.staff2@workfrom.com', name: 'Ethan Burke', dept: depts.marketing.dpId, role: roles.member.roleId, status: 'offline', city: 'Buenos Aires', country: 'Argentina', timezone: 'America/Buenos_Aires' },
+    { email: 'marketing.staff3@workfrom.com', name: 'Amara Okafor', dept: depts.marketing.dpId, role: roles.member.roleId, status: 'offline', city: 'Lagos', country: 'Nigeria', timezone: 'Africa/Lagos' },
 
-        // OPERATIONS
-        { email: 'ops.mgr@workfrom.com', name: 'Marcus Brody', dept: depts.ops.dpId, role: roles.manager.roleId, status: 'in_meeting' },
-        { email: 'ops.lead@workfrom.com', name: 'Nina Vance', dept: depts.ops.dpId, role: roles.leader.roleId, status: 'in_meeting' },
-        { email: 'ops.staff1@workfrom.com', name: 'Nathan Cole', dept: depts.ops.dpId, role: roles.member.roleId, status: 'offline' },
-        { email: 'ops.staff2@workfrom.com', name: 'Hana Kimura', dept: depts.ops.dpId, role: roles.member.roleId, status: 'offline' },
+    // OPERATIONS
+    { email: 'ops.mgr@workfrom.com', name: 'Marcus Brody', dept: depts.ops.dpId, role: roles.manager.roleId, status: 'away', city: 'Berlin', country: 'Germany', timezone: 'Europe/Berlin' },
+    { email: 'ops.lead@workfrom.com', name: 'Nina Vance', dept: depts.ops.dpId, role: roles.leader.roleId, status: 'away', city: 'Stockholm', country: 'Sweden', timezone: 'Europe/Stockholm' },
+    { email: 'ops.staff1@workfrom.com', name: 'Nathan Cole', dept: depts.ops.dpId, role: roles.member.roleId, status: 'offline', city: 'Dubai', country: 'United Arab Emirates', timezone: 'Asia/Dubai' },
+    { email: 'ops.staff2@workfrom.com', name: 'Hana Kimura', dept: depts.ops.dpId, role: roles.member.roleId, status: 'offline', city: 'Seoul', country: 'South Korea', timezone: 'Asia/Seoul' },
 
-        // ENGINEERING
-        { email: 'eng.mgr@workfrom.com', name: 'Devon Lane', dept: depts.engineering.dpId, role: roles.manager.roleId, status: 'online' },
-        { email: 'eng.lead@workfrom.com', name: 'James Smith', dept: depts.engineering.dpId, role: roles.leader.roleId, status: 'online' },
-        { email: 'eng.staff1@workfrom.com', name: 'Owen Carter', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'focus' },
-        { email: 'eng.staff2@workfrom.com', name: 'Zara Ahmed', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'focus' },
-        { email: 'eng.staff3@workfrom.com', name: 'Clara Bennett', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online' },
-        { email: 'eng.staff4@workfrom.com', name: 'Tariq Johnson', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online' },
-        { email: 'eng.staff5@workfrom.com', name: 'Arjun Mehta', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online' },
-        { email: 'eng.staff6@workfrom.com', name: 'Elena Petrova', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online' },
-        { email: 'eng.staff7@workfrom.com', name: 'Marcus Reed', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online' },
-        { email: 'eng.staff8@workfrom.com', name: 'Yuki Tanaka', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online' },
+    // ENGINEERING
+    { email: 'eng.mgr@workfrom.com', name: 'Devon Lane', dept: depts.engineering.dpId, role: roles.manager.roleId, status: 'online', city: 'Singapore', country: 'Singapore', timezone: 'Asia/Singapore' },
+    { email: 'eng.lead@workfrom.com', name: 'James Smith', dept: depts.engineering.dpId, role: roles.leader.roleId, status: 'online', city: 'Bangalore', country: 'India', timezone: 'Asia/Kolkata' },
+    { email: 'eng.staff1@workfrom.com', name: 'Owen Carter', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'focus', city: 'Tokyo', country: 'Japan', timezone: 'Asia/Tokyo' },
+    { email: 'eng.staff2@workfrom.com', name: 'Zara Ahmed', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'focus', city: 'Dubai', country: 'United Arab Emirates', timezone: 'Asia/Dubai' },
+    { email: 'eng.staff3@workfrom.com', name: 'Clara Bennett', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online', city: 'Berlin', country: 'Germany', timezone: 'Europe/Berlin' },
+    { email: 'eng.staff4@workfrom.com', name: 'Tariq Johnson', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online', city: 'Cape Town', country: 'South Africa', timezone: 'Africa/Johannesburg' },
+    { email: 'eng.staff5@workfrom.com', name: 'Arjun Mehta', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online', city: 'Mumbai', country: 'India', timezone: 'Asia/Kolkata' },
+    { email: 'eng.staff6@workfrom.com', name: 'Elena Petrova', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online', city: 'Warsaw', country: 'Poland', timezone: 'Europe/Warsaw' },
+    { email: 'eng.staff7@workfrom.com', name: 'Marcus Reed', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online', city: 'Auckland', country: 'New Zealand', timezone: 'Pacific/Auckland' },
+    { email: 'eng.staff8@workfrom.com', name: 'Yuki Tanaka', dept: depts.engineering.dpId, role: roles.member.roleId, status: 'online', city: 'Osaka', country: 'Japan', timezone: 'Asia/Tokyo' },
 
-        // DESIGN
-        { email: 'design.mgr@workfrom.com', name: 'Sophia Grant', dept: depts.design.dpId, role: roles.manager.roleId, status: 'focus' },
-        { email: 'design.lead@workfrom.com', name: 'Clarke Mason', dept: depts.design.dpId, role: roles.leader.roleId, status: 'focus' },
-        { email: 'design.staff1@workfrom.com', name: 'Aisha Rahman', dept: depts.design.dpId, role: roles.member.roleId, status: 'online' },
-        { email: 'design.staff2@workfrom.com', name: 'Liam Parker', dept: depts.design.dpId, role: roles.member.roleId, status: 'online' }
-    ];
+    // DESIGN
+    { email: 'design.mgr@workfrom.com', name: 'Sophia Grant', dept: depts.design.dpId, role: roles.manager.roleId, status: 'focus', city: 'Copenhagen', country: 'Denmark', timezone: 'Europe/Copenhagen' },
+    { email: 'design.lead@workfrom.com', name: 'Clarke Mason', dept: depts.design.dpId, role: roles.leader.roleId, status: 'focus', city: 'Melbourne', country: 'Australia', timezone: 'Australia/Melbourne' },
+    { email: 'design.staff1@workfrom.com', name: 'Aisha Rahman', dept: depts.design.dpId, role: roles.member.roleId, status: 'online', city: 'Istanbul', country: 'Turkey', timezone: 'Europe/Istanbul' },
+    { email: 'design.staff2@workfrom.com', name: 'Liam Parker', dept: depts.design.dpId, role: roles.member.roleId, status: 'online', city: 'Montreal', country: 'Canada', timezone: 'America/Toronto' }
+];
 
     // Department name mapping for title generation
     const deptNameMap = {
@@ -245,10 +251,13 @@ async function main() {
             where: { userEmail: u.email },
             update: { 
                 userName: u.name, 
-                userStatus: u.status, 
+                // userStatus: u.status, 
                 dpId: u.dept, 
                 roleId: u.role,
-                userTitle: title
+                // userTitle: title
+				// city: u.city,
+				// country: u.country,
+				// timezone: u.timezone 
             },
             create: {
                 userEmail: u.email,
@@ -260,7 +269,10 @@ async function main() {
                 workspaceId: wsId,
                 dpId: u.dept,
                 authProvider: 'email',
-                emailVerified: true
+                emailVerified: true,
+				city: u.city,
+				country: u.country,
+				timezone: u.timezone 
             }
         });
     }
