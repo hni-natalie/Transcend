@@ -42,9 +42,9 @@ export const Privacy = () => (
 						<li>
 							<strong>Tasks &amp; Projects:</strong> We store titles, descriptions, assignments, priorities, and completion statuses of tasks created within your workspace.
 						</li>
-						<li>
+						{/* <li>
 							<strong>Documents &amp; Knowledge Base:</strong> We process and store uploaded documents (such as meeting summaries) and generate semantic search embeddings of document content.
-						</li>
+						</li> */}
 					</ul>
 
 					<h3 className="text-2xl font-semibold text-white mb-2 font-mono">b. Live Communication &amp; Meetings</h3>
@@ -56,7 +56,7 @@ export const Privacy = () => (
 							<strong>Meeting Recordings:</strong> If a meeting host initiates a recording, the audio/video session is recorded, processed, and the resulting file URL is stored in our system.
 						</li>
 						<li>
-							<strong>AI-Powered Transcription &amp; Summarization:</strong> When a meeting is recorded, we may process the audio using [placeholder: third-party AI/speech-to-text provider] to generate a text transcript, and may further process that transcript using an AI language model to produce a meeting summary. These generated transcripts and summaries are stored alongside the recording and are visible to authorized workspace members. This section will be updated once this feature is implemented and the specific provider is finalized.
+							<strong>AI-Powered Transcription &amp; Summarization:</strong> When a meeting is recorded, we may process the audio using Faster Whisper Service to generate a text transcript, and may further process that transcript using an AI language model to produce a meeting summary. These generated transcripts and summaries are stored alongside the recording and are visible to authorized workspace members. This section will be updated once this feature is implemented and the specific provider is finalized.
 						</li>
 					</ul>
 
@@ -128,7 +128,7 @@ export const Privacy = () => (
                             <li><strong>LiveKit:</strong> To coordinate audio/video connection tokens.</li>
                             <li><strong>Google OAuth:</strong> To authenticate your login credentials (if selected).</li>
                             <li><strong>Supabase:</strong> For database hosting, user metadata syncing, and file storage.</li>
-                            <li><strong>[Placeholder: AI transcription/summarization provider]:</strong> To convert meeting recordings into text transcripts and summaries (not yet active — see Section 1C).</li>
+                            <li><strong>Faster Whisper Service &amp; Google AI:</strong> To convert meeting recordings into text transcripts and summaries (see Section 1C).</li>
                         </ul>
                     </li>
                 </ul>
