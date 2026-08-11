@@ -33,6 +33,10 @@ const ActivityAvatar = ({ url, name }: { url?: string | null; name: string }) =>
 
 export function ActivityLog() {
   const [activeTab, setActiveTab] = useState<'All' | 'Presence' | 'Spaces' | 'Tasks' | 'Meetings'>('All');
+  // searchInput updates instantly on every keystroke (keeps the field responsive).
+  // searchQuery only updates after the user pauses typing, and is what actually
+  // drives the API call / re-render of the list below.
+  const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState<DateRangeFilter>('all');
   const [customRange, setCustomRange] = useState<CustomDateRange>({ startDate: '', endDate: '' });
@@ -50,6 +54,14 @@ export function ActivityLog() {
   );
 
   const { subscribeDashboard, unsubscribeDashboard, latestActivity, activitySeq } = useSocket();
+
+  // debounce: only push searchInput > seachQuery after typing for 300ms
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [searchInput]);
 
   useEffect(() => {
     setPage(1);
@@ -140,8 +152,8 @@ export function ActivityLog() {
 
   return (
 	<FilterLayout
-	searchQuery={searchQuery}
-	onSearchChange={setSearchQuery}
+	searchQuery={searchInput}
+	onSearchChange={setSearchInput}
 	searchPlaceholder="Search activities..."
 	filterTabs={filterTabs}
 	activeFilter={activeTab}
