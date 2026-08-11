@@ -3,8 +3,8 @@ import { apiClient } from '@api/api.client';
 import { useToast } from '@/context/ToastContext';
 import { useSocket } from '@/context/SocketContext';
 import { activityApi } from '@/features/admin/activity/api/activity.api';
-import { officeService } from '@/features/office/services/office.service'; // adjust to actual path
-import { Space } from '@/shared/types/space.types'; // adjust path to match actual location
+import { officeService } from '@/features/office/services/office.service';
+import { Space } from '@/shared/types/space.types';
 import { SpaceWithOccupancy } from './types';
 import { DbUser, DashboardMetricsResponse, ActivityItem } from './types';
 
@@ -24,6 +24,17 @@ const OFFICE_SPACE_NAMES = new Set([
   'People Ops Hub',
 ]);
 
+// maps dpmt space names to dpmt name for occupancy count
+// use space > dpmt name cz Space.dpId us a UUID (not in DbUser)
+const SPACE_TO_DEPARTMENT_NAME: Record<string, string> = {
+  'Audit Vault': 'Accounts',
+  'Creative Lab': 'Design',
+  'Dev Lab': 'Engineering',
+  'Growth Lab': 'Marketing',
+  'Logistics Ops Hub': 'Operations',
+  'People Ops Hub': 'Human Resources',
+};
+
 const toActivityItem = (e: any): ActivityItem => ({
   id: e.id,
   name: e.user,
@@ -36,14 +47,19 @@ export const useDashboardData = () => {
   const [users, setUsers] = useState<DbUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { showToast } = useToast();
-  const { enableSocket, isConnected, userStatuses, roomOccupancy, subscribeDashboard, unsubscribeDashboard } = useSocket();
+  const {
+    enableSocket,
+    isConnected,
+    userStatuses,
+    roomOccupancy,
+    subscribeDashboard,
+    unsubscribeDashboard,
+  } = useSocket();
 
   const [presenceItems, setPresenceItems] = useState<ActivityItem[]>([]);
   const [tasksItems, setTasksItems] = useState<ActivityItem[]>([]);
   const [meetingsItems, setMeetingsItems] = useState<ActivityItem[]>([]);
   const [isActivityLoading, setIsActivityLoading] = useState(true);
-
-  // NEW — spaces state
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [isSpacesLoading, setIsSpacesLoading] = useState(true);
 
@@ -95,12 +111,11 @@ export const useDashboardData = () => {
     fetchActivityStreams();
   }, [showToast]);
 
-  // NEW — fetch spaces
   useEffect(() => {
 	const fetchSpaces = async () => {
 		try {
 		const res = await officeService.getAllSpaces();
-		setSpaces((res.data as unknown as Space[]) || []); // cast until SpaceResponse.data is fixed to Space[]
+		setSpaces((res.data as unknown as Space[]) || []);
 		} catch (err) {
 		console.error('Failed to fetch spaces:', err);
 		showToast('error', 'Failed to load spaces');
@@ -114,13 +129,6 @@ export const useDashboardData = () => {
   const usersWithLiveStatus = users.map(u => ({
 	...u,
 	status: userStatuses[u.id] ?? u.status,
-  }));
-
-  const spacesWithOccupancy: SpaceWithOccupancy[] = spaces
-  .filter(s => OFFICE_SPACE_NAMES.has(s.spaceName))
-  .map((s) => ({
-    ...s,
-    currentOccupancy: roomOccupancy[s.spaceId] ?? 0,
   }));
 
   // METRICS — per-status breakdown (feeds the 3 colored rings, unchanged)
@@ -143,6 +151,29 @@ export const useDashboardData = () => {
     const active = deptGroup.filter(u => u.status !== 'offline').length;
     return { active, total: deptGroup.length };
   };
+
+  // only get those who are in office with online / meeting status
+  const SPACE_PRESENT_STATUSES = new Set(['online', 'in_meeting']);
+  const getDepartmentSpaceCount = (deptName: string) => {
+    return users.filter(u => u.department === deptName && SPACE_PRESENT_STATUSES.has(u.status)).length;
+  };
+
+  // get occupancy
+  // department - count dpmt members (online/meeting) since they're spawned (no active socket)
+  // shared - use socket RoomOccupancy
+  const spacesWithOccupancy: SpaceWithOccupancy[] = spaces
+    .filter(s => OFFICE_SPACE_NAMES.has(s.spaceName))
+    .map((s) => {
+      if (s.accessLevel === 'department') {
+        const deptName = SPACE_TO_DEPARTMENT_NAME[s.spaceName];
+        const currentOccupancy = deptName ? getDepartmentSpaceCount(deptName) : 0;
+        return { ...s, currentOccupancy };
+      }
+      return {
+        ...s,
+        currentOccupancy: roomOccupancy[s.spaceId] ?? roomOccupancy[s.spaceName] ?? 0,
+      };
+    });
 
   const isExcludedUser = (user: DbUser) => {
     const name = user.name?.toLowerCase() || '';

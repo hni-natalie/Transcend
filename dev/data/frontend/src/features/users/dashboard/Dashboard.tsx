@@ -156,7 +156,7 @@ export const Dashboard = () => {
                   currentUser.userStatus === 'online'      ? 'text-accent-lime' :
                   currentUser.userStatus === 'focus'        ? 'text-accent-teal' :
                   currentUser.userStatus === 'in_meeting'  ? 'text-accent-gold' :
-				  currentUser.userStatus === 'away'  		? 'text-accent-purple' : 'text-foreground-4'
+				  currentUser.userStatus === 'away'  		? 'text-accent-ultramarine' : 'text-foreground-4'
                 }
                 strokeWidth="5" stroke="currentColor" fill="none"
                 strokeDasharray="116.2" strokeDashoffset="0" strokeLinecap="round"

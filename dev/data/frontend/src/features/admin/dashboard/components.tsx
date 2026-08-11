@@ -21,8 +21,8 @@ export interface MetricsRingProps {
   focusCount: number;
   inMeetingCount: number;
   totalCount: number;
-  activePercentage: string;      // was attendancePercentage
-  attendancePercentage: string;  // was checkedInPercentage
+  activePercentage: string;
+  attendancePercentage: string;
   absentPercentage: string;
 }
 
@@ -288,7 +288,7 @@ const OFFICE_ROOMS: OfficeRoom[] = [
   { code: 'AV',  spaceName: 'Audit Vault',     	 colSpanClass: 'col-span-1', rowSpanClass: 'row-span-1' },
   { code: 'MS',  spaceName: 'Meeting Room S',    colSpanClass: 'col-span-1', rowSpanClass: 'row-span-1' },
   { code: 'GL',  spaceName: 'Growth Lab',        colSpanClass: 'col-span-1', rowSpanClass: 'row-span-2' },
-  { code: 'TH',  spaceName: 'Town Hall',         colSpanClass: 'col-span-5', rowSpanClass: 'row-span-2' },
+  { code: 'TH',  spaceName: 'The Town Hall',     colSpanClass: 'col-span-5', rowSpanClass: 'row-span-2' },
   { code: 'LOH', spaceName: 'Logistics Ops Hub', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1' },
   { code: 'POH', spaceName: 'People Ops Hub',    colSpanClass: 'col-span-1', rowSpanClass: 'row-span-2' },
   { code: 'ML',  spaceName: 'Meeting Room L',    colSpanClass: 'col-span-2', rowSpanClass: 'row-span-2' },
@@ -338,48 +338,6 @@ export const OfficeMap = ({ spaces }: { spaces: SpaceWithOccupancy[] }) => {
   );
 };
 
-
-// interface OfficeRoom {
-//   name: string;
-//   colSpanClass: string;
-//   rowSpanClass: string;
-//   bgClass: string;
-//   textClass?: string;
-// }
-
-// const OFFICE_ROOMS: OfficeRoom[] = [
-//   { name: 'AV', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
-//   { name: 'MS', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
-//   { name: 'GL', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-2', bgClass: 'bg-accent-lime-bg' },
-//   { name: 'TH', colSpanClass: 'col-span-5', rowSpanClass: 'row-span-2', bgClass: 'bg-background-1' },
-//   { name: 'LOH', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
-//   { name: 'POH', colSpanClass: 'col-span-1', rowSpanClass: 'row-span-2', bgClass: 'bg-accent-lime', textClass: 'text-black' },
-//   { name: 'ML', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-2', bgClass: 'bg-background-1' },
-//   { name: 'CL', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1', bgClass: 'bg-accent-lime-bg' },
-//   { name: 'DL', colSpanClass: 'col-span-3', rowSpanClass: 'row-span-2', bgClass: 'bg-accent-lime', textClass: 'text-black' },
-//   { name: 'MM', colSpanClass: 'col-span-2', rowSpanClass: 'row-span-1', bgClass: 'bg-background-1' },
-// ];
-
-// export const OfficeMap = () => {
-//   return (
-//     <div className="col-span-8 bg-background-2 rounded-3xl p-6 flex flex-col">
-//       <div className="text-mc text-foreground font-semibold font-main mb-6">Office</div>
-//       <div className="my-3 flex-1 grid grid-cols-8 grid-rows-4 gap-1.5">
-//         {OFFICE_ROOMS.map((room) => (
-//           <div
-//             key={room.name}
-//             className={`${room.colSpanClass} ${room.rowSpanClass} ${room.bgClass} rounded-lg p-3 flex items-start justify-start`}
-//           >
-//             <span className={`text-sm font-bold ${room.textClass || 'text-foreground-1'}`}>
-//               {room.name}
-//             </span>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// };
-
 // SPACES
 const SpaceRatioBar = ({ space }: { space: SpaceRatio }) => {
   const percent = space.max > 0 ? (space.count / space.max) * 100 : 0;
@@ -427,50 +385,6 @@ export const SpacesProgress = ({ spaces }: { spaces: SpaceWithOccupancy[] }) => 
     </div>
   );
 };
-
-
-// SPACES (mock)
-// const SpaceRatioBar = ({ space }: { space: SpaceRatio }) => {
-//   const percent = space.max > 0 ? (space.count / space.max) * 100 : 0;
-  
-//   return (
-//     <div className="flex items-center gap-4">
-//       <span className="text-foreground-2 text-base w-36 shrink-0">{space.name}</span>
-//       <span className="text-foreground-3 text-sm w-10 shrink-0 text-right">{space.count}/{space.max}</span>
-//       <div className="flex-1 h-2.5 bg-background-3 rounded-full overflow-hidden">
-//         <div
-//           className="h-full bg-accent-lime rounded-full transition-all"
-//           style={{ width: `${percent}%` }}
-//         />
-//       </div>
-//     </div>
-//   );
-// };
-
-// // export const SpacesProgress = ({ spaces }: { spaces: SpaceWithOccupancy[] }) => {
-// export const SpacesProgress = () => {
-//   const sharedSpaces = mockSpacesProgress.filter(space => space.group === 'shared');
-//   const departmentSpaces = mockSpacesProgress.filter(space => space.group === 'department');
-
-//   return (
-//     <div className="col-span-8 bg-background-2 rounded-3xl p-6 pb-8 flex flex-col">
-//       <div className="text-md text-foreground font-semibold font-main mb-6">Spaces</div>
-//       <div className="flex-1 flex flex-col gap-4">
-//         <div className="space-y-2">
-//           {sharedSpaces.map((space) => (
-//             <SpaceRatioBar key={space.name} space={space} />
-//           ))}
-//         </div>
-//         <div className="space-y-2 pt-5">
-//           {departmentSpaces.map((space) => (
-//             <SpaceRatioBar key={space.name} space={space} />
-//           ))}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
 
 // ACTIVITY
 interface ActivityItemRowProps {
