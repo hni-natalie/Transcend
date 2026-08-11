@@ -1,9 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSocket } from '@/context';
 import { FilterLayout } from '@shared';
 import { DefaultAvatar } from '@/shared/ui/DefaultAvatar';
 import { activityApi } from '@/features/admin/activity/api/activity.api';
 import type { ActivityEvent, DateRangeFilter, CustomDateRange } from '@/features/admin/activity/types';
 import { getDateRangeBounds, DATE_RANGE_OPTIONS } from '@/features/admin/activity/components';
+
+// maps ui filter labels to match api event types
+const TAB_TO_TYPE: Record<string, string> = {
+  Presence: 'presence',
+  Spaces: 'space',
+  Tasks: 'task',
+  Meetings: 'meeting',
+};
 
 const ActivityAvatar = ({ url, name }: { url?: string | null; name: string }) => {
   const [failed, setFailed] = useState(false);
@@ -34,21 +43,23 @@ export function ActivityLog() {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasNewActivity, setHasNewActivity] = useState(false); 
   const { startDate, endDate } = useMemo(
 	() => getDateRangeBounds(dateRange, customRange),
 	[dateRange, customRange.startDate, customRange.endDate]
   );
 
+  const { subscribeDashboard, unsubscribeDashboard, latestActivity, activitySeq } = useSocket();
+
   useEffect(() => {
     setPage(1);
   }, [activeTab, searchQuery, perPage, dateRange, customRange]);
 
-  useEffect(() => {
-    if (dateRange === 'custom' && (!customRange.startDate || !customRange.endDate)) return;
+  const fetchActivities = useCallback(() => {
+    if (dateRange === 'custom' && (!customRange.startDate || !customRange.endDate)) return () => {};
 
     let cancelled = false;
     setIsLoading(true);
-
 
     activityApi
       .getAllActivities({ type: activeTab, search: searchQuery, page, limit: perPage, startDate, endDate })
@@ -57,6 +68,7 @@ export function ActivityLog() {
         setActivities(res.data);
         setTotalItems(res.pagination.total);
         setTotalPages(res.pagination.totalPages);
+        setHasNewActivity(false);
       })
       .catch((err) => {
         console.error('Failed to fetch activities:', err);
@@ -74,6 +86,35 @@ export function ActivityLog() {
       cancelled = true;
     };
   }, [activeTab, searchQuery, page, perPage, dateRange, customRange, startDate, endDate]);
+
+  useEffect(() => {
+    const cancel = fetchActivities();
+    return cancel;
+  }, [fetchActivities]);
+
+  useEffect(() => {
+    subscribeDashboard();
+    return () => unsubscribeDashboard();
+  }, [subscribeDashboard, unsubscribeDashboard]);
+
+  // Handle real-time activity updates
+  // If user is on page 1 with no filters, merge new activity directly
+  useEffect(() => {
+    if (activitySeq === 0 || !latestActivity) return;
+
+    const tabMatches = activeTab === 'All' || TAB_TO_TYPE[activeTab] === latestActivity.type;
+    const canMergeInPlace =
+      page === 1 && !searchQuery && dateRange === 'all' && tabMatches;
+
+    if (canMergeInPlace) {
+      setActivities((prev) => [latestActivity, ...prev].slice(0, perPage));
+      setTotalItems((prev) => prev + 1);
+    } else if (tabMatches) {
+      setHasNewActivity(true);
+    }
+	// only trigger on new socket events, silence filters
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activitySeq]);
 
   const categoryStyles: Record<string, { dotColor: string; textColor: string }> = {
     presence: { dotColor: 'bg-accent-lime', textColor: 'text-accent-lime' },
@@ -129,6 +170,14 @@ export function ActivityLog() {
 	totalPages={totalPages}
 	containerHeight="calc(103vh - 120px)"
 	>
+      {hasNewActivity && (
+        <button
+          onClick={fetchActivities}
+          className="w-full text-center text-sm font-medium text-accent-lime bg-background-2 hover:bg-background rounded-lg py-2 mb-2 transition-colors"
+        >
+          New activity available — click to refresh
+        </button>
+      )}
       <div className="relative pl-4.5 space-y-2 pt-8 pb-8">
         <div className="absolute left-[19px] top-8 bottom-8 w-[1px] bg-background-4 pointer-events-none" />
 

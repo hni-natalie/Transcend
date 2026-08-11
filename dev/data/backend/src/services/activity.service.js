@@ -2,12 +2,36 @@ const prisma = require('../../prisma/client');
 
 async function createActivityLog({ workspaceId, userId, type, action, contextTitle, contextDetails }) {
     try {
-        return await prisma.activity.create({
+        const activity = await prisma.activity.create({
             data: { workspaceId, userId, type, action, contextTitle, contextDetails },
+            include: {
+                user: {
+                    include: { role: true, department: true },
+                },
+            },
         });
+
+        emitActivityCreated(workspaceId, activity);
+
+        return activity;
     } catch (error) {
         console.error('[activity.service] createActivityLog failed:', error.message);
         return null;
+    }
+}
+
+// const { getIO } = require('./socket.service'); lazy require (only load when needed)
+// if socket fail, dont let db write fail
+function emitActivityCreated(workspaceId, activity) {
+    try {
+        const { getIO } = require('./socket.service'); // lazy require
+        const io = getIO();
+        io.to('dashboard-viewers').emit('activity-created', {
+            workspaceId,
+            activity: formatActivity(activity),
+        });
+    } catch (error) {
+        console.error('[activity.service] emitActivityCreated failed:', error.message);
     }
 }
 
