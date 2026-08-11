@@ -931,16 +931,18 @@ export const IconRecording = (props: SVGProps<SVGSVGElement>) => (
 
 export const IconArrowUpRight = ({ className }: IconProps) => (
   <svg 
-  	width="14"
-	height="14"
-	viewBox="0 0 14 14"
-	fill="none" 
-	xmlns="http://www.w3.org/2000/svg">
-  <path 
-  	d="M10.488 10.5865L10.488 3.56259L3.36278 3.5627M10.488 3.56259L3.53711 10.4628"
-	stroke="currentColor"
-	stroke-linecap="round"
-	stroke-linejoin="round"/>
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path 
+      d="M10.488 10.5865L10.488 3.56259L3.36278 3.5627M10.488 3.56259L3.53711 10.4628"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
-
 );
