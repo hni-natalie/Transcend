@@ -10,6 +10,7 @@ import { Text } from '@react-three/drei';
 import { useLiveKit } from '@features/livekit'
 import { officeService } from '@/features/office/services/office.service';
 import { useTextWidth } from '@/features/office/hooks/useTextWidth';
+import { useSocket } from '@/context/SocketContext';
 
 const SpaceContext = createContext(null);
 export const useOfficeSpace = () => useContext(SpaceContext);
@@ -61,6 +62,53 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 	const [loading, setLoading] = useState(true);
 	const [officeSpace, setOfficeSpace] = useState([]);
 	const [count, setCount] = useState(0);
+
+	const { socket } = useSocket();
+	const previousActivePlaneRef = useRef<number | null>(null);
+
+	useEffect(() => {
+		if (!socket) {
+			console.log('[SpaceContext] socket not available, skipping space tracking');
+			return;
+		}
+
+		const prevIndex = previousActivePlaneRef.current;
+		const nextIndex = activePlane;
+
+		console.log('[SpaceContext] activePlane changed:', { prevIndex, nextIndex });
+
+		if (prevIndex !== nextIndex) {
+			if (prevIndex !== null) {
+				const prevMesh = planeRefs.current.get(prevIndex);
+				const prevSpaceId = prevMesh?.userData?.spaceId;
+				console.log('[SpaceContext] leaving space:', { prevIndex, prevSpaceId, userData: prevMesh?.userData });
+				if (prevSpaceId) {
+					socket.emit('space-left', { spaceId: prevSpaceId });
+				}
+			}
+			if (nextIndex !== null) {
+				const nextMesh = planeRefs.current.get(nextIndex);
+				const nextSpaceId = nextMesh?.userData?.spaceId;
+				console.log('[SpaceContext] entering space:', { nextIndex, nextSpaceId, userData: nextMesh?.userData });
+				if (nextSpaceId) {
+					socket.emit('space-entered', { spaceId: nextSpaceId });
+				}
+			}
+			previousActivePlaneRef.current = nextIndex;
+		}
+	}, [activePlane, socket]);
+
+	useEffect(() => {
+		return () => {
+			if (socket && previousActivePlaneRef.current !== null) {
+				const prevMesh = planeRefs.current.get(previousActivePlaneRef.current);
+				const prevSpaceId = prevMesh?.userData?.spaceId;
+				if (prevSpaceId) {
+					socket.emit('space-left', { spaceId: prevSpaceId });
+				}
+			}
+		};
+	}, [socket]);
 
   const setPlaneRef = ( index:number ) => ( el:THREE.Mesh ) => {
     if (el) {
@@ -167,7 +215,8 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 						index:i,
 						name:plane.spaceName,
 						accessLevel: plane.accessLevel,
-						dpId: plane.departmentId
+						dpId: plane.departmentId,
+						spaceId: plane.spaceId
 					}}
 					onPointerOver={() => setHoveredIndex(i)}
 					onPointerOut={() => setHoveredIndex(null)}

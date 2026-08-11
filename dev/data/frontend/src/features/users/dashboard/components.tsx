@@ -177,7 +177,7 @@ export const StatusDropdown = ({
         { status: 'online' as const, dot: 'bg-accent-lime', label: 'Available' },
         { status: 'focus' as const, dot: 'bg-accent-teal', label: 'Focus' },
         { status: 'in_meeting' as const, dot: 'bg-accent-gold', label: 'In Meeting' },
-        { status: 'away' as const, dot: 'bg-accent-purple', label: 'Away' },
+        { status: 'away' as const, dot: 'bg-accent-ultramarine', label: 'Away' },
       ].map(({ status, dot, label }) => (
         <button
           key={status}

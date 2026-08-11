@@ -1,6 +1,5 @@
 const spaceService = require('../services/space.service');
 
-
 const spaceController = {
     async getAllSpaces(req, res) {
         try {

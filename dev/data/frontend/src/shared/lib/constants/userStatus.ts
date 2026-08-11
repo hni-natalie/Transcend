@@ -40,11 +40,11 @@ export const STATUS_COLORS: Record<UserStatusType, {
     ring: 'ring-accent-gold/20',
   },
     away: {
-    dot: 'bg-accent-purple',
-    bg: 'bg-accent-purple-bg',
-    text: 'text-accent-purple',
-    border: 'border-accent-purple',
-    ring: 'ring-accent-purple/20',
+    dot: 'bg-accent-ultramarine',
+    bg: 'bg-accent-ultramarine-bg',
+    text: 'text-accent-ultramarine',
+    border: 'border-accent-ultramarine',
+    ring: 'ring-accent-ultramarine/20',
   },
   offline: {
     dot: 'bg-foreground-4',

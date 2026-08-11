@@ -41,11 +41,11 @@ export const useSettingsData = () => {
         const nameParts = userData.userName?.split(' ') || ['', ''];
 
         setProfile({
-		  userId: userData.userId,
+		      userId: userData.userId,
           firstName: nameParts[0] || '',
           lastName: nameParts.slice(1).join(' ') || '',
           email: userData.userEmail || '',
-          title: '',
+          title: userData.userTitle || '',
           role: userData.role?.roleName || 'Team Member',
           department: userData.department?.dpName || '',
           country: userData.country || '',

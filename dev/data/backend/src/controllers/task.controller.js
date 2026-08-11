@@ -65,7 +65,8 @@ const taskController = {
 			const { id } = req.params;
 			const userId = req.user.userId;
 
-			const updatedTask = await taskService.updateTask(id, userId, req.body);
+			// const updatedTask = await taskService.updateTask(id, userId, req.body);
+			const updatedTask = await taskService.updateTaskWithLogging(id, userId, req.body);
 
 			return res.json(updatedTask);
 
