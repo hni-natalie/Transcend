@@ -20,6 +20,8 @@ const { logSpaceActivity, logMeetingActivity } = require('../utils/activity');
 const { initializeRoomData, createPlayer, randomPosition } = require('../utils/socket')
 const players     = new Map();
 const rooms       = new Map();      // Map<roomName, roomPlayers> : Map<roomName, [roomPlayers, roomObjects]>
+const spaceOccupancy = new Map();
+const userCurrentSpace = new Map();
 let ioInstance = null;
 
 // socket io setup
@@ -49,10 +51,16 @@ const socketService = (io) => {
   // dashboard subscribes to live occupancy updates
   socket.on('subscribe-dashboard', () => {
     socket.join('dashboard-viewers');
-    const snapshot = Array.from(rooms.entries()).map(([roomName, data]) => ({
-      roomName,
-      count: data.users.length,
+    const snapshot = Array.from(spaceOccupancy.entries()).map(([spaceId, count]) => ({
+      spaceId,
+      count,
     }));
+    Array.from(rooms.entries()).forEach(([roomName, roomData]) => {
+      snapshot.push({
+        roomName,
+        count: roomData.users ? roomData.users.length : 0,
+      });
+    });
     socket.emit('space-occupancy-snapshot', snapshot);
   });
 
@@ -148,6 +156,17 @@ const socketService = (io) => {
     console.log('Backend [object-released] ', data.objectId);
   });
 
+  socket.on('space-entered', async ({ spaceId }) => {
+    console.log(`[socket] space-entered received: spaceId=${spaceId}, user=${socket.user?.userName}`);
+    if (!spaceId || !socket.user?.userId) return;
+    await setUserSpacePresence(socket, spaceId);
+  });
+
+  socket.on('space-left', async ({ spaceId }) => {
+    if (!socket.user?.userId) return;
+    await clearUserSpacePresence(socket, spaceId);
+  });
+
   // Event handler for joining rooms
   socket.on('join-room', async ({ roomName }) => {
     if (!player) {
@@ -217,7 +236,7 @@ const socketService = (io) => {
 		await logSpaceActivity({
 			workspaceId: socket.user.workspaceId,
 			userId: socket.user.userId,
-			action: 'entered a department',
+			action: 'entered',
 			spaceName: space.spaceName,
 		});
 	} else {
@@ -259,7 +278,7 @@ const socketService = (io) => {
         await logSpaceActivity({
             workspaceId: socket.user.workspaceId,
             userId: socket.user.userId,
-            action: 'left a department',
+            action: 'left',
             spaceName: space.spaceName,
         });
     } else {
@@ -275,6 +294,7 @@ const socketService = (io) => {
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log(`Player disconnected: ${socket.id}`);
+    clearUserSpacePresence(socket);
     if (player.roomName)
       handleLeaveRoom(socket, player, player.roomName)
     players.delete(socket.id);
@@ -292,6 +312,74 @@ const socketService = (io) => {
     const roomData = rooms.get(roomName);
     const count = roomData ? roomData.users.length : 0;
     io.to('dashboard-viewers').emit('space-occupancy-changed', { roomName, count });
+  }
+
+  async function setUserSpacePresence(socket, nextSpaceId) {
+    const userId = socket.user.userId;
+    const previousSpaceId = userCurrentSpace.get(userId);
+
+    if (previousSpaceId === nextSpaceId) {
+      return;
+    }
+
+    if (previousSpaceId) {
+      await updateSpaceOccupancy(previousSpaceId, -1);
+      await logSpaceActivityForSpace(socket, previousSpaceId, 'left');
+    }
+
+    userCurrentSpace.set(userId, nextSpaceId);
+    await updateSpaceOccupancy(nextSpaceId, 1);
+    await logSpaceActivityForSpace(socket, nextSpaceId, 'entered');
+  }
+
+  async function clearUserSpacePresence(socket, spaceId = null) {
+    const userId = socket.user.userId;
+    const currentSpaceId = userCurrentSpace.get(userId);
+    const targetSpaceId = spaceId || currentSpaceId;
+
+    if (!targetSpaceId || currentSpaceId !== targetSpaceId) {
+      return;
+    }
+
+    userCurrentSpace.delete(userId);
+    await updateSpaceOccupancy(targetSpaceId, -1);
+    await logSpaceActivityForSpace(socket, targetSpaceId, 'left');
+  }
+
+  async function updateSpaceOccupancy(spaceId, delta) {
+    const nextCount = Math.max((spaceOccupancy.get(spaceId) || 0) + delta, 0);
+    console.log(`[socket] updateSpaceOccupancy: spaceId=${spaceId}, delta=${delta}, nextCount=${nextCount}`);
+
+    if (nextCount === 0) {
+      spaceOccupancy.delete(spaceId);
+    } else {
+      spaceOccupancy.set(spaceId, nextCount);
+    }
+
+    console.log(`[socket] emitting space-occupancy-changed to dashboard-viewers: { spaceId: ${spaceId}, count: ${nextCount} }`);
+    io.to('dashboard-viewers').emit('space-occupancy-changed', { spaceId, count: nextCount });
+  }
+
+  async function logSpaceActivityForSpace(socket, spaceId, action) {
+    const space = await prisma.space.findUnique({
+      where: { spaceId },
+      select: {
+        spaceName: true,
+        department: {
+          select: { dpName: true }
+        }
+      }
+    });
+
+    if (!space) return;
+
+    await logSpaceActivity({
+      workspaceId: socket.user.workspaceId,
+      userId: socket.user.userId,
+      action,
+      spaceName: space.spaceName,
+      departmentName: space.department?.dpName ?? null,
+    });
   }
 
   function handleLeaveRoom(socket, player, roomName) {

@@ -29,9 +29,12 @@ export function SocketProvider ({ children }) {
   const [currentRoom, setCurrentRoom] = useState<String>(null);
   const [roomPlayers, setRoomPlayers] = useState< Player[] >([]);
   
-  // for dashboard
   const [roomOccupancy, setRoomOccupancy] = useState<Record<string, number>>({});
-  const [roomObjs, setRoomObjs] = useState< Player[] >([]);
+  const [roomObjs, setRoomObjs] = useState< Player[] >([]); 
+
+  // for /admin/activity
+  const [latestActivity, setLatestActivity] = useState<any>(null);
+  const [activitySeq, setActivitySeq] = useState<number>(0);
 
   useEffect(() => {
   const token = getToken();
@@ -182,25 +185,39 @@ export function SocketProvider ({ children }) {
       }));
     });
 
-	// syncs all user status across pages
-	// socket.on('user-status-changed', (data: { userId: string; status: string }) => {
-	//   setUserStatuses((prev) => ({ ...prev, [data.userId]: data.status }));
-	// });
-
-	socket.on('user-status-changed', (data) => {
-	  console.log('[SocketContext] received user-status-changed:', data); // TEMP
+	socket.on('user-status-changed', (data: { userId: string; status: string }) => {
+	  console.log('[SocketContext] received user-status-changed:', data);
 	  setUserStatuses((prev) => ({ ...prev, [data.userId]: data.status }));
 	});
 
 	// for admin's dashboard; office and space occupancy mapping
-	socket.on('space-occupancy-snapshot', (snapshot: { roomName: string; count: number }[]) => {
+	socket.on('space-occupancy-snapshot', (snapshot: any[]) => {
+	  console.log('[SocketContext] space-occupancy-snapshot received:', snapshot);
 	  const map: Record<string, number> = {};
-	  snapshot.forEach((s) => { map[s.roomName] = s.count; });
+	  snapshot.forEach((s) => {
+	    const key = s.spaceId || s.roomName;
+	    if (key) map[key] = s.count;
+	  });
+	  console.log('[SocketContext] mapped roomOccupancy:', map);
 	  setRoomOccupancy(map);
 	});
 
-	socket.on('space-occupancy-changed', (data: { roomName: string; count: number }) => {
-	  setRoomOccupancy((prev) => ({ ...prev, [data.roomName]: data.count }));
+	socket.on('space-occupancy-changed', (data: any) => {
+	  console.log('[SocketContext] space-occupancy-changed received:', data);
+	  const key = data.spaceId || data.roomName;
+	  if (key) {
+	    setRoomOccupancy((prev) => {
+	      const nextMap = { ...prev, [key]: data.count };
+	      console.log('[SocketContext] updated roomOccupancy:', nextMap);
+	      return nextMap;
+	    });
+	  }
+	});
+
+	socket.on('activity-created', (data: { workspaceId: string; activity: any }) => {
+	  console.log('[SocketContext] activity-created received:', data);
+	  setLatestActivity(data.activity);
+	  setActivitySeq((prev) => prev + 1);
 	});
   
   /* Events: Chat */
@@ -237,6 +254,7 @@ export function SocketProvider ({ children }) {
 		socket.off('user-status-changed');
 		socket.off('space-occupancy-snapshot');
 		socket.off('space-occupancy-changed');
+		socket.off('activity-created');
         socket.off('online-status');
         socket.off('force-logout');
         socket.disconnect();
@@ -386,6 +404,8 @@ export function SocketProvider ({ children }) {
 
 	/* Dashboard methods */
 	roomOccupancy,
+	latestActivity, // NEW
+	activitySeq, // NEW
     subscribeDashboard,
     unsubscribeDashboard,
   };
