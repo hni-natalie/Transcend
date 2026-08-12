@@ -28,11 +28,12 @@ function getPlanePosition( planeRefs:any, dpId:string ) {
 interface SpawnCharacterProps {
 	roomName: string;
 	listenerRef: RefObject<THREE.AudioListener>;
+	lightTargetRef: RefObject<THREE.Object3D>;
 }
 
 // export function SpawnCharacter({ roomName, localPlayerRef }) {
 export const SpawnCharacter = React.forwardRef<THREE.Object3D, SpawnCharacterProps>((
-	{ roomName, listenerRef } : SpawnCharacterProps,
+	{ roomName, listenerRef, lightTargetRef } : SpawnCharacterProps,
 	ref) => {
 
 	const { planeRefs } = useOfficeSpace();
@@ -59,6 +60,7 @@ export const SpawnCharacter = React.forwardRef<THREE.Object3D, SpawnCharacterPro
 						isPlayerAudioReady={isPlayerAudioReady(user.id)}
 						getPositionalAudio={getPositionalAudio}
 						listenerRef={listenerRef}
+						lightTargetRef={lightTargetRef}
 					/>
 				);
 			})}

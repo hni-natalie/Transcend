@@ -21,16 +21,28 @@ import { usePosition } from '@/context';
 
 interface ObjectProps extends Player {
 	type?: 'Kinematic' | 'Dynamic';
+	radius?: number;
+	segments?: number;
 }
 
-export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
-	{ userId, id, name, position={ x:0, y:0, z:0 }, color="#D0F05C", type='Dynamic', photo, ownership } : ObjectProps,
+export const Object = React.forwardRef<THREE.Object3D, ObjectProps>(({
+	userId,
+	id,
+	name,
+	position={ x:0, y:0, z:0 },
+	radius=1,
+	segments=24,
+	color="#D0F05C",
+	type='Dynamic',
+	photo,
+	ownership
+	} : ObjectProps,
 	ref) => {
 
 	useContactMaterial('objMaterial', 'objMaterial', {
 		friction: 0.8,
-		restitution: 0.05,        				// 0 no bounce - 1 elastic
-		contactEquationStiffness: 0.5,   	// lower = softer push
+		restitution: 0.5,        				// 0 no bounce - 1 elastic
+		contactEquationStiffness: 1,   	// lower = softer push
 		contactEquationRelaxation: 500, // higher = softer/slower correction
 	});
   const [objectRef, api] = useBox(() => ({
@@ -42,7 +54,7 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
 		rotation: [-Math.PI / 2, 0, 0],
 		fixedRotation: true,
   	allowSleep: false,
-    args: [conf.Player.radius * 3, conf.Player.radius * 3, conf.Player.radius * 3], // Match circle size
+    args: [radius * 3, radius * 3, 3], // Match circle size
 	  userData: { userId },
   }));
 
@@ -101,10 +113,10 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
 	const worldHeight = conf.World.height + conf.World.border;
 
 	const boundaries = {
-			minX: -worldWidth/2 + conf.Player.radius,
-			maxX: worldWidth/2 - conf.Player.radius,
-			minZ: -worldHeight/2 + conf.Player.radius,
-			maxZ: worldHeight/2 - conf.Player.radius
+			minX: -worldWidth/2 + radius,
+			maxX: worldWidth/2 - radius,
+			minZ: -worldHeight/2 + radius,
+			maxZ: worldHeight/2 - radius
 	};
 
 	return (
@@ -117,7 +129,7 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
 		>
 			<mesh>
 				{/* main surface */}
-				<circleGeometry args={[conf.Player.radius, conf.Player.segments]} />
+				<circleGeometry args={[radius, segments]} />
 				{texture ? (
 				<meshStandardMaterial map={texture} color="#FFFFFF" emissive="#1A1A1A" side={THREE.DoubleSide} />
 				) : (
@@ -128,7 +140,7 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>((
 			{/* Ring outline on hover */}
 			{hovered && (
 				<mesh>
-					<ringGeometry args={[0.95, 1.1, 36]} />
+					<ringGeometry args={[radius * 0.95, radius * 1.1, 36]} />
 					<meshStandardMaterial color="#D0F05C" emissive="#627C06" side={THREE.DoubleSide} />
 				</mesh>
 			)}

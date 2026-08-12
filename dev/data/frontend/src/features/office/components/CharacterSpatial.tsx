@@ -21,12 +21,13 @@ interface CharacterProps extends Player {
 	isLocalPlayer: boolean;
 	isPlayerAudioReady: boolean;
   listenerRef: RefObject<THREE.AudioListener>;
+	lightTargetRef: RefObject<THREE.Object3D>;
 	getPositionalAudio: (userId: string) => THREE.PositionalAudio;
 }
 
 // 2D Circle Character Component + Movement handling
 export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
-	{ userId, id, name, position, color="#D0F05C", roomName='Office', photo, isLocalPlayer, isPlayerAudioReady, listenerRef, getPositionalAudio } : CharacterProps,
+	{ userId, id, name, position, color="#D0F05C", roomName='Office', photo, isLocalPlayer, isPlayerAudioReady, listenerRef, lightTargetRef, getPositionalAudio } : CharacterProps,
 	ref) => {
 
 	const { lastKnownPositionsRef, lockSystem } = usePosition();
@@ -45,7 +46,6 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 		rotation: [-Math.PI / 2, 0, 0],
 		fixedRotation: true,
   	allowSleep: false,
-	  // material: 'playerMaterial',
     args: [conf.Player.radius * 2, conf.Player.radius * 2, conf.Player.radius * 2], // Match circle size
 	  userData: { userId },
 	  onCollide: (e) => handleCollision(e)
@@ -69,6 +69,12 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 
 	const { enableSocket, isConnected, socket } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
+
+  // useEffect(() => {
+  //   if (lightTargetRef) {
+	// 		console.log('[CharacterSpatial] target value: ', lightTargetRef.current.position);
+  //   }
+  // }, [lightTargetRef.current]);
 
 	const speed = conf.Movement.keyboard_speed; //movement speed
 	
@@ -153,7 +159,8 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 	  delta is from useFrame
 	*/
 	const movement = new THREE.Vector3(0, 0, 0);
-	const newPos = new THREE.Vector3(0,0,0);
+	const newPos = new THREE.Vector3(0, 0, 0);
+	const lightDist = 2;
 
 	const worldWidth = conf.World.width + conf.World.border;
 	const worldHeight = conf.World.height + conf.World.border;
@@ -174,10 +181,22 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 		const moveDistance = speed * delta;
 
 		// Calculate movement direction
-		if (keys.w || keys.ArrowUp)    movement.z -= 1;  // Forward
-		if (keys.s || keys.ArrowDown)  movement.z += 1;  // Backward
-		if (keys.a || keys.ArrowLeft)  movement.x -= 1;  // Left
-		if (keys.d || keys.ArrowRight) movement.x += 1;  // Right
+		if (keys.w || keys.ArrowUp) {
+			if (lightTargetRef) lightTargetRef.current.position.set(0, lightDist, 0);
+			movement.z -= 1;
+		}
+		if (keys.s || keys.ArrowDown) {
+			if (lightTargetRef) lightTargetRef.current.position.set(0, -lightDist, 0);
+			movement.z += 1;
+		} 
+		if (keys.a || keys.ArrowLeft) {
+			if (lightTargetRef) lightTargetRef.current.position.set(-lightDist, 0, 0);
+			movement.x -= 1;
+		}
+		if (keys.d || keys.ArrowRight) {
+			if (lightTargetRef) lightTargetRef.current.position.set(lightDist, 0, 0);
+			movement.x += 1;
+		}
 
 		// Normalize diagonal movement
 		if (movement.length() > 0) movement.normalize();
@@ -219,6 +238,25 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 			<mesh>
 				{/* main circle */}
 				<circleGeometry args={[conf.Player.radius, conf.Player.segments]} />
+
+				{isLocalPlayer && (
+					<group>
+						<spotLight
+							position={[0, 0, 1]}
+							color="#ffeedd"
+							intensity={50}
+							angle={0.5}
+							penumbra={1}
+							decay={1}
+							distance={20}
+							target={lightTargetRef.current}
+						/>
+						<object3D 
+							ref={lightTargetRef} 
+							position={[0, 2, 0]}  // ← Light points here
+						/>
+					</group>
+				)}
 				{texture ? (
 				<meshStandardMaterial map={texture} color="#FFFFFF" emissive="#1A1A1A" side={THREE.DoubleSide} />
 				) : (

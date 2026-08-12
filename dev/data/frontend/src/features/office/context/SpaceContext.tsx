@@ -158,7 +158,7 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 		const tileSize = 10;
 		
 		positionedPlanes.forEach((plane, i) => {
-			const hue = (i / count) * 360;
+			const hue = (i / count) * 210;
 			// const texture = loader.load('/texture/grass.png');
 			const texture = loader.load('/texture/marble/marble-roughness.png');
 			// const planeId = plane.departmentId;
@@ -204,7 +204,7 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 	const activeOverlay = useMemo(() => {
 		if (activePlane === null) return null;
 		const plane = positionedPlanes[activePlane];
-		const hue = (activePlane / count) * 360;
+		const hue = (activePlane / count) * 210;
 
 		if (!plane) return null;
 			
