@@ -1,4 +1,5 @@
 const taskService = require('../services/task.service');
+const { getIO } = require("../services/socket.service");
 
 const taskController = {
 
@@ -52,6 +53,7 @@ const taskController = {
 				createdByUserId,
 				assignedUserIds,
 			});
+			getIO().emit("taskUpdated");
 			return res.status(201).json(newTask);
 
 		} catch (error) {
@@ -67,7 +69,7 @@ const taskController = {
 
 			// const updatedTask = await taskService.updateTask(id, userId, req.body);
 			const updatedTask = await taskService.updateTaskWithLogging(id, userId, req.body);
-
+			getIO().emit("taskUpdated");
 			return res.json(updatedTask);
 
 		} catch (error) {
@@ -86,6 +88,7 @@ const taskController = {
 			const userId = req.user.userId;
 			
 			await taskService.deleteTask(id, userId);
+			getIO().emit("taskUpdated");
 			return res.json({ message: 'Task deleted successfully' });
 		} catch (error) {
 			if (error.message === 'Task not found') {
