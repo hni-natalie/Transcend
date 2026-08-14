@@ -33,7 +33,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
   // const userLocation = getUserLocation();
   const [now, setNow] = useState(() => new Date());
   
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
   const { location: userLocation, isLoading: locationLoading, error: locationError } = useUserLocation();

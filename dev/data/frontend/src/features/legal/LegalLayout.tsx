@@ -10,13 +10,13 @@ export interface LegalLayoutProps {
 export const LegalLayout = ({ 
   title, 
   children, 
-  lastUpdated = "April 29, 2026" 
+  lastUpdated = "August 6, 2026" 
 }: LegalLayoutProps) => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-12 md:py-16">
+      <div className="max-w-6xl mx-auto px-4 py-12 md:py-16">
         {/* Back button */}
         <button 
           onClick={() => navigate(-1)}
@@ -27,10 +27,10 @@ export const LegalLayout = ({
 
         {/* Header */}
         <div className="mb-8 pb-4 border-b border-background-2">
-          <h1 className="text-3xl md:text-4xl font-bold text-accent-lime font-mono mb-2">
+          <h1 className="text-5xl md:text-6xl font-bold text-accent-lime font-mono mb-2">
             {title}
           </h1>
-          <p className="text-foreground-2 text-sm">Last updated: {lastUpdated}</p>
+          <p className="text-foreground-2 text-base">Last updated: {lastUpdated}</p>
         </div>
 
         {/* Content */}

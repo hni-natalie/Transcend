@@ -70,7 +70,6 @@ enum SummaryStatus {
   failed
 }
 
-// TO ADD: Messages
 enum ConversationType {
   direct
   group
@@ -124,6 +123,7 @@ model User {
   userEmail     String     @unique
   userPassword  String?
   userName      String
+  userTitle     String?
   userStatus    UserStatus @default(offline)
 
   roleId        String
@@ -162,7 +162,6 @@ model User {
 
   activityLogs 				Activity[]
 
-// TO ADD: Messages
   createdConversations       Conversation[]            @relation("ConversationCreatedBy")
   conversationParticipations ConversationParticipant[]
   messages                   Message[]
@@ -185,7 +184,6 @@ model Workspace {
   meetings   	Meeting[]
   documents   	Document[]
   activityLogs 	Activity[]
-// TO ADD : Messages
   conversations Conversation[]
 }
 
@@ -362,7 +360,6 @@ model DocumentChunk {
   @@unique([documentId, chunkIndex])
 }
 
-// TO ADD: Messages
 // CONVERSATION
 // >>> directKey make sure that direct dms stay unique 
 // eg; A+B = convo 1, B+A = convo1 (userIdA:userIdB)
