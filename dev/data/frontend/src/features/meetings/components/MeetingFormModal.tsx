@@ -236,23 +236,26 @@ export const ScheduleMeetingModal = ({
                 onCreated?.();
 
             } else if (mode === "edit" && meeting) {
+
                 await meetingApi.syncParticipants({
                     meetId: meeting.meetId,
                     participants: selectedUsers.map(user => ({
                         userId: user.userId,
                         role: user.role,
                         attendance: user.attendance,
-                    }))
+                    })),
+                    meetStart: new Date(start).toISOString(),
+                    meetEnd: new Date(end).toISOString()
                 });
-                
+
                 await meetingApi.updateMeeting({
                     meetId: meeting.meetId,
                     meetTitle: title,
                     meetDesc: description,
                     meetStart: new Date(start).toISOString(),
-                    meetEnd: new Date(end).toISOString()
-                });
-                
+                    meetEnd: new Date(end).toISOString(),
+                });    
+            
                 alert("Meeting updated successfully!");
                 onUpdated?.();
             }
