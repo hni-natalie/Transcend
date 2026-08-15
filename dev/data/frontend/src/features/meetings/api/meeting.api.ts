@@ -60,12 +60,14 @@ export const meetingApi = {
     // =====================
 
     syncParticipants(data: {
-		meetId: string;
-		participants: {
-			userId: string;
-			role: "organiser" | "participant";
-			attendance: "present" | "absent" | "pending";
-		}[];
+      meetId: string;
+      participants: {
+        userId: string;
+        role: "organiser" | "participant";
+        attendance: "present" | "absent" | "pending";
+      }[];
+      meetStart?: string;
+      meetEnd?: string;
     }) {
       	return apiClient.patch(`${base}/participants`, data);
     },
