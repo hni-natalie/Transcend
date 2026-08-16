@@ -38,4 +38,6 @@ module.exports = {
     SUPABASE_PUBLIC_URL: process.env.SUPABASE_PUBLIC_URL,
     // Google API Key
     GOOGLE_AI_API_KEY: readSecret('google_ai_api_key'),
+	// SMTP
+	SMTP_PASSWORD: readSecret('smtp_password'),
 };
