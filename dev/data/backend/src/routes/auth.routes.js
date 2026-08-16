@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { OAuth2Client } = require('google-auth-library');
 const { logPresenceActivity } = require('../utils/activity');
+const { validateLogin, validateGoogleLogin } = require('../validators/auth.validator');
 
 
 const JWT_SECRET = fs.readFileSync('/run/secrets/jwt_secret', 'utf8').trim();
@@ -25,7 +26,14 @@ async function verifyGoogleToken(idToken) {
 
 // POST /auth/login — email login
 router.post('/login', async (req, res) => {
-    const { userEmail, userPassword } = req.body;
+    // const { userEmail, userPassword } = req.body;
+	let userEmail, userPassword;
+    try {
+        ({ userEmail, userPassword } = validateLogin(req.body));
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+
 
     try {
         const user = await prisma.user.findUnique({
@@ -92,7 +100,14 @@ router.post('/login', async (req, res) => {
 
 // POST /auth/google — OAuth login (only existing users)
 router.post('/google', async (req, res) => {
-    const { idToken } = req.body;
+    // const { idToken } = req.body;
+	let idToken;
+    try {
+        ({ idToken } = validateGoogleLogin(req.body));
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+
 
     try {
         // verify google token

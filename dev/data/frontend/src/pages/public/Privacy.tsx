@@ -56,7 +56,7 @@ export const Privacy = () => (
 							<strong>Meeting Recordings:</strong> If a meeting host initiates a recording, the audio/video session is recorded, processed, and the resulting file URL is stored in our system.
 						</li>
 						<li>
-							<strong>AI-Powered Transcription &amp; Summarization:</strong> When a meeting is recorded, we may process the audio using Faster Whisper Service to generate a text transcript, and may further process that transcript using an AI language model to produce a meeting summary. These generated transcripts and summaries are stored alongside the recording and are visible to authorized workspace members. This section will be updated once this feature is implemented and the specific provider is finalized.
+							<strong>AI-Powered Transcription &amp; Summarization:</strong> When a meeting is recorded, we may process the audio using Faster Whisper Service to generate a text transcript, and may further process that transcript using an AI language model to produce a meeting summary. These generated transcripts and summaries are stored alongside the recording and are visible to authorized workspace members.
 						</li>
 					</ul>
 

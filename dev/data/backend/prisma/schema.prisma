@@ -20,6 +20,7 @@ enum UserStatus {
 enum AccessLevel {
   shared
   department
+  virtual
 }
 
 enum AttendanceStatus {
@@ -141,6 +142,10 @@ model User {
   socketId      String?
   lastLoginAt   DateTime?
   emailVerified Boolean? @default(false)
+
+  dataExportRequestedAt DateTime?
+  dataExportCompletedAt DateTime?
+  deletionRequestedAt	DateTime?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
