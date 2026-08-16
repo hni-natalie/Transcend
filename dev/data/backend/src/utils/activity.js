@@ -77,7 +77,7 @@ const logSpaceActivity = async ({
         type: 'space',
         action,
         contextTitle: spaceName || 'Unknown Space',
-        contextDetails: departmentName || 'General'
+        contextDetails: departmentName || 'Common Space'
     });
 };
 
