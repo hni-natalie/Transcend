@@ -17,4 +17,14 @@ export interface PasswordData {
   confirmPassword: string;
 }
 
-export type ActiveSection = 'profile' | 'password';
+export type ActiveSection = 'profile' | 'password' | 'privacy';
+
+export interface DataExportRecord {
+  requestedAt: string;
+  completedAt: string;
+}
+
+export interface DeletionRequestRecord {
+  requestedAt: string;
+  alreadyRequested: boolean;
+}
