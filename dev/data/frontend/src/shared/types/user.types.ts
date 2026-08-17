@@ -93,7 +93,7 @@ export type Player = {
 	roomName?: string;
 	position: Position;
 	rotation?: number;
-	color: string;
+	color?: string;
 	photo: string;
 	audioEnabled?: boolean;
 	speaking?: boolean;

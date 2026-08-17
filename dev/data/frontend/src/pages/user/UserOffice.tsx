@@ -6,7 +6,7 @@ import { PerspectiveCamera, MapControls, SpotLight, Plane } from '@react-three/d
 import { useSocket } from '@/context/SocketContext';
 import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceSpace } from '@features/livekit';
-import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject } from '@features/office';
+import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject, SpawnParticle } from '@features/office';
 import { KeyboardProvider, PositionProvider } from '@/context';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { SpaceProvider } from '@/features/office/context/SpaceContext';
@@ -118,9 +118,9 @@ export function Office({ roomName } : SpaceProps ) {
 		<div className='flex-1 relative'>
 			<Canvas className=''>
 			<Physics>
-
 				<SpaceProvider localPlayerRef={localPlayerRef} roomName={roomName}>
 				<PositionProvider roomName={roomName}>
+
 					<PerspectiveCamera 
 						ref={cameraRef as React.Ref<THREE.PerspectiveCamera>}
 						makeDefault
@@ -162,9 +162,10 @@ export function Office({ roomName } : SpaceProps ) {
 					{/* <directionalLight position={[10, 5, 5]} /> */}
 					
 					{/* Ground Plane */}
-					<PlaneGround handleGroundClick={handleGroundClick} />
+					<PlaneGround handleGroundClick={handleGroundClick} color="#303030" />
 					<GenerateDept />
 					<SpawnObject roomName={roomName} />
+					<SpawnParticle roomName={roomName} radius={0.07} />
 
 					<SpawnCharacter roomName={roomName} lightTargetRef={lightTargetRef} listenerRef={listenerRef} ref={localPlayerRef}/>
 					{/* Grid helper for reference */}

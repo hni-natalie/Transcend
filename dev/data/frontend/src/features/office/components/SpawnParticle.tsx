@@ -3,27 +3,25 @@ import * as THREE from 'three';
 import { useOfficeSpace } from '@features/office/context/SpaceContext';
 import { useSocket } from '@/context/SocketContext';
 import { Player, addPosition } from '@shared';
-import { Object } from '@features/office';
+import { Particle } from '@features/office';
 import { useLiveKit } from '@features/livekit';
 
-export function SpawnObject({ roomName }) {
-	const { roomObjs } = useSocket();
+export function SpawnParticle({ roomName, radius }) {
+	const { roomParticles } = useSocket();
 
 	return (
 		<>
-			{roomObjs.map(( object:Player ) => {
+			{roomParticles.map(( object:Player ) => {
 				return (
-					<Object
+					<Particle
 						key={object.userId}
 						ref={null} // null for remote players
 						position={object.position} // need object.position to receive socketio remote pos updates
 						id={object.id}
 						userId={object.userId}
 						name={object.name}
-						color={object.color}
-						photo='/objects/ball/ball.png'
-						ownership={object.ownership}
-						radius={2}
+						photo={null}
+						radius={radius}
 					/>
 				);
 			})}

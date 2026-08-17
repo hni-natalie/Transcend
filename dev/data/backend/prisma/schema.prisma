@@ -20,6 +20,7 @@ enum UserStatus {
 enum AccessLevel {
   shared
   department
+  virtual
 }
 
 enum AttendanceStatus {
