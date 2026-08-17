@@ -71,28 +71,16 @@ const getOfficeDept = async () => {
 	return { departmentNames, departmentCount, officeSpaces };
 }
 
-const updateRoomPlayer = (prev, data, planeRefs) => {
-	const planePos = getPlanePosition(planeRefs, data.player.dpId);
-	// const finalPos = {
-	// 	x: planePos?.x || 0, //+ (data.player.position?.x || 0), // should be random +0.01
-	// 	y: 0,
-	// 	z: planePos?.z || 0, //+ (data.player.position?.z || 0)
-	// }
+const updateRoomPlayer = (prev, data) => {
 
 	const existingUserIdx = prev.findIndex(p => p.userId === data.player.userId);
 	console.log('[updateRoomPlayer] existing player: ', existingUserIdx, ' ', data.player.userId);
-	// console.log('[updateRoomPlayer] finalPos: ', finalPos, ' player: ', data.player.position);
 	if (existingUserIdx !== -1) {
 		const updatedPlayers = [...prev];
-		// updatedPlayers[existingUserIdx] = {
-		// 	...data.player, // replace, check if userId gets updated
-		// 	position: finalPos || data.player.position
-		// }
 		updatedPlayers[existingUserIdx] = data.player;
 		return updatedPlayers;
 	}
 	else {
-		// return [...prev, { ...data.player, position: finalPos || data.player.position }];
 		return [...prev, data.player];
 	}
 }
@@ -119,7 +107,7 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 		}
 
     socket.on('player-joined-room', (data) => {
-      setRoomPlayers(prev => updateRoomPlayer(prev, data, planeRefs));
+      setRoomPlayers(prev => updateRoomPlayer(prev, data));
       console.log(`User ${data.player.name}, sockId:${data.player.id} joined ${data.roomName}`);
     });
 

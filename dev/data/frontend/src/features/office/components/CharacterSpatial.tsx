@@ -241,6 +241,10 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 
 				{isLocalPlayer && (
 					<group>
+						<object3D 
+							ref={lightTargetRef} 
+							position={[0, 2, 0]}  // ← Light points here
+						/>
 						<spotLight
 							position={[0, 0, 1]}
 							color="#ffeedd"
@@ -250,10 +254,6 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 							decay={1}
 							distance={20}
 							target={lightTargetRef.current}
-						/>
-						<object3D 
-							ref={lightTargetRef} 
-							position={[0, 2, 0]}  // ← Light points here
 						/>
 					</group>
 				)}

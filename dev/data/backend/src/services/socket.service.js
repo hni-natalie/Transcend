@@ -177,13 +177,13 @@ const socketService = (io) => {
 
     player.roomName = roomName;
     player.position = getSpawnPosFromDpId(roomData, player.dpId);
-    console.log('[join-room] player spawn at: ', getSpawnPosFromDpId(roomData, player.dpId))
+    // console.log('[join-room] player spawn at: ', getSpawnPosFromDpId(roomData, player.dpId))
 
     if (roomData.users.length > 0) {
       const existingUserIdx = roomData?.users.findIndex(u => u.userId === player.userId);
       console.log('[socket] existingUserIdx ', existingUserIdx);
       if (existingUserIdx !== -1) {
-        console.log('[existingUserIdx] id: ', roomData.users[existingUserIdx].id);
+        // console.log('[existingUserIdx] id: ', roomData.users[existingUserIdx].id);
         roomData.users[existingUserIdx] = player; // ## replace existing with real socket.id
       }
       else {
