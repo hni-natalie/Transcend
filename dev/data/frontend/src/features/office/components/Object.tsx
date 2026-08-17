@@ -7,8 +7,8 @@
 	3D components position emits their position when on collision/moved
 */
 
-import { useLoader, useFrame } from '@react-three/fiber';
-import { useBox, useContactMaterial, useCylinder } from '@react-three/cannon';
+import { useTexture } from '@react-three/drei';
+import { useBox, useContactMaterial } from '@react-three/cannon';
 import { Text } from '@react-three/drei';
 import React, { useRef, useState, useEffect, useCallback, RefObject } from 'react';
 import * as THREE from 'three';
@@ -46,7 +46,7 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>(({
 		contactEquationRelaxation: 500, // higher = softer/slower correction
 	});
   const [objectRef, api] = useBox(() => ({
-    mass: 1,
+    mass: 0.5,
 	  type: type,
   	linearDamping: 0.1,
 	  material: 'objMaterial',
@@ -65,13 +65,8 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>(({
 	useEffect(() => { enableSocket(); }, []);
 
 	let texture = null;
-	if (photo) {
-		try {
-			texture = (useLoader(THREE.TextureLoader, photo) as THREE.Texture);
-		} catch (error) {
-			texture = null;
-		}
-	}
+	if (photo)
+		texture = useTexture(photo);
 
 	// only propagate forward ref is isLocalPlayer
   useEffect(() => {
@@ -131,7 +126,7 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>(({
 				{/* main surface */}
 				<circleGeometry args={[radius, segments]} />
 				{texture ? (
-				<meshStandardMaterial map={texture} color="#FFFFFF" emissive="#1A1A1A" side={THREE.DoubleSide} />
+				<meshStandardMaterial map={texture} color={color} emissive="#1A1A1A" side={THREE.DoubleSide} />
 				) : (
 					<meshStandardMaterial color={color} side={THREE.DoubleSide} /> 
 				)}
