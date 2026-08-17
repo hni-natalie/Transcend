@@ -338,14 +338,21 @@ class LiveKitService {
           this.audioManager.setRoom(this._room);
         }
       } catch (error) {
-        console.error(error);
+        console.error('livekitService: ', error.name, ' ', error);
       
         await this._room?.disconnect();
         this._room = null;
 
         this.setIsConnectedRoom(false);
         this.setIsLoading(false); // ###
-        this.setError(error.message || "Unable to connect to meeting.");
+        if (error.name === 'NotFoundError') {
+          this.setError('No microphone or camera found. Please connect a device and try again.');
+        } else if (error.name === 'NotAllowedError') {
+          this.setError('Camera/microphone access was denied. Please check your browser permissions.');
+        } else {
+          this.setError(error.message || "Unable to connect to meeting.");
+        }
+        alert(this.error);
         // window.location.reload();
 
         return {
