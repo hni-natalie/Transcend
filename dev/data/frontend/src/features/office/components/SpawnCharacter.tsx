@@ -24,12 +24,13 @@ export const SpawnCharacter = React.forwardRef<THREE.Object3D, SpawnCharacterPro
 	return (
 		<>
 			{roomPlayers.map(( user:Player ) => {
-				// console.log('[SpawnCharacter] ', addPosition(planePos, user.position));
+				const mockPos = { x:0, y:0, z:0 }; // workaround so that fetched user stay in place
+				// console.log('[SpawnCharacter] ', addPosition(mockPos, user.position));
 				return (
 					<Character
 						key={user.userId}
 						ref={user.id === localPlayerId ? ref : null} // null for remote players
-						position={user.position} // need user.position to receive socketio remote pos updates
+						position={addPosition(mockPos, user.position)} // need user.position to receive socketio remote pos updates
 						id={user.id}
 						userId={user.userId}
 						name={user.name}
