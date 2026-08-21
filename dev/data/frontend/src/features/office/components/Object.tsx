@@ -46,7 +46,7 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>(({
 		contactEquationRelaxation: 500, // higher = softer/slower correction
 	});
   const [objectRef, api] = useBox(() => ({
-    mass: 0.5,
+    mass: 1,
 	  type: type,
   	linearDamping: 0.1,
 	  material: 'objMaterial',
@@ -86,8 +86,6 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>(({
 
 	// update position from values set outside
 	useEffect(() => {
-		// if (hasChangedRef.current[userId]) return ;
-
 		// if im colliding with this object, do not update
 		// only update objects that remote update
 		
