@@ -16,12 +16,14 @@ import { useCreateLayoutContext } from '@livekit/components-react';
 import { usePinnedTracks, useTracks } from '@livekit/components-react';
 import { Chat, ControlBar, ParticipantTile } from '@/features/livekit';
 import { Rnd } from "react-rnd";
+import { Attendance } from './Attendance';
 
 /**
  * @public
  */
 export interface VideoConferenceProps extends React.HTMLAttributes<HTMLDivElement> {
   meetId: string;
+  isHost: boolean;
   chatMessageFormatter?: MessageFormatter;
   chatMessageEncoder?: MessageEncoder;
   chatMessageDecoder?: MessageDecoder;
@@ -49,6 +51,7 @@ export interface VideoConferenceProps extends React.HTMLAttributes<HTMLDivElemen
  */
 export function VideoConference({
   meetId,
+  isHost,
   chatMessageFormatter,
   chatMessageDecoder,
   chatMessageEncoder,
@@ -60,6 +63,9 @@ export function VideoConference({
     unreadMessages: 0,
     showSettings: false,
   });
+  
+  const [showAttendance, setShowAttendance] = React.useState(false);
+  
   const lastAutoFocusedScreenShareTrack = React.useRef<TrackReferenceOrPlaceholder | null>(null);
 
   const tracks = useTracks(
@@ -151,7 +157,16 @@ export function VideoConference({
                 </FocusLayoutContainer>
               </div>
             )}
-            <ControlBar meetId={meetId} controls={{ chat: true, recording: true, settings: !!SettingsComponent }} />
+            <ControlBar 
+              meetId={meetId} 
+              controls={{ 
+                chat: true, 
+                recording: true, 
+                attendance: isHost,
+                settings: !!SettingsComponent 
+              }}
+              onAttendanceClick={() => setShowAttendance(true)} 
+            />
           </div>
           <div
             style={{
@@ -183,6 +198,16 @@ export function VideoConference({
               />
             </Rnd>
           </div>
+
+          {/* Attendance */}
+          {showAttendance && (
+            <Attendance
+              meetId={meetId}
+              onClose={() => setShowAttendance(false)}
+            />
+          )}
+
+          {/* Setting */}
           {SettingsComponent && (
             <div
               className="lk-settings-menu-modal"

@@ -17,11 +17,12 @@ const { apiClient }                        = require('../api/api.client.js')
 const { updateSocketId }                   = require('./supabase-utils.service.js')
 const prisma 				= require('../../prisma/client');
 const { logSpaceActivity, logMeetingActivity } = require('../utils/activity');
-const { initializeRoomData, createPlayer, randomPosition } = require('../utils/socket')
+const { initRoomData, createPlayer, initRoomSpawnPos, getSpawnPosFromDpId, initRoomComponents } = require('../utils/socket')
 const players     = new Map();
 const rooms       = new Map();      // Map<roomName, roomPlayers> : Map<roomName, [roomPlayers, roomObjects]>
-const spaceOccupancy = new Map();
+const spaceOccupancy   = new Map();
 const userCurrentSpace = new Map();
+const roomSize    = 30;
 let ioInstance = null;
 
 // socket io setup
@@ -95,7 +96,7 @@ const socketService = (io) => {
     roomName: null,
     position: { x:0, y:0, z:0 },
     rotation: { x:-Math.PI/2, y:0, z:0 },
-    color: randomHslColor(),
+    color: randomHslColor("80"),
     photo: socket.user.avatarUrl || '',
     audioEnabled: true,
     speaking: false,
@@ -111,16 +112,26 @@ const socketService = (io) => {
   // Handle position updates
   socket.on('player-move', (data) => {
     const target = Array.from(players.values()).find(p => p.userId === data.userId);
-    // target = players.get(data.id)
     // console.log('[player-move] target! ', target, ' ', data.userId);
     if (target && target.roomName) {
       target.position = data.position; // ### this means user pos not updated?
-      // target.rotation = data.rotation;
 
       // emit position in room name
       socket.to(target.roomName).emit('player-moved', data);
     }
   });
+
+  socket.on('room-spawn-pos', async (data) => {
+    let roomData = rooms.get(data.roomName);
+    if (!roomData) {
+      roomData = initRoomSpawnPos(rooms, data.roomName, data.positionData);
+    }
+    else // update
+      roomData.positionData = data.positionData;
+    // console.log('[room-spawn-pos] roomData: ', roomData);
+    console.log('[room-spawn-pos] update roomData');
+  })
+
   socket.on('object-move', (data) => {
     let roomData = rooms.get(data.roomName);
     if (!roomData) return;
@@ -130,9 +141,6 @@ const socketService = (io) => {
       target.position = data.position;
       // emit to everyone include sender
       io.in(target.roomName).emit('object-moved', data);
-      // socket.emit('object-moved', data);
-      // io.in(target.roomName).emit('object-moved', data);
-
       // console.log('[object-move] object! ', data.position, ' ', data.userId);
     }
   });
@@ -179,35 +187,54 @@ const socketService = (io) => {
     // ...
     // create if no room
     if (!roomData) {
-      roomData = await initializeRoomData(rooms, roomName);
-      // console.log('[socket.service] new room!');
+      roomData = await initRoomData(rooms, roomName);
+
+      await new Promise((resolve) => { // wait frontend data
+        socket.emit('get-room-spawn-pos', { roomName });
+        socket.once('room-spawn-pos', (data) => {
+          resolve(data);
+        });
+        setTimeout(() => {
+          resolve(null);
+        }, 5000);
+      });
+      console.log('[socket.service] new room!');
+    }
+    else if (roomData.users.length === 0) {
+      console.log('[join-room] no users! init..'); // ###d
+      await initRoomComponents(roomData);
     }
 
     // Room-size constrains
-    const roomSize = 20;
     if (roomData.users.length > roomSize) {
       socket.emit('room-full', { roomName, maxSize:roomSize });
-      console.log('Room Full: current users: ', roomData.users)
+      console.log('Room Full: current users: ', roomData.users.length)
       return;
     }
 
     player.roomName = roomName;
+    player.position = getSpawnPosFromDpId(roomData, player.dpId);
+    // console.log('[join-room] player spawn at: ', getSpawnPosFromDpId(roomData, player.dpId))
 
-    if (roomData?.users) {
+    if (roomData.users.length > 0) {
       const existingUserIdx = roomData?.users.findIndex(u => u.userId === player.userId);
       console.log('[socket] existingUserIdx ', existingUserIdx);
-      if (existingUserIdx !== -1)
-        roomData.users[existingUserIdx] = player; // replace
-      else
+      if (existingUserIdx !== -1) {
+        // console.log('[existingUserIdx] id: ', roomData.users[existingUserIdx].id);
+        roomData.users[existingUserIdx] = player; // ## replace existing with real socket.id
+      }
+      else {
         roomData.users.push(player);
+      }
     }
-    else
+    else {
       roomData.users.push(player); // append entire player obj
+    }
     socket.join(roomName);
     socket.emit('existing-room-players', roomData?.users || []); // send only to client
     socket.emit('existing-room-objects', roomData?.objects || []);
-    // console.log('[existing-room-objects] ', roomData?.objects);
-    
+    socket.emit('existing-room-particles', roomData?.particles || []);
+
     // Generate room-specific token
     const token = await generateRoomToken(roomName, player.id, player.name); // ###
 

@@ -115,8 +115,35 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
     }
   };
 
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const validateForm = (): string | null => {
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      return 'First and last name are required.';
+    }
+    if (formData.firstName.trim().length > 100 || formData.lastName.trim().length > 100) {
+      return 'Names must be under 100 characters.';
+    }
+    if (!formData.email.trim()) {
+      return 'Email is required.';
+    }
+    if (!EMAIL_REGEX.test(formData.email.trim())) {
+      return 'Please enter a valid email address.';
+    }
+    if (!formData.roleId) {
+      return 'Please select a role.';
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
+
+  const formError = validateForm();
+  if (formError) {
+    showToast('error', formError);
+    return;
+  }
 
   // Validate password if provided
   if (formData.password && formData.password.trim() !== '') {

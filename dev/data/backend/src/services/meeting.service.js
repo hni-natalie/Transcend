@@ -284,7 +284,7 @@ const meetingService = {
     },
 
     // Sync Participants
-    async syncParticipants(meetId, userId, participantDatas) {
+    async syncParticipants(meetId, userId, participantDatas, meetStart=null, meetEnd=null) {
         const meeting = await prisma.meeting.findUnique({
             where: { meetId }
         });
@@ -313,8 +313,8 @@ const meetingService = {
             ...otherParticipants
         ];
 
-        const normalizedStart = normalizeDateTime(meeting.meetStart);
-        const normalizedEnd = normalizeDateTime(meeting.meetEnd);
+        const normalizedStart = normalizeDateTime(meetStart ?? meeting.meetStart);
+        const normalizedEnd = normalizeDateTime(meetEnd ?? meeting.meetEnd);
 
         // Validate participant conflicts
         await validateParticipantConflicts({

@@ -3,6 +3,10 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { getIO } = require('./socket.service');
 const { validatePassword } = require('../utils/password');
+const { sendDataExportEmail, sendAccountDeletionRequestEmail, notifySupportOfDeletionRequest } = require('../utils/mailer');
+
+// only google users receive email, mock users with fake email dont (for demo only)
+const canReceiveRealEmail = (user) => user.authProvider === 'google';
 
 const userService = {
     async getDashboardMetrics() {
@@ -300,7 +304,7 @@ const userService = {
     },
     
     async createUser(userData) {
-        const { email, password, name, roleId, workspaceId, dpId } = userData;
+        const { email, password, name, roleId, workspaceId, dpId, userTitle } = userData;
         
         const existingUser = await prisma.user.findUnique({
             where: { userEmail: email }
@@ -481,7 +485,130 @@ const userService = {
 		  console.log('[user.service] broadcasting user-status-changed:', userId, status); // debug
 		  getIO().emit('user-status-changed', { userId, status });
 		return { userId, userStatus: status };
-	}
+	},
+
+	// instant download and audit trail
+	async exportUserData(userId) {
+		const user = await prisma.user.findUnique({
+			where: { userId },
+			select: {
+				userId: true,
+				userEmail: true,
+				userName: true,
+				userTitle: true,
+				avatarUrl: true,
+				city: true,
+				country: true,
+				timezone: true,
+				authProvider: true,
+				userStatus: true,
+				lastLoginAt: true,
+				createdAt: true,
+				updatedAt: true,
+				role: { select: { roleName: true } },
+				department: { select: { dpName: true } },
+			}
+		});
+
+		if (!user) throw new Error('User not found');
+
+		const [activityLogs, createdTasks, assignedTasks, createdMeetings, meetingParticipations, messages] = await Promise.all([
+			prisma.activity.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } }),
+			prisma.task.findMany({ where: { createdByUserId: userId } }),
+			prisma.taskAssignment.findMany({ where: { userId }, include: { task: { select: { taskTitle: true, taskStatus: true } } } }),
+			prisma.meeting.findMany({ where: { createdByUserId: userId } }),
+			prisma.meetingParticipant.findMany({ where: { userId }, include: { meet: { select: { meetTitle: true, meetStart: true, meetEnd: true } } } }),
+			prisma.message.findMany({
+				where: { authorId: userId, deletedAt: null },
+				select: { messageId: true, conversationId: true, text: true, createdAt: true, attachments: { select: { name: true, kind: true, url: true } } }
+			}),
+		]);
+
+		const requestedAt = new Date();
+
+		await prisma.user.update({
+			where: { userId },
+			data: { dataExportRequestedAt: requestedAt, dataExportCompletedAt: requestedAt },
+
+		});
+
+		const payload = {
+			profile: user,
+			workspaceActivity: {
+				statusAndActivityLogs: activityLogs,
+			},
+			collaborativeContent: {
+				meetingsCreated: createdMeetings,
+				meetingsParticipated: meetingParticipations,
+				tasksCreated: createdTasks,
+				tasksAssigned: assignedTasks,
+				sentMessages: messages,
+			},
+			generatedAt: requestedAt,
+		};
+
+		if (canReceiveRealEmail(user)) {
+			sendDataExportEmail({
+				to: user.userEmail,
+				userName: user.userName,
+				requestedAt,
+				completedAt: requestedAt,
+			}).catch((err) => console.error('[user.service] Failed to send data export email:', err));
+		} else {
+			console.log(`[user.service] Skipping data export email for mock user ${user.userEmail} (authProvider=${user.authProvider})`);
+		}
+
+		return {
+			requestedAt,
+			completedAt: requestedAt,
+			data: payload,
+		};
+	},
+
+	// request only, notify user and support (admin)
+	async requestAccountDeletion(userId) {
+		const user = await prisma.user.findUnique({ where: { userId } });
+		if (!user) throw new Error('User not found');
+
+		if (user.deletionRequestedAt) {
+			return { alreadyRequested: true, requestedAt: user.deletionRequestedAt };
+		}
+		
+		const requestedAt = new Date();
+
+		await prisma.user.update({
+			where: { userId },
+			data: { deletionRequestedAt: requestedAt },
+
+		});
+
+		const emailTasks = [
+			notifySupportOfDeletionRequest({
+				userId: user.userId,
+				userEmail: user.userEmail,
+				userName: user.userName,
+				requestedAt,
+			}),
+		];
+
+		if (canReceiveRealEmail(user)) {
+			emailTasks.push(
+				sendAccountDeletionRequestEmail({
+					to: user.userEmail,
+					userName: user.userName,
+					requestedAt,
+				})
+			);
+		} else {
+			console.log(`[user.service] Skipping deletion confirmation email for mock user ${user.userEmail} (authProvider=${user.authProvider})`);
+		}
+
+		await Promise.all(emailTasks).catch((err) =>
+			console.error('[user.service] Failed to send deletion request emails:', err)
+		);
+
+		return { alreadyRequested: false, requestedAt };
+		}
 };
 
 module.exports = userService;

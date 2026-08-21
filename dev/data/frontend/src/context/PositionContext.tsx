@@ -5,6 +5,7 @@
 import { createContext, useContext, useRef, useEffect } from 'react';
 import { useSocket } from '@/context';
 import { useLiveKit } from '@/features/livekit';
+import { officeSceneConfig as conf } from '@/config/office.config';
 
 const PositionContext = createContext(null);
 export const usePosition = () => {
@@ -29,6 +30,16 @@ export const PositionProvider = ({ children, roomName }) => {
   const locksRef = useRef<Map<string, ObjectLock>>(new Map());
   const isMovingRef = useRef({});
   const hasChangedRef = useRef({});
+
+  const worldWidth = conf.World.width + conf.World.border;
+  const worldHeight = conf.World.height + conf.World.border;
+  const radius = 3;
+  const boundaries = {
+      minX: -worldWidth/2 + radius,
+      maxX: worldWidth/2 - radius,
+      minZ: -worldHeight/2 + radius,
+      maxZ: worldHeight/2 - radius
+  };
 
   // functions
   const lockSystem = {
@@ -88,7 +99,17 @@ export const PositionProvider = ({ children, roomName }) => {
         }
         
         if (!hasChangedRef.current[userId]) return;
-        socket.emit('object-move', { userId:userId, roomName:roomName, position:lastKnownPositionsRef.current[userId] });
+        const newPos = { ...lastKnownPositionsRef.current[userId] };
+        newPos.x = newPos.x < boundaries.minX ? boundaries.minX * 0.98 : 
+                  newPos.x > boundaries.maxX ? boundaries.maxX * 0.98 : 
+                  newPos.x;
+        newPos.z = newPos.z < boundaries.minZ ? boundaries.minZ * 0.98 : 
+                  newPos.z > boundaries.maxZ ? boundaries.maxZ * 0.98 : 
+                  newPos.z;
+        if (newPos.x !== p[0] || newPos.z !== p[2])
+          api.position.set(newPos.x, newPos.y, newPos.z);
+
+        socket.emit('object-move', { userId:userId, roomName:roomName, position:newPos });
         hasChangedRef.current[userId] = false;
       }
     })

@@ -35,13 +35,32 @@ export const Login = () => {
 
     const onBack = () => { navigate('/'); };
 
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const validateLoginForm = (): string | null => {
+        if (!userEmail.trim() || !userPassword) {
+            return 'Email and password are required.';
+        }
+        if (!EMAIL_REGEX.test(userEmail.trim())) {
+            return 'Please enter a valid email address.';
+        }
+        return null;
+    };
+
     const handleEmailLogin = async (e: React.SubmitEvent) => {
         e.preventDefault();
         setError('');
+
+        const validationError = validateLoginForm();
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
         setLoading(true);
 
         try {
-            const user = await login(userEmail, userPassword);
+            const user = await login(userEmail.trim(), userPassword);
             if (user.roleName === 'Admin') {
                 navigate(R.ADMIN_DASHBOARD);
             } else {

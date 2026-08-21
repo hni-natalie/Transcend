@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { usePlane } from '@react-three/cannon';
 import { officeSceneConfig as conf } from '@/config/office.config';
 
-export function PlaneGround({ handleGroundClick }) {
+export function PlaneGround({ handleGroundClick, color="#6E6E6E" }) {
 
 	const hasMouseMoved = useRef(false);
 	const hasMouseDown = useRef(false);
@@ -48,7 +48,7 @@ export function PlaneGround({ handleGroundClick }) {
 			ref={groundRef}
 		>
 			<planeGeometry args={[conf.World.width+10, conf.World.height+10]} />
-			<meshStandardMaterial color="#6E6E6E" metalness={0.5} visible={true} />
+			<meshStandardMaterial color={color} metalness={0.5} visible={true} />
 		</mesh>
 	)
 }

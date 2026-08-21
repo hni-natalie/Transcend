@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IconCamera, InputDropdown, countryOptions, timezoneOptions, IconEye, IconEyeOff } from '@/shared';
 import { usePasswordField } from '@/shared';
-import { ProfileData, PasswordData, ActiveSection } from './types';
+import { ProfileData, PasswordData, ActiveSection, DataExportRecord, DeletionRequestRecord } from './types';
 
 export const countryChoices = countryOptions.map(country => ({ id: country, name: country }));
 export const timezoneChoices = timezoneOptions.map(tz => ({ id: tz.value, name: tz.label }));
@@ -421,5 +421,135 @@ export const SideNav = ({ activeSection, isGoogleUser, onSelect }: SideNavProps)
         Password
       </button>
     )}
+	<button
+      onClick={() => onSelect('privacy')}
+      className={`px-9 text-left text-base font-semibold tracking-wide rounded-xl transition-all duration-200 cursor-pointer ${
+        activeSection === 'privacy' ? 'text-accent-lime' : 'text-foreground-3 hover:text-foreground'
+      }`}
+    >
+      Privacy and Data
+    </button>
   </div>
 );
+
+// GDPR
+const formatDateTime = (iso: string) =>
+  new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+const gdprCardClass = 'bg-background-2 rounded-3xl p-8 space-y-4';
+
+export interface RequestMyDataCardProps {
+  isRequesting: boolean;
+  lastExport: DataExportRecord | null;
+  onRequestData: () => void;
+}
+
+export const RequestMyDataCard = ({ isRequesting, lastExport, onRequestData }: RequestMyDataCardProps) => (
+  <div className={gdprCardClass}>
+    <div className="flex justify-between items-center">
+      <h2 className="text-xl font-semibold text-foreground tracking-wide">Request My Data</h2>
+      <button
+        onClick={onRequestData}
+        disabled={isRequesting}
+        className="btn-lime text-base !px-4 !py-2 whitespace-nowrap disabled:opacity-50"
+      >
+        {isRequesting ? 'Preparing...' : 'Request Data'}
+      </button>
+    </div>
+
+    <p className="text-base text-foreground-3 leading-relaxed">
+      Under the General Data Protection Regulation (GDPR) and other privacy laws, you have the right to request a
+      copy of the personal data we store about you. If you submit a request, we will generate a downloadable report
+      containing your personal information, workspace activities, and application history. This includes:
+    </p>
+    <ul className="list-disc list-inside text-base text-foreground-3 leading-relaxed space-y-1 ml-2">
+      <li><span className="text-foreground-2 font-medium">Profile Details:</span> Name, email address, avatar, location (city/country), timezone, and authentication provider.</li>
+      <li><span className="text-foreground-2 font-medium">Workspace Activity:</span> Your active status logs, department assignments, and system-wide activity logs.</li>
+      <li><span className="text-foreground-2 font-medium">Collaborative Content:</span> Meetings you organized or participated in, assigned tasks, conversations, sent messages, and attachments.</li>
+    </ul>
+
+    {lastExport && (
+      <p className="text-sm text-accent-lime pt-1">
+        Requested {formatDateTime(lastExport.requestedAt)} · Completed {formatDateTime(lastExport.completedAt)} — a confirmation email is on its way.
+      </p>
+    )}
+  </div>
+);
+
+export interface RequestAccountDeletionCardProps {
+  isRequesting: boolean;
+  deletionRequest: DeletionRequestRecord | null;
+  onRequestDeletion: () => void;
+}
+
+export const RequestAccountDeletionCard = ({
+  isRequesting,
+  deletionRequest,
+  onRequestDeletion,
+}: RequestAccountDeletionCardProps) => (
+  <div className={gdprCardClass}>
+    <div className="flex justify-between items-center">
+      <h2 className="text-xl font-semibold text-foreground tracking-wide">Request to Delete My Account</h2>
+      <button
+        onClick={onRequestDeletion}
+        disabled={isRequesting || Boolean(deletionRequest)}
+        className="btn-lime text-base !px-4 !py-2 whitespace-nowrap disabled:opacity-50"
+      >
+        {deletionRequest ? 'Request Sent' : isRequesting ? 'Sending...' : 'Request Deletion'}
+      </button>
+    </div>
+
+    <p className="text-base text-foreground-3 leading-relaxed">
+      If you no longer wish to use WorkFrom, you can request the permanent deletion of your account. Please note
+      that this action is irreversible. Submitting this request will notify our support team
+      (support@workfrom.com) to delete your account, which will result in the following actions:
+    </p>
+    <ul className="list-disc list-inside text-base text-foreground-3 leading-relaxed space-y-1 ml-2">
+      <li><span className="text-foreground-2 font-medium">Personal Identity Removal:</span> Your profile credentials, email, password, and linked Google authentication ID will be permanently erased.</li>
+      <li><span className="text-foreground-2 font-medium">Task &amp; Meeting De-association:</span> Tasks created by you will be purged, and your name will be removed from all past meeting participation lists.</li>
+      <li><span className="text-foreground-2 font-medium">Chat &amp; Message Anonymization:</span> Your sent messages and conversation histories will be unlinked from your profile, and all uploaded message attachments will be permanently deleted from our servers.</li>
+    </ul>
+
+    {deletionRequest && (
+      <p className="text-sm text-accent-lime pt-1">
+        Requested {formatDateTime(deletionRequest.requestedAt)} — we'll carry this out within 30 days. Check your email for confirmation.
+      </p>
+    )}
+  </div>
+);
+
+// confirm modal content - mirrors the delete-conversation confirmation pattern
+export interface ConfirmAccountDeletionProps {
+  isRequesting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}
+
+export const ConfirmAccountDeletion = ({ isRequesting, onCancel, onConfirm }: ConfirmAccountDeletionProps) => (
+  <div className="bg-background-1 rounded-3xl p-6 shadow-2xl w-[340px]">
+    <p className="text-base text-foreground mb-1 font-semibold">Delete your account?</p>
+    <p className="text-sm text-foreground-3 mb-6">
+      This will submit a request to permanently delete your account and all associated data. This action cannot
+      be undone. Are you sure?
+    </p>
+
+    <div className="flex justify-end gap-2.5">
+      <button
+        onClick={onCancel}
+        disabled={isRequesting}
+        className="px-4 py-2 text-base rounded-full text-foreground-3 hover:text-foreground hover:bg-background-2 transition-colors cursor-pointer disabled:opacity-50"
+      >
+        Cancel
+      </button>
+
+      <button
+        onClick={onConfirm}
+        disabled={isRequesting}
+        className="px-4 py-2 text-base rounded-full bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-50"
+      >
+        {isRequesting ? 'Submitting...' : 'Delete'}
+      </button>
+    </div>
+  </div>
+);
+
