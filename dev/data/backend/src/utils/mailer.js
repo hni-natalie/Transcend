@@ -37,7 +37,7 @@ async function sendEmail({ to, subject, html, text }) {
 
   if (!client) {
     console.log(`[mailer] (not sent - SMTP not configured) to=${to} subject="${subject}"`);
-	console.log('[mailer] Set SMTP_USER, SMTP_PASSWORD, SMTP_HOST, SMTP_PORT to enable email sending');
+	  console.log('[mailer] Set SMTP_USER, SMTP_PASSWORD, SMTP_HOST, SMTP_PORT to enable email sending');
     return { sent: false, reason: 'SMTP not configured' };
   }
 

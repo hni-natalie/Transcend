@@ -20,14 +20,14 @@ export const Dashboard = () => {
         {/* LEFT */}
         <div className="w-[27%] p-6 pt-0">
           <MetricsRing
-			availableCount={metrics.availableCount}
-			focusCount={metrics.focusCount}
-			inMeetingCount={metrics.inMeetingCount}
-			totalCount={metrics.totalCount}
-			activePercentage={metrics.activePercentage}
-			attendancePercentage={metrics.attendancePercentage}
-			absentPercentage={metrics.absentPercentage}
-			/>
+            availableCount={metrics.availableCount}
+            focusCount={metrics.focusCount}
+            inMeetingCount={metrics.inMeetingCount}
+            totalCount={metrics.totalCount}
+            activePercentage={metrics.activePercentage}
+            attendancePercentage={metrics.attendancePercentage}
+            absentPercentage={metrics.absentPercentage}
+          />
           <StatusGrid users={users} isExcludedUser={isExcludedUser} />
         </div>
 

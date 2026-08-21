@@ -11,7 +11,6 @@ import { useSocket } from '@/context/SocketContext';
 import { LivekitMode } from '@/shared/types/livekit.types';
 import * as THREE from 'three'; //debug
 
-// export function useLiveKit( roomName:string , participantName:string ) {
 export function useLiveKit( roomName:string ) {
   const { enableSocket, joinRoom, leaveRoom } = useSocket();
   useEffect(() => { enableSocket(); }, []);

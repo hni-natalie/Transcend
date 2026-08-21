@@ -31,7 +31,7 @@ const createPlayer = ({
   roomName = null,
   position = { x: 0, y: 0, z: 0 },
   rotation = { x: -Math.PI / 2, y: 0, z: 0 },
-  color = randomHslColor(),
+  color = randomHslColor("80"),
   photo = '',
   audioEnabled = true,
   speaking = false,
@@ -53,6 +53,51 @@ const createPlayer = ({
   };
 }
 
+const createRoom = ({
+  roomName,
+  users = [],
+  objects = [],
+  particles = [],
+  positionData = [],
+  createdAt = Date.now()
+}) => {
+  return ({
+    roomName,
+    users,
+    objects,
+    particles,
+    positionData,
+    createdAt
+  });
+}
+
+const createDustParticles = async( count=250 ) => {
+  const particles = [];
+
+  for (let i = 0; i < count; i++) {
+    const objectId = uuidv4();
+    particles.push(
+      createPlayer({
+        id: i,
+        userId: objectId,
+        name: `Obj-${objectId}`,
+        dpId: 'guest',
+        roomName: 'Office',
+        position: randomPosition(50),
+        rotation: { x:-Math.PI/2, y:0, z:0 },
+        color: randomHslColor("90"),
+        photo: '',
+        audioEnabled: true,
+        speaking: false,
+        ownership: {
+          ownerId: null,
+          timestamp: null,
+        },
+  }));
+  }
+  return particles; // Return array
+}
+
 const randomPosition = ( range=10 ) => {
     return {
         x: (Math.random() - 0.5) * range * 2, // -range to +range
@@ -61,15 +106,13 @@ const randomPosition = ( range=10 ) => {
     };
 }
 
-const fetchRoomObjs = async() => {
-  // implement from db or admin config
-  // placeholder atm
+const getRoomObjs = async() => {
+  // future: implement from db or admin config
   const mockObjects = [];
-  const count = 2; // Number of mock objects
+  const count = 2;
   
   for (let i = 0; i < count; i++) {
     const objectId = uuidv4();
-    // console.log('random pos: ', randomPosition(2));
 
     mockObjects.push(
       createPlayer({
@@ -80,7 +123,7 @@ const fetchRoomObjs = async() => {
         roomName: 'Office',
         position: randomPosition(5),
         rotation: { x:-Math.PI/2, y:0, z:0 },
-        color: randomHslColor(),
+        color: randomHslColor("90"),
         photo: '',
         audioEnabled: true,
         speaking: false,
@@ -93,28 +136,37 @@ const fetchRoomObjs = async() => {
   return mockObjects; // Return array
 }
 
-// ### fetch roomObjects here, from db i guess
-// admin setting -> db, then fetch db -> room
-const initializeRoomData = async (rooms, roomName) => {
-  const roomData = {
-    name: roomName,
-    users: [],
-    objects: [],
-    createdAt: Date.now()
-  };
+const getSpawnPosFromDpId = ( roomData, userDpId ) => {
+  const offset = randomPosition(3);
 
-  // fetch all db users with online status in Office
-	// bug: when user is online(has socket) but not joined room
-	// when join room will need to rewrite
-  if (roomName === 'Office'){
+  for (const [key, room] of Object.entries(roomData.positionData)) {
+    if (room.accessLevel === 'department' && room.departmentId === userDpId) {
+      return ( { x:room?.x + offset.x || offset.x , y:0 , z:room?.z + offset.z || offset.z } )
+    }
+  }
+  return { x:0, y:0, z:0 };
+}
+
+const initRoomSpawnPos = (rooms, roomName, positionData) => {
+  const roomData = createRoom({
+    roomName,
+    positionData,
+  })
+  rooms.set(roomName, roomData);
+  return roomData;
+}
+
+const initRoomComponents = async ( roomData ) => {
+  if (!roomData) return ;
+  if (roomData.roomName === 'Office') {
 
     const activeUsers = await apiClient.get('/users/status/online');
-    const existingObjs = await fetchRoomObjs();
+    const existingObjs = await getRoomObjs();
+    const roomParticles = await createDustParticles();
 
     const count = activeUsers.length;
     console.log('num of active users: ', count);
 		const trimUser = activeUsers.slice(0, 3);
-    // console.log('[socket-service] active users: ', trimUser);
 
     // trimUser.forEach(user => {
     activeUsers.forEach(user => {
@@ -124,19 +176,42 @@ const initializeRoomData = async (rooms, roomName) => {
         name: user.userName || null,
 		    dpId: user?.department?.dpId || 'guest',
         roomName: 'Office',
-        position: randomPosition(2),
+        position: getSpawnPosFromDpId(roomData, user?.department?.dpId || 'guest'),
         rotation: { x:-Math.PI/2, y:0, z:0 },
-        color: randomHslColor(),
+        color: randomHslColor("80"),
         photo: user.avatarUrl || null,
         audioEnabled: false,
         speaking: false,
       });
       roomData.users.push(existingPlayer);
+      // console.log('existingPos: ', existingPlayer.position, ' ', existingPlayer.dpId);
     });
     roomData.objects.push(...existingObjs);
+    roomData.particles.push(...roomParticles);
   }
+}
+
+// ### fetch roomObjects here, from db i guess
+// admin setting -> db, then fetch db -> room
+const initRoomData = async (rooms, roomName) => {
+  const roomData = createRoom({
+    roomName,
+    users: [],
+    objects: [],
+    particles: [],
+    positionData: [],
+    createdAt: Date.now()
+  });
+  await initRoomComponents(roomData);
   rooms.set(roomName, roomData);
   return roomData
 }
 
-module.exports = { initializeRoomData, createPlayer, randomPosition };
+module.exports = {
+  initRoomData,
+  createPlayer,
+  randomPosition,
+  initRoomSpawnPos,
+  getSpawnPosFromDpId,
+  initRoomComponents,
+};

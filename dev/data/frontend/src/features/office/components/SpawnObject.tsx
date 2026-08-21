@@ -1,10 +1,6 @@
-import { useRef, useState, useEffect } from 'react';
-import * as THREE from 'three';
-import { useOfficeSpace } from '@features/office/context/SpaceContext';
 import { useSocket } from '@/context/SocketContext';
-import { Player, addPosition } from '@shared';
+import { Player } from '@shared';
 import { Object } from '@features/office';
-import { useLiveKit } from '@features/livekit';
 
 export function SpawnObject({ roomName }) {
 	const { roomObjs } = useSocket();
@@ -21,8 +17,9 @@ export function SpawnObject({ roomName }) {
 						userId={object.userId}
 						name={object.name}
 						color={object.color}
-						photo={null}
+						photo='/objects/ball/ball.png'
 						ownership={object.ownership}
+						radius={1.5}
 					/>
 				);
 			})}

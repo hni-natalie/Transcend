@@ -7,7 +7,6 @@ import { io, Socket } from 'socket.io-client';
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { Player } from '@shared/types/user.types';
 import { useAuth } from '@/features/auth/AuthContext';
-import { Position } from '@shared';
 
 const SocketContext     = createContext(null);
 export const useSocket  = () => useContext(SocketContext);
@@ -31,6 +30,7 @@ export function SocketProvider ({ children }) {
   
   const [roomOccupancy, setRoomOccupancy] = useState<Record<string, number>>({});
   const [roomObjs, setRoomObjs] = useState< Player[] >([]); 
+  const [roomParticles, setRoomParticles] = useState< Player[] >([]);
 
   // for /admin/activity
   const [latestActivity, setLatestActivity] = useState<any>(null);
@@ -79,6 +79,10 @@ export function SocketProvider ({ children }) {
       // console.log('[existing-room-objects] test ', objects[0]);
       setRoomObjs(objects);
       console.log('[existing-room-objects] all: ', objects);
+    });
+    socket.on('existing-room-particles', (objects) => {
+      setRoomParticles(objects);
+      // console.log('[existing-room-particles] count: ', objects?.length);
     });
 
     socket.on('player-joined', (data) => {
@@ -140,16 +144,11 @@ export function SocketProvider ({ children }) {
     })
 
     /* Events: Room */
-    // socket.on('existing-room-players', (players) => {
-    //   setRoomPlayers(players);
-    //   console.log('[existing-room]curr room players: ', roomPlayers);
-    // });
-
     /* handles data after backend successfully creates room token */
     socket.on('room-joined', (data) => {
       console.log('Room joined successfully:', data);
       setCurrentRoom(data.roomName);
-      console.log('[room-joined]curr room players: ', data.participants);
+      // console.log('[room-joined]curr room players: ', data.participants);
 
       // Emit event for LiveKit service to connect
       window.dispatchEvent(new CustomEvent('livekit-connect', { 
@@ -158,17 +157,18 @@ export function SocketProvider ({ children }) {
     });
   
     // update when new player joins
-    socket.on('player-joined-room', (data) => {
-      setRoomPlayers(prev => [...prev, data.player]);
-      console.log(`User ${data.player.name}, sockId:${data.player.id} joined ${data.roomName}`);
-    });
+    // socket.on('player-joined-room', (data) => {
+    //   setRoomPlayers(prev => [...prev, data.player]);
+    //   console.log('[player-joined-room] player dept: ', data.player.dpId);
+    //   console.log(`User ${data.player.name}, sockId:${data.player.id} joined ${data.roomName}`);
+    // });
 
     // existing players
-    socket.on('existing-room-players', (data) => {
-      console.log(`[existing-room-players]:`, data);
-      setRoomPlayers(data);
-      // setRoomPlayers(prev => [...prev, ...data]);
-    })
+    // socket.on('existing-room-players', (data) => {
+    //   console.log(`[existing-room-players]:`, data);
+    //   setRoomPlayers(data);
+    //   // setRoomPlayers(prev => [...prev, ...data]);
+    // })
   
     // User left room
     socket.on('player-left-room', (data) => {
@@ -179,46 +179,48 @@ export function SocketProvider ({ children }) {
     // Room full error
     socket.on('room-full', (data) => {
       console.warn(`Room ${data.roomName} is full (max: ${data.maxSize})`);
+			alert("Room is fully occupied, please wait and retry later.");
+
       // You might want to show a notification to user
       window.dispatchEvent(new CustomEvent('room-error', { 
         detail: { type: 'full', message: `Room ${data.roomName} is full` }
       }));
     });
 
-	socket.on('user-status-changed', (data: { userId: string; status: string }) => {
-	  console.log('[SocketContext] received user-status-changed:', data);
-	  setUserStatuses((prev) => ({ ...prev, [data.userId]: data.status }));
-	});
+    socket.on('user-status-changed', (data: { userId: string; status: string }) => {
+      console.log('[SocketContext] received user-status-changed:', data);
+      setUserStatuses((prev) => ({ ...prev, [data.userId]: data.status }));
+    });
 
-	// for admin's dashboard; office and space occupancy mapping
-	socket.on('space-occupancy-snapshot', (snapshot: any[]) => {
-	  console.log('[SocketContext] space-occupancy-snapshot received:', snapshot);
-	  const map: Record<string, number> = {};
-	  snapshot.forEach((s) => {
-	    const key = s.spaceId || s.roomName;
-	    if (key) map[key] = s.count;
-	  });
-	  console.log('[SocketContext] mapped roomOccupancy:', map);
-	  setRoomOccupancy(map);
-	});
+    // for admin's dashboard; office and space occupancy mapping
+    socket.on('space-occupancy-snapshot', (snapshot: any[]) => {
+      console.log('[SocketContext] space-occupancy-snapshot received:', snapshot);
+      const map: Record<string, number> = {};
+      snapshot.forEach((s) => {
+        const key = s.spaceId || s.roomName;
+        if (key) map[key] = s.count;
+      });
+      console.log('[SocketContext] mapped roomOccupancy:', map);
+      setRoomOccupancy(map);
+    });
 
-	socket.on('space-occupancy-changed', (data: any) => {
-	  console.log('[SocketContext] space-occupancy-changed received:', data);
-	  const key = data.spaceId || data.roomName;
-	  if (key) {
-	    setRoomOccupancy((prev) => {
-	      const nextMap = { ...prev, [key]: data.count };
-	      console.log('[SocketContext] updated roomOccupancy:', nextMap);
-	      return nextMap;
-	    });
-	  }
-	});
+    socket.on('space-occupancy-changed', (data: any) => {
+      console.log('[SocketContext] space-occupancy-changed received:', data);
+      const key = data.spaceId || data.roomName;
+      if (key) {
+        setRoomOccupancy((prev) => {
+          const nextMap = { ...prev, [key]: data.count };
+          console.log('[SocketContext] updated roomOccupancy:', nextMap);
+          return nextMap;
+        });
+      }
+    });
 
-	socket.on('activity-created', (data: { workspaceId: string; activity: any }) => {
-	  console.log('[SocketContext] activity-created received:', data);
-	  setLatestActivity(data.activity);
-	  setActivitySeq((prev) => prev + 1);
-	});
+    socket.on('activity-created', (data: { workspaceId: string; activity: any }) => {
+      console.log('[SocketContext] activity-created received:', data);
+      setLatestActivity(data.activity);
+      setActivitySeq((prev) => prev + 1);
+    });
   
   /* Events: Chat */
     // socket.on('chat-message', (messageData) => {
@@ -244,17 +246,16 @@ export function SocketProvider ({ children }) {
         socket.off('object-acquired');
         socket.off('object-released');
         socket.off('room-joined');
-        socket.off('player-joined-room');
-        socket.off('existing-room-players');
         socket.off('existing-room-objects');
+        socket.off('existing-room-particles');
         socket.off('player-left-room');
         socket.off('room-full');
         socket.off('connect_error');
         socket.off('connect');
-		socket.off('user-status-changed');
-		socket.off('space-occupancy-snapshot');
-		socket.off('space-occupancy-changed');
-		socket.off('activity-created');
+        socket.off('user-status-changed');
+        socket.off('space-occupancy-snapshot');
+        socket.off('space-occupancy-changed');
+        socket.off('activity-created');
         socket.off('online-status');
         socket.off('force-logout');
         socket.disconnect();
@@ -375,7 +376,7 @@ export function SocketProvider ({ children }) {
     shouldConnect,
     // onlineStatus,
     // setOnlineStatus,
-	userStatuses,
+	  userStatuses,
     
     /* Player methods */
     players,
@@ -394,6 +395,7 @@ export function SocketProvider ({ children }) {
     leaveRoom,
     fetchRoomPlayers,
     roomObjs,
+    roomParticles,
     setRoomObjs,
 
     /* Chat methods */
