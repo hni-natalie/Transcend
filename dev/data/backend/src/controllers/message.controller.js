@@ -117,29 +117,35 @@ const messageController = {
 
 	async sendMessage(req, res) {
 		try {
-			const { id } = req.params;
+			const { id } = req.params; // conversationId
 			const { userId } = req.user;
-			const { text } = req.body;
+			const { text, attachments = [] } = req.body;
 
 			if (!id) {
-				return res.status(400).json({ error: "Conversation ID required" });
+				return res.status(400).json({
+					error: "Conversation ID required"
+				});
 			}
-			if (!text) {
-				return res.status(400).json({ error: "Message content required" });
+			const hasText = typeof text === "string" && text.trim().length > 0;
+			const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
+
+			if (!hasText && !hasAttachments) {
+				return res.status(400).json({ error: "Message text or attachment is required"});
 			}
 
-			const message = await messageService.sendMessage(id, userId, text);
+			const message = await messageService.sendMessage(id, userId, text, attachments);
 			console.log("message.created");
 			return res.status(201).json(message);
+
 		} catch (error) {
-			if (error.message === 'Conversation not found') {
-				res.status(404).json({ error: error.message });
-			} else {
-				res.status(500).json({ error: error.message });
+			if (error.message === "Conversation not found or user is not a participant") {
+				return res.status(404).json({error: error.message});
 			}
+			return res.status(500).json({error: error.message});
 		}
 	},
 
+	
 	// Participants
 	async addParticipant(req, res) {
 		try {
@@ -244,23 +250,27 @@ const messageController = {
 			const { id } = req.params;
 			const { userId } = req.user;
 			const file = req.file;
-
-			if (!file)
-				return res.status(400).json({ error: "A file is required" });
 			if (!id) {
-				return res.status(400).json({ error: "Message ID required" });
+				return res.status(400).json({ error: "Conversation ID required" });
 			}
-			if (!userId) {
-				return res.status(400).json({ error: "User ID required" });
+
+			if (!file) {
+				return res.status(400).json({ error: "File is required"});
 			}
-			const attachment = await messageService.uploadAttachment(userId, id, file, req.body.name);
-			console.log("attachment.uplaoded");
+
+			const attachment =
+			await messageService.uploadAttachment(userId, id, file);
+
 			return res.status(201).json(attachment);
 		} catch (error) {
-			console.error('Error uploading attachment:', error);
-			res.status(500).json({ error: error.message})
+			console.error("Error uploading attachment:", error);
+
+			return res.status(500).json({
+			error: error.message
+			});
 		}
 	},
+
 	async deleteAttachment(req, res) {
 		try {
 			const { id } = req.params;

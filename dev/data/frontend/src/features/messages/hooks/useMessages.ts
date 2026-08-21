@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/AuthContext';
 
-import type { DayGroup, Message, MessageResponse, Attachment } from '../types';
+import type { DayGroup, Message, MessageResponse, Attachment, SendMessageInput } from '../types';
 // import { messagesApi } from '../api/messages.api'; // uncomment for BE implmentation
 
 // imports below to remove once BE is implemented
@@ -52,7 +52,7 @@ export function useMessages({ conversationId, kind}: UseMessagesOptions) {
   });
 
   const { mutate: sendMessage } = useMutation({
-    mutationFn: (message: Message) =>
+    mutationFn: (message: SendMessageInput) =>
       messagesApi.sendMessage({
         conversationId: conversationId!,
         text: message.text,

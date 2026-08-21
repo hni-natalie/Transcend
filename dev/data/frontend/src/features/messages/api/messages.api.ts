@@ -1,6 +1,6 @@
 import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
-import { Conversation, ConversationResponse, Message, MessageResponse, type Attachment } from '../types';
+import { Conversation, ConversationResponse, Message, MessageResponse, UploadedAttachment, type Attachment } from '../types';
 import { mapConversation } from '../lib/mappers'
 import { useAuth } from '@/features/auth/AuthContext';
 
@@ -9,10 +9,9 @@ const base = API_CONFIG.endpoints.messages;
 
 // response shape for uploadAttachment; kept here (rather than in types.ts) since it's a network-response wrapper, not a domain type
 // check: tally with BE
-export interface UploadAttachmentResponse {
-  attachment: Attachment;
-}
-
+// export interface UploadAttachmentResponse {
+//   attachment: Attachment;
+// }
 
 export const messagesApi = {
   getAllConversations() {
@@ -48,7 +47,7 @@ export const messagesApi = {
   sendMessage(data: {
     conversationId: string;
     text?: string;
-    attachments?: Attachment[];
+    attachments?: UploadedAttachment[];
   }) {
     return apiClient.post<Message>(`${base}/${data.conversationId}/messages`, data);
   },
@@ -73,16 +72,13 @@ export const messagesApi = {
   },
 
   // uses apiClient.upload because file uploads require FormData and upload progress
-  uploadAttachment(
-    conversationId: string,
-    file: File,
-    onProgress?: (percent: number) => void,
-  ): Promise<UploadAttachmentResponse> {
+  uploadAttachment(conversationId: string, file: File, onProgress?: (percent: number) => void,
+  ): Promise<UploadedAttachment> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('conversationId', conversationId);
 
 	// check: tally with BE
-    return apiClient.upload(`${base}/${conversationId}/attachments`, formData, onProgress);
+    return apiClient.upload<UploadedAttachment>(`${base}/${conversationId}/attachments`, formData, onProgress);
   },
 };

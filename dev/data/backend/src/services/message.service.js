@@ -378,13 +378,14 @@ const messageService = {
 			}})
 		},
 
-	async sendMessage(conversationId, userId, text) {
+	async sendMessage(conversationId, userId, text, attachments = []) {
 		const cleanText = typeof text === "string" ? text.trim() : "";
-		if (!cleanText) {
-			throw new Error("Message text is required")
+
+		if (!cleanText && attachments.length === 0) {
+			throw new Error("Message text or attachment is required");
 		}
 		return prisma.$transaction(async(tx) => {
-			const conversation = prisma.conversation.findUnique({
+			const conversation = await tx.conversation.findFirst({
 				where: {
 					conversationId: conversationId,
 					deletedAt: null,
@@ -406,7 +407,17 @@ const messageService = {
 			data: {
 				conversationId,
 				authorId: userId,
-				text: cleanText
+				text: cleanText,
+				attachments: {
+					create: attachments.map((attachment) => ({
+						name: attachment.name,
+						kind: attachment.kind,
+						sizeInBytes: attachment.sizeInBytes,
+						url: attachment.url,
+						path: attachment.path,
+						mimeType: attachment.mimeType
+					}))
+				}
 			},
 			select: {
 				messageId: true,
@@ -634,46 +645,45 @@ const messageService = {
 	},
 
 	//attachment
-	async uploadAttachment(userId, messageId, file, customName) {
-	const message = await prisma.message.findUnique({
-		where: {
-			messageId,
-			conversation: {
+	async uploadAttachment(userId, conversationId, file) {
+		const conversation = await prisma.conversation.findFirst({
+			where: {
+				conversationId,
 				deletedAt: null,
 				participants: {
 					some: {
-						userId
+					userId
 					}
 				}
+			},
+			select: {
+				conversationId: true
 			}
-		},
-		select: {
-			conversationId: true
+		});
+
+		if (!conversation) {
+			throw new Error('Conversation not found or user cannot access this conversation');
 		}
-	})
-	if (!message)
-		throw new Error ('Message not found or user cannot access this conversation');
-	const fileExt = file.originalname.split('.').pop();
-	const fileName = `${userId}-${Date.now()}.${fileExt}`;
-	const filePath = `chat/${message.conversationId}/${messageId}/${fileName}`;
 
-	const publicUrl = await uploadFile(
-		process.env.SUPABASE_PUBLIC_BUCKET, // to do : change to attachment/....
-		filePath,
-		file.buffer,
-		file.mimetype
-	);
+		const fileExt = file.originalname.split('.').pop();
+		const fileName = `${userId}-${Date.now()}.${fileExt}`;
+		const filePath = `${conversationId}/${fileName}`;
 
-	return prisma.messageAttachment.create({
-		data: {
-			messageId,
-			name: customName?.trim() || file.originalname,
+		const publicUrl = await uploadFile(
+			process.env.SUPABASE_ATTACHMENT_BUCKET,
+			filePath,
+			file.buffer,
+			file.mimetype
+		);
+
+		return {
+			name: file.originalname,
 			kind: getAttachmentKind(file.mimetype),
 			url: publicUrl,
 			path: filePath,
 			mimeType: file.mimetype,
 			sizeInBytes: file.size
-		}})
+		};
 	},
 
 	async deleteAttachment(attachmentId) {

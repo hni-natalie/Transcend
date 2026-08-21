@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { IconEmoji, IconFile, IconImage, IconPlus } from '@shared';
 import { messagesApi } from "../api/messages.api";
-import type { Attachment } from '../types';
+import type { Attachment, UploadedAttachment } from '../types';
 import { formatFileSize } from '../lib/format';
 import { RemoveButton } from './UserRow';
 
@@ -20,13 +20,14 @@ interface PendingAttachment {
   file: File;
   progress: number; // 0-100
   status: 'uploading' | 'done' | 'error';
-  attachment?: Attachment;
+  attachment?: UploadedAttachment;
 }
+
 
 interface ComposerProps {
   contactName: string;
   conversationId?: string;
-  onSend?: (text: string, attachments?: Attachment[]) => void;
+  onSend?: (text: string, attachments?: UploadedAttachment[]) => void;
 }
 
 function pendingAttachmentIcon(file: File) {
@@ -113,7 +114,7 @@ export function Composer({ contactName, conversationId, onSend }: ComposerProps)
       setPendingAttachments((previous) =>
         previous.map((item) =>
           item.localId === localId
-            ? { ...item, status: 'done', progress: 100, attachment: response.attachment }
+            ? { ...item, status: 'done', progress: 100, attachment: response }
             : item,
         ),
       );

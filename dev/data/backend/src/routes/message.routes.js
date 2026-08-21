@@ -14,7 +14,7 @@ router.post('/direct', messageController.createDirectConversation);
 router.post('/group', messageController.createGroupConversation);
 router.delete('/:id', messageController.deleteConversation);
 
-// // Messages
+// Messages
 router.get('/:id/messages', messageController.getMessages);
 router.post('/:id/messages', messageController.sendMessage);
 

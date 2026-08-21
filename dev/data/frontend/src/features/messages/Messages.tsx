@@ -6,7 +6,7 @@ import { Sidebar, MessageHeader, MessageList, Composer, MessageProfile } from '.
 import { FormNewMessage } from './form/FormNewMessage';
 import { useProfile, useCreateConversation, useConversations, useMessages } from './hooks';
 import type { CreateConversationInput } from './hooks';
-import type { Attachment, Conversation, Message } from './types';
+import type { Attachment, Conversation, Message, UploadedAttachment } from './types';
 import { buildLastMessagePreview, extractAttachmentsFromDayGroups, extractLinksFromDayGroups, toGroupProfile, toProfile, mapConversationsToInvitableGroups } from './lib/mappers';
 
 interface MessagingProps {
@@ -123,7 +123,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
     };
   }, [allConversations, selectedConversation.id, usersById, conversationMessages, currentUser?.userName, currentAttachments, currentLinks, isSelectedNew]);
 
-  console.log('debuggingg current chat profile:', currentChat?.profile);
+  // console.log('debuggingg current chat profile:', currentChat?.profile);
 
   // const handleCreateConversation = async (data: CreateConversationInput & { message?: string }) => {
   //   try {
@@ -243,31 +243,35 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
     setConversationPendingDeletion(null);
   };
 
-  const handleSendMessage = (text: string, attachments?: Attachment[]) => {
+  const handleSendMessage = (text: string, attachments?: UploadedAttachment[]) => {
+    console.log('DEBUGGING FE attachments before sending:', attachments);
     if (!selectedConversation.id || (!text.trim() && !attachments?.length)) {
       return;
     }
 
     const now = new Date();
 
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId: selectedConversation.id,
-      author: currentUser?.userName || 'You',
-      authorId: currentUser?.userId || undefined,
-      isSelf: true,
-      createdAt: now.toISOString(),
-      text: text.trim() || undefined,
-      attachments,
-    };
+    // const newMessage: Message = {
+    //   id: `msg-${Date.now()}`,
+    //   conversationId: selectedConversation.id,
+    //   author: currentUser?.userName || 'You',
+    //   authorId: currentUser?.userId || undefined,
+    //   isSelf: true,
+    //   createdAt: now.toISOString(),
+    //   text: text.trim() || undefined,
+    //   attachments,
+    // };
 
-    sendMessage(newMessage);
-
+    sendMessage({text: text.trim() || undefined, attachments});
     updateConversationLastMessage(
       selectedConversation.id,
-      buildLastMessagePreview(newMessage)!,
+      {
+        text: text.trim() || 'Attachment',
+        author: currentUser?.userName || 'You',
+        createdAt: now.toISOString(),
+      }
     );
-
+    
     setNewConversationIds((previous) => {
       if (!previous.has(selectedConversation.id)) {
         return previous;

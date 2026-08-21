@@ -111,6 +111,11 @@ export interface MessageResponse {
   attachments?: Attachment[];
 }
 
+export interface SendMessageInput {
+  text?: string;
+  attachments?: UploadedAttachment[];
+}
+
 export interface DayGroup {
   id: string;
   label: string;
@@ -128,6 +133,17 @@ export interface Attachment {
   createdAt: string;
   mimeType?: string;
 }
+
+export interface UploadedAttachment {
+  name: string;
+  kind: 'pdf' | 'image' | 'document';
+  sizeInBytes: number;
+  url: string;
+  path: string;
+  mimeType: string;
+}
+
+
 
 export interface Link {
   id: string;
