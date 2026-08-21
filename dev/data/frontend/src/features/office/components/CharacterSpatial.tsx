@@ -30,7 +30,7 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 	{ userId, id, name, position, color="#D0F05C", roomName='Office', photo, isLocalPlayer, isPlayerAudioReady, listenerRef, lightTargetRef, getPositionalAudio } : CharacterProps,
 	ref) => {
 
-	const { lastKnownPositionsRef, lockSystem } = usePosition();
+	const { lockSystem } = usePosition();
 
 	useContactMaterial('playerMaterial', 'playerMaterial', {
 		friction: 0.3,
@@ -39,8 +39,8 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 		contactEquationRelaxation: 400, // higher = softer/slower correction
 	});
   const [characterRef, api] = useBox(() => ({
-    mass: 1,
-	  type: 'Dynamic',
+    mass: 100,
+	  type: 'Dynamic', // Dynamic, Kinematic
   	linearDamping: 0.1,
     position: [position.x, position.y, position.z],
 		rotation: [-Math.PI / 2, 0, 0],
@@ -279,7 +279,7 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 			{/* Ring outline on hover */}
 			{hovered && (
 				<mesh>
-					<ringGeometry args={[0.95, 1.1, 36]} />
+					<ringGeometry args={[conf.Player.radius * 0.95, conf.Player.radius * 1.1, 36]} />
 					<meshStandardMaterial color="#D0F05C" emissive="#627C06" side={THREE.DoubleSide} />
 				</mesh>
 			)}
