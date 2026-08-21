@@ -123,7 +123,7 @@ const getRoomObjs = async() => {
         roomName: 'Office',
         position: randomPosition(5),
         rotation: { x:-Math.PI/2, y:0, z:0 },
-        color: randomHslColor("80"),
+        color: randomHslColor("90"),
         photo: '',
         audioEnabled: true,
         speaking: false,
@@ -137,7 +137,7 @@ const getRoomObjs = async() => {
 }
 
 const getSpawnPosFromDpId = ( roomData, userDpId ) => {
-  const offset = randomPosition(2);
+  const offset = randomPosition(3);
 
   for (const [key, room] of Object.entries(roomData.positionData)) {
     if (room.accessLevel === 'department' && room.departmentId === userDpId) {
