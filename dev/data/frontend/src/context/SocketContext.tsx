@@ -20,12 +20,21 @@ export function SocketProvider ({ children }) {
   const [players, setPlayers] = useState< Player[] >([]);
   const [localPlayerId, setLocalPlayerId] = useState<String>(null);
   // const [onlineStatus, setOnlineStatus] = useState('offline')
-  const [messages, setMessages] = useState([]);
+  // const [messages, setMessages] = useState([]);
+  
+  // status sync across pages
+  const [userStatuses, setUserStatuses] = useState<Record<string, string>>({});
   
   const [currentRoom, setCurrentRoom] = useState<String>(null);
   const [roomPlayers, setRoomPlayers] = useState< Player[] >([]);
-  const [roomObjs, setRoomObjs] = useState< Player[] >([]);
+  
+  const [roomOccupancy, setRoomOccupancy] = useState<Record<string, number>>({});
+  const [roomObjs, setRoomObjs] = useState< Player[] >([]); 
   const [roomParticles, setRoomParticles] = useState< Player[] >([]);
+
+  // for /admin/activity
+  const [latestActivity, setLatestActivity] = useState<any>(null);
+  const [activitySeq, setActivitySeq] = useState<number>(0);
 
   useEffect(() => {
   const token = getToken();
@@ -177,6 +186,41 @@ export function SocketProvider ({ children }) {
         detail: { type: 'full', message: `Room ${data.roomName} is full` }
       }));
     });
+
+    socket.on('user-status-changed', (data: { userId: string; status: string }) => {
+      console.log('[SocketContext] received user-status-changed:', data);
+      setUserStatuses((prev) => ({ ...prev, [data.userId]: data.status }));
+    });
+
+    // for admin's dashboard; office and space occupancy mapping
+    socket.on('space-occupancy-snapshot', (snapshot: any[]) => {
+      console.log('[SocketContext] space-occupancy-snapshot received:', snapshot);
+      const map: Record<string, number> = {};
+      snapshot.forEach((s) => {
+        const key = s.spaceId || s.roomName;
+        if (key) map[key] = s.count;
+      });
+      console.log('[SocketContext] mapped roomOccupancy:', map);
+      setRoomOccupancy(map);
+    });
+
+    socket.on('space-occupancy-changed', (data: any) => {
+      console.log('[SocketContext] space-occupancy-changed received:', data);
+      const key = data.spaceId || data.roomName;
+      if (key) {
+        setRoomOccupancy((prev) => {
+          const nextMap = { ...prev, [key]: data.count };
+          console.log('[SocketContext] updated roomOccupancy:', nextMap);
+          return nextMap;
+        });
+      }
+    });
+
+    socket.on('activity-created', (data: { workspaceId: string; activity: any }) => {
+      console.log('[SocketContext] activity-created received:', data);
+      setLatestActivity(data.activity);
+      setActivitySeq((prev) => prev + 1);
+    });
   
   /* Events: Chat */
     // socket.on('chat-message', (messageData) => {
@@ -202,14 +246,16 @@ export function SocketProvider ({ children }) {
         socket.off('object-acquired');
         socket.off('object-released');
         socket.off('room-joined');
-        // socket.off('player-joined-room');
-        // socket.off('existing-room-players');
         socket.off('existing-room-objects');
         socket.off('existing-room-particles');
         socket.off('player-left-room');
         socket.off('room-full');
         socket.off('connect_error');
         socket.off('connect');
+        socket.off('user-status-changed');
+        socket.off('space-occupancy-snapshot');
+        socket.off('space-occupancy-changed');
+        socket.off('activity-created');
         socket.off('online-status');
         socket.off('force-logout');
         socket.disconnect();
@@ -285,6 +331,19 @@ export function SocketProvider ({ children }) {
     socket.emit('request-room-players', { roomName });
   }
 
+  // added for dashboard
+  const subscribeDashboard = useCallback(() => {
+	if (socket && isConnected) {
+	  socket.emit('subscribe-dashboard');
+	}
+  }, [socket, isConnected]);
+
+  const unsubscribeDashboard = useCallback(() => {
+	if (socket && isConnected) {
+	  socket.emit('unsubscribe-dashboard');
+	}
+  }, [socket, isConnected]);
+
 
   // const sendMessage = (text, senderName) => {
   //   if (socket && text.trim()) {
@@ -317,6 +376,7 @@ export function SocketProvider ({ children }) {
     shouldConnect,
     // onlineStatus,
     // setOnlineStatus,
+	  userStatuses,
     
     /* Player methods */
     players,
@@ -343,6 +403,13 @@ export function SocketProvider ({ children }) {
     // sendMessage,
     // clearMessages,
     // addSystemMessage,
+
+	/* Dashboard methods */
+	roomOccupancy,
+	latestActivity, // NEW
+	activitySeq, // NEW
+    subscribeDashboard,
+    unsubscribeDashboard,
   };
 
   return (

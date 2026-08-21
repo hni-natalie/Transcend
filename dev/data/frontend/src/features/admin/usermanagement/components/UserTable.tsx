@@ -19,13 +19,14 @@ export const UserTable = ({
     <table className="w-full text-left border-collapse min-w-[800px] table-fixed">
       <thead className="sticky top-0 z-10 bg-background-1 border-b border-background-3">
         <tr className="text-foreground-2 text-base uppercase tracking-widest">
-          <th className="py-4 px-4 font-bold w-[22%]">User</th>
+          <th className="py-4 px-4 font-bold w-[20%]">User</th>
           <th className="py-4 px-4 font-bold w-[15%]">Department</th>
           <th className="py-4 px-4 font-bold w-[12%]">Role</th>
+		  <th className="py-4 px-4 font-bold w-[14%]">Title</th>
           <th className="py-4 px-4 font-bold w-[12%]">Location</th>
-          <th className="py-4 px-4 font-bold w-[12%]">Status</th>
-          <th className="py-4 px-4 font-bold w-[15%]">Date Joined</th>
-          <th className="py-4 px-4 font-bold w-[12%]">Action</th>
+          <th className="py-4 px-4 font-bold w-[10%]">Status</th>
+          <th className="py-4 px-4 font-bold w-[12%]">Date Joined</th>
+          <th className="py-4 px-4 font-bold w-[8%]">Action</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-background-2">

@@ -18,11 +18,11 @@ export const adminMenuConfig: MenuConfig = [
     href: R.ADMIN_USERS,
     icon: <IconUsers />,
   },
-  {
-    title: 'Spaces',
-    href: R.ADMIN_SPACES,
-    icon: <IconSpaces />,
-  },
+//   {
+//     title: 'Spaces',
+//     href: R.ADMIN_SPACES,
+//     icon: <IconSpaces />,
+//   },
   {
     title: 'Activity',
     href: R.ADMIN_ACTIVITY,

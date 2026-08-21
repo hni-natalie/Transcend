@@ -91,6 +91,7 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 	const [hoveredIndex, setHoveredIndex] = useState(null)
 	const { textRef, textWidth, getTextWidth } = useTextWidth();
 	const planeRefs = useRef(new Map());
+	const previousActivePlaneRef = useRef<number | null>(null);
 	const positionDataRef = useRef([]);
 
 	const [loading, setLoading] = useState(true);
@@ -129,6 +130,50 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
         socket.off('get-room-spawn-pos');
 			}
 		}
+	}, [socket]);
+
+	useEffect(() => {
+		if (!socket) {
+			console.log('[SpaceContext] socket not available, skipping space tracking');
+			return;
+		}
+
+		const prevIndex = previousActivePlaneRef.current;
+		const nextIndex = activePlane;
+
+		console.log('[SpaceContext] activePlane changed:', { prevIndex, nextIndex });
+
+		if (prevIndex !== nextIndex) {
+			if (prevIndex !== null) {
+				const prevMesh = planeRefs.current.get(prevIndex);
+				const prevSpaceId = prevMesh?.userData?.spaceId;
+				console.log('[SpaceContext] leaving space:', { prevIndex, prevSpaceId, userData: prevMesh?.userData });
+				if (prevSpaceId) {
+					socket.emit('space-left', { spaceId: prevSpaceId });
+				}
+			}
+			if (nextIndex !== null) {
+				const nextMesh = planeRefs.current.get(nextIndex);
+				const nextSpaceId = nextMesh?.userData?.spaceId;
+				console.log('[SpaceContext] entering space:', { nextIndex, nextSpaceId, userData: nextMesh?.userData });
+				if (nextSpaceId) {
+					socket.emit('space-entered', { spaceId: nextSpaceId });
+				}
+			}
+			previousActivePlaneRef.current = nextIndex;
+		}
+	}, [activePlane, socket]);
+
+	useEffect(() => {
+		return () => {
+			if (socket && previousActivePlaneRef.current !== null) {
+				const prevMesh = planeRefs.current.get(previousActivePlaneRef.current);
+				const prevSpaceId = prevMesh?.userData?.spaceId;
+				if (prevSpaceId) {
+					socket.emit('space-left', { spaceId: prevSpaceId });
+				}
+			}
+		};
 	}, [socket]);
 
   const setPlaneRef = ( index:number ) => ( el:THREE.Mesh ) => {
@@ -172,10 +217,13 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 		fetchData();
 	}, []);
 
+  /* **************************************************************
+   * Memo declarations
+   * **************************************************************/
 	const canvasWidth = conf.World.width;
 	const canvasHeight = conf.World.height;
 	const themeColor = conf.Color.themes.golden;
-	
+
 	// 1. Prepare data for treemap
 	const treemapData = useMemo(() => {
 		const root = d3.stratify<TreemapData>()
@@ -257,7 +305,8 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 						index:i,
 						name:plane.spaceName,
 						accessLevel: plane.accessLevel,
-						dpId: plane.departmentId
+						dpId: plane.departmentId,
+						spaceId: plane.spaceId
 					}}
 					onPointerOver={() => setHoveredIndex(i)}
 					onPointerOut={() => setHoveredIndex(null)}

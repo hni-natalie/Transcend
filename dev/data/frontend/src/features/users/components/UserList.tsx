@@ -50,6 +50,7 @@ export const UserList = ({ user, onEdit }: UserListProps) => {
 
       <td className="py-6.5 px-4 text-base text-foreground-3">{user.department}</td>
       <td className="py-6.5 px-4 text-base text-foreground-3">{user.role}</td>
+	  <td className="py-6.5 px-4 text-base text-foreground-3">{user.userTitle || '-'}</td>
       <td className="py-6.5 px-4 text-base text-foreground-3">{user.location}</td>
       <td className="py-6.5 px-4">
         <UserStatusBadge status={user.status} />

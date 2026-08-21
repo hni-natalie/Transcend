@@ -14,6 +14,7 @@ export interface User {
     // role: { roleId: string; roleName: string };
     workspace: { workspaceName: string };
 	  department?: { dpId?: string; dpName: string } | null;
+	userTitle?: string;
     avatarUrl?: string | null;
     city?: string;
     country?: string;
@@ -33,6 +34,7 @@ export interface UserAccount {
 	roleId?: string;
 	department: string;
 	role: string;
+	userTitle?: string;
 	location: string;
 	photo: string;
 	dateJoined: string;
@@ -120,6 +122,7 @@ export const toUserAccount = (user: User): UserAccount => {
         roleId: user.roleId ?? user.role?.roleId,
         department: user.department?.dpName ?? '-',
         role: user.role?.roleName ?? '-',
+		userTitle: user.userTitle ?? '-',
         location: user.country ?? '-',
         photo: user.avatarUrl ?? '',
         dateJoined: user.createdAt 

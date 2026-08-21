@@ -57,6 +57,7 @@ const uploadRoutes		= require('./routes/upload.routes');
 const spaceRoutes		= require('./routes/space.routes');
 const taskRoutes		= require('./routes/task.routes');
 const meetingRoutes		= require('./routes/meeting.routes');
+const activityRoutes	= require('./routes/activity.routes');
 const recordingRoutes	= require('./routes/recording.routes');
 const messageRoutes		= require('./routes/message.routes');
 
@@ -75,6 +76,7 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/spaces', spaceRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/activity', activityRoutes);
 app.use('/api/recordings', recordingRoutes);
 app.use('/api/messages', messageRoutes);
 

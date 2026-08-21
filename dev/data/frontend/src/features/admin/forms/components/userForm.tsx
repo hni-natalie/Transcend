@@ -35,7 +35,8 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
         email: user.email,
         roleId: user.roleId || '',
         deptId: user.deptId || '',
-        location: user.location || '',
+		userTitle: user.userTitle || '',
+        // location: user.location || '',
         photo: user.photo || '',
         password: '',
       };
@@ -47,7 +48,8 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
       email: '',
       roleId: '',
       deptId: '',
-      location: '',
+	  userTitle: '',
+    //   location: '',
       photo: '',
       password: '',
     };
@@ -113,8 +115,35 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
     }
   };
 
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const validateForm = (): string | null => {
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      return 'First and last name are required.';
+    }
+    if (formData.firstName.trim().length > 100 || formData.lastName.trim().length > 100) {
+      return 'Names must be under 100 characters.';
+    }
+    if (!formData.email.trim()) {
+      return 'Email is required.';
+    }
+    if (!EMAIL_REGEX.test(formData.email.trim())) {
+      return 'Please enter a valid email address.';
+    }
+    if (!formData.roleId) {
+      return 'Please select a role.';
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
+
+  const formError = validateForm();
+  if (formError) {
+    showToast('error', formError);
+    return;
+  }
 
   // Validate password if provided
   if (formData.password && formData.password.trim() !== '') {
@@ -135,7 +164,8 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
         email: formData.email,
         roleId: formData.roleId,
         dpId: formData.deptId || undefined,
-        country: formData.location || undefined,
+		userTitle: formData.userTitle || undefined,
+        // country: formData.location || undefined,
         avatarUrl: formData.photo || undefined,
       };
 
@@ -166,6 +196,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
         roleId: formData.roleId,
         workspaceId: '',
         dpId: formData.deptId || undefined,
+		userTitle: formData.userTitle || undefined,
         password: formData.password || undefined,
       };
 

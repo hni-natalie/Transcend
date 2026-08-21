@@ -23,6 +23,7 @@
     "livekit-client": "^2.18.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-rnd": "^10.5.3",
     "react-router-dom": "^7.13.1",
     "socket.io-client": "^4.8.3",
     "tailwindcss": "^4.2.2",

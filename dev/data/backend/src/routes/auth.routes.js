@@ -5,6 +5,9 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { OAuth2Client } = require('google-auth-library');
+const { logPresenceActivity } = require('../utils/activity');
+const { validateLogin, validateGoogleLogin } = require('../validators/auth.validator');
+
 
 const JWT_SECRET = fs.readFileSync('/run/secrets/jwt_secret', 'utf8').trim();
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '1d';
@@ -23,7 +26,14 @@ async function verifyGoogleToken(idToken) {
 
 // POST /auth/login — email login
 router.post('/login', async (req, res) => {
-    const { userEmail, userPassword } = req.body;
+    // const { userEmail, userPassword } = req.body;
+	let userEmail, userPassword;
+    try {
+        ({ userEmail, userPassword } = validateLogin(req.body));
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+
 
     try {
         const user = await prisma.user.findUnique({
@@ -61,6 +71,13 @@ router.post('/login', async (req, res) => {
         { expiresIn: JWT_EXPIRY }
         );
 
+		await logPresenceActivity({
+			workspaceId: user.workspaceId,
+			userId: user.userId,
+			action: 'logged in',
+		});
+
+
         res.json({
         token,
         user: {
@@ -83,7 +100,14 @@ router.post('/login', async (req, res) => {
 
 // POST /auth/google — OAuth login (only existing users)
 router.post('/google', async (req, res) => {
-    const { idToken } = req.body;
+    // const { idToken } = req.body;
+	let idToken;
+    try {
+        ({ idToken } = validateGoogleLogin(req.body));
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+
 
     try {
         // verify google token
@@ -155,6 +179,13 @@ router.post('/google', async (req, res) => {
             { expiresIn: JWT_EXPIRY }
         );
 
+		await logPresenceActivity({
+			workspaceId: user.workspaceId,
+			userId: user.userId,
+			action: 'logged in',
+		});
+
+
         res.json({
             token,
             user: {
@@ -186,6 +217,7 @@ router.get('/me', authMiddleware, async (req, res) => {
                 userId: true,
                 userName: true,
                 userEmail: true,
+				workspaceId: true,
                 roleId: true,
                 role: {
                     select: { roleName: true }
@@ -196,6 +228,7 @@ router.get('/me', authMiddleware, async (req, res) => {
                         dpName: true 
                     }
                 },
+                userTitle: true,
                 userStatus: true,
                 avatarUrl: true,
 				authProvider: true,
@@ -213,12 +246,14 @@ router.get('/me', authMiddleware, async (req, res) => {
 
         res.json({
             socketId: user.socketId,
+			workspaceId: user.workspaceId,
             userId: user.userId,
             userName: user.userName,
             userEmail: user.userEmail,
             roleId: user.roleId,
-            roleName: user.role.roleName,
+            role: { roleName: user.role.roleName }, 
 			department: user.department,
+            userTitle: user.userTitle,
             userStatus: user.userStatus,
             avatarUrl: user.avatarUrl ?? null,
 			authProvider: user.authProvider ?? 'email',
@@ -236,7 +271,25 @@ router.get('/me', authMiddleware, async (req, res) => {
 
 // POST /auth/logout — logout (client just discards token)
 router.post('/logout', authMiddleware, async (req, res) => {
-    res.json({ message: 'Logged out successfully' });
+    try {
+        await prisma.user.update({
+            where: { userId: req.user.userId },
+            data: { userStatus: 'offline' }
+        });
+
+        await logPresenceActivity({
+            workspaceId: req.user.workspaceId,
+            userId: req.user.userId,
+            action: 'logged out',
+        });
+
+        const { getIO } = require('../services/socket.service');
+        getIO().emit('user-status-changed', { userId: req.user.userId, status: 'offline' });
+
+        res.json({ message: 'Logged out successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;
