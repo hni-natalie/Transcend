@@ -1,8 +1,11 @@
 import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
-import type { Attachment } from '../types';
+import { Conversation, ConversationResponse, Message, MessageResponse, type Attachment } from '../types';
+import { mapConversation } from '../lib/mappers'
+import { useAuth } from '@/features/auth/AuthContext';
 
 const base = API_CONFIG.endpoints.messages;
+
 
 // response shape for uploadAttachment; kept here (rather than in types.ts) since it's a network-response wrapper, not a domain type
 // check: tally with BE
@@ -10,50 +13,59 @@ export interface UploadAttachmentResponse {
   attachment: Attachment;
 }
 
+
 export const messagesApi = {
   getAllConversations() {
-    return apiClient.get(`${base}`);
+    return apiClient.get<ConversationResponse[]>(base);
   },
 
-  getConversationById(conversationId: string) {
-    return apiClient.get(`${base}/${conversationId}`);
-  },
-
-  createConversation(data: {
-    isGroup: boolean;
+  createGroupConversation(data: {
     groupName?: string;
-    userIds: string[];
-    message?: string;
+    participantIds: string[];
   }) {
-    return apiClient.post(`${base}`, data);
+    return apiClient.post<ConversationResponse>(
+      `${base}/group`,
+      data
+    );
   },
 
+  createDirectConversation(data: {
+    participantId: string;
+  }) {
+    return apiClient.post<ConversationResponse>(
+      `${base}/direct`,
+      data
+    );
+  },
   deleteConversation(conversationId: string) {
     return apiClient.delete(`${base}/${conversationId}`);
   },
 
   getMessages(conversationId: string) {
-    return apiClient.get(`${base}/${conversationId}/messages`);
+    return apiClient.get<MessageResponse[]>(`${base}/${conversationId}/messages`);
   },
 
   sendMessage(data: {
     conversationId: string;
     text?: string;
-    attachments?: { id: string; name: string; kind: string; url: string; path: string }[];
+    attachments?: Attachment[];
   }) {
-    return apiClient.post(`${base}/${data.conversationId}/messages`, data);
+    return apiClient.post<Message>(`${base}/${data.conversationId}/messages`, data);
   },
 
-  addMembers(data: { conversationId: string; userIds: string[] }) {
-  	return apiClient.post(`${base}/${data.conversationId}/members`, { userIds: data.userIds });
+  addMembers(data: { conversationId: string; participantIds: string[] }) {
+  	return apiClient.post(`${base}/${data.conversationId}/members`, { userIds: data.participantIds });
    },
 
   removeMember(conversationId: string, targetUserId: string) {
   	return apiClient.delete(`${base}/${conversationId}/members/${targetUserId}`);
   },
 
-  toggleConversationPin(conversationId: string) {
+  pinConversation(conversationId: string) {
   	return apiClient.post(`${base}/${conversationId}/pin`);
+  },
+  unpinConversation(conversationId: string) {
+  	return apiClient.delete(`${base}/${conversationId}/pin`);
   },
 
   markConversationRead(conversationId: string) {

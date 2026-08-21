@@ -13,154 +13,293 @@ function getAttachmentKind(mimeType) {
 	return "pdf";
 }
 
+
+function conversationResponseSelect(userId) {
+  return {
+    conversationId: true,
+    type: true,
+    groupName: true,
+    avatarUrl: true,
+    createdAt: true,
+    updatedAt: true,
+
+    pins: {
+      where: {
+        userId
+      },
+      select: {
+        userId: true
+      }
+    },
+
+    participants: {
+      select: {
+        userId: true,
+        lastReadAt: true,
+
+        user: {
+          select: {
+            userId: true,
+            userName: true,
+            avatarUrl: true,
+            userStatus: true
+          }
+        }
+      }
+    },
+
+    messages: {
+      orderBy: {
+        createdAt: 'desc'
+      },
+
+      take: 1,
+
+      select: {
+        messageId: true,
+        text: true,
+        createdAt: true,
+
+        author: {
+          select: {
+            userId: true,
+            userName: true,
+            avatarUrl: true
+          }
+        }
+      }
+    }
+  };
+}
+
 const messageService = {
-	  async getAllConversations(userId) {		
-		return prisma.conversation.findMany({
-			// only return conversations where the user is a participant
+	async getAllConversations(userId) {
+		console.log("Fetching all conversations for userId:", userId);
+
+		const conversations = await prisma.conversation.findMany({
 			where: {
-				participants: {
-					some: {
-						userId: userId
-					}
-				}
-			},
-			// include participants and the most recent message in each conversation
-			include:{
-				pins:{
-					where: {
-						userId: userId
-					}
-				},
-				participants: {
-					select: {
-						userId: true,
-						user: {
-							select: {
-								userId: true,
-								userName: true,
-								avatarUrl: true
-							}
-						}
-					}
-				},
-				messages: {
-					orderBy: {
-						createdAt: 'desc'
-					},
-					take: 1
-				},
-			},
-			// order by the most recently updated conversation first
-			orderBy: {
-				updatedAt: 'desc'
-			}
-		});
-	},
-
-
-	async getConversationById(conversationId, userId) {
-		return prisma.conversation.findUnique({
-			// only return the conversation if the user is a participant
-			where: { 
-				conversationId: conversationId,
-				deletedAT: null,
-				participants: {
-					some: {
-						userId: userId
-					}
-				}
-			},
-			// include participants and messages in the conversation
-			select: {
-				conversationId: true, 
-				type: true, 
-				avatarUrl: true,
-				createdByUserId: true,
-				createdAt: true,
-				updatedAt: true,
-				participants: {
-					select: {
-						userId: true,
-						user: {
-							select: {
-								userId: true,
-								userName: true,
-								avatarUrl: true
-							}
-						}
-					}
-				},
-			}
-		});
-	},
-
-	async createDirectConversation(userId, participantId, workspaceId) {
-		const directKey = createDirectKey(userId, participantId);
-		return prisma.conversation.upsert({
-			where: {
-				directKey: directKey
-			},
-			// if a conversation with this directKey exists, do nothing
-			update: {},
-			// if it doesn't exist, create a new direct conversation with the two participants
-			create: {
-				type: 'direct',
-				createdByUserId: userId,
-				workspaceId: workspaceId,
-				directKey: directKey,
-				participants: {
-					create: [
-						{ userId: userId },
-						{ userId: participantId }
-					]
-				}
-			},
-			include: {
-				participants: {
-					select: {
-						userId: true,
-						user: {
-							select: {
-								userId: true,
-								userName: true,
-								avatarUrl: true
-							}
-						}
-					}
-				}
-			}
-		});
-	},
-	async createGroupConversation(userId, participantIds, groupName, workspaceId) { 
-		return prisma.conversation.create({
-			data: {
-			type: "group",
-			groupName,
-			createdByUserId: userId,
-			workspaceId,
+			deletedAt: null,
 
 			participants: {
-				create: participantIds.map((participantUserId) => ({
-				userId: participantUserId, })),
-				},
+				some: {
+					userId: userId
+					}
+				}
 			},
 
-			include: {
+			select: {
+				conversationId: true,
+				type: true,
+				groupName: true,
+				avatarUrl: true,
+				createdAt: true,
+				updatedAt: true,
+
+			pins: {
+				where: {
+					userId: userId
+				},
+
+				select: {
+					userId: true
+				}
+			},
+
 			participants: {
 				select: {
 				userId: true,
+				lastReadAt: true,
+
 				user: {
 					select: {
 					userId: true,
 					userName: true,
 					avatarUrl: true,
-					},
-				},
-				},
+					userStatus: true
+					}
+				}
+				}
 			},
+
+			messages: {
+				orderBy: {
+				createdAt: 'desc'
+				},
+
+				take: 1,
+
+				select: {
+				messageId: true,
+				text: true,
+				createdAt: true,
+
+				author: {
+					select: {
+					userId: true,
+					userName: true,
+					avatarUrl: true
+					}
+				}
+				}
+			}
 			},
+
+			orderBy: {
+			updatedAt: 'desc'
+			}
 		});
+
+		return Promise.all(
+			conversations.map(async (conversation) => {
+			const currentParticipant = conversation.participants.find(
+				participant => participant.userId === userId
+			);
+
+			const lastReadAt = currentParticipant?.lastReadAt;
+
+			const unreadCount = await prisma.message.count({
+				where: {
+				conversationId: conversation.conversationId,
+
+				...(lastReadAt && {
+					createdAt: {
+					gt: lastReadAt
+					}
+				}),
+
+				authorId: {
+					not: userId
+				}
+				}
+			});
+
+			return {
+				...conversation,
+				unreadCount
+			};
+			})
+		);
 	},
+
+
+	// async getConversationById(conversationId, userId) {
+	// 	return prisma.conversation.findUnique({
+	// 		// only return the conversation if the user is a participant
+	// 		where: { 
+	// 			conversationId: conversationId,
+	// 			deletedAt: null,
+	// 			participants: {
+	// 				some: {
+	// 					userId: userId
+	// 				}
+	// 			}
+	// 		},
+	// 		// include participants in the conversation
+	// 		select: {
+	// 			conversationId: true, 
+	// 			type: true, 
+	// 			avatarUrl: true,
+	// 			createdByUserId: true,
+	// 			createdAt: true,
+	// 			updatedAt: true,
+	// 			participants: {
+	// 				select: {
+	// 					userId: true,
+	// 					user: {
+	// 						select: {
+	// 							userId: true,
+	// 							userName: true,
+	// 							avatarUrl: true
+	// 						}
+	// 					}
+	// 				}
+	// 			},
+	// 		}
+	// 	});
+	// },
+
+	async createDirectConversation(userId, participantId, workspaceId) {
+		const directKey = createDirectKey(userId, participantId);
+
+		const conversation = await prisma.conversation.upsert({
+			where: {
+				directKey
+				},
+
+			// Conversation already exists
+			update: {},
+
+			// Create new direct conversation
+			create: {
+				type: 'direct',
+				createdByUserId: userId,
+				workspaceId,
+				directKey,
+
+				participants: {
+					create: [
+					{ userId },
+					{ userId: participantId }
+					]
+				}
+			},
+
+			select: conversationResponseSelect(userId)
+		});
+
+		const currentParticipant = conversation.participants.find(
+			participant => participant.userId === userId
+		);
+
+		const lastReadAt = currentParticipant?.lastReadAt;
+
+		const unreadCount = await prisma.message.count({
+			where: {
+			conversationId: conversation.conversationId,
+
+			...(lastReadAt && {
+				createdAt: {
+				gt: lastReadAt
+				}
+			}),
+
+			authorId: {
+				not: userId
+			}
+			}
+		});
+
+		return {
+			...conversation,
+			unreadCount
+		};
+	},
+
+	async createGroupConversation( userId, participantIds, groupName, workspaceId) {
+		const allParticipantIds = [...new Set([userId, ...participantIds])];
+		const conversation = await prisma.conversation.create({
+			data: {
+			type: 'group',
+			groupName,
+			createdByUserId: userId,
+			workspaceId,
+
+			participants: {
+				create: allParticipantIds.map((participantUserId) => ({
+				userId: participantUserId
+				}))
+			}
+			},
+
+			select: conversationResponseSelect(userId)
+		});
+
+		return {
+			...conversation,
+			unreadCount: 0
+			};
+	},
+
 	async deleteConversation(conversationId, userId) {
 		return prisma.$transaction(async (tx) => {
 			// check if the conversation exists and if the user is the creator
@@ -228,8 +367,12 @@ const messageService = {
 					select : {
 						id:  true,
 						name:  true,
+						kind: true,
+						sizeInBytes: true,
 						url:  true,
-						createdAt:  true
+						path: true,
+						createdAt:  true,
+						mimeType: true
 					}
 				}
 			}})
@@ -281,8 +424,12 @@ const messageService = {
 					select: {
 						id:  true,
 						name:  true,
+						kind: true,
+						sizeInBytes: true,
 						url:  true,
-						createdAt:  true
+						path: true,
+						createdAt:  true,
+						mimeType: true
 					}
 				}
 			}})
@@ -511,7 +658,7 @@ const messageService = {
 	const filePath = `chat/${message.conversationId}/${messageId}/${fileName}`;
 
 	const publicUrl = await uploadFile(
-		process.env.SUPABASE_PUBLIC_BUCKET,
+		process.env.SUPABASE_PUBLIC_BUCKET, // to do : change to attachment/....
 		filePath,
 		file.buffer,
 		file.mimetype
@@ -542,8 +689,22 @@ const messageService = {
 				id: attachmentId
 			}
 		})
-	}
+	},
 
+	async markConversationRead(conversationId, userId) {
+		return prisma.conversationParticipant.update({
+			where: {
+				conversationId_userId: {
+					conversationId,
+					userId
+				}
+			},
+			data: {
+				lastReadAt: new Date()
+			}
+		})
+	},
 }
+		
 
 module.exports = messageService;

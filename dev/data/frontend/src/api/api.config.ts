@@ -34,6 +34,6 @@ export const API_CONFIG = {
     tasks: '/tasks',
     meetings: '/meetings',
     init: '/init',
-	// messages: '/conversations', 
+	messages: '/conversations', 
   }
 } as const;

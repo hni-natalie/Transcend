@@ -17,6 +17,8 @@ export const DefaultAvatar = ({
 }: DefaultAvatarProps) => {
 
   const getInitials = () => {
+
+ 
     const nameParts = name.trim().split(' ');
     
     if (nameParts.length >= 2) {

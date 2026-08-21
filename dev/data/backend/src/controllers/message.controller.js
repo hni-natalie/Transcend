@@ -274,7 +274,25 @@ const messageController = {
 			console.error('Error deleting attachment:', error);
 			res.status(500).json({ error: error.message})
 		}
-	}
+	},
+
+	async markConversationRead(req, res) {
+		try {
+			const { id } = req.params;
+			const { userId } = req.user;
+			if (!id) {
+				return res.status(400).json({ error: "Conversation ID required" });
+			}
+			if (!userId) {
+				return res.status(400).json({ error: "User ID required" });
+			}
+			await messageService.markConversationRead(id, userId);
+			return res.json({ message: 'Conversation marked as read' });
+		} catch (error) {
+			console.error('error marking conversation as read:', error);
+			res.status(500).json({ error: error.message})
+		}
+	},
 }
 
 module.exports = messageController;

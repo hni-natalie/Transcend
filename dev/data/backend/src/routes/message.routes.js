@@ -27,7 +27,10 @@ router.post('/:id/pin', messageController.pinConversation);
 router.delete('/:id/pin', messageController.unpinConversation);
 
 // // Attachments
-router.post('/:id/attachments', upload.single("file"),messageController.uploadAttachment);
+router.post('/:id/attachments', upload.single("file"), messageController.uploadAttachment);
 router.delete('/attachments/:id', messageController.deleteAttachment);
+
+// Read Status
+router.post('/:id/read', messageController.markConversationRead);
 
 module.exports = router;

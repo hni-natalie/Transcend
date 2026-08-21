@@ -9,7 +9,7 @@ interface NewMessageFormProps {
   onClose: () => void;
   onSuccess: () => void;
   onCreateConversation: (data: {
-    userIds: string[];
+    participantIds: string[];
     isGroup: boolean;
     groupName?: string;
     message?: string;
@@ -91,7 +91,7 @@ export function FormNewMessage({
 
     try {
       await onCreateConversation({
-        userIds: selectedUserIds,
+        participantIds: selectedUserIds,
         isGroup,
         groupName: isGroup ? groupName.trim() : undefined,
         message: messageText.trim() || undefined,

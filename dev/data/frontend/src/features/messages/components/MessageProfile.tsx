@@ -1,16 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { IconFile, IconImage, IconLink, IconMemberAdd, IconMembers, IconMessagePin, IconOffice } from '@shared';
 import type { IconProps } from '@shared';
-import type { Attachment, Link, Profile } from '../types';
+import type { Attachment, Link, Profile, InvitableGroup } from '../types';
 import { UserRow, SelectToggle, RemoveButton } from './UserRow';
 import { ChatAvatar } from './ChatAvatar';
 
-interface InvitableGroup {
-  id: string;
-  name: string;
-  memberCount?: number;
-  members?: unknown[];
-}
 
 interface MessageProfileProps {
   contact: Profile;
@@ -50,6 +44,7 @@ export function MessageProfile({
   const [inviteSearch, setInviteSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
+  // console.log('debugging group messages: ', groupMessages);
   useEffect(() => {
     setShowMembers(false);
     setShowInvite(false);

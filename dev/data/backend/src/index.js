@@ -51,7 +51,7 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/spaces', spaceRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/meetings', meetingRoutes);
-app.use('/api/messages', messageRoutes);
+app.use('/api/conversations', messageRoutes);
 
 // start server
 server.listen(port, () => {
