@@ -1,9 +1,9 @@
-import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, UserChipItem, User } from '@shared';
+import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, UserChipItem, User, IconPlus, LoadingState } from '@shared';
 import { useEffect, useMemo, useState } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
 import { InputTextArea } from '@/shared/ui/InputTextArea';
-import { InputDropdownChecklist } from '@/shared/ui/InputDropdownChecklist';
+import { InputDropdownChecklist, EmptyCard } from '@/shared';
 import { DropdownChoice } from '@/shared/types/ui.types';
 
 type TaskMember = {
@@ -306,7 +306,7 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
   return (
     <div
       // onClick={onClick}
-      className="relative p-6 rounded-2xl bg-[#1f1f1f]  shadow-lg hover:border-lime-300 transition-all cursor-pointer"
+      className="relative task-card hover:border-lime-300 transition-all"
     >
       <div className="absolute right-6 top-6">
       <button
@@ -351,27 +351,27 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
       )}
     </div>
 
-      <h2 className="text-2xl font-semibold mb-3 pr-8">
+      <h2 className="text-xl font-semibold mb-4 pr-8">
         {task.taskTitle}
       </h2>
 
-      <p className="text-gray-400 mb-6">
+      <p className="task-desc">
         {task.taskDesc || 'No description'}
       </p>
 
-      <p className={`text-lg font-medium ${
+      <p className={`font-medium ${
           priority === 'high'
             ? 'text-accent-lime'
             : priority === 'medium'
             ? 'text-yellow-300'
             : 'text-gray-400'
         }`}>
-        {priority ? `${priority} Priority` : 'No Priority'}
+        {taskPriorityOptions.find(option => option.id === priority)?.name || 'No Priority'}
       </p>
 
-      <p className="text-lg mb-4">
+      <p className="mb-4 whitespace-pre">
        
-        {task.taskStatus != 'done' ? 'Due on :' : 'Completed on :'}{' '}
+        {task.taskStatus != 'done' ? 'Due on  ·' : 'Completed on  ·'}{'  '}
         {displayDate ? new Date(displayDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric',}): '-'}
       </p>
 
@@ -408,16 +408,19 @@ const TaskColumn = ({
 }) => {
   return (
     <div>
-      <div className="flex items-center justify-between border border-gray-700 rounded-2xl px-6 py-4 mb-6">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <span className="text-2xl font-bold text-accent-lime">
+      <div className='task-tab'>
+        <h2 className="text-lg">{title}</h2>
+        <span className="text-2xl text-accent-lime">
           {tasks.length}
         </span>
       </div>
 
       <div className="space-y-6">
         {tasks.length === 0 ? (
-          <p className="text-content-2">No tasks found.</p>
+          <EmptyCard 
+            title='No tasks found'
+            desc='Nothing assigned at the moment'
+          />
         ) : (
           tasks.map((task) => (
             <TaskCard
@@ -569,7 +572,11 @@ export const Tasks = () => {
   }, [tasks]);
 
   if (loading) {
-    return <p className="p-6">Loading tasks...</p>;
+    return (
+      <div className='flex h-full justify-center'>
+        <LoadingState message="Loading tasks..." size="full" />
+      </div>
+    );
   }
 
   if (error) {
@@ -578,47 +585,48 @@ export const Tasks = () => {
 
   return (
     <>
-      <div className="flex items-center justify-between px-6">
-        <PageHeader
-          icon={<IconTasks className="w-7 h-7" />}
-          title="Tasks"
-        />
-
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="btn-lime-outline"
-        >
-          + Add Task
+      <PageHeader
+        icon={<IconTasks className="w-7 h-7" />}
+        title="Tasks"
+        action={
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="btn-header text-base"
+          >
+            <IconPlus className="w-4 h-4" />
+            Add Task
         </button>
-      </div>
+        }
+      />
+			<div className="flex-1 overflow-y-auto mt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <TaskColumn
+            title="Backlog"
+            tasks={groupedTasks.backlog}
+            onTaskClick={handleTaskClick}
+            onDelete={handleDeleteTask}
+          />
+          <TaskColumn
+            title="Upcoming"
+            tasks={groupedTasks.upcoming}
+            onTaskClick={handleTaskClick}
+            onDelete={handleDeleteTask}
+          />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 p-6">
-        <TaskColumn
-          title="Backlog"
-          tasks={groupedTasks.backlog}
-          onTaskClick={handleTaskClick}
-          onDelete={handleDeleteTask}
-        />
-        <TaskColumn
-          title="Upcoming"
-          tasks={groupedTasks.upcoming}
-          onTaskClick={handleTaskClick}
-          onDelete={handleDeleteTask}
-        />
+          <TaskColumn
+            title="In Progress"
+            tasks={groupedTasks.inProgress}
+            onTaskClick={handleTaskClick}
+            onDelete={handleDeleteTask}
+          />
 
-        <TaskColumn
-          title="In Progress"
-          tasks={groupedTasks.inProgress}
-          onTaskClick={handleTaskClick}
-          onDelete={handleDeleteTask}
-        />
-
-        <TaskColumn
-          title="Done"
-          tasks={groupedTasks.done}
-          onTaskClick={handleTaskClick}
-          onDelete={handleDeleteTask}
-        />
+          <TaskColumn
+            title="Done"
+            tasks={groupedTasks.done}
+            onTaskClick={handleTaskClick}
+            onDelete={handleDeleteTask}
+          />
+        </div>
       </div>
 
       {detailLoading && (

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { PageHeader, IconMeetings } from '@shared';
+import { PageHeader, IconMeetings, IconPlus } from '@shared';
 import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal, RecordingModal, MeetingChatModal } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useSocket } from "@/context/SocketContext";
@@ -324,9 +324,10 @@ export const Meetings = () => {
 				action={
 					<button
 						onClick={() => setShowScheduleModal(true)} 
-						className="bg-accent-lime-bg text-accent-lime border border-accent-lime px-4 py-1.5 rounded-lg font-bold text-xs tracking-wider hover:opacity-90 transition-opacity"
+						className="btn-header text-base"
 					>
-						+ Schedule Meeting
+						<IconPlus className="w-4 h-4" />
+						Schedule Meeting
 					</button>
 				}
 			/>
@@ -337,8 +338,8 @@ export const Meetings = () => {
 				</div>
 			)}
 
-			<div className="flex-1 overflow-y-auto p-4">
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+			<div className="flex-1 overflow-y-auto mt-4">
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 				<MeetingColumn
 					label="Today"
 					action="join"
@@ -398,7 +399,7 @@ export const Meetings = () => {
 
 			{showRecordingModal && (
 				<RecordingModal
-					meetId={selectedMeetingId ?? ""}
+					// meetId={selectedMeetingId ?? ""}
 					recordings={recordings}
 					onClose={() => {
 						setShowRecordingModal(false);

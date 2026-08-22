@@ -295,7 +295,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
 				<button
 				type="button"
 				onClick={handleDelete}
-				className="btn-danger-outline-solid"
+				className="btn-danger-outline-m"
 				>
 				Delete
 				</button>

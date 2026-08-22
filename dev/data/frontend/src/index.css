@@ -98,8 +98,17 @@
   .btn-header {
   	@apply inline-flex items-center justify-center gap-2 text-sm font-bold tracking-wider 
         px-4 py-1.5 rounded-xl border border-accent-lime 
-        bg-accent-lime-bg text-accent-lime 
+        bg-accent-lime-bg/80 text-accent-lime 
         hover:bg-accent-lime hover:text-black 
+        transition-all cursor-pointer 
+        active:scale-95 disabled:opacity-50;
+  }
+
+  .btn-orange {
+  	@apply inline-flex items-center justify-center gap-2 text-sm font-bold tracking-wider 
+        px-4 py-1.5 rounded-xl border border-warning 
+        bg-accent-lime-bg/80 text-warning 
+        hover:bg-warning hover:text-black 
         transition-all cursor-pointer 
         active:scale-95 disabled:opacity-50;
   }
@@ -115,11 +124,6 @@
         transition-all cursor-pointer active:scale-95 disabled:opacity-50
         bg-accent-lime/5 text-accent-lime border border-accent-lime hover:bg-accent-lime/10;
   }
-
-  /* .btn-lime-outline {
-  @apply bg-accent-lime-bg text-accent-lime border border-accent-lime px-4 py-1.5 rounded-lg
-        font-bold text-sm tracking-wider hover:brightness-110 transition-opacity
-} */
 
   .btn-lime-outline-solid {
   	@apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-xl 
@@ -141,13 +145,32 @@
 		hover:bg-danger/20 hover:text-danger;
   }
 
-  .btn-danger-outline-solid {
+  .btn-danger-outline-s {
+  	@apply inline-flex items-center justify-center gap-2 text-sm font-bold tracking-wider 
+        px-4 py-1.5 rounded-xl border border-danger 
+        bg-accent-lime-bg/50 text-danger 
+        hover:bg-danger hover:text-black 
+        transition-all cursor-pointer 
+        active:scale-95 disabled:opacity-50;  }
+
+  .btn-danger-outline-m {
  	 @apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-xl 
         transition-all cursor-pointer active:scale-95 disabled:opacity-50
         bg-danger/5 border border-danger/50 text-danger 
         hover:bg-danger hover:text-black;
   }
 
+
+  /* task list */
+  .task-tab {
+    @apply flex items-center justify-between border border-gray-700 rounded-2xl px-8 py-4 mb-6 font-semibold;
+  }
+  .task-card {
+    @apply bg-background-1 p-6 px-8 rounded-2xl;
+  }
+  .task-desc {
+    @apply text-foreground-3 mb-6 leading-snug;
+  }
 
   /* forms */
   .input-base {

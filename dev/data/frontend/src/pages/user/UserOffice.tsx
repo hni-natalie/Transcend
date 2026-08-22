@@ -8,7 +8,6 @@ import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceSpace } from '@features/livekit';
 import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject, SpawnParticle } from '@features/office';
 import { KeyboardProvider, PositionProvider } from '@/context';
-import { officeSceneConfig as conf } from '@/config/office.config';
 import { SpaceProvider } from '@/features/office/context/SpaceContext';
 
 // Main Scene
@@ -110,11 +109,11 @@ export function Office({ roomName } : SpaceProps ) {
             roomName={roomName} 
             joinText={`Join ${roomName} Room`}
 						mode="room"
+						className='btn-header text-base'
           />
         }
       />
 
-		{/* <div className='bg-background p-8 flex w-full'> */}
 		<div className='flex-1 relative'>
 			<Canvas className=''>
 			<Physics>
