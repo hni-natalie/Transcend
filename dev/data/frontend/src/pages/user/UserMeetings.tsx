@@ -398,7 +398,6 @@ export const Meetings = () => {
 
 			{showRecordingModal && (
 				<RecordingModal
-					meetId={selectedMeetingId ?? ""}
 					recordings={recordings}
 					onClose={() => {
 						setShowRecordingModal(false);

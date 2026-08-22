@@ -33,7 +33,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const getToken = () => localStorage.getItem('token');
   const setToken = (token: string) => localStorage.setItem('token', token);
-  const removeToken = () => localStorage.removeItem('token');
+  
+  // 1. Updated removeToken to also clean up the socket sessionId
+  const removeToken = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('sessionId'); 
+  };
 
   // App bootstrap - restore auth from token
   useEffect(() => {
@@ -78,24 +83,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return authUser; 
   };
 
+  // 2. Added inside the logout cleanup path
   const logout = async () => {
     try {
-        await apiClient.post('/auth/logout');
+      await apiClient.post('/auth/logout');
     } catch (error) {
-        console.error('Logout request failed:', error);
+      console.error('Logout request failed:', error);
     } finally {
-        removeToken();
-        setUser(null);
-        window.location.href = '/login';
+      removeToken(); 
+      setUser(null);
+      window.location.href = '/login';
     }
-};
-
-// local state only
-//   const logout = () => {
-//     removeToken();
-//     setUser(null);
-//     window.location.href = '/login';
-//   };
+  };
 
   return (
     <AuthContext.Provider
