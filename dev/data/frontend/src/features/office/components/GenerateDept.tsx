@@ -7,7 +7,7 @@ import { BlinkingText } from '@/shared';
 import { useOfficeSpace } from '@features/office/context/SpaceContext';
 
 export function GenerateDept() {
-const { planes, loading } = useOfficeSpace();
+const { planes, loading, activeOverlay, hoverOverlay } = useOfficeSpace();
 
   if (loading || !planes) {
     return (
@@ -19,5 +19,11 @@ const { planes, loading } = useOfficeSpace();
       />
     );
   }
-  return <group>{planes}</group>;
+  return (
+  <group>
+    {planes}
+    {activeOverlay}
+    {hoverOverlay}
+  </group>
+);
 }

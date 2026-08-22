@@ -8,7 +8,7 @@ export const ROUTE_PATH = {
 	// admin
 	ADMIN_DASHBOARD: '/admin/dashboard',
 	ADMIN_USERS: '/admin/users',
-	ADMIN_SPACES: '/admin/spaces',
+	// ADMIN_SPACES: '/admin/spaces',
 	ADMIN_ACTIVITY: '/admin/activity',
 	// ADMIN_SETTINGS: '/admin/settings', // kiv - to remove
 
