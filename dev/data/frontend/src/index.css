@@ -96,7 +96,7 @@
 
   /* buttons */
   .btn-header {
-  	@apply inline-flex items-center justify-center gap-2 text-sm font-bold tracking-wider 
+  	@apply inline-flex items-center justify-center gap-2 text-base font-bold tracking-wider 
         px-4 py-1.5 rounded-xl border border-accent-lime 
         bg-accent-lime-bg/80 text-accent-lime 
         hover:bg-accent-lime hover:text-black 
@@ -195,6 +195,10 @@
 
   .close-right {
     @apply flex ml-auto text-2xl text-gray-300 hover:text-white
+  }
+
+  .form-layout {
+    @apply flex flex-col gap-y-4 w-[368px] max-h-[90vh] overflow-y-auto rounded-[1.5rem] bg-background-1 border border-[#242424] p-7 py-8 shadow-2xl text-gray-200
   }
 
   /* data & status */

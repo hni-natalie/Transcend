@@ -31,6 +31,7 @@ export { ButtonLoading } from './ui/ButtonLoading';
 export { UploadFile } from './ui/UploadFile';
 export { UploadPhoto } from './ui/UploadPhoto';
 export { Modal } from './ui/Modal';
+export { ModalHeader } from './ui/ModalHeader';
 export { BlinkingText } from './ui/BlinkingText';
 export { TruncatedText } from './ui/TruncatedText';
 export { PasswordField, usePasswordField } from './ui/PasswordField'
