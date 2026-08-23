@@ -1,5 +1,8 @@
 const prisma = require('../../prisma/client');
 
+const TITLE_MAX_LENGTH = 50;
+const DESC_MAX_LENGTH = 200;
+
 // Validate meeting start & end time
 function validateMeetingTime({
     meetStart,
@@ -94,6 +97,24 @@ function validateRequiredStrings(fields) {
     for (const [fieldName, value] of Object.entries(fields)) {
         if (typeof value !== 'string' || value.trim() === '') {
             throw new Error(`${fieldName} is required and cannot be empty`);
+        }
+
+        if (
+            fieldName === 'meetTitle' &&
+            value.trim().length > TITLE_MAX_LENGTH
+        ) {
+            throw new Error(
+                `Meeting title cannot exceed ${TITLE_MAX_LENGTH} characters`
+            );
+        }
+
+        if (
+            fieldName === 'meetDesc' &&
+            value.trim().length > DESC_MAX_LENGTH
+        ) {
+            throw new Error(
+                `Meeting description cannot exceed ${DESC_MAX_LENGTH} characters`
+            );
         }
     }
 }
