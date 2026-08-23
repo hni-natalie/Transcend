@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePasswordField } from '@shared/ui/PasswordField';
 import { UserFormFields } from './userFormFields';
-import { useRolesAndDepartments, useAvatarUpload, UserTableRow } from '@shared';
+import { useRolesAndDepartments, useAvatarUpload, UserTableRow, IconClose } from '@shared';
 import { createUser, updateUser, resetUserPassword } from '@features/users';
 import { useToast } from '@/context/ToastContext';
 
@@ -259,10 +259,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
             onClick={onClose} 
             className="text-foreground-3 hover:text-white transition-colors cursor-pointer"
           >
-			{/* svg to replace with x icon */}
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <IconClose className="w-8 h-8"/>
           </button>
         </div>
 
