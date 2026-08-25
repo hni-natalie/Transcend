@@ -7,20 +7,22 @@ interface HeaderProps {
 	iconClassName?: string;
 	onClose: () => void;
 	title: string;
+	titleClassName?: string;
 }
 
 export const ModalHeader = ({
 	icon: Icon,
 	iconClassName,
 	onClose,
-	title
+	title,
+	titleClassName = ''
 } : HeaderProps) => {
 	return (
 		<div className="flex justify-between items-start">
 			<div className="w-5" />
 			<div className='flex flex-col gap-y-2 items-center justify-center text-center text-4xl'>
         {Icon && <Icon className={iconClassName} />}
-				<h2 className="text-2xl font-semibold text-accent-lime">{title}</h2>
+				<h2 className={`text-2xl font-semibold text-accent-lime ${titleClassName}`}>{title}</h2>
 			</div>
 
 			<button 
