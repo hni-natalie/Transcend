@@ -130,6 +130,7 @@ export const MeetingColumn = ({
               </button>
 
               {/* Actions */}
+              <div>
               {action === 'join' ? (
                 meeting.status === "started" ? (
                   <ButtonVoiceRoom
@@ -155,7 +156,7 @@ export const MeetingColumn = ({
                 ) : (
                   <button
                     disabled
-                    className="w-full border border-gray-400 text-gray-400 text-xs font-semibold py-1.5 rounded-lg"
+                    className="btn-gray"
                   >
                     Waiting for host
                   </button>
@@ -204,6 +205,7 @@ export const MeetingColumn = ({
                   </button>
                 </div>
               )}
+              </div>
             </div>
 
           );
