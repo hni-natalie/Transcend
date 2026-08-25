@@ -109,7 +109,7 @@ export function Office({ roomName } : SpaceProps ) {
             roomName={roomName} 
             joinText={`Join ${roomName} Room`}
 						mode="room"
-						className='btn-header text-base'
+						className='btn-header'
           />
         }
       />
