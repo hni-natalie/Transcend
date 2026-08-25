@@ -1,16 +1,24 @@
 import { IconClose } from "@shared"
+import React, { ComponentType } from 'react';
+
+interface HeaderProps {
+	icon?: ComponentType<{ className?: string }>;
+  // icon?: React.ReactElement;
+	iconClassName?: string;
+	onClose: () => void;
+	title: string;
+}
 
 export const ModalHeader = ({
 	icon: Icon,
 	iconClassName,
 	onClose,
 	title
-}) => {
+} : HeaderProps) => {
 	return (
 		<div className="flex justify-between items-start">
 			<div className="w-5" />
 			<div className='flex flex-col gap-y-2 items-center justify-center text-center text-4xl'>
-				{/* <IconTasks className='text-white w-7 h-7' /> */}
         {Icon && <Icon className={iconClassName} />}
 				<h2 className="text-2xl font-semibold text-accent-lime">{title}</h2>
 			</div>

@@ -8,7 +8,7 @@ import { IconDown } from './Icons';
 // }
 
 interface InputDropdownProps {
-  title: string;
+  title?: string;
   name?: string;
   choices: Array<DropdownChoice | string>;
   value: string;
