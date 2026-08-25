@@ -136,7 +136,7 @@ export function ButtonVoiceRoom({
   const finalClassName = className || "btn-lime-outline";
 
   return (
-    <nav className="flex justify-center items-center">
+    <nav className="flex items-center">
       {!isCurrentRoom ? (
         <button
           onClick={handleJoin}

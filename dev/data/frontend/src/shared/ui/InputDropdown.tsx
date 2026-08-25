@@ -8,7 +8,7 @@ import { IconDown } from './Icons';
 // }
 
 interface InputDropdownProps {
-  title: string;
+  title?: string;
   name?: string;
   choices: Array<DropdownChoice | string>;
   value: string;
@@ -79,7 +79,7 @@ export function InputDropdown({
   return (
     <div className="flex flex-col gap-y-1.5 w-full relative text-left" ref={containerRef}>
       {title && (
-        <label className="text-base text-foreground-3 font-medium px-0.5">
+        <label className="input-label">
           {title}
           {required && <span className="text-xs text-accent-lime ml-1">*</span>}
         </label>

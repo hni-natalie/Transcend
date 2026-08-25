@@ -218,7 +218,6 @@ const recordingService = {
                         });
 
                         const transcript = await whisperService.transcribe(fileUrl);
-                        console.log("[WHISPER] Transcript:", transcript);
 
                         const summary = await googleAIService.generateSummary(transcript);
 

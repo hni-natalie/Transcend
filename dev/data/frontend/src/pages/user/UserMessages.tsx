@@ -12,7 +12,7 @@ export const Messages = () => {
 		  action={
         	<button
               onClick={() => setShowAddForm(true)}
-              className="btn-header text-base"
+              className="btn-header"
           	>
 			  <IconPlus className="w-4 h-4" />
               Create Message

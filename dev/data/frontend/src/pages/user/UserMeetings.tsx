@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { PageHeader, IconMeetings } from '@shared';
+import { PageHeader, IconMeetings, IconPlus, Modal } from '@shared';
 import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal, RecordingModal, MeetingChatModal } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useSocket } from "@/context/SocketContext";
@@ -324,21 +324,22 @@ export const Meetings = () => {
 				action={
 					<button
 						onClick={() => setShowScheduleModal(true)} 
-						className="bg-accent-lime-bg text-accent-lime border border-accent-lime px-4 py-1.5 rounded-lg font-bold text-xs tracking-wider hover:opacity-90 transition-opacity"
+						className="btn-header"
 					>
-						+ Schedule Meeting
+						<IconPlus className="w-4 h-4" />
+						Schedule Meeting
 					</button>
 				}
 			/>
 
 			{message && (
-				<div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-green-100 text-green-700 text-sm font-medium">
+				<div className="mb-2 p-3 px-4 rounded-lg bg-background-2 text-accent-lime text-sm font-medium">
 					{message}
 				</div>
 			)}
 
-			<div className="flex-1 overflow-y-auto p-4">
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+			<div className="flex-1 overflow-y-auto mt-4">
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 				<MeetingColumn
 					label="Today"
 					action="join"
@@ -381,12 +382,23 @@ export const Meetings = () => {
 				</div>
 			</div>
 
-			<MeetingDetailsModal
-				meeting={selectedMeeting}
+			<Modal
+				isOpen={!!selectedMeeting}
 				onClose={() => setSelectedMeeting(null)}
-			/>
+			>
+				<MeetingDetailsModal
+					meeting={selectedMeeting}
+					onClose={() => setSelectedMeeting(null)}
+				/>
+			</Modal>
 
-			{showChatModal && (
+			<Modal
+				isOpen={!!showChatModal}
+				onClose={() => {
+					setShowChatModal(false);
+					setChatMessages([]);
+				}}
+			>
 				<MeetingChatModal
 					messages={chatMessages}
 					onClose={() => {
@@ -394,30 +406,43 @@ export const Meetings = () => {
 					setChatMessages([]);
 					}}
 				/>
-			)}
+			</Modal>
 
-			{showRecordingModal && (
+			<Modal
+				isOpen={showRecordingModal}
+				onClose={() => {
+					setShowRecordingModal(false);
+					setRecordings([]);
+				}}
+			>
 				<RecordingModal
-					meetId={selectedMeetingId ?? ""}
 					recordings={recordings}
 					onClose={() => {
 						setShowRecordingModal(false);
 						setRecordings([]);
 					}}
 				/>
-			)}
+			</Modal>
 
-			<ScheduleMeetingModal
-				open={showScheduleModal}
-				mode={editingMeeting ? "edit" : "create"}
-				meeting={editingMeeting ?? undefined}
+			<Modal
+				isOpen={showScheduleModal}
 				onClose={() => {
 					setShowScheduleModal(false);
 					setEditingMeeting(null);
 				}}
-				onCreated={loadMeetings}
-				onUpdated={loadMeetings}
-			/>
+			>
+				<ScheduleMeetingModal
+					open={showScheduleModal}
+					mode={editingMeeting ? "edit" : "create"}
+					meeting={editingMeeting ?? undefined}
+					onClose={() => {
+						setShowScheduleModal(false);
+						setEditingMeeting(null);
+					}}
+					onCreated={loadMeetings}
+					onUpdated={loadMeetings}
+				/>
+			</Modal>
 		</>
 	);
 };

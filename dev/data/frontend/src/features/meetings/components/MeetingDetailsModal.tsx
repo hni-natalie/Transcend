@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { MeetingDetails } from '../meeting.types';
+import { ModalHeader } from '@/shared';
 
 type Props = {
   meeting: MeetingDetails | null;
@@ -26,32 +27,19 @@ export const MeetingDetailsModal = ({ meeting, onClose }: Props) => {
   if (!meeting) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="flex flex-col gap-y-4 w-full max-w-[480px] max-h-[88vh] overflow-y-auto rounded-[1.5rem] bg-[#1b1b1b] border border-[#242424] px-8 py-7 shadow-2xl text-gray-200">
-
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="close-right"
-        >
-          ✕
-        </button>
-
-        {/* Header */}
-        <div>
-          <h2 className="text-2xl font-semibold text-white">
-            {meeting.meetTitle}
-          </h2>
-
-          {meeting.meetDesc && (
-            <p className="mt-2 text-sm text-gray-400">
-              {meeting.meetDesc}
-            </p>
-          )}
-        </div>
+      <div className='form-layout'>
+        <ModalHeader 
+            title={meeting.meetTitle}
+            onClose={onClose}
+        />
+        {meeting.meetDesc && (
+          <p className="mt-2 text-base text-gray-400">
+            {meeting.meetDesc}
+          </p>
+        )}
 
         {/* Meeting Information */}
-        <div className="rounded-xl border border-[#2f2f2f] p-4 space-y-3">
+        <div className="rounded-2xl border border-background-3 p-4 space-y-2 mt-2 mb-2">
           <div className="flex justify-between">
             <span className="text-gray-400">Start</span>
             <span>{new Date(meeting.meetStart).toLocaleString()}</span>
@@ -78,14 +66,14 @@ export const MeetingDetailsModal = ({ meeting, onClose }: Props) => {
             {meeting.participants.map((participant, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between rounded-lg border border-[#2f2f2f] bg-[#222222] px-4 py-3"
+                className="flex items-center justify-between task-list-layout"
               >
                 <div>
-                  <p className="font-medium text-white">
+                  <p className="font-medium text-white pb-1">
                     {participant.user.userName}
                   </p>
 
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm text-gray-400">
                     {participant.user.userEmail} 
                   </p>
 
@@ -94,7 +82,13 @@ export const MeetingDetailsModal = ({ meeting, onClose }: Props) => {
                   </p>
                 </div>
 
-                <span className="text-xs text-accent-lime capitalize">
+                <span className={`text-sm font-medium capitalize ${
+                  participant.attendance === 'present'
+                  ? 'text-accent-lime'
+                  : participant.attendance === 'absent'
+                  ? 'text-foreground-2'
+                  : 'text-foreground-3'
+                }`}>
                   {participant.attendance}
                 </span>
               </div>
@@ -103,6 +97,5 @@ export const MeetingDetailsModal = ({ meeting, onClose }: Props) => {
         </div>
 
       </div>
-    </div>
   );
 };

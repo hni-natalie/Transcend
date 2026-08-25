@@ -11,6 +11,7 @@ interface InputTextProps {
   disabled?: boolean;
   name?: string;
   className?: string;
+  min?: any;
 }
 
 export function InputText({ 
@@ -25,7 +26,8 @@ export function InputText({
   type = 'text',
   error = '',
   disabled = false,
-  className = ''
+  className = '',
+  min = ''
 }: InputTextProps) {
   return (
     <div className="flex flex-col gap-y-1">
@@ -42,6 +44,7 @@ export function InputText({
         className={`input-base ${error ? 'input-error' : ''} ${className}`}
         placeholder={placeholder}
         value={value}
+        min={min}
         onChange={onChange}
 		    onBlur={onBlur}
         onFocus={onFocus} 
