@@ -117,7 +117,6 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
           {loading ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
-
     </div>
   );
 };
@@ -356,18 +355,17 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
         {task.taskDesc || 'No description'}
       </p>
 
-      <p className={`font-medium ${
+      <p className={`font-medium capitalize ${
           priority === 'high'
             ? 'text-accent-lime'
             : priority === 'medium'
             ? 'text-yellow-300'
             : 'text-gray-400'
         }`}>
-        {taskPriorityOptions.find(option => option.id === priority)?.name || 'No Priority'}
+        {priority || 'No'} Priority
       </p>
 
       <p className="mb-4 whitespace-pre">
-       
         {task.taskStatus != 'done' ? 'Due on  ·' : 'Completed on  ·'}{'  '}
         {displayDate ? new Date(displayDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric',}): '-'}
       </p>
