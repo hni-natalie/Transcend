@@ -1,3 +1,4 @@
+import { Modal, ModalHeader } from '@/shared';
 import type { Recording } from '../meeting.types';
 import { SummaryModal } from './SummaryModal';
 import { useState } from "react";
@@ -19,48 +20,25 @@ export const RecordingModal = ({
     
     return (
         <>
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                <div className="flex flex-col gap-y-4 w-full max-w-[480px] max-h-[88vh] overflow-y-auto rounded-[1.5rem] bg-[#1b1b1b] border border-[#242424] px-8 py-7 shadow-2xl text-gray-200">
-
-                    {/* Header */}
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold">
-                            Meeting Recordings
-                        </h2>
-
-                        <button
-                            onClick={onClose}
-                            className="text-text-secondary hover:text-text-primary"
-                        >
-                            ✕
-                        </button>
-                    </div>
-
+                <div className='form-layout'>
+                    <ModalHeader 
+                        title='Meeting Recordings'
+                        onClose={onClose}
+                    />
                     {/* Empty State */}
                     {recordings.length === 0 ? (
-                        <p className="text-sm text-text-secondary text-center py-6">
+                        <p className="text-sm text-foreground-3 text-center py-6">
                             No recordings available.
                         </p>
                     ) : (
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-3 mt-6">
                             {recordings.map((recording) => (
-                                <div key={recording.recordingId} className="border border-surface-secondary rounded-lg p-3">
+                                <div key={recording.recordingId} className="task-list-layout">
 
                                     <div className="flex justify-between items-center mb-2">
-                                        <p className="text-sm font-medium">Recording</p>
-
-                                        <span className={`text-xs ${
-                                            recording.status === "completed"
-                                                ? "text-green-400"
-                                                : recording.status === "failed"
-                                                ? "text-red-400"
-                                                : "text-yellow-400"
-                                        }`}>
-                                            {recording.status}
-                                        </span>
-                                    </div>
-
-                                    <p className="text-xs text-text-secondary mb-2">
+                                    <div className="flex flex-col">
+                                    <p className="font-medium">Recording</p>
+                                    <p className="text-sm text-gray-400 mb-2">
                                         {new Date(recording.createdAt).toLocaleString("en-MY", {
                                             timeZone: "Asia/Kuala_Lumpur",
                                             dateStyle: "medium",
@@ -69,15 +47,15 @@ export const RecordingModal = ({
                                     </p>
 
                                     {recording.fileUrl ? (
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-3 text-xs">
                                             {recording.fileUrl && (
                                                 <a
                                                     href={recording.fileUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-accent-lime text-sm hover:underline"
+                                                    className="text-accent-lime hover:underline"
                                                 >
-                                                    Open Recording
+                                                    View Playback
                                                 </a>
                                             )}
 
@@ -88,31 +66,46 @@ export const RecordingModal = ({
                                                         status: recording.summaryStatus,
                                                     })
                                                 }
-                                                className="text-accent-lime text-sm hover:underline"
+                                                className="text-accent-lime hover:underline"
                                             >
                                                 Summary
                                             </button>
                                         </div>
                                     ) : (
-                                        <p className="text-sm text-red-400">
+                                        <p className="text-sm text-danger">
                                             Recording unavailable
                                         </p>
                                     )}
+                                    </div>
 
+                                    <span className={`text-sm font-medium capitalize ${
+                                        recording.status === "completed"
+                                            ? "text-white"
+                                            : recording.status === "failed"
+                                            ? "text-danger"
+                                            : "text-warning"
+                                    }`}>
+                                        {recording.status}
+                                    </span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     )}
                 </div>
-            </div>
 
-            {selectedSummary !== null && (
+            <Modal 
+                isOpen={!!selectedSummary}
+                onClose={() => setSelectedSummary(null)}
+            >
+                {selectedSummary &&
                 <SummaryModal
                     summary={selectedSummary.summary}
                     summaryStatus={selectedSummary.status as "pending" | "completed" | "failed"}
                     onClose={() => setSelectedSummary(null)}
                 />
-            )}
+                }
+            </Modal>
         </>
     );
 };
