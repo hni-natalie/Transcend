@@ -141,6 +141,7 @@ export const MeetingColumn = ({
                     mode="video"
                     joinTo={R.USER_VIDEOCALL}
                     isHost={isHost}
+                    className="btn-header"
                   />
                 ) : isHost ? (
                   <ButtonVoiceRoom
