@@ -5,9 +5,11 @@
 
 import { BlinkingText } from '@/shared';
 import { useOfficeSpace } from '@features/office/context/SpaceContext';
+import { useOfficeSpaceLayout } from '@features/office/context/SpaceLayoutContext';
 
 export function GenerateDept() {
-const { planes, loading, activeOverlay, hoverOverlay } = useOfficeSpace();
+const { planes, activeOverlay, hoverOverlay } = useOfficeSpace();
+const { loading } = useOfficeSpaceLayout();
 
   if (loading || !planes) {
     return (
