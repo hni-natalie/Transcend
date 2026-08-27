@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { RoomContext } from '@livekit/components-react';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useLiveKit, VideoConference } from '@/features/livekit';
-import { PageHeader, IconMeetings } from '@/shared';
+import { PageHeader, IconMeetings, LoadingState } from '@/shared';
 import { useAuth } from '@/features/auth/AuthContext';
 import { meetingApi } from '@/features/meetings/api/meeting.api';
 import { Room, RoomEvent } from 'livekit-client';
@@ -17,11 +17,12 @@ export function UserMeetingRoom() {
   const navigate = useNavigate();
   // console.log("location state:", location.state);
   
-  const { meetId, roomName, meetingTitle, isHost } = location.state || {
+  const { meetId, roomName, meetingTitle, isHost, leaveTo } = location.state || {
     roomName: '',
     meetId: '',
     meetingTitle: 'Meeting',
     isHost: false,
+    leaveTo: R.USER_MEETINGS,
   };
 
   const { isConnectedRoom, getLivekitRoom, disconnect, isLoading, error } =
@@ -83,7 +84,7 @@ export function UserMeetingRoom() {
       console.log("Meeting ended");
     }
 
-    navigate(R.USER_MEETINGS);
+    navigate(leaveTo);
   };
 
   return (
@@ -94,8 +95,8 @@ export function UserMeetingRoom() {
         action={
           error ? (
             <button
-              onClick={() => navigate(R.USER_MEETINGS)}
-              className="btn-lime-outline"
+              onClick={() => navigate(leaveTo)}
+              className="btn-header"
             >
               Return Back
             </button>
@@ -123,15 +124,15 @@ export function UserMeetingRoom() {
 
         <div className="flex flex-1 min-h-0">
           {error ? (
-            <div className="text-center">
-              <p className="text-red-500 font-semibold">
+            <div className="text-center flex flex-col w-full justify-center">
+              <p className="text-danger font-semibold">
                 Failed to join meeting
               </p>
 
               <p>{error}</p>
             </div>
           ) : !room ? (
-            <p>Connecting...</p>
+            <LoadingState message="Connecting..." size="full" />
           ) : (
             <RoomContext.Provider value={room}>
               <VideoConference 
