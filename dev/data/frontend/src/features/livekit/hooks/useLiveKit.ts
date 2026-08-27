@@ -128,11 +128,11 @@ export function useLiveKit( roomName:string ) {
   const setIsMuted = useCallback(( status:boolean ) => {
     livekitService.setIsMuted(status);
   }, []);
-  const locateOfficeUser = (href: string) => async () => {
+  const locateOfficeUser = (href: string, targetPosition?: { x: number; y: number; z: number }) => async () => {
       await connect("room");
       navigate( href, {
         state: {
-          targetPosition: {x:2, y:0, z:10}
+          targetPosition: targetPosition || { x:0, y:0, z:0 }
         }
       });
   }

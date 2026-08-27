@@ -94,7 +94,7 @@ export const CameraTracking = ({ localPlayerRef, controlsRef, isConnectedRoom, c
         if (isPanning) return ;
         // Use external spawn position once on initial placement, then follow local player
         const target = (!hasUsedSpawnPosition.current && spawnPosition) ? spawnPosition : localPlayerRef.current.position;
-        hasUsedSpawnPosition.current = true;
+        if (isMoveKey()) hasUsedSpawnPosition.current = true;
         // Update MapControls(camera) target to follow player
         controlsRef.current.target.set(
           target.x,

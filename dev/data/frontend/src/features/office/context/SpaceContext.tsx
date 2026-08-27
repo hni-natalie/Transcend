@@ -77,11 +77,6 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
       console.log(`User ${data.player.name}, sockId:${data.player.id} joined ${data.roomName}`);
     });
 
-    socket.on('existing-room-players', (data) => {
-      console.log(`[existing-room-players]:`, data);
-      setRoomPlayers(data);
-    })
-
     socket.on('get-room-spawn-pos', (data) => {
 			console.log('[get-room-spawn-pos] roomName ', data.roomName);
 			if (positionDataRef.current.length > 0)
@@ -91,7 +86,6 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
     return () => {
       if (socket && !shouldConnect) {
         socket.off('player-joined-room');
-        socket.off('existing-room-players');
         socket.off('get-room-spawn-pos');
 			}
 		}

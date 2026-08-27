@@ -61,7 +61,6 @@ export function SpaceLayoutProvider({ children, padding=1, roomName } : SpaceLay
 			const { departmentCount, officeSpaces } = await getOfficeDept();
 			setOfficeSpace(officeSpaces);
 			setCount(departmentCount);
-			setLoading(false);
 		};
 		fetchData();
 	}, []);
@@ -127,7 +126,8 @@ export function SpaceLayoutProvider({ children, padding=1, roomName } : SpaceLay
 		}));
 		positionDataRef.current = positionData;
 		socket.emit('room-spawn-pos', { roomName, positionData:positionDataRef.current });
-		// console.log("[SpaceLayoutContext] Layout ready: ", positionDataRef.current.length);
+		setLoading(false);
+		console.log("[SpaceLayoutContext] Layout ready: ", positionDataRef.current.length, ' ', loading);
 		return data;
 	},[treemapData, officeSpace, canvasWidth, canvasHeight, isConnected])
 
