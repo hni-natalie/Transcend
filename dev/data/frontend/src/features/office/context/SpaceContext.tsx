@@ -2,31 +2,21 @@
 	Handling all planes in Scene
 */
 import * as THREE from 'three';
-import * as d3 from 'd3-hierarchy';
 import { createContext, useContext, useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { useFrame } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import { useLiveKit } from '@features/livekit'
-import { officeService } from '@/features/office/services/office.service';
 import { useTextWidth } from '@/features/office/hooks/useTextWidth';
+import { useOfficeSpaceLayout, SpaceLayoutProviderProps } from '@/features/office/context/SpaceLayoutContext';
 import { useSocket } from '@/context';
 
 const SpaceContext = createContext(null);
 export const useOfficeSpace = () => useContext(SpaceContext);
 
 
-interface TreemapData {
-  id: string;
-  parentId?: string | null;
-  value: number;
-}
-
-interface SpaceProviderProps {
-	children: React.ReactNode | React.ReactNode[];
-	padding?: number;
+interface SpaceProviderProps extends SpaceLayoutProviderProps {
 	localPlayerRef?: React.RefObject<THREE.Group | null>;
-	roomName: string;
 }
 
 /************************************************
@@ -50,27 +40,6 @@ function getPlanePosition( planeRefs:any, dpId:string ) {
   }
 };
 
-const getOfficeDept = async () => {
-	const res = await officeService.getAllSpaces();
-
-	let departmentNames = [];
-	let departmentCount = 0;
-	let officeSpaces = [];
-
-	// console.log('received data: ', res);
-	if (res.success && Array.isArray(res.data)) {
-		// const departmentSize = res.data.map(item => item.userCapacity);
-
-		departmentNames = res.data.map(item => item.spaceName);
-		officeSpaces = res.data;
-		departmentCount = officeSpaces.length;
-		// console.log('received spaces: ', officeSpaces);
-		// console.log('Departments:', departmentNames);
-		// console.log('Length of array: ', departmentCount);
-	}
-	return { departmentNames, departmentCount, officeSpaces };
-}
-
 const updateRoomPlayer = (prev, data) => {
 
 	const existingUserIdx = prev.findIndex(p => p.userId === data.player.userId);
@@ -87,16 +56,12 @@ const updateRoomPlayer = (prev, data) => {
 
 export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } : SpaceProviderProps ) {
 	const { socket, shouldConnect, setRoomPlayers, isConnected } = useSocket();
+	const { count, positionedPlanes, positionDataRef, canvasHeight, canvasWidth } = useOfficeSpaceLayout();
 	const { activePlane, setActivePlane, isConnectedRoom } = useLiveKit(roomName);
 	const [hoveredIndex, setHoveredIndex] = useState(null)
 	const { textRef, textWidth, getTextWidth } = useTextWidth();
 	const planeRefs = useRef(new Map());
 	const previousActivePlaneRef = useRef<number | null>(null);
-	const positionDataRef = useRef([]);
-
-	const [loading, setLoading] = useState(true);
-	const [officeSpace, setOfficeSpace] = useState([]);
-	const [count, setCount] = useState(0);
 
   /* **************************************************************
    * Socket declarations
@@ -206,82 +171,16 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 		}
 	});
 
-	useEffect(() => {
-		setLoading(true);
-		const fetchData = async () => {
-			const { departmentCount, officeSpaces } = await getOfficeDept();
-			setOfficeSpace(officeSpaces);
-			setCount(departmentCount);
-			setLoading(false);
-		};
-		fetchData();
-	}, []);
 
   /* **************************************************************
    * Memo declarations
    * **************************************************************/
-	const canvasWidth = conf.World.width;
-	const canvasHeight = conf.World.height;
 	const themeColor = conf.Color.themes.golden;
 
-	// 1. Prepare data for treemap
-	const treemapData = useMemo(() => {
-		const root = d3.stratify<TreemapData>()
-			.id(d => d.id)
-			.parentId(d => d.parentId || null)
-			([
-				{ id: "root", value: 0 },
-				...officeSpace.map(p => ({ 
-						id: p.spaceId, 
-						parentId: "root", 
-						value: p.userCapacity,  // Use capacity as the area!
-				}))
-			])
-			.sum(d => Math.sqrt(d.value ?? 0));   // without this all leaf values are 0/undefined
-			// .sum(d => Math.log((d.value ?? 0) + 1)); // lesser diff between large & small
-
-		// 2. Create treemap layout (this replaces cols/rows)
-		const treemap = d3.treemap()
-			.size([canvasWidth, canvasHeight])
-			.padding(padding)
-			.tile(d3.treemapSquarify.ratio(1));
-
-		const layout = treemap(root);
-		// console.log('Treemap size:', treemap.size());
-		// console.log('First leaf:', layout.leaves()[0]);
-		return layout;
-	}, [officeSpace, canvasWidth, canvasHeight])
-
-	const positionedPlanes = useMemo(() => {
-		// 3. Extract positions
-		const shrinkFactor = 0.5
-		const data = treemapData.leaves().map(( leaf:any, i ) => {
-			const planeData = officeSpace.find(p => p.spaceId === leaf.data.id);
-			return {
-					...planeData,
-					index: i,
-					x: (leaf.x0 + leaf.x1) / 2 - canvasWidth/2,
-					z: (leaf.y0 + leaf.y1) / 2 - canvasHeight/2,
-					width: (leaf.x1 - leaf.x0) * shrinkFactor,
-					height: (leaf.y1 - leaf.y0) * shrinkFactor,
-			};
-		});
-		// console.log('[SpaceContext] positionedPlanes: ', data);
-		const positionData = data.map(item => ({
-			departmentId:item.departmentId,
-			accessLevel:item.accessLevel,
-			x:item.x,
-			z:item.z
-		}));
-		positionDataRef.current = positionData;
-		socket.emit('room-spawn-pos', { roomName, positionData:positionDataRef.current });
-		return data;
-	},[treemapData, officeSpace, canvasWidth, canvasHeight])
-
+	// 4. Create meshes at calculated positions
 	const planes = useMemo(() => {
 		
 		const result = [];
-		// 4. Create meshes at calculated positions
 		const loader = new THREE.TextureLoader();
 		const tileSize = 10;
 		
@@ -290,11 +189,11 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 			const theme = themeColor[i % themeColor.length];
 			const texture = loader.load('/texture/marble-2/roughness.png');
 
-				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-				texture.repeat.set(
-					plane.width / tileSize,
-					plane.height / tileSize
-				);
+			texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+			texture.repeat.set(
+				plane.width / tileSize,
+				plane.height / tileSize
+			);
 			result.push(
 				<mesh
 					key={i}
@@ -332,9 +231,8 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 		const hue = (activePlane / count) * conf.Color.endHue;
 		const theme = themeColor[activePlane % themeColor.length];
 		const color = theme.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
-		const value = Number(color[3]) * 2;
+		const value = Number(color[3]) * 1.5;
 		// console.log('hsl: ', color[0], ' ', color[1], ' ', color[2], ' ', color[3]);
-		// console.log('sat: ', value);
 
 		if (!plane) return null;
 			
@@ -384,7 +282,6 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 
 	const value = {
 		planes,
-		loading,
 		planeRefs,
 		hoverOverlay,
 		activeOverlay,

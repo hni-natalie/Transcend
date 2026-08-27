@@ -179,7 +179,7 @@ export const MeetingColumn = ({
                   </button>
               </div>
               ) : (
-                <div className="flex gap-2 -ml-4">
+                <div className="flex gap-2 flex-wrap">
                   <ButtonVoiceRoom 
                     className='btn-header' 
                     joinText='Start Meeting' 
