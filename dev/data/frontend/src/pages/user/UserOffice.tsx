@@ -4,7 +4,7 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { Physics } from '@react-three/cannon';
 import { PerspectiveCamera, MapControls, SpotLight, Plane } from '@react-three/drei';
 import { useSocket } from '@/context/SocketContext';
-import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
+import { PageHeader, IconOffice, LoadingState } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceSpace } from '@features/livekit';
 import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject, SpawnParticle } from '@features/office';
 import { KeyboardProvider, PositionProvider } from '@/context';
@@ -21,18 +21,15 @@ export function Office({ roomName } : SpaceProps ) {
 	const { disconnect, getAudioListener, getPositionalAudio, isPlayerAudioReady, isConnectedRoom } = useLiveKit(roomName);
 	/* ------------- threejs  ------------- */
   const localPlayerRef = useRef<THREE.Group>(null);
-  const groundRef = useRef<THREE.Mesh>(null);
 	const controlsRef = useRef<React.ElementRef<typeof MapControls>>(null);
 	const cameraRef = useRef<THREE.Camera>(null);
 	const clickPoint = useRef(null);
-	// const [lightTarget, setLightTarget] = useState(null);
 	const lightTargetRef = useRef<THREE.Object3D>(null);
 
-	const hasMouseMoved = useRef(false);
-	const hasMouseDown = useRef(false);
 	const listenerRef = useRef<THREE.AudioListener | null>(null);
 	/* ------------- general  ------------- */
   const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 	const isConnectedRoomRef = useRef(isConnectedRoom);
 
 	const handleUncaughtRejection = async ( event:PromiseRejectionEvent ) => {
@@ -114,8 +111,14 @@ export function Office({ roomName } : SpaceProps ) {
         }
       />
 
+		{isLoading &&
+		<LoadingState message="Initializing Office resources..." size="full" />
+		}
 		<div className='flex-1 relative'>
-			<Canvas className=''>
+			<Canvas
+				className=''
+        onCreated={(state) => { setIsLoading(false) }}
+			>
 			<Physics>
 				<SpaceProvider localPlayerRef={localPlayerRef} roomName={roomName}>
 				<PositionProvider roomName={roomName}>
