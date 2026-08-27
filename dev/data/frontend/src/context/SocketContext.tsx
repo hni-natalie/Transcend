@@ -284,7 +284,9 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
   }, [shouldConnect]);
   
 
-  /* Helper functions */
+  /* **************************************************************
+   * Helper functions
+   * **************************************************************/
   const getToken = () => localStorage.getItem('token');
   const enableSocket = () => setShouldConnect(true);
   const getPlayerCount = () => players.length;

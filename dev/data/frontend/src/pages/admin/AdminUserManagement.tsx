@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PageHeader, IconUsers } from '@shared';
+import { PageHeader, IconUsers, IconPlus } from '@shared';
 import { UserManagement } from '@features/admin';
 
 export const AdminUserManagement = () => {
@@ -15,7 +15,8 @@ export const AdminUserManagement = () => {
             onClick={() => setShowAddForm(true)}
             className="btn-header"
           >
-            + Add User
+          <IconPlus className="w-4 h-4" />
+          Add User
           </button>
         }
       />

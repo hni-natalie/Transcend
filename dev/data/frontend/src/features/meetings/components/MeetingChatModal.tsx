@@ -1,3 +1,4 @@
+import { ModalHeader } from '@/shared';
 import type { MeetingChatMessage } from '../meeting.types';
 
 
@@ -12,42 +13,31 @@ export const MeetingChatModal = ({
 }: Props) => {
     console.log("Modal messages:", messages);
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-            <div className="flex flex-col gap-y-4 w-full max-w-[480px] max-h-[88vh] overflow-y-auto rounded-[1.5rem] bg-[#1b1b1b] border border-[#242424] px-8 py-7 shadow-2xl text-gray-200">
+            <div className='form-layout'>
 
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-lg font-semibold">
-                        Meeting Chat
-                    </h2>
-
-                    <button
-                        onClick={onClose}
-                        className="text-text-secondary hover:text-text-primary"
-                    >
-                        ✕
-                    </button>
-                </div>
-
-
+                <ModalHeader 
+                    title='Meeting Chat'
+                    onClose={onClose}
+                />
                 {messages.length === 0 ? (
-                    <p className="text-sm text-text-secondary text-center py-6">
+                    <p className="text-sm text-foreground-3 text-center py-6">
                         No chat messages available.
                     </p>
                 ) : (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 mt-6">
 
                         {messages.map((msg)=>(
                             <div
                                 key={msg.id}
-                                className="border border-surface-secondary rounded-lg p-3"
+                                className='task-list-layout rounded-xl'
                             >
 
-                                <div className="flex justify-between">
-                                    <p className="text-sm font-medium">
+                                <div className="flex justify-between text-xs text-foreground-3">
+                                    <p className="font-medium">
                                         {msg.senderName}
                                     </p>
 
-                                    <p className="text-xs text-text-secondary">
+                                    <p>
                                         {new Date(msg.createdAt).toLocaleString("en-MY", {
                                             timeZone: "Asia/Kuala_Lumpur",
                                             day: "2-digit",
@@ -71,6 +61,5 @@ export const MeetingChatModal = ({
                 )}
 
             </div>
-        </div>
     );
 };

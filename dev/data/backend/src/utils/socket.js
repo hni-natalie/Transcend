@@ -137,14 +137,14 @@ const getRoomObjs = async() => {
 }
 
 const getSpawnPosFromDpId = ( roomData, userDpId ) => {
-  const offset = randomPosition(3);
+  const offset = randomPosition(2);
 
   for (const [key, room] of Object.entries(roomData.positionData)) {
     if (room.accessLevel === 'department' && room.departmentId === userDpId) {
       return ( { x:room?.x + offset.x || offset.x , y:0 , z:room?.z + offset.z || offset.z } )
     }
   }
-  return { x:0, y:0, z:0 };
+  return offset;
 }
 
 const initRoomSpawnPos = (rooms, roomName, positionData) => {

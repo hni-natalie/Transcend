@@ -104,7 +104,7 @@ export function UserMeetingRoom() {
               <button
                 onClick={handleLeave}
                 disabled={isLoading}
-                className="btn-lime-outline"
+                className="btn-header"
               >
                 Leave Meeting
               </button>
