@@ -4,6 +4,8 @@ import type { IconProps } from '@shared';
 import type { Attachment, Link, Profile } from '../types';
 import { UserRow, SelectToggle, RemoveButton } from './UserRow';
 import { ChatAvatar } from './ChatAvatar';
+import { useLiveKit } from '@/features/livekit';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
 
 interface InvitableGroup {
   id: string;
@@ -49,6 +51,8 @@ export function MessageProfile({
   const [showInvite, setShowInvite] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const { connect, isConnectedRoom, locateOfficeUser } = useLiveKit("Office");
+
 
   useEffect(() => {
     setShowMembers(false);
@@ -129,7 +133,7 @@ export function MessageProfile({
     { icon: IconMemberAdd, label: 'Invite', onClick: toggleInvite, isActive: showInvite },
     contact.isGroup
       ? { icon: IconMembers, label: 'Members', onClick: toggleMembers, isActive: showMembers }
-      : { icon: IconOffice, label: 'Locate', onClick: undefined, isActive: false },
+      : { icon: IconOffice, label: 'Locate', onClick: locateOfficeUser(R.USER_OFFICE), isActive: false },
   ];
 
   const memberCount = contact.memberCount ?? contact.members?.length ?? 0;

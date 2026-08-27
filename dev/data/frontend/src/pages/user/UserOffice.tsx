@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
+import { useLocation } from 'react-router-dom';
 import { Physics } from '@react-three/cannon';
 import { PerspectiveCamera, MapControls, SpotLight, Plane } from '@react-three/drei';
 import { useSocket } from '@/context/SocketContext';
@@ -16,6 +17,9 @@ interface SpaceProps {
 }
 
 export function Office({ roomName } : SpaceProps ) {
+	/* ------------- nav  ------------- */
+	const location = useLocation();
+	const spawnPosition = location.state?.targetPosition;
 	/* ------------- sockets  ------------- */
 	const { enableSocket, socket, players, fetchRoomPlayers, roomPlayers, localPlayerId } = useSocket();
 	const { disconnect, getAudioListener, getPositionalAudio, isPlayerAudioReady, isConnectedRoom } = useLiveKit(roomName);
@@ -144,7 +148,7 @@ export function Office({ roomName } : SpaceProps ) {
 						minAzimuthAngle={0}						// min left rotation
 						maxAzimuthAngle={0}						// max right rotation
 					/>
-					<CameraTracking isConnectedRoom={isConnectedRoom} clickPoint={clickPoint} localPlayerRef={localPlayerRef} controlsRef={controlsRef} />
+					<CameraTracking isConnectedRoom={isConnectedRoom} clickPoint={clickPoint} localPlayerRef={localPlayerRef} controlsRef={controlsRef} spawnPosition={spawnPosition} />
 
 					<ambientLight intensity={0.8} />
 					<spotLight

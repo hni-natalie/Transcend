@@ -1,17 +1,28 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { MapControls } from '@react-three/drei';
 import { useKeyboard } from '@/context/KeyboardContext';
 import { useSocket } from '@/context/SocketContext';
 import { officeSceneConfig as conf } from '@/config/office.config';
+import { Position } from '@/shared';
 import * as THREE from 'three';
 
+interface CameraTrackingProps {
+  localPlayerRef: RefObject<THREE.Group | null>;
+  controlsRef: RefObject<React.ElementRef<typeof MapControls>>;
+  isConnectedRoom: boolean;
+  clickPoint: RefObject<THREE.Vector3>;
+  spawnPosition?: Position;
+}
+
 /* controls scene camera to follow player */
-export const CameraTracking = ({ localPlayerRef, controlsRef, isConnectedRoom, clickPoint }) => {
+export const CameraTracking = ({ localPlayerRef, controlsRef, isConnectedRoom, clickPoint, spawnPosition } : CameraTrackingProps) => {
 	const { enableSocket, socket, localPlayerId } = useSocket();
   const { isMoveKey, isDragging } = useKeyboard();
   const [isInteracting, setIsInteracting] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
-  
+  const hasUsedSpawnPosition = useRef(false);
+
   // detect if MapControls is used
   useEffect(() => { enableSocket(); }, []);
   useEffect(() => {
@@ -81,12 +92,14 @@ export const CameraTracking = ({ localPlayerRef, controlsRef, isConnectedRoom, c
       // 3. Handle fallback (initial spawn & keypress)
       else if (controlsRef.current) {
         if (isPanning) return ;
-        // if (isDragging.current) return ;
+        // Use external spawn position once on initial placement, then follow local player
+        const target = (!hasUsedSpawnPosition.current && spawnPosition) ? spawnPosition : localPlayerRef.current.position;
+        hasUsedSpawnPosition.current = true;
         // Update MapControls(camera) target to follow player
         controlsRef.current.target.set(
-          localPlayerRef.current.position.x,
+          target.x,
           controlsRef.current.target.y,
-          localPlayerRef.current.position.z,
+          target.z,
         );
         controlsRef.current.update();
       }

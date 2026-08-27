@@ -5,7 +5,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { livekitService } from '@/features/livekit/services/livekitService';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useSocket } from '@/context/SocketContext';
 import { LivekitMode } from '@/shared/types/livekit.types';
@@ -13,6 +13,8 @@ import * as THREE from 'three'; //debug
 
 export function useLiveKit( roomName:string ) {
   const { enableSocket, joinRoom, leaveRoom } = useSocket();
+  const navigate = useNavigate();
+
   useEffect(() => { enableSocket(); }, []);
   
   const [state, setState] = useState(() => livekitService.getState());
@@ -126,6 +128,14 @@ export function useLiveKit( roomName:string ) {
   const setIsMuted = useCallback(( status:boolean ) => {
     livekitService.setIsMuted(status);
   }, []);
+  const locateOfficeUser = (href: string) => async () => {
+      await connect("room");
+      navigate( href, {
+        state: {
+          targetPosition: {x:2, y:0, z:10}
+        }
+      });
+  }
 
   return { connect, disconnect,
           createRoom, 
@@ -137,6 +147,7 @@ export function useLiveKit( roomName:string ) {
           isPlayerAudioReady,
           getMediaStream, getPositionalAudio, getAudioListener, getLivekitRoom,
           error: state.error,
+          locateOfficeUser,
         };
 }
 
