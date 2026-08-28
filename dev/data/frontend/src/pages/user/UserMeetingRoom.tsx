@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { RoomContext } from '@livekit/components-react';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useLiveKit, VideoConference } from '@/features/livekit';
-import { PageHeader, IconMeetings } from '@/shared';
+import { PageHeader, IconMeetings, LoadingState } from '@/shared';
 import { useAuth } from '@/features/auth/AuthContext';
 import { meetingApi } from '@/features/meetings/api/meeting.api';
 import { Room, RoomEvent } from 'livekit-client';
@@ -131,7 +131,7 @@ export function UserMeetingRoom() {
               <p>{error}</p>
             </div>
           ) : !room ? (
-            <p>Connecting...</p>
+            <LoadingState message="Connecting..." size="full" className='flex-1' />
           ) : (
             <RoomContext.Provider value={room}>
               <VideoConference 

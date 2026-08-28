@@ -12,7 +12,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
-    return (<LoadingState message="Loading..." size="full" />);
+    return (<LoadingState message="Loading..." size="full" className='flex-1' />);
   }
 
   if (!isAuthenticated) {
@@ -30,7 +30,7 @@ export const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) 
-    return (<LoadingState message="Loading..." size="full" />);
+    return (<LoadingState message="Loading..." size="full" className='flex-1' />);
 
   if (isAuthenticated) {
     if (user?.roleName === 'Admin') {
