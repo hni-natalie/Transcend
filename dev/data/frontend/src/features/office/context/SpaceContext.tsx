@@ -55,8 +55,8 @@ const updateRoomPlayer = (prev, data) => {
 }
 
 export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } : SpaceProviderProps ) {
-	const { socket, shouldConnect, setRoomPlayers, isConnected } = useSocket();
-	const { count, positionedPlanes, positionDataRef, canvasHeight, canvasWidth } = useOfficeSpaceLayout();
+	const { socket, shouldConnect, setRoomPlayers } = useSocket();
+	const { positionedPlanes, positionDataRef, canvasHeight, canvasWidth } = useOfficeSpaceLayout();
 	const { activePlane, setActivePlane, isConnectedRoom } = useLiveKit(roomName);
 	const [hoveredIndex, setHoveredIndex] = useState(null)
 	const { textRef, textWidth, getTextWidth } = useTextWidth();
@@ -179,7 +179,7 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 		const tileSize = 10;
 		
 		positionedPlanes.forEach((plane, i) => {
-			const hue = (i / count) * conf.Color.endHue;
+			// const hue = (i / count) * conf.Color.endHue;
 			const theme = themeColor[i % themeColor.length];
 			const texture = loader.load('/texture/marble-2/roughness.png');
 
@@ -217,15 +217,14 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 			);
 	}) // map
 	return result;
-	}, [count, canvasWidth, canvasHeight, positionedPlanes]);
+	}, [canvasWidth, canvasHeight, positionedPlanes]);
 
 	const activeOverlay = useMemo(() => {
 		if (activePlane === null) return null;
 		const plane = positionedPlanes[activePlane];
-		const hue = (activePlane / count) * conf.Color.endHue;
+		// const hue = (activePlane / count) * conf.Color.endHue;
 		const theme = themeColor[activePlane % themeColor.length];
 		const color = theme.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
-		const value = Number(color[3]) * 1.5;
 		// console.log('hsl: ', color[0], ' ', color[1], ' ', color[2], ' ', color[3]);
 
 		if (!plane) return null;

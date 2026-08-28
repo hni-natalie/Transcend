@@ -127,7 +127,7 @@ export function SpaceLayoutProvider({ children, padding=1, roomName } : SpaceLay
 		positionDataRef.current = positionData;
 		socket.emit('room-spawn-pos', { roomName, positionData:positionDataRef.current });
 		setLoading(false);
-		console.log("[SpaceLayoutContext] Layout ready: ", positionDataRef.current.length, ' ', loading);
+		// console.log("[SpaceLayoutContext] Layout ready: ", positionDataRef.current.length, ' ', loading);
 		return data;
 	},[treemapData, officeSpace, canvasWidth, canvasHeight, isConnected])
 

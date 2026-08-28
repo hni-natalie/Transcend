@@ -10,6 +10,7 @@ import { useLiveKit, isAudioSupported, ButtonVoiceSpace } from '@features/liveki
 import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject, SpawnParticle } from '@features/office';
 import { KeyboardProvider, PositionProvider } from '@/context';
 import { SpaceProvider } from '@/features/office/context/SpaceContext';
+import { useOfficeSpaceLayout } from '@/features/office/context/SpaceLayoutContext';
 
 // Main Scene
 interface SpaceProps {
@@ -34,6 +35,8 @@ export function Office({ roomName } : SpaceProps ) {
 	/* ------------- general  ------------- */
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { loading: spaceLayoutLoading } = useOfficeSpaceLayout();
+
 	const isConnectedRoomRef = useRef(isConnectedRoom);
 
 	const handleUncaughtRejection = async ( event:PromiseRejectionEvent ) => {
@@ -110,7 +113,7 @@ export function Office({ roomName } : SpaceProps ) {
             roomName={roomName} 
             joinText={`Join ${roomName} Room`}
 						mode="room"
-						className='btn-header'
+						className={ isLoading || spaceLayoutLoading ? 'btn-header cursor-not-allowed' : 'btn-header' }
           />
         }
       />
