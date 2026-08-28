@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
+import { useLocation } from 'react-router-dom';
 import { Physics } from '@react-three/cannon';
 import { PerspectiveCamera, MapControls, SpotLight, Plane } from '@react-three/drei';
 import { useSocket } from '@/context/SocketContext';
@@ -9,6 +10,7 @@ import { useLiveKit, isAudioSupported, ButtonVoiceSpace } from '@features/liveki
 import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject, SpawnParticle } from '@features/office';
 import { KeyboardProvider, PositionProvider } from '@/context';
 import { SpaceProvider } from '@/features/office/context/SpaceContext';
+import { useOfficeSpaceLayout } from '@/features/office/context/SpaceLayoutContext';
 
 // Main Scene
 interface SpaceProps {
@@ -16,6 +18,9 @@ interface SpaceProps {
 }
 
 export function Office({ roomName } : SpaceProps ) {
+	/* ------------- nav  ------------- */
+	const location = useLocation();
+	const spawnPosition = location.state?.targetPosition;
 	/* ------------- sockets  ------------- */
 	const { enableSocket, socket, players, fetchRoomPlayers, roomPlayers, localPlayerId } = useSocket();
 	const { disconnect, getAudioListener, getPositionalAudio, isPlayerAudioReady, isConnectedRoom } = useLiveKit(roomName);
@@ -30,6 +35,8 @@ export function Office({ roomName } : SpaceProps ) {
 	/* ------------- general  ------------- */
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { loading: spaceLayoutLoading } = useOfficeSpaceLayout();
+
 	const isConnectedRoomRef = useRef(isConnectedRoom);
 
 	const handleUncaughtRejection = async ( event:PromiseRejectionEvent ) => {
@@ -106,7 +113,7 @@ export function Office({ roomName } : SpaceProps ) {
             roomName={roomName} 
             joinText={`Join ${roomName} Room`}
 						mode="room"
-						className='btn-header'
+						className={ isLoading || spaceLayoutLoading ? 'btn-header cursor-not-allowed' : 'btn-header' }
           />
         }
       />
@@ -144,7 +151,7 @@ export function Office({ roomName } : SpaceProps ) {
 						minAzimuthAngle={0}						// min left rotation
 						maxAzimuthAngle={0}						// max right rotation
 					/>
-					<CameraTracking isConnectedRoom={isConnectedRoom} clickPoint={clickPoint} localPlayerRef={localPlayerRef} controlsRef={controlsRef} />
+					<CameraTracking isConnectedRoom={isConnectedRoom} clickPoint={clickPoint} localPlayerRef={localPlayerRef} controlsRef={controlsRef} spawnPosition={spawnPosition} />
 
 					<ambientLight intensity={0.8} />
 					<spotLight
