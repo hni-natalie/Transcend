@@ -75,7 +75,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     name: user.userName,
     email: user.userEmail,
     role: user.roleName,
-    photo: user.avatarUrl || '/default-avatar.png',
+    photo: user.avatarUrl || null,
     status: user.userStatus as UserBackendStatus,
   } : {
     name: 'Guest',
