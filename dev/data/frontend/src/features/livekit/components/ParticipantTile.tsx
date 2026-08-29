@@ -137,6 +137,7 @@ export const ParticipantTile: (
             {children ?? (
               <>
                 {isTrackReference(trackReference) &&
+                !trackReference.publication.isMuted &&
                 (trackReference.publication?.kind === 'video' ||
                   trackReference.source === Track.Source.Camera ||
                   trackReference.source === Track.Source.ScreenShare) ? (

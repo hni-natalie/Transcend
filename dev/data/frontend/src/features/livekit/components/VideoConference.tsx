@@ -6,7 +6,6 @@ import type { MessageFormatter } from '@livekit/components-react';
 import {
   CarouselLayout,
   ConnectionStateToast,
-  FocusLayout,
   FocusLayoutContainer,
   GridLayout,
   LayoutContextProvider,
@@ -14,7 +13,7 @@ import {
 } from '@livekit/components-react';
 import { useCreateLayoutContext } from '@livekit/components-react';
 import { usePinnedTracks, useTracks } from '@livekit/components-react';
-import { Chat, ControlBar, ParticipantTile } from '@/features/livekit';
+import { Chat, ControlBar, ParticipantTile, FocusLayout } from '@/features/livekit';
 import { Rnd } from "react-rnd";
 import { Attendance } from './Attendance';
 
