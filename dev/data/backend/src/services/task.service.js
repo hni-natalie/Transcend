@@ -130,7 +130,7 @@ const taskService = {
 		const task = await prisma.task.findUnique({ where: { taskId } });
 
 		if (!task) throw new Error('Task not found');
-		if (task.createdByUserId !== userId) throw new Error('Unauthorized to update this task');
+		
 		if (taskStatus == 'done')
 			updateData.completedDate = new Date();
 

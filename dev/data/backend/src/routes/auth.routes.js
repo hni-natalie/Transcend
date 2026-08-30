@@ -1,3 +1,4 @@
+// auth.routes
 const router = require('express').Router();
 const { authMiddleware } = require('../middleware/auth.middleware');
 const prisma = require('../../prisma/client');
@@ -7,6 +8,7 @@ const bcrypt = require('bcrypt');
 const { OAuth2Client } = require('google-auth-library');
 const { logPresenceActivity } = require('../utils/activity');
 const { validateLogin, validateGoogleLogin } = require('../validators/auth.validator');
+const { uploadFile } = require('../services/supabase-storage.service');
 
 
 const JWT_SECRET = fs.readFileSync('/run/secrets/jwt_secret', 'utf8').trim();
@@ -16,12 +18,34 @@ const JWT_EXPIRY = process.env.JWT_EXPIRY || '1d';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
+// re-download google avatar if the last sync is older than this
+const AVATAR_SYNC_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
 async function verifyGoogleToken(idToken) {
     const ticket = await client.verifyIdToken({
         idToken: idToken,
         audience: GOOGLE_CLIENT_ID
     });
     return ticket.getPayload();
+}
+
+// downloads google's hotlinked profile photo and re-hosts it on supabase,
+// so clients never hit googleusercontent.com directly (was causing 429s)
+async function syncGoogleAvatar(userId, googlePhotoUrl) {
+    try {
+        const res = await fetch(googlePhotoUrl);
+        if (!res.ok) return null;
+
+        const contentType = res.headers.get('content-type') || 'image/jpeg';
+        const buffer = Buffer.from(await res.arrayBuffer());
+        const fileExt = contentType.split('/').pop();
+        const filePath = `avatars/${userId}/${userId}-${Date.now()}.${fileExt}`;
+
+        return await uploadFile(process.env.SUPABASE_PUBLIC_BUCKET, filePath, buffer, contentType);
+    } catch (err) {
+        console.error('Google avatar sync failed:', err);
+        return null;
+    }
 }
 
 // POST /auth/login — email login
@@ -136,12 +160,14 @@ router.post('/google', async (req, res) => {
 
         // if user exists but no googleId yet > link google account
         if (!user.googleId) {
+            const syncedAvatarUrl = avatarUrl ? await syncGoogleAvatar(user.userId, avatarUrl) : null;
             user = await prisma.user.update({
                 where: { userId: user.userId },
                 data: {
                     googleId: googleId,
                     authProvider: 'google',
-                    avatarUrl: avatarUrl || user.avatarUrl,
+                    avatarUrl: syncedAvatarUrl || avatarUrl || user.avatarUrl,
+                    avatarSyncedAt: syncedAvatarUrl ? new Date() : undefined,
                 },
                 include: { role: true }
             });
@@ -152,11 +178,20 @@ router.post('/google', async (req, res) => {
             });
         } else if (
             avatarUrl &&
-            (!user.avatarUrl || user.avatarUrl.includes('googleusercontent.com'))
+            (
+                !user.avatarUrl ||
+                user.avatarUrl.includes('googleusercontent.com') ||
+                !user.avatarSyncedAt ||
+                Date.now() - user.avatarSyncedAt.getTime() > AVATAR_SYNC_TTL_MS
+            )
         ) {
+            const syncedAvatarUrl = await syncGoogleAvatar(user.userId, avatarUrl);
             user = await prisma.user.update({
                 where: { userId: user.userId },
-                data: { avatarUrl: avatarUrl },
+                data: {
+                    avatarUrl: syncedAvatarUrl || avatarUrl,
+                    avatarSyncedAt: syncedAvatarUrl ? new Date() : undefined,
+                },
                 include: { role: true }
             });
         }

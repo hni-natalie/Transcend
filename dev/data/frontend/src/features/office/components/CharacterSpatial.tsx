@@ -8,7 +8,7 @@
 */
 
 import { useFrame, useLoader } from '@react-three/fiber';
-import { useBox, useContactMaterial } from '@react-three/cannon';
+import { useBox } from '@react-three/cannon';
 import { Text } from '@react-three/drei';
 import React, { useRef, useState, useEffect, useCallback, RefObject } from 'react';
 import * as THREE from 'three';
@@ -32,15 +32,9 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 
 	const { lockSystem } = usePosition();
 
-	useContactMaterial('playerMaterial', 'playerMaterial', {
-		friction: 0.3,
-		restitution: 0.5,        				// 0 no bounce - 1 elastic
-		contactEquationStiffness: 1,   	// lower = softer push
-		contactEquationRelaxation: 400, // higher = softer/slower correction
-	});
   const [characterRef, api] = useBox(() => ({
     mass: 100,
-	  type: 'Dynamic', // Dynamic, Kinematic
+	  type: 'Dynamic', // Dynamic | Kinematic
   	linearDamping: 0.1,
     position: [position.x, position.y, position.z],
 		rotation: [-Math.PI / 2, 0, 0],
@@ -245,6 +239,7 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 							ref={lightTargetRef} 
 							position={[0, 2, 0]}  // ← Light points here
 						/>
+						{lightTargetRef &&
 						<spotLight
 							position={[0, 0, 1]}
 							color="#ffeedd"
@@ -255,6 +250,7 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 							distance={20}
 							target={lightTargetRef.current}
 						/>
+						}
 					</group>
 				)}
 				{texture ? (
