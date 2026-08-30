@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/features/auth/AuthContext';
 import type { Conversation, ConversationResponse, LastMessage, Profile } from '../types';
 import { messagesApi } from '../api/messages.api'; // uncomment for BE implmentation
+import { useSocket } from '@/context/SocketContext';
+
 
 import { mapConversation } from '../lib/mappers';
 
@@ -65,6 +67,7 @@ export interface AddConversationInput {
 }
 
 export const useConversations = () => {
+  const { socket } = useSocket();
   const { user: currentUser } = useAuth();
   const currentUserId = currentUser?.userId;
   
@@ -78,12 +81,13 @@ export const useConversations = () => {
       return;
     }
 
-    setLoading(true);
+    // setLoading(true);
     setError(null);
 
     messagesApi
       .getAllConversations()
       .then((response) => {
+        // console.log("DEBUG(useConversations):response:", response);
         const fetched: Conversation[] = response.map((conversation) =>
           mapConversation(conversation, currentUserId)
         );
@@ -226,9 +230,25 @@ export const useConversations = () => {
 
 //   refetch();
 // }, [currentUser?.userId]);
+
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  // listen fro real time messages
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = () => {
+      refetch();
+    };
+
+    socket.on('messageUpdated', handleNewMessage);
+
+    return () => {
+      socket.off('messageUpdated', handleNewMessage);
+    };
+  }, [socket, refetch]);
   // >>>>>>>>>>>>>>>  END REAL API 
 
   // useEffect(() => {
@@ -293,7 +313,7 @@ export const useConversations = () => {
           return conversation;
         }
   
-        return { ...conversation, members: [...(conversation.participants ?? []), ...toAdd] };
+        return { ...conversation, participants: [...(conversation.participants ?? []), ...toAdd] };
       }),
     );
   
@@ -333,7 +353,7 @@ export const useConversations = () => {
           return conversation;
         }
   
-        return { ...conversation, members: conversation.participants.filter((member) => member.id !== userId) };
+        return { ...conversation, participants: conversation.participants.filter((member) => member.id !== userId) };
       }),
     );
   

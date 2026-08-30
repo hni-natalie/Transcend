@@ -8,9 +8,15 @@ function createDirectKey(userId1, userId2) {
 }
 
 function getAttachmentKind(mimeType) {
-	if (mimeType.startsWith("image/"))
-		return "image";
-	return "pdf";
+	if (mimeType === 'application/pdf') {
+		return 'pdf';
+	}
+
+	if (mimeType.startsWith('image/')) {
+		return 'image';
+	}
+
+	return 'document';
 }
 
 
@@ -173,6 +179,7 @@ const messageService = {
 				}
 			});
 
+			console.log(`Conversation ID: ${conversation.conversationId}, Unread Count: ${unreadCount}`);
 			return {
 				...conversation,
 				unreadCount

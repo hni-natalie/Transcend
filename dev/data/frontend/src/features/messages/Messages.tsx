@@ -9,6 +9,7 @@ import type { CreateConversationInput } from './hooks';
 import type { Attachment, Conversation, Message, UploadedAttachment } from './types';
 import { buildLastMessagePreview, extractAttachmentsFromDayGroups, extractLinksFromDayGroups, toGroupProfile, toProfile, mapConversationsToInvitableGroups } from './lib/mappers';
 
+
 interface MessagingProps {
   showAddForm: boolean;
   onCloseAddForm: () => void;
@@ -73,6 +74,28 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
     markConversationRead(firstConversation.conversationId);
   }, [allConversations, selectedConversation.id, markConversationRead]);
 
+  useEffect(() => {
+    if (!selectedConversation.id) {
+      return;
+    }
+
+    const selected = allConversations.find(
+      (conversation) =>
+        conversation.conversationId === selectedConversation.id
+    );
+
+    if (!selected?.unreadCount) {
+      return;
+    }
+
+    markConversationRead(selectedConversation.id);
+
+  }, [
+    allConversations,
+    selectedConversation.id,
+    markConversationRead
+  ]);
+
   const isSelectedNew = newConversationIds.has(selectedConversation.id);
 
   const { messages: conversationMessages, sendMessage } = useMessages({
@@ -122,6 +145,25 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       links: isSelectedNew ? [] : currentLinks,
     };
   }, [allConversations, selectedConversation.id, usersById, conversationMessages, currentUser?.userName, currentAttachments, currentLinks, isSelectedNew]);
+
+  // if the user is not in the group, show invite, else dont show
+  const invitableGroups = useMemo(() => {
+    if (!currentChat || currentChat.profile.isGroup) {
+      return [];
+    }
+
+    const targetUserId = currentChat.profile.id;
+
+    const availableGroups = allConversations.filter(
+      (conversation) =>
+        conversation.type === 'group' &&
+        !conversation.participants?.some(
+          (participant) => participant.id === targetUserId
+        )
+    );
+
+    return mapConversationsToInvitableGroups(availableGroups);
+  }, [allConversations, currentChat]);
 
   // console.log('debuggingg current chat profile:', currentChat?.profile);
 
@@ -205,12 +247,12 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
 	markConversationRead(conversation.conversationId);
   };
 
-  const handleInviteUsersToGroup = (userIds: string[]) => {
+  const handleInviteUsersToGroup = (participantIds: string[]) => {
     if (!selectedConversation.id) {
       return;
     }
 
-    const invited = filteredUsers.filter((user) => userIds.includes(user.userId)).map(toProfile);
+    const invited = filteredUsers.filter((user) => participantIds.includes(user.userId)).map(toProfile);
 
     addMembersToConversation(selectedConversation.id, invited);
   };
@@ -220,7 +262,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       return;
     }
 
-    addMembersToConversation(`group-${groupId}`, [currentChat.profile]);
+    addMembersToConversation(groupId, [currentChat.profile]);
   };
 
   const handleRemoveMember = (userId: string) => {
@@ -334,7 +376,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
               attachments={currentChat.attachments}
               links={currentChat.links}
               inviteUsers={filteredUsers.map(toProfile)}
-              groupMessages={mapConversationsToInvitableGroups(allConversations)}
+              groupMessages={invitableGroups}
               onInviteUsers={handleInviteUsersToGroup}
               onJoinGroup={handleJoinGroup}
               onRemoveMember={handleRemoveMember}

@@ -9,21 +9,57 @@ interface MessageAttachmentProps {
   attachment: Attachment;
 }
 
+
+
 export function MessageAttachment({ attachment }: MessageAttachmentProps) {
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(attachment.url);
+      const blob = await response.blob();
+
+      const downloadUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = attachment.name;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(downloadUrl);
+    } 
+    catch (error) {
+      console.error('Failed to download attachment:', error);
+    }
+  };
+
+  const getAttachmentIcon = (kind: Attachment['kind']) => {
+    return kind === 'image' ? (
+      <IconImage className="text-foreground-3 shrink-0 w-[18px] h-[18px]" />
+    ) : (
+      <IconFile className="text-foreground-3 shrink-0 w-[18px] h-[18px]" />
+    );
+  };
   return (
     <div className="flex items-center justify-between gap-4 bg-background-1 border border-border rounded-xl px-4 py-3 max-w-[360px] mb-2">
       <div className="flex items-center gap-2.5 min-w-0">
-        {attachment.kind === 'pdf' ? (
-          <IconFile className="text-foreground-3 shrink-0 w-[18px] h-[18px]" />
-        ) : (
-          <IconImage className="text-foreground-3 shrink-0 w-[18px] h-[18px]" />
-        )}
 
-        <span className="text-[1.1em] text-accent-lime truncate">{attachment.name}</span>
+        {getAttachmentIcon(attachment.kind)}
+
+        <div className="min-w-0">
+          <p className="text-[1.1em] text-accent-lime truncate">
+            {attachment.name}
+          </p>
+
+          <p className="text-xs text-foreground-3">
+            {attachment.size}
+          </p>
+        </div>
       </div>
 
-      {/* TO DO: wire up real downloads once attachment.url points at a real file store. (real download )*/}
       <button
+        onClick={handleDownload}
         aria-label={`Download ${attachment.name}`}
         className="flex p-0.5 text-foreground-3 hover:text-foreground cursor-pointer transition-colors"
       >

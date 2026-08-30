@@ -53,11 +53,11 @@ export const messagesApi = {
   },
 
   addMembers(data: { conversationId: string; participantIds: string[] }) {
-  	return apiClient.post(`${base}/${data.conversationId}/members`, { userIds: data.participantIds });
+  	return apiClient.post(`${base}/${data.conversationId}/participants`, { userIds: data.participantIds });
    },
 
   removeMember(conversationId: string, targetUserId: string) {
-  	return apiClient.delete(`${base}/${conversationId}/members/${targetUserId}`);
+  	return apiClient.delete(`${base}/${conversationId}/participants/${targetUserId}`);
   },
 
   pinConversation(conversationId: string) {

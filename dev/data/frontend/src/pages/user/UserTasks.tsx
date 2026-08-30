@@ -1,10 +1,11 @@
 import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, UserChipItem, IconPlus, LoadingState, Modal, IconClose, ModalHeader } from '@shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
 import { InputTextArea } from '@/shared/ui/InputTextArea';
 import { InputDropdownChecklist, EmptyCard } from '@/shared';
 import { DropdownChoice } from '@/shared/types/ui.types';
+import { useSocket } from "@/context/SocketContext";
 
 type TaskMember = {
   userId: string;
@@ -432,6 +433,7 @@ const TaskColumn = ({
 };
 
 export const Tasks = () => {
+  const { socket } = useSocket();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -442,7 +444,7 @@ export const Tasks = () => {
   const [error, setError] = useState<string | null>(null);
 
 
-  const fetchTasks = async () => {
+   const fetchTasks = useCallback(async () => {
     try 
     {
       setLoading(true);
@@ -459,7 +461,25 @@ export const Tasks = () => {
     {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { fetchTasks(); }, [fetchTasks]);
+
+  useEffect(() => {
+    if (!socket)
+      return;
+    
+    const handleTaskUpdated = () => {
+      fetchTasks();
+    };
+
+    socket.on("taskUpdated", handleTaskUpdated);
+
+    return () => {
+      socket.off("taskUpdated", handleTaskUpdated);
+    };
+  }, [socket, fetchTasks])
+ 
 
   const handleTaskClick = async (id: string) => {
     try 
@@ -633,12 +653,12 @@ export const Tasks = () => {
       )}
 
       <Modal isOpen={!!selectedTask} onClose={() => setSelectedTask(null)}>
-        <TaskDetailModal
+        (<TaskDetailModal
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
           onUpdate={handleUpdateTask}
           loading={updateLoading}
-        />
+        />)
       </Modal>
 
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)}>

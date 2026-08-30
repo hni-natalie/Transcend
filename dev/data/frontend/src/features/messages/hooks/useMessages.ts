@@ -40,6 +40,7 @@ export function useMessages({ conversationId, kind}: UseMessagesOptions) {
       return [];
     }
       // Backend response -> frontend Message[]
+      // console.log("DEBUGG: response:", response);
       const mappedMessages = response.map((message) =>
         mapMessage(message, currentUserId)
       );

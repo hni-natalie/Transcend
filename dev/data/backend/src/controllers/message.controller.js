@@ -1,4 +1,48 @@
 const messageService = require('../services/message.service');
+const { getIO } = require("../services/socket.service");
+
+const path = require('path');
+
+const ACCEPTED_FILE_EXTENSIONS = [
+	'.pdf',
+	'.doc',
+	'.docx',
+	'.png',
+	'.jpg',
+	'.jpeg',
+	'.gif'
+];
+
+const ACCEPTED_MIME_TYPES = [
+	'application/pdf',
+	'application/msword',
+	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	'image/png',
+	'image/jpeg',
+	'image/gif'
+];
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 10 MB
+
+
+function validateAttachment(file) {
+	if (!file) {
+		throw new Error('File is required');
+	}
+
+	if (!ACCEPTED_FILE_EXTENSIONS.includes(path.extname(file.originalname).toLowerCase())) {
+		throw new Error('Invalid file type');
+	}
+
+	if (!ACCEPTED_MIME_TYPES.includes(file.mimetype)) {
+		throw new Error('Invalid file type');
+	}
+
+	if (file.size > MAX_FILE_SIZE) {
+		throw new Error('File size exceeds the limit');
+	}
+}
+
 
 const messageController = {
 	async getAllConversations(req, res) {
@@ -46,6 +90,7 @@ const messageController = {
 			
 			const conversation = await messageService.createDirectConversation(userId, participantId, workspaceId);
 			console.log("conversation.created");
+			getIO().emit("messageUpdated");
 			return res.status(201).json(conversation);
 		} catch (error) {
 			console.error('Error creating direct conversation:', error);
@@ -70,6 +115,7 @@ const messageController = {
 
 			const conversation = await messageService.createGroupConversation(userId, participantIds, groupName, workspaceId);
 			console.log("conversation.created");
+			getIO().emit("messageUpdated");
 			return res.status(201).json(conversation);
 		} catch (error) {
 			console.error('Error creating group conversation:', error);
@@ -86,6 +132,7 @@ const messageController = {
 			}
 			await messageService.deleteConversation(id, userId);
 			console.log("conversation.deleted");
+			getIO().emit("messageUpdated");
 			return res.status(204).send();
 		} catch (error) {
 			if (error.message === 'Conversation not found') {
@@ -135,6 +182,7 @@ const messageController = {
 
 			const message = await messageService.sendMessage(id, userId, text, attachments);
 			console.log("message.created");
+			getIO().emit("messageUpdated");
 			return res.status(201).json(message);
 
 		} catch (error) {
@@ -151,21 +199,23 @@ const messageController = {
 		try {
 			const { id } = req.params;
 			const { userId } = req.user;
-			const { participantIds } = req.body;
+			const { userIds } = req.body;
+			console.log("userIds:", userIds);
 
 			if (!id) {
 				return res.status(400).json({ error: "Conversation ID required" });
 			}
-			if (!participantIds) {
-				return res.status(400).json({ error: "Participant ID required" });
+			if (!userIds) {
+				return res.status(400).json({ error: "User IDs required" });
 			}
 			
 			if (!userId) {
 				return res.status(400).json({ error: "User ID required" });
 			}
 			
-			const conversation = await messageService.addParticipant(id, userId, participantIds);
+			const conversation = await messageService.addParticipant(id, userId, userIds);
 			console.log("participant.joined");
+			getIO().emit("messageUpdated");
 			return res.status(201).json(conversation);
 		} catch (error) {
 			console.error('Error adding participants:', error);
@@ -195,6 +245,7 @@ const messageController = {
 
 			const conversation = await messageService.removeParticipant(id, userId, participantId);
 			console.log("participant.removed");
+			getIO().emit("messageUpdated");
 			return res.status(201).json(conversation);
 		} catch (error) {
 			console.error('Error removing participant:', error);
@@ -250,16 +301,20 @@ const messageController = {
 			const { id } = req.params;
 			const { userId } = req.user;
 			const file = req.file;
+
 			if (!id) {
 				return res.status(400).json({ error: "Conversation ID required" });
 			}
-
 			if (!file) {
 				return res.status(400).json({ error: "File is required"});
 			}
 
-			const attachment =
-			await messageService.uploadAttachment(userId, id, file);
+			try {
+				validateAttachment(file);
+			} catch (error) {
+				return res.status(400).json({ error: error.message });
+			}
+			const attachment = await messageService.uploadAttachment(userId, id, file);
 
 			return res.status(201).json(attachment);
 		} catch (error) {
