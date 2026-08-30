@@ -8,6 +8,7 @@ import { useLiveKit } from '@/features/livekit';
 import { useOfficeSpaceLayout } from '@/features/office/context/SpaceLayoutContext';
 import { useSocket } from '@/context';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
+import { Tooltip } from '@features/messages/components/MessageHeader';
 
 interface InvitableGroup {
   id: string;
@@ -35,6 +36,7 @@ interface ActionButton {
   onClick?: () => void;
   isActive?: boolean;
   disabled?: boolean;
+  tooltip?: string;
 }
 
 export function MessageProfile({
@@ -158,6 +160,7 @@ export function MessageProfile({
           onClick: locateOfficeUser(R.USER_OFFICE, targetPos),
           isActive: false,
           disabled: spaceLayoutLoading || !targetPos,
+          tooltip: `${spaceLayoutLoading || !targetPos ? "Out of office" : "Go to user"}`,
         },
   ];
 
@@ -183,27 +186,29 @@ export function MessageProfile({
       </div>
 
       <div className="flex gap-2.5 mt-8 mb-10">
-        {actionButtons.map(({ icon: Icon, label, onClick, isActive, disabled }) => {
+        {actionButtons.map(({ icon: Icon, label, onClick, isActive, disabled, tooltip }) => {
           const isUnpin = label === 'Unpin';
 
           return (
-            <button
-              key={label}
-              onClick={onClick}
-              disabled={disabled}
-              className={`flex-1 flex flex-col items-center gap-1.5 bg-background-2 rounded-xl py-3 px-1.5 text-[11px] transition-colors ${
-                disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
-              } ${
-                isActive
-                  ? isUnpin
-                    ? 'text-foreground-3 hover:bg-background-3 hover:text-foreground'
-                    : 'bg-accent-lime-bg text-accent-lime'
-                  : 'text-foreground-3 hover:bg-background-3 hover:text-foreground'
-              }`}
-            >
-              <Icon className="w-[18px] h-[18px]" />
-              {label}
-            </button>
+            <Tooltip text={tooltip} className='flex flex-1'>
+              <button
+                key={label}
+                onClick={onClick}
+                disabled={disabled}
+                className={`flex-1 flex flex-col items-center gap-1.5 bg-background-2 rounded-xl py-3 px-1.5 text-[11px] transition-colors ${
+                  disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                } ${
+                  isActive
+                    ? isUnpin
+                      ? 'text-foreground-3 hover:bg-background-3 hover:text-foreground'
+                      : 'bg-accent-lime-bg text-accent-lime'
+                    : 'text-foreground-3 hover:bg-background-3 hover:text-foreground'
+                }`}
+              >
+                <Icon className="w-[18px] h-[18px]" />
+                {label}
+              </button>
+            </Tooltip>
           );
         })}
       </div>
