@@ -67,13 +67,13 @@ export const routes: RouteConfig[] = [
 		requiresAuth: true,
 		allowedRoles: ['Admin'],
 	},
-	{
-		path: R.ADMIN_SPACES,
-		element: <SpaceManagement />,
-		title: 'Spaces · Admin · WorkFrom,',
-		requiresAuth: true,
-		allowedRoles: ['Admin'],
-	},
+	// {
+	// 	path: R.ADMIN_SPACES,
+	// 	element: <SpaceManagement />,
+	// 	title: 'Spaces · Admin · WorkFrom,',
+	// 	requiresAuth: true,
+	// 	allowedRoles: ['Admin'],
+	// },
 	{
 		path: R.ADMIN_ACTIVITY,
 		element: <AdminActivity />,

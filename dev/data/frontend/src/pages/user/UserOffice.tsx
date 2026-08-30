@@ -6,7 +6,7 @@ import { PerspectiveCamera, MapControls, SpotLight, Plane } from '@react-three/d
 import { useSocket } from '@/context/SocketContext';
 import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceSpace } from '@features/livekit';
-import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject } from '@features/office';
+import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject, SpawnParticle } from '@features/office';
 import { KeyboardProvider, PositionProvider } from '@/context';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { SpaceProvider } from '@/features/office/context/SpaceContext';
@@ -26,6 +26,9 @@ export function Office({ roomName } : SpaceProps ) {
 	const controlsRef = useRef<React.ElementRef<typeof MapControls>>(null);
 	const cameraRef = useRef<THREE.Camera>(null);
 	const clickPoint = useRef(null);
+	// const [lightTarget, setLightTarget] = useState(null);
+	const lightTargetRef = useRef<THREE.Object3D>(null);
+
 	const hasMouseMoved = useRef(false);
 	const hasMouseDown = useRef(false);
 	const listenerRef = useRef<THREE.AudioListener | null>(null);
@@ -45,6 +48,13 @@ export function Office({ roomName } : SpaceProps ) {
 	const handleGroundClick = (e) => {
 		if (!isConnectedRoomRef.current) return ;
 		clickPoint.current = new THREE.Vector3(e.point.x, 0, e.point.z);
+
+		const direction = new THREE.Vector3()
+		.copy(clickPoint.current)
+		.sub(localPlayerRef.current.position)
+
+		direction.normalize().multiplyScalar(-2);
+		lightTargetRef.current.position.set(-direction.x, direction.z, 0);
 		// console.log('Click point (world):', clickPoint);
 	}
 
@@ -108,9 +118,9 @@ export function Office({ roomName } : SpaceProps ) {
 		<div className='flex-1 relative'>
 			<Canvas className=''>
 			<Physics>
-
 				<SpaceProvider localPlayerRef={localPlayerRef} roomName={roomName}>
 				<PositionProvider roomName={roomName}>
+
 					<PerspectiveCamera 
 						ref={cameraRef as React.Ref<THREE.PerspectiveCamera>}
 						makeDefault
@@ -152,30 +162,12 @@ export function Office({ roomName } : SpaceProps ) {
 					{/* <directionalLight position={[10, 5, 5]} /> */}
 					
 					{/* Ground Plane */}
-					<PlaneGround handleGroundClick={handleGroundClick} />
+					<PlaneGround handleGroundClick={handleGroundClick} color="#303030" />
 					<GenerateDept />
 					<SpawnObject roomName={roomName} />
+					<SpawnParticle roomName={roomName} radius={0.07} />
 
-					<SpawnCharacter roomName={roomName} listenerRef={listenerRef} ref={localPlayerRef}/>
-					{/* {(roomPlayers.map(( user:Player ) => (
-						// const planePosition = getPlanePosition(user.dpId);
-						<Character
-							key={user.userId}
-							ref={user.id === localPlayerId ? localPlayerRef : null}
-							id={user.id}
-							userId={user.userId}
-							name={user.name}
-							color={user.color}
-							position={user.position} // need user.position to receive socketio remote pos updates
-							// position={user.position || planePosition} // need user.position to receive socketio remote pos updates
-							photo={user.photo}
-							isLocalPlayer={user.id === localPlayerId}
-							isPlayerAudioReady={isPlayerAudioReady(user.id)}
-							getPositionalAudio={getPositionalAudio}
-							listenerRef={listenerRef}
-						/>
-					)))} */}
-					
+					<SpawnCharacter roomName={roomName} lightTargetRef={lightTargetRef} listenerRef={listenerRef} ref={localPlayerRef}/>
 					{/* Grid helper for reference */}
 					{/* <gridHelper args={[20, 20]} /> */}
 

@@ -1,6 +1,6 @@
 const prisma = require('../../prisma/client');
 const { MeetingRole, AttendanceStatus } = require('@prisma/client');
-const { validateMeetingTime, validateParticipantConflicts } = require('../validators/meeting.validator');
+const { validateMeetingTime, validateParticipantConflicts, validateRequiredStrings } = require('../validators/meeting.validator');
 const { logMeetingActivity } = require('../utils/activity');
 
 const normalizeDateTime = (date) => {
@@ -168,6 +168,13 @@ const meetingService = {
             meetEnd
         } = meetingData;
 
+        validateRequiredStrings({
+            workspaceId,
+            spaceId,
+            userId,
+            meetTitle
+        });
+
         const normalizedStart = normalizeDateTime(meetStart);
         const normalizedEnd = normalizeDateTime(meetEnd);
 
@@ -186,45 +193,45 @@ const meetingService = {
         });
 
         const meeting = await prisma.$transaction(async (tx) => {
-        const newMeeting = await tx.meeting.create({
-            data: {
-                workspace: { connect: { workspaceId } },
-                space: { connect: { spaceId } },
-                createdBy: { connect: { userId } },
-                meetTitle,
-                meetDesc,
-                meetStart: normalizedStart,
-                meetEnd: normalizedEnd
-            },
-            include: {
-                space: {
-                    select: { spaceName: true }
+            const newMeeting = await tx.meeting.create({
+                data: {
+                    workspace: { connect: { workspaceId } },
+                    space: { connect: { spaceId } },
+                    createdBy: { connect: { userId } },
+                    meetTitle,
+                    meetDesc,
+                    meetStart: normalizedStart,
+                    meetEnd: normalizedEnd
+                },
+                include: {
+                    space: {
+                        select: { spaceName: true }
+                    }
                 }
-            }
+            });
+
+            await tx.meetingParticipant.create({
+                data: {
+                    meetId: newMeeting.meetId,
+                    userId,
+                    role: MeetingRole.organiser,
+                    attendance: AttendanceStatus.present
+                }
+            });
+
+            return newMeeting;
         });
 
-        await tx.meetingParticipant.create({
-            data: {
-                meetId: newMeeting.meetId,
-                userId,
-                role: MeetingRole.organiser,
-                attendance: AttendanceStatus.present
-            }
+        await logMeetingActivity({
+            workspaceId,
+            userId,
+            action: 'scheduled a meeting',
+            contextTitle: meeting.meetTitle,
+            spaceName: meeting.space?.spaceName || 'Unknown Space',
+            date: normalizedStart
         });
 
-        return newMeeting;
-    });
-
-    await logMeetingActivity({
-        workspaceId,
-        userId,
-        action: 'scheduled a meeting',
-        contextTitle: meeting.meetTitle,
-        spaceName: meeting.space?.spaceName || 'Unknown Space',
-        date: normalizedStart
-    });
-
-    return meeting;
+        return meeting;
     },
 
     // Update
@@ -235,6 +242,8 @@ const meetingService = {
             meetStart,
             meetEnd
         } = data;
+
+        validateRequiredStrings({ meetTitle });
 
         const normalizedStart = normalizeDateTime(meetStart);
         const normalizedEnd = normalizeDateTime(meetEnd);
@@ -284,7 +293,7 @@ const meetingService = {
     },
 
     // Sync Participants
-    async syncParticipants(meetId, userId, participantDatas) {
+    async syncParticipants(meetId, userId, participantDatas, meetStart=null, meetEnd=null) {
         const meeting = await prisma.meeting.findUnique({
             where: { meetId }
         });
@@ -313,8 +322,8 @@ const meetingService = {
             ...otherParticipants
         ];
 
-        const normalizedStart = normalizeDateTime(meeting.meetStart);
-        const normalizedEnd = normalizeDateTime(meeting.meetEnd);
+        const normalizedStart = normalizeDateTime(meetStart ?? meeting.meetStart);
+        const normalizedEnd = normalizeDateTime(meetEnd ?? meeting.meetEnd);
 
         // Validate participant conflicts
         await validateParticipantConflicts({

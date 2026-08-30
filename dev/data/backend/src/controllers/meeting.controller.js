@@ -135,7 +135,9 @@ const meetingController = {
         try {
             const {
                 meetId,
-                participants
+                participants,
+                meetStart,
+                meetEnd
             } = req.body;
 
             const userId = req.user.userId;
@@ -143,7 +145,9 @@ const meetingController = {
             const result = await meetingService.syncParticipants(
                 meetId,
                 userId,
-                participants
+                participants,
+                meetStart,
+                meetEnd
             );
 
             getIO().emit("meetingUpdated");

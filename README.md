@@ -62,3 +62,9 @@ Before running this project, ensure the following is installed:
 | [Hoi Ling](https://github.com/holickka) | |
 | [Yee Joo](https://github.com/Joophang) | |
 | [Natalie](https://github.com/hni-natalie) | | 
+
+## Asset credits
+
+### Flaticon
+
+- Magnific

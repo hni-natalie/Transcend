@@ -3,14 +3,14 @@
 */
 import * as THREE from 'three';
 import * as d3 from 'd3-hierarchy';
-import { createContext, useContext, useMemo, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { useFrame } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import { useLiveKit } from '@features/livekit'
 import { officeService } from '@/features/office/services/office.service';
 import { useTextWidth } from '@/features/office/hooks/useTextWidth';
-import { useSocket } from '@/context/SocketContext';
+import { useSocket } from '@/context';
 
 const SpaceContext = createContext(null);
 export const useOfficeSpace = () => useContext(SpaceContext);
@@ -32,6 +32,24 @@ interface SpaceProviderProps {
 /************************************************
  Office Context logic
  ************************************************/
+function getPlanePosition( planeRefs:any, dpId:string ) {
+
+  for (const [index, mesh] of planeRefs.current) {
+    // console.log(`Plane ${index}:`, mesh.userData);
+    // console.log('Access Level:', mesh.userData.accessLevel);
+    // console.log('Department ID:', mesh.userData.dpId);
+    
+    if (mesh.userData.accessLevel === 'department') {
+      // console.log(`✅ Found department plane at index ${index}:`, mesh.userData);
+			if (mesh.userData.dpId === dpId) {
+      	// console.log('Department: ', mesh.userData.name, ' ', mesh.userData.dpId);
+      	// console.log('mesh pos: ', mesh.position);
+				return (mesh.position);
+			}
+    }
+  }
+};
+
 const getOfficeDept = async () => {
 	const res = await officeService.getAllSpaces();
 
@@ -53,18 +71,66 @@ const getOfficeDept = async () => {
 	return { departmentNames, departmentCount, officeSpaces };
 }
 
+const updateRoomPlayer = (prev, data) => {
+
+	const existingUserIdx = prev.findIndex(p => p.userId === data.player.userId);
+	console.log('[updateRoomPlayer] existing player: ', existingUserIdx, ' ', data.player.userId);
+	if (existingUserIdx !== -1) {
+		const updatedPlayers = [...prev];
+		updatedPlayers[existingUserIdx] = data.player;
+		return updatedPlayers;
+	}
+	else {
+		return [...prev, data.player];
+	}
+}
+
 export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } : SpaceProviderProps ) {
+	const { socket, shouldConnect, setRoomPlayers, isConnected } = useSocket();
 	const { activePlane, setActivePlane, isConnectedRoom } = useLiveKit(roomName);
 	const [hoveredIndex, setHoveredIndex] = useState(null)
 	const { textRef, textWidth, getTextWidth } = useTextWidth();
 	const planeRefs = useRef(new Map());
+	const previousActivePlaneRef = useRef<number | null>(null);
+	const positionDataRef = useRef([]);
 
 	const [loading, setLoading] = useState(true);
 	const [officeSpace, setOfficeSpace] = useState([]);
 	const [count, setCount] = useState(0);
 
-	const { socket } = useSocket();
-	const previousActivePlaneRef = useRef<number | null>(null);
+  /* **************************************************************
+   * Socket declarations
+   * **************************************************************/
+	useEffect(() => {
+		if (!socket) {
+			console.log('socket not ready!');
+			return ;
+		}
+
+    socket.on('player-joined-room', (data) => {
+      setRoomPlayers(prev => updateRoomPlayer(prev, data));
+      console.log(`User ${data.player.name}, sockId:${data.player.id} joined ${data.roomName}`);
+    });
+
+    socket.on('existing-room-players', (data) => {
+      console.log(`[existing-room-players]:`, data);
+      setRoomPlayers(data);
+    })
+
+    socket.on('get-room-spawn-pos', (data) => {
+			console.log('[get-room-spawn-pos] roomName ', data.roomName);
+			if (positionDataRef.current.length > 0)
+				socket.emit('room-spawn-pos', { roomName, positionData:positionDataRef.current });
+		});
+
+    return () => {
+      if (socket && !shouldConnect) {
+        socket.off('player-joined-room');
+        socket.off('existing-room-players');
+        socket.off('get-room-spawn-pos');
+			}
+		}
+	}, [socket]);
 
 	useEffect(() => {
 		if (!socket) {
@@ -146,20 +212,20 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 			const { departmentCount, officeSpaces } = await getOfficeDept();
 			setOfficeSpace(officeSpaces);
 			setCount(departmentCount);
-			setLoading(false); // ✅ Everything is ready
+			setLoading(false);
 		};
 		fetchData();
 	}, []);
 
-
+  /* **************************************************************
+   * Memo declarations
+   * **************************************************************/
 	const canvasWidth = conf.World.width;
 	const canvasHeight = conf.World.height;
-	const planes = useMemo(() => {
+	const themeColor = conf.Color.themes.golden;
 
-		const result = [];
-		// console.log('Office space dpId: ', officeSpace.departmentId);
-		
-		// 1. Prepare data for treemap
+	// 1. Prepare data for treemap
+	const treemapData = useMemo(() => {
 		const root = d3.stratify<TreemapData>()
 			.id(d => d.id)
 			.parentId(d => d.parentId || null)
@@ -171,7 +237,7 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 						value: p.userCapacity,  // Use capacity as the area!
 				}))
 			])
-			.sum(d => Math.sqrt(d.value ?? 0));   // <-- required, without this all leaf values are 0/undefined
+			.sum(d => Math.sqrt(d.value ?? 0));   // without this all leaf values are 0/undefined
 			// .sum(d => Math.log((d.value ?? 0) + 1)); // lesser diff between large & small
 
 		// 2. Create treemap layout (this replaces cols/rows)
@@ -180,15 +246,17 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 			.padding(padding)
 			.tile(d3.treemapSquarify.ratio(1));
 
-			const layout = treemap(root);
-			// console.log('Treemap size:', treemap.size());
-			// console.log('First leaf:', layout.leaves()[0]);
+		const layout = treemap(root);
+		// console.log('Treemap size:', treemap.size());
+		// console.log('First leaf:', layout.leaves()[0]);
+		return layout;
+	}, [officeSpace, canvasWidth, canvasHeight])
 
-		// 3. Extract positions (no cols/rows needed!)
+	const positionedPlanes = useMemo(() => {
+		// 3. Extract positions
 		const shrinkFactor = 0.5
-		const positionedPlanes = layout.leaves().map(( leaf:any, i ) => {
+		const data = treemapData.leaves().map(( leaf:any, i ) => {
 			const planeData = officeSpace.find(p => p.spaceId === leaf.data.id);
-			// console.log('planeData : ', planeData);
 			return {
 					...planeData,
 					index: i,
@@ -198,13 +266,35 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 					height: (leaf.y1 - leaf.y0) * shrinkFactor,
 			};
 		});
+		// console.log('[SpaceContext] positionedPlanes: ', data);
+		const positionData = data.map(item => ({
+			departmentId:item.departmentId,
+			accessLevel:item.accessLevel,
+			x:item.x,
+			z:item.z
+		}));
+		positionDataRef.current = positionData;
+		socket.emit('room-spawn-pos', { roomName, positionData:positionDataRef.current });
+		return data;
+	},[treemapData, officeSpace, canvasWidth, canvasHeight])
 
+	const planes = useMemo(() => {
+		
+		const result = [];
 		// 4. Create meshes at calculated positions
+		const loader = new THREE.TextureLoader();
+		const tileSize = 10;
+		
 		positionedPlanes.forEach((plane, i) => {
-			const hue = (i / count) * 360;
-			// const planeId = plane.departmentId;
-			// console.log('planeId: ', planeId);
-			// console.log('plane: ', plane.spaceName, 'size: ', plane.width, ' ', plane.height, ' ', plane.depth)
+			const hue = (i / count) * conf.Color.endHue;
+			const theme = themeColor[i % themeColor.length];
+			const texture = loader.load('/texture/marble-2/roughness.png');
+
+				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+				texture.repeat.set(
+					plane.width / tileSize,
+					plane.height / tileSize
+				);
 			result.push(
 				<mesh
 					key={i}
@@ -224,39 +314,81 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 					{/* office floor plane */}
 					<planeGeometry args={[plane.width, plane.height]} />
 					<meshStandardMaterial
-						color={activePlane === i ? `hsl(${hue}, 50%, 60%)` : `hsl(${hue}, 20%, 50%)`}
+						color={theme}
+						map={texture}
 						side={THREE.DoubleSide}
 						roughness={0.4}
 						metalness={0.2}
-						emissive={`hsl(${hue}, 70%, 10%)`}
 					/>
-					{/* Text on hover */}
-					{hoveredIndex === i && (
-					<group position={[0, plane.height*-0.4, 0.2]} >
-						{/* Rectangle Background Mesh */}
-						<mesh position={[0, 0, -0.1]}>
-							<planeGeometry args={[textWidth[i], 0.9]} />
-							<meshStandardMaterial color="#1D2307" opacity={0.5} transparent />
-						</mesh>
-						<Text
-							ref={(ref) => textRef.current[i] = ref}
-							font="/font/Plus_Jakarta_Sans/PlusJakartaSans-VariableFont_wght.ttf"
-							fontSize={0.6}
-							color="white"
-							onSync={() => getTextWidth(i)}
-						>{plane.spaceName}</Text>
-					</group>
-					)}
 				</mesh>
 			);
 	}) // map
 	return result;
-	}, [count, canvasWidth, canvasHeight, activePlane, hoveredIndex, textWidth]);
+	}, [count, canvasWidth, canvasHeight, positionedPlanes]);
+
+	const activeOverlay = useMemo(() => {
+		if (activePlane === null) return null;
+		const plane = positionedPlanes[activePlane];
+		const hue = (activePlane / count) * conf.Color.endHue;
+		const theme = themeColor[activePlane % themeColor.length];
+		const color = theme.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+		const value = Number(color[3]) * 2;
+		// console.log('hsl: ', color[0], ' ', color[1], ' ', color[2], ' ', color[3]);
+		// console.log('sat: ', value);
+
+		if (!plane) return null;
+			
+		return (
+			<mesh
+					position={[plane.x, -0.48, plane.z]}
+					rotation={[-Math.PI / 2, 0, 0]}
+			>
+				<planeGeometry args={[plane.width, plane.height]} />
+				<meshStandardMaterial
+					color={`hsl(${color[1]}, 100%, ${color[3]}%)`}
+					transparent
+					opacity={0.1}
+					side={THREE.DoubleSide}
+				/>
+			</mesh>
+		);
+	}, [activePlane, positionedPlanes]);
+
+	const hoverOverlay = useMemo(() => {
+		if (hoveredIndex === null) return null;
+    const plane = positionedPlanes[hoveredIndex];
+
+		return (
+		<group
+			name='text-on-hover'
+			position={[plane.x, 0.1, plane.z]}
+			rotation={[-Math.PI / 2, 0, 0]}
+		>
+			<mesh name='rec-bg' position={[0, 0, -0.1]}>
+				<planeGeometry args={[textWidth[hoveredIndex], 0.9]} />
+				<meshStandardMaterial color="#FFFFFF" opacity={0.5} transparent />
+			</mesh>
+			<Text
+				ref={(ref) => textRef.current[hoveredIndex] = ref}
+				font="/font/Plus_Jakarta_Sans/PlusJakartaSans-VariableFont_wght.ttf"
+				fontSize={0.6}
+				color="white"
+				onSync={() => getTextWidth(hoveredIndex)}
+			>
+				{plane.spaceName}
+			</Text>
+
+		</group>
+		)
+	}, [hoveredIndex, textWidth])
 
 	const value = {
 		planes,
 		loading,
-		planeRefs
+		planeRefs,
+		hoverOverlay,
+		activeOverlay,
+		getPlanePosition,
 	};
 
   return (

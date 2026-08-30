@@ -338,7 +338,7 @@ export const Meetings = () => {
 			)}
 
 			<div className="flex-1 overflow-y-auto p-4">
-				<div className="grid grid-cols-4 gap-3">
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
 				<MeetingColumn
 					label="Today"
 					action="join"
@@ -398,7 +398,6 @@ export const Meetings = () => {
 
 			{showRecordingModal && (
 				<RecordingModal
-					meetId={selectedMeetingId ?? ""}
 					recordings={recordings}
 					onClose={() => {
 						setShowRecordingModal(false);

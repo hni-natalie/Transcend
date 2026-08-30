@@ -134,7 +134,10 @@ export function UserMeetingRoom() {
             <p>Connecting...</p>
           ) : (
             <RoomContext.Provider value={room}>
-              <VideoConference meetId={meetId} />
+              <VideoConference 
+                meetId={meetId}
+                isHost={isHost} 
+              />
             </RoomContext.Provider>
           )}
         </div>
