@@ -75,7 +75,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     name: user.userName,
     email: user.userEmail,
     role: user.roleName,
-    photo: user.avatarUrl || '/default-avatar.png',
+    photo: user.avatarUrl || null,
     status: user.userStatus as UserBackendStatus,
   } : {
     name: 'Guest',
@@ -172,6 +172,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
                   className={`${linkClass({ isActive:location.pathname === item.href })} w-full 
                               ${isConnectedRoom || !isConnected || layoutLoading ? 'cursor-not-allowed' : 'cursor-pointer'} `}
                   disabled={isConnectedRoom || isLoading || layoutLoading || !isConnected}
+                  title={`${isConnectedRoom || isLoading || layoutLoading || !isConnected ? 'Refresh to connect Office' : '' }`}
                 >
                   {linkContent(item)}
                 </button>

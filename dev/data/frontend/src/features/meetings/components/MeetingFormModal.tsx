@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { IconClose, IconMeetings, InputDropdown, InputDropdownChecklist, InputDropdownChip, InputText, ModalHeader } from "@shared";
+import { IconMeetingAdd, InputDropdownChip, InputText, ModalHeader } from "@shared";
 import { meetingApi } from "@features/meetings";
 import type { MeetingDetails, Participant } from "@features/meetings/meeting.types";
 import { InputTextArea } from "@/shared";
@@ -306,8 +306,8 @@ export const ScheduleMeetingModal = ({
             className='form-layout'
         >
             <ModalHeader 
-                icon={IconMeetings}
-                iconClassName='w-6 h-6 text-white'
+                icon={IconMeetingAdd}
+                iconClassName='w-7 h-7 text-white'
                 title={mode === "edit" ? "Update Meeting" : "Schedule Meeting"}
                 onClose={handleClose}
             />

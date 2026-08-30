@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { PageHeader, IconMeetings, IconPlus, Modal } from '@shared';
+import { PageHeader, IconMeetings, IconPlus, Modal, AlertBanner } from '@shared';
 import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal, RecordingModal, MeetingChatModal } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useSocket } from "@/context/SocketContext";
@@ -333,9 +333,9 @@ export const Meetings = () => {
 			/>
 
 			{message && (
-				<div className="mb-2 p-3 px-4 rounded-lg bg-background-2 text-accent-lime text-sm font-medium">
-					{message}
-				</div>
+				<AlertBanner
+					message={message}
+				/>
 			)}
 
 			<div className="flex-1 overflow-y-auto mt-4">
