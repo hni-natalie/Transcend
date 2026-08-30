@@ -172,6 +172,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
                   className={`${linkClass({ isActive:location.pathname === item.href })} w-full 
                               ${isConnectedRoom || !isConnected || layoutLoading ? 'cursor-not-allowed' : 'cursor-pointer'} `}
                   disabled={isConnectedRoom || isLoading || layoutLoading || !isConnected}
+                  title={`${isConnectedRoom || isLoading || layoutLoading || !isConnected ? 'Refresh to connect Office' : '' }`}
                 >
                   {linkContent(item)}
                 </button>
