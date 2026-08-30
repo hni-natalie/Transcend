@@ -269,6 +269,18 @@ export const IconMute = ({ className, onClick }: IconProps) => (
   </svg>
 );
 
+export const IconMicDisabled = (props: SVGProps<SVGSVGElement>) => (
+  <svg 
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    fill="currentColor"
+    viewBox="0 0 16 16"
+  >
+    <path d="M12.227 11.52a5.48 5.48 0 0 0 1.246-2.97.5.5 0 0 0-.995-.1 4.5 4.5 0 0 1-.962 2.359l-1.07-1.07C10.794 9.247 11 8.647 11 8V3a3 3 0 0 0-6 0v1.293L1.354.646a.5.5 0 1 0-.708.708l14 14a.5.5 0 0 0 .708-.708zM8 12.5c.683 0 1.33-.152 1.911-.425l.743.743c-.649.359-1.378.59-2.154.66V15h2a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h2v-1.522a5.5 5.5 0 0 1-4.973-4.929.5.5 0 0 1 .995-.098A4.5 4.5 0 0 0 8 12.5" />
+    <path d="M8.743 10.907 5 7.164V8a3 3 0 0 0 3.743 2.907" />
+  </svg>
+);
+
 export const IconSpeak = ({ className, onClick }: IconProps) => (
   <svg
     onClick={onClick}
@@ -860,7 +872,7 @@ export const IconGroup = ({ className }: IconProps) => (
 export const IconChat = ({ className }: IconProps) => (
   <svg 
     className={className}
-    xmlns="http://www.w3.org/2000/svg" width={16} height={18} fill="none"
+    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 18" fill="none"
   >
     <path
       fill="currentColor"
@@ -880,7 +892,10 @@ export const IconChat = ({ className }: IconProps) => (
 export const IconScreenShare = (props: SVGProps<SVGSVGElement>) => (
   <svg
     {...props}
-    xmlns="http://www.w3.org/2000/svg" width={20} height={16} fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    width={20} height={16}
+    viewBox="0 0 20 16"
+    fill="none"
   >
     <path
       fill="currentColor"
@@ -900,7 +915,10 @@ export const IconScreenShare = (props: SVGProps<SVGSVGElement>) => (
 export const IconLockLocked = (props: SVGProps<SVGSVGElement>) => (
   <svg
     {...props}
-    xmlns="http://www.w3.org/2000/svg" width={16} height={16} fill="none"
+    xmlns="http://www.w3.org/2000/svg" 
+    width={16} height={16}
+    viewBox="0 0 16 16"
+    fill="none"
   >
     <path
       fill="currentcolor"
