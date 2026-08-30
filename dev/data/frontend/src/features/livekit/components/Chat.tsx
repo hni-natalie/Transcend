@@ -4,6 +4,7 @@ import { cloneSingleChild } from '../utils/utils';
 import { useMaybeLayoutContext, useChat, ChatToggle, ChatCloseIcon, ChatEntry, MessageFormatter } from '@livekit/components-react';
 import { meetingApi } from '@/features/meetings/api/meeting.api';
 import { useRoomContext } from '@livekit/components-react';
+import { InputTextArea } from '@/shared';
 
 /** @public */
 export interface ChatProps extends React.HTMLAttributes<HTMLDivElement>, ChatOptions {
@@ -162,16 +163,20 @@ export function Chat({
  
               return (
                 <li key={msg.id ?? idx} className="lk-chat-entry">
-                  {!hideName && (
-                    <span className="lk-chat-entry-name">{msg.from?.name ?? 'Unknown'}</span>
-                  )}
-                  {!hideTimestamp && (
-                    <time className="lk-chat-entry-time">
-                      {new Date(msg.timestamp).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </time>
+                  {(!hideName || !hideTimestamp) && (
+                    <div className={`flex ${idx >= 1 ? 'mt-5!' : ''}`}>
+                    {!hideName && (
+                      <span className="lk-chat-entry-name">{msg.from?.name ?? 'Unknown'}</span>
+                    )}
+                    {!hideTimestamp && (
+                      <time className="lk-chat-entry-time">
+                        {new Date(msg.timestamp).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </time>
+                    )}
+                  </div>
                   )}
                   <p className="lk-chat-entry-message">
                     {messageFormatter ? messageFormatter(msg.message) : msg.message}
@@ -184,19 +189,21 @@ export function Chat({
  
         {/* ── Bottom: message input ──────────────────────────── */}
         <form className="lk-chat-form" onSubmit={handleSubmit}>
-          <textarea
-            ref={inputRef}
-            className="lk-chat-input"
-            rows={1}
-            disabled={isSending}
-            placeholder="Enter a message..."
-            onInput={handleInputResize}
-            onKeyDown={handleKeyDown}
-            onKeyUp={(ev) => ev.stopPropagation()}
+          <InputTextArea
+              ref={inputRef}
+              className="bg-background-1 border-background-3 focus:border-background-4"
+              rows={1}
+              disabled={isSending}
+              placeholder="Enter a message..."
+              onInput={handleInputResize}
+              onKeyDown={handleKeyDown}
+              onKeyUp={(ev) => ev.stopPropagation()}
           />
-          <button type="submit" className="lk-chat-send" disabled={isSending}>
-            Send
-          </button>
+          <div>
+            <button type="submit" className="btn-header rounded-full" disabled={isSending}>
+              Send
+            </button>
+          </div>
         </form>
       </div>
     </div>

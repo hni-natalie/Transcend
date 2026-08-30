@@ -190,7 +190,7 @@ export function VideoConference({
             >
               <Chat
                 meetId={meetId}
-                className="h-full w-full"
+                className="h-full w-full p-2 pt-0"
                 messageFormatter={chatMessageFormatter}
                 messageEncoder={chatMessageEncoder}
                 messageDecoder={chatMessageDecoder}
