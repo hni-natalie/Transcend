@@ -1,30 +1,33 @@
 // reusable text input
-import { ChangeEvent } from 'react';
+import { ChangeEvent, forwardRef } from 'react';
 
-interface InputTextAreaProps {
+interface InputTextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
 	title?: string;
 	placeholder?: string;
-	value: string;
-	onChange: (e: ChangeEvent<HTMLTextAreaElement>) => void;
+	// value?: string;
+	onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void;
 	required?: boolean;
 	error?: string;
-	disabled?: false;
+	disabled?: boolean;
 	className?: string;
 }
 
-export function InputTextArea({ 
-	title, 
-	value = '', 
-	onChange,
-	required = false,
-	placeholder = '', 
-	error = '',
-	disabled = false,
-	className
-} : InputTextAreaProps) {
+export const InputTextArea = forwardRef<HTMLTextAreaElement, InputTextAreaProps>(
+	({
+		title,
+		// value = '', 
+		onChange,
+		required = false,
+		placeholder = '', 
+		error = '',
+		disabled = false,
+		className,
+		...props // pass the rest (value, other props directly inherit from original textarea elem)
+	} : InputTextAreaProps
+	, ref) => {
 
 	return (
-		<div className="flex flex-col gap-y-1">
+		<div className="flex flex-col gap-y-1 flex-1">
 			{title && (
 				<label className="input-label">
 					{title}
@@ -33,15 +36,17 @@ export function InputTextArea({
 			)}
 
 			<textarea
-				value={value}
+				ref={ref}
+				// value={value}
 				onChange={onChange}
 				placeholder={placeholder}
         className={`input-base ${error ? 'input-error' : ''} ${className}`}
         required={required}
         disabled={disabled}
+				{...props}
 			/>
 
 			{error && <span className="error-message">{error}</span>}
 		</div>
 	);
-}
+})
