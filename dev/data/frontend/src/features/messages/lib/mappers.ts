@@ -17,6 +17,7 @@ export function toProfile(user?: User): Profile {
   const name = user.userName || user.userEmail || 'Unknown User';
   const role = user.role?.roleName || user.roleName || 'No role';
   const department = user.department?.dpName || 'No department';
+  const departmentId = user.department?.dpId;
 
   return {
     id: user.userId,
@@ -26,6 +27,7 @@ export function toProfile(user?: User): Profile {
     department,
     avatarUrl: user.avatarUrl || undefined,
     status: user.userStatus || 'offline',
+    departmentId,
     isGroup: false,
   };
 }

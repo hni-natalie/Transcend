@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, ChangeEvent } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { IconDown } from './Icons';
 
 interface User {
@@ -37,6 +37,7 @@ export function InputDropdownChecklist({
 }: InputDropdownProps) {
   const [memberOpen, setMemberOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [search, setSearch] = useState("");
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -53,6 +54,11 @@ export function InputDropdownChecklist({
   // Get selected label for display
   const selectedUsers = users.filter((user) => selectedUserIds.includes(user.userId));
   const selectedText = selectedUsers.length > 0 ? selectedUsers.map((user) => user.userName).join(', ') : placeholder;
+  const filteredUsers = useMemo(() => {
+      return users.filter((user) =>
+      user.userName.toLowerCase().includes(search.toLowerCase())
+      );
+  }, [users, search]);
 
   // Handle user toggle (for multi-select with users)
   const handleUserToggle = (userId: string) => {
@@ -96,23 +102,38 @@ export function InputDropdownChecklist({
                 {emptyText}
               </p>
             ) : (
-              users.map((user) => (
-                <label
-                  key={user.userId}
-                  className="flex cursor-pointer items-center gap-4 px-4 py-3 text-base text-gray-200 hover:bg-background-3"
-                >
-                  <input
-                    type="checkbox"
-                    checked={isUserSelected(user.userId)}
-                    onChange={() => handleUserToggle(user.userId)}
-                    className="h-5 w-5 accent-lime-300"
-                  />
-                  <div>
-                    <p>{user.userName}</p>
-                    <p className="text-sm text-foreground-3/90">{user.userEmail}</p>
-                  </div>
-                </label>
-              ))
+              <>
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full px-4 py-2 outline-none border-b border-transparent focus:border-background-4 mb-2"
+              />
+              {filteredUsers.length === 0 ? (
+                <div className="text-center py-4 text-gray-400 text-sm">
+                    No users found.
+                </div>
+              ) : (
+                filteredUsers.map((user) => (
+                  <label
+                    key={user.userId}
+                    className="flex cursor-pointer items-center gap-4 px-4 py-3 text-base text-gray-200 hover:bg-background-3"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isUserSelected(user.userId)}
+                      onChange={() => handleUserToggle(user.userId)}
+                      className="h-5 w-5 accent-lime-300"
+                    />
+                    <div>
+                      <p>{user.userName}</p>
+                      <p className="text-sm text-foreground-3/90">{user.userEmail}</p>
+                    </div>
+                  </label>
+                ))
+              )}
+              </>
             )}
           </div>
         )}

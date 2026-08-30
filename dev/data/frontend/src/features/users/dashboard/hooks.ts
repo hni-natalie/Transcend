@@ -6,11 +6,12 @@ import { UserBackendStatus } from '@/shared';
 import { useAuth } from '@/features/auth';
 import { useSocket } from '@/context/SocketContext';
 
+
 export const useDashboard = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isConnected } = useSocket();
+  const { isConnected, userStatuses } = useSocket();
 
 
   useEffect(() => {
@@ -36,7 +37,18 @@ export const useDashboard = () => {
       setIsLoading(true);
   }, [isConnected]);
 
-  return { data, setData, isLoading, error };
+  const dataWithLiveStatus: DashboardData | null = data
+  ? {
+      ...data,
+      currentUser: data.currentUser, 
+      allUsers: data.allUsers.map(u => ({
+        ...u,
+        userStatus: userStatuses[u.userId] ?? u.userStatus,
+      })),
+    }
+  : null;
+
+  return { data: dataWithLiveStatus, setData, isLoading, error };
 };
 
 export const useSessionTimer = (lastLoginAt: string | null | undefined) => {

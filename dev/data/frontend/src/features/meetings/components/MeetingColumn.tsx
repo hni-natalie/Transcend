@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { ButtonVoiceRoom } from '@/features/livekit/components/ButtonVoiceRoom';
+import { EmptyCard } from '@shared';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import type { Meeting } from '@/features/meetings/meeting.types';
 
@@ -21,6 +22,8 @@ type Props = {
   onViewMore?: (id: string) => void;
   onDelete?: (id: string) => void;
   onEdit?: (id: string) => void;
+  onViewRecording?: (id: string) => void;
+  onViewChat?: (id: string) => void;
 };
 
 // truncate helper
@@ -34,11 +37,13 @@ export const MeetingColumn = ({
   label,
   meetings,
   action,
+  userId,
   onTogglePin,
   onViewMore,
   onDelete,
   onEdit,
-  userId,
+  onViewRecording,
+  onViewChat,
 }: Props) => {
   const sortedMeetings = useMemo(() => {
     return [...meetings].sort(
@@ -48,27 +53,24 @@ export const MeetingColumn = ({
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex justify-between items-center bg-surface-secondary rounded-xl px-4 py-3 mb-2.5">
-        <span className="text-sm font-medium text-text-primary">
+      {/* Tab Header */}
+      <div className="task-tab">
+        <h2 className="text-lg">
           {label}
-        </span>
+        </h2>
 
-        <span className="text-sm font-semibold text-accent-lime">
+        <span className="text-2xl text-accent-lime">
           {meetings.length}
         </span>
       </div>
 
-      {/* Empty State */}
+      {/* Empty State or Show Card */}
+      <div className="space-y-6">
       {sortedMeetings.length === 0 ? (
-        <div className="bg-surface-secondary rounded-xl p-8 min-h-[180px] flex flex-col items-center justify-center text-center">
-          <p className="text-sm font-medium text-text-secondary">
-            No meetings
-          </p>
-          <p className="text-xs text-text-tertiary mt-1">
-            Nothing scheduled here yet
-          </p>
-        </div>
+        <EmptyCard 
+          title='No meetings'
+          desc='Nothing scheduled here yet'
+        />
       ) : (
         sortedMeetings.map((meeting) => {
           const meetTitle = truncateWords(meeting.title, 3);
@@ -77,44 +79,44 @@ export const MeetingColumn = ({
           return (
             <div
               key={meeting.id}
-              className="bg-surface-secondary rounded-xl p-3.5 mb-2"
+              className="task-card"
             >
               {/* Title + Pin */}
               <div className="flex justify-between items-start mb-0.5">
-                <p className="text-sm font-medium text-text-primary">
+                <h2 className="text-xl font-semibold mb-4 pr-8">
                   {meetTitle}
-                </p>
+                </h2>
 
                 <button
                   onClick={() => onTogglePin?.(meeting.id)}
                   className="text-text-tertiary hover:text-text-secondary transition"
                 >
                   <IconPin
-                    className="w-4 h-4"
+                    className="w-5 h-5 cursor-pointer"
                     active={meeting.pinned}
                   />
                 </button>
               </div>
 
               {/* Description */}
-              <p className="text-xs text-text-tertiary mb-2.5 leading-snug">
+              <p className="task-desc">
                 {truncateWords(meeting.description, 8)}
               </p>
 
               {/* Meta */}
-              <div className="flex flex-col gap-1 mb-3">
-                <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-                  <IconCalendar className="w-3.5 h-3.5" />
+              <div className="flex flex-col gap-1 mb-2">
+                <div className="flex items-center gap-1.5 text-text-secondary">
+                  <IconCalendar className="w-4.5 h-4.5" />
                   {meeting.date}
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-                  <IconClock className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1.5 text-text-secondary">
+                  <IconClock className="w-4.5 h-4.5" />
                   {meeting.time} · {meeting.duration}
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-                  <IconUsers className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1.5 text-text-secondary">
+                  <IconUsers className="w-4.5 h-4.5" />
                   {meeting.participants} participants
                 </div>
               </div>
@@ -122,53 +124,67 @@ export const MeetingColumn = ({
               {/* View More */}
               <button
                 onClick={() => onViewMore?.(meeting.id)}
-                className="text-xs text-accent-lime font-medium mb-2 hover:underline"
+                className="text-sm text-accent-lime font-medium mb-4 hover:underline"
               >
                 View more
               </button>
 
               {/* Actions */}
+              <div>
               {action === 'join' ? (
                 meeting.status === "started" ? (
                   <ButtonVoiceRoom
                     joinText={isHost ? "Start Meeting" : "Join Meeting"}
                     roomName={meeting.id}
                     meetingTitle={meeting.title}
+                    meetId={meeting.id}
                     mode="video"
                     joinTo={R.USER_VIDEOCALL}
                     isHost={isHost}
+                    className="btn-header"
                   />
                 ) : isHost ? (
                   <ButtonVoiceRoom
                     joinText="Start Meeting"
                     roomName={meeting.id}
                     meetingTitle={meeting.title}
+                    meetId={meeting.id}
                     mode="video"
                     joinTo={R.USER_VIDEOCALL}
                     isHost={true}
-                    className="w-full border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg hover:bg-accent-lime/10 transition-colors cursor-pointer"
+                    className="btn-header"
                   />
                 ) : (
                   <button
                     disabled
-                    className="w-full border border-gray-400 text-gray-400 text-xs font-semibold py-1.5 rounded-lg"
+                    className="btn-gray"
                   >
                     Waiting for host
                   </button>
                 )
               ) : action === 'transcript' ? (
-                <button className="w-full border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg hover:bg-accent-lime/10 transition-colors cursor-pointer">
-                  View Transcript
-                </button>
-              ) : (
                 <div className="flex gap-2">
-                  {/* <button className="flex-1 bg-accent-lime text-surface-primary text-xs font-semibold py-1.5 rounded-lg">
-                    Start
-                  </button> */}
+                  <button
+                      onClick={() => onViewRecording?.(meeting.id)}
+                      className='btn-orange'
+                  >
+                      Recordings
+                  </button>
+
+                  <button
+                      onClick={() => onViewChat?.(meeting.id)}
+                      className='btn-header'
+                  >
+                      Chat
+                  </button>
+              </div>
+              ) : (
+                <div className="flex gap-2 flex-wrap">
                   <ButtonVoiceRoom 
                     className='btn-header' 
-                    joinText='Start' 
+                    joinText='Start Meeting' 
                     roomName={meeting.id} 
+                    meetId={meeting.id}
                     meetingTitle={meeting.title} 
                     mode='video' 
                     joinTo={`${R.USER_VIDEOCALL}`}
@@ -177,24 +193,26 @@ export const MeetingColumn = ({
 
                 <button 
                   onClick={() => onEdit?.(meeting.id)}
-                  className="flex-1 border border-accent-lime text-accent-lime text-xs font-semibold py-1.5 rounded-lg cursor-pointer hover:bg-accent-lime/10 transition-colors"
+                  className="btn-header"
                 >
                   Edit
                 </button>
 
                   <button
                     onClick={() => onDelete?.(meeting.id)}
-                    className="flex-1 border border-red-500 text-red-400 text-xs font-semibold py-1.5 rounded-lg hover:bg-red-500/10 cursor-pointer transition-colors"
+                    className="btn-danger-outline-s"
                   >
                     Delete
                   </button>
                 </div>
               )}
+              </div>
             </div>
 
           );
         })
       )}
+      </div>
     </div>
   );
 };

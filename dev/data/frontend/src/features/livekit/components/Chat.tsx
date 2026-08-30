@@ -2,10 +2,13 @@ import { type ChatMessage, type ChatOptions } from '@livekit/components-core';
 import * as React from 'react';
 import { cloneSingleChild } from '../utils/utils';
 import { useMaybeLayoutContext, useChat, ChatToggle, ChatCloseIcon, ChatEntry, MessageFormatter } from '@livekit/components-react';
+import { meetingApi } from '@/features/meetings/api/meeting.api';
+import { useRoomContext } from '@livekit/components-react';
 
 /** @public */
 export interface ChatProps extends React.HTMLAttributes<HTMLDivElement>, ChatOptions {
   messageFormatter?: MessageFormatter;
+  meetId: string;
 }
 
 /**
@@ -39,10 +42,12 @@ export function Chat({
   messageDecoder,
   messageEncoder,
   channelTopic,
+  meetId,
   ...props
 }: ChatProps) {
+  const room = useRoomContext();
   const ulRef = React.useRef<HTMLUListElement>(null);
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  const inputRef = React.useRef<HTMLTextAreaElement>(null);
 
   const chatOptions: ChatOptions = React.useMemo(() => {
     return { messageDecoder, messageEncoder, channelTopic };
@@ -56,9 +61,51 @@ export function Chat({
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (inputRef.current && inputRef.current.value.trim() !== '') {
-      await send(inputRef.current.value);
-      inputRef.current.value = '';
-      inputRef.current.focus();
+      const message = inputRef.current.value;
+      await send(message);
+
+      console.log("Saving chat message:", {
+        meetId,
+        senderId: room.localParticipant.identity,
+        senderName:
+          room.localParticipant.name ??
+          room.localParticipant.identity,
+        message,
+      });
+
+      if (meetId) {
+        await meetingApi.createChatMessage(
+          meetId,
+          {
+            senderId: room.localParticipant.identity,
+
+            senderName:
+              room.localParticipant.name ??
+              room.localParticipant.identity,
+
+            message,
+          }
+        );
+    }
+
+
+    inputRef.current.value = '';
+    inputRef.current.style.height = 'auto';
+    inputRef.current.focus();
+    }
+  }
+
+  function handleInputResize(ev: React.FormEvent<HTMLTextAreaElement>) {
+    const el = ev.currentTarget;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }
+
+  function handleKeyDown(ev: React.KeyboardEvent<HTMLTextAreaElement>) {
+    ev.stopPropagation();
+    if (ev.key === 'Enter' && !ev.shiftKey) {
+      ev.preventDefault();
+      handleSubmit(ev as unknown as React.FormEvent);
     }
   }
 
@@ -93,56 +140,65 @@ export function Chat({
   }, [chatMessages, layoutContext?.widget]);
 
   return (
-    <div {...props} className="lk-chat">
-      <div className="lk-chat-header">
-				<div className='ml-2 flex w-full'>Messages</div>
-        {layoutContext && (
-          <ChatToggle className="">
-            <ChatCloseIcon />
-          </ChatToggle>
-        )}
-      </div>
-
-      <ul className="lk-list lk-chat-messages" ref={ulRef}>
-        {props.children
-          ? chatMessages.map((msg, idx) =>
-              cloneSingleChild(props.children, {
-                entry: msg,
-                key: msg.id ?? idx,
-                messageFormatter,
-              }),
-            )
-          : chatMessages.map((msg, idx, allMsg) => {
-              const hideName = idx >= 1 && allMsg[idx - 1].from === msg.from;
-              // If the time delta between two messages is bigger than 60s show timestamp.
-              const hideTimestamp = idx >= 1 && msg.timestamp - allMsg[idx - 1].timestamp < 60_000;
-
+    <div className="lk-chat-overlay">
+      <div {...props} className={`lk-chat-panel ${props.className ?? ''}`}>
+        {/* ── Top: title + exit ───────────────────────────── */}
+        <div className="lk-chat-header">
+          <span className="lk-chat-title">Messages</span>
+          {layoutContext && (
+            <ChatToggle className="lk-chat-close ml-auto">
+              <ChatCloseIcon />
+            </ChatToggle>
+          )}
+        </div>
+        
+        {/* ── Middle: scrollable message list ────────────────── */}
+        <div className="lk-chat-body">
+          <ul ref={ulRef} className="lk-chat-messages">
+            {chatMessages.map((msg, idx, all) => {
+              const hideName = idx >= 1 && all[idx - 1].from === msg.from;
+              const hideTimestamp =
+                idx >= 1 && msg.timestamp - all[idx - 1].timestamp < 60_000;
+ 
               return (
-                <ChatEntry
-                  key={msg.id ?? idx}
-                  hideName={hideName}
-                  hideTimestamp={hideName === false ? false : hideTimestamp} // If we show the name always show the timestamp as well.
-                  entry={msg}
-                  messageFormatter={messageFormatter}
-                />
+                <li key={msg.id ?? idx} className="lk-chat-entry">
+                  {!hideName && (
+                    <span className="lk-chat-entry-name">{msg.from?.name ?? 'Unknown'}</span>
+                  )}
+                  {!hideTimestamp && (
+                    <time className="lk-chat-entry-time">
+                      {new Date(msg.timestamp).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </time>
+                  )}
+                  <p className="lk-chat-entry-message">
+                    {messageFormatter ? messageFormatter(msg.message) : msg.message}
+                  </p>
+                </li>
               );
             })}
-      </ul>
-      <form className="lk-chat-form" onSubmit={handleSubmit}>
-        <input
-          className="lk-form-control lk-chat-form-input"
-          disabled={isSending}
-          ref={inputRef}
-          type="text"
-          placeholder="Enter a message..."
-          onInput={(ev) => ev.stopPropagation()}
-          onKeyDown={(ev) => ev.stopPropagation()}
-          onKeyUp={(ev) => ev.stopPropagation()}
-        />
-        <button type="submit" className="lk-button lk-chat-form-button" disabled={isSending}>
-          Send
-        </button>
-      </form>
+          </ul>
+        </div>
+ 
+        {/* ── Bottom: message input ──────────────────────────── */}
+        <form className="lk-chat-form" onSubmit={handleSubmit}>
+          <textarea
+            ref={inputRef}
+            className="lk-chat-input"
+            rows={1}
+            disabled={isSending}
+            placeholder="Enter a message..."
+            onInput={handleInputResize}
+            onKeyDown={handleKeyDown}
+            onKeyUp={(ev) => ev.stopPropagation()}
+          />
+          <button type="submit" className="lk-chat-send" disabled={isSending}>
+            Send
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

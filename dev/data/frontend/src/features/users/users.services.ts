@@ -15,12 +15,14 @@ export interface CreateUserDto {
     roleId: string;
     workspaceId: string;
     dpId?: string;
+	userTitle?: string;
     password?: string;
 }
 
 export interface UpdateUserDto {
     name?: string;
     email?: string;
+	userTitle?: string;
     roleId?: string;
     dpId?: string;
     status?: string;

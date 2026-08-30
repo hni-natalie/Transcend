@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { authMiddleware } = require('../middleware/auth.middleware');
 const meetingController = require('../controllers/meeting.controller');
+const meetingChatController = require('../controllers/meetingChat.controller');
 
 // all routes require authentication (must be logged in)
 router.use(authMiddleware);
@@ -22,5 +23,8 @@ router.delete('/:meetId', meetingController.deleteMeeting);
 
 router.patch('/:meetId/start', meetingController.startMeeting);
 router.patch('/:meetId/end', meetingController.endMeeting);
+
+router.post('/:meetId/chat', meetingChatController.createChatMessage);
+router.get('/:meetId/chat', meetingChatController.getMeetingChat);
 
 module.exports = router;

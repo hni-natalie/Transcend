@@ -1,6 +1,14 @@
 const prisma = require('../../prisma/client');
 const userService = require('../services/user.service');
 const { validatePassword, PASSWORD_RULES } = require('../utils/password');
+const {
+    validateCreateUser,
+    validateUpdateUserByAdmin,
+    validateUpdateProfile,
+    validateUserStatus,
+    validateChangePassword,
+    validateResetPassword
+} = require('../validators/user.validator');
 
 const userController = {
 	async getDashboardMetrics(req, res) {
@@ -55,6 +63,15 @@ const userController = {
                 });
             }
 
+            try {
+                const validated = validateUpdateProfile(updates);
+                Object.keys(validated).forEach(key => {
+                    if (validated[key] !== undefined) updates[key] = validated[key];
+                });
+            } catch (validationErr) {
+                return res.status(400).json({ error: validationErr.message });
+            }
+
 			if (updates.userEmail) {
             const existingUser = await userService.getUserByEmail(updates.userEmail);
             if (existingUser && existingUser.userId !== req.user.userId) {
@@ -74,10 +91,11 @@ const userController = {
 	async updateUserStatus(req, res) {
 		try {
 			const userId = req.user.userId;
-			const { status } = req.body;
-			
-			if (!status) {
-				return res.status(400).json({ error: 'Status is required' });
+			let status;
+			try {
+				({ status } = validateUserStatus(req.body));
+			} catch (validationErr) {
+				return res.status(400).json({ error: validationErr.message });
 			}
 			
 			await userService.updateUserStatus(userId, status);
@@ -122,9 +140,34 @@ const userController = {
         }
     },
 
+    async getUsersByStatus(req, res) {
+        try {
+            const status = req.params.status;
+            console.log(`📥 Getting users with status: "${status}"`);
+
+            if (!status) {
+                return res.status(400).json({ error: 'User status required' });
+            }
+            const user = await userService.getUsersByStatus(status);
+            return res.json(user);
+        } catch (error) {
+            if (error.message === 'User not found') {
+                res.status(404).json({ error: error.message });
+            } else {
+                res.status(500).json({ error: error.message });
+            }
+        }
+    },
+
 	async createUser(req, res) {
 		try {
-			const { email, password, name, roleId, dpId } = req.body;
+			let validated;
+			try {
+				validated = validateCreateUser(req.body);
+			} catch (validationErr) {
+				return res.status(400).json({ success: false, message: validationErr.message });
+			}
+			const { email, password, name, roleId, dpId, userTitle } = validated;
 			
 			// get admin's workspaceId
 			const currentUser = await prisma.user.findUnique({
@@ -145,7 +188,8 @@ const userController = {
 				name,
 				roleId,
 				workspaceId: currentUser.workspaceId,  // user admin's
-				dpId
+				dpId,
+				userTitle
 			});
 			
 			return res.status(201).json({
@@ -185,19 +229,14 @@ const userController = {
     async changePassword(req, res) {
         try {
             const userId = req.user.userId;
-            const { oldPassword, newPassword } = req.body;
-            
-            if (!oldPassword || !newPassword) {
+            let oldPassword, newPassword;
+            try {
+                ({ oldPassword, newPassword } = validateChangePassword(req.body));
+            } catch (validationErr) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Both old password and new password are required'
-                });
-            }
-            
-            if (newPassword.length < 6) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'New password must be at least 6 characters'
+                    message: validationErr.message,
+                    code: 'PASSWORD_RULES_VIOLATION'
                 });
             }
             
@@ -233,21 +272,17 @@ const userController = {
 	async resetUserPassword(req, res) {
 		try {
 			const { userId } = req.params;
-			const { newPassword } = req.body;
-			
-			if (!newPassword) {
-				return res.status(400).json({
-					success: false,
-					message: 'New password is required'
-				});
+			if (!userId) {
+				return res.status(400).json({ success: false, message: 'User ID is required' });
 			}
-			
-			// Validate password rules
-			const validation = validatePassword(newPassword);
-			if (!validation.isValid) {
+
+			let newPassword;
+			try {
+				({ newPassword } = validateResetPassword(req.body));
+			} catch (validationErr) {
 				return res.status(400).json({
 					success: false,
-					message: validation.errors.join('. '),
+					message: validationErr.message,
 					code: 'PASSWORD_RULES_VIOLATION'
 				});
 			}
@@ -281,7 +316,18 @@ const userController = {
     async updateUser(req, res) {
         try {
             const { id } = req.params;
-            const user = await userService.updateUserByAdmin(id, req.body);
+            if (!id) {
+                return res.status(400).json({ error: 'User ID is required' });
+            }
+
+            let validated;
+            try {
+                validated = validateUpdateUserByAdmin(req.body);
+            } catch (validationErr) {
+                return res.status(400).json({ error: validationErr.message });
+            }
+
+            const user = await userService.updateUserByAdmin(id, validated);
             res.json(user);
         } catch (error) {
             if (error.message === 'User not found') {
@@ -306,7 +352,40 @@ const userController = {
                 res.status(500).json({ error: error.message });
             }
         }
-    }
+    },
+
+    async getMyDataExport(req, res) {
+        try {
+            const userId = req.user.userId;
+            const result = await userService.exportUserData(userId);
+            return res.json({ success: true, ...result });
+        } catch (error) {
+            if (error.message === 'User not found') {
+                return res.status(404).json({ success: false, message: error.message });
+            }
+            return res.status(500).json({ success: false, message: error.message });
+        }
+    },
+
+    async requestAccountDeletion(req, res) {
+        try {
+            const userId = req.user.userId;
+            const result = await userService.requestAccountDeletion(userId);
+            return res.json({
+                success: true,
+                message: result.alreadyRequested
+                    ? 'A deletion request is already pending for your account.'
+                    : 'Your deletion request has been received.',
+                ...result,
+            });
+        } catch (error) {
+            if (error.message === 'User not found') {
+                return res.status(404).json({ success: false, message: error.message });
+            }
+            return res.status(500).json({ success: false, message: error.message });
+        }
+	}
+
 };
 
 module.exports = userController;

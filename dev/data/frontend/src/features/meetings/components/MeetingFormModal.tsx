@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { IconMeetings } from "@shared";
+import { IconClose, IconMeetings, InputDropdown, InputDropdownChecklist, InputDropdownChip, InputText, ModalHeader } from "@shared";
 import { meetingApi } from "@features/meetings";
 import type { MeetingDetails, Participant } from "@features/meetings/meeting.types";
+import { InputTextArea } from "@/shared";
+import { DropdownChoice } from "@/shared/types/ui.types";
 
 type User = {
     userId: string;
@@ -20,6 +22,16 @@ type Props = {
     onUpdated?: () => void;
 };
 
+const roleOptions : DropdownChoice[] = [
+    { id: 'organiser', name: 'Organiser' },
+    { id: 'participant', name: 'Participant' },
+];
+const attendanceOptions : DropdownChoice[] = [
+    { id: 'pending', name: 'Pending' },
+    { id: 'present', name: 'Present' },
+    { id: 'absent', name: 'Absent' },
+];
+
 export const ScheduleMeetingModal = ({
     open,
     onClose,
@@ -33,9 +45,8 @@ export const ScheduleMeetingModal = ({
     const [start, setStart] = useState("");
     const [end, setEnd] = useState("");
 
-    const [users, setUsers] = useState<User[]>([]);
-    const [search, setSearch] = useState("");
-    const [selectedUsers, setSelectedUsers] = useState<Participant[]>([]);
+    const [users, setUsers] = useState<Participant[]>([]);
+    const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
@@ -46,8 +57,7 @@ export const ScheduleMeetingModal = ({
         setDescription("");
         setStart("");
         setEnd("");
-        setSearch("");
-        setSelectedUsers([]);
+        setSelectedUserIds([]);
         setErrorMessage("");
     }, []);
 
@@ -78,8 +88,23 @@ export const ScheduleMeetingModal = ({
         const loadUsers = async () => {
         try {
             const res = (await meetingApi.allUsers())as User[];
+            // extend all users with role & attendance
+            setUsers(prev => {
+              const prevById = new Map(prev.map(u => [u.userId, u]));
 
-            setUsers(res);
+              const merged = res.map(u =>
+                prevById.get(u.userId) ?? {
+                  ...u,
+                  role: "participant" as const,
+                  attendance: "pending" as const,
+                }
+              );
+              // add if users non existent in list (?)
+              const extra = prev.filter(
+                u => !res.some(r => r.userId === u.userId)
+              );
+              return [...merged, ...extra];
+            });
         } catch (err) {
             console.error(err);
         }
@@ -95,6 +120,15 @@ export const ScheduleMeetingModal = ({
 
         return d.toISOString().slice(0, 16);
     };
+    
+    const toggleUser = (userId: string) => {
+        setSelectedUserIds((prevSelected) => {
+        if (prevSelected.includes(userId)) 
+            return prevSelected.filter((id) => id !== userId);
+        else 
+            return [...prevSelected, userId];
+        });
+    }
 
     useEffect(() => {
         if (!open) return;
@@ -106,50 +140,36 @@ export const ScheduleMeetingModal = ({
             setStart(toDateTimeLocal(meeting.meetStart));
             setEnd(toDateTimeLocal(meeting.meetEnd));
 
-            setSelectedUsers(
-                meeting.participants.map(p => ({
-                    userId: p.userId,
-                    userName: p.user.userName,
-                    userEmail: p.user.userEmail,
-                    role: p.role,
-                    attendance: p.attendance,
-                }))
-            );
+            // update with Users existing role status
+            setUsers(prev => {
+                const byId = new Map(prev.map(u => [u.userId, u]));
+
+                meeting.participants.forEach(p => {
+                    byId.set(p.userId, {
+                        userId: p.userId,
+                        userName: p.user.userName,
+                        userEmail: p.user.userEmail,
+                        role: p.role,
+                        attendance: p.attendance,
+                    });
+                });
+                return Array.from(byId.values());
+            });
+            setSelectedUserIds(meeting.participants.map(p => p.userId));
         } else {
             resetForm();
         }
     }, [open, mode, meeting, resetForm]);
 
-    const filteredUsers = useMemo(() => {
-        return users.filter((user) =>
-        user.userName.toLowerCase().includes(search.toLowerCase())
-        );
-    }, [users, search]);
-
-    const toggleParticipant = (user: Participant) => {
-        setSelectedUsers(prev => {
-            const exists = prev.some(p => p.userId === user.userId);
-
-            if (exists) {
-                return prev.filter(p => p.userId !== user.userId);
-            }
-
-            return [
-                ...prev,
-                {
-                    ...user,
-                    role: "participant",
-                    attendance: "pending",
-                },
-            ];
-        });
-    };
+    const selectedUsers = useMemo(() => {
+        return users.filter(user => selectedUserIds.includes(user.userId));
+    }, [users, selectedUserIds]);
 
     const updateRole = (
         userId: string,
         role: "organiser" | "participant"
     ) => {
-        setSelectedUsers(prev =>
+        setUsers(prev =>
             prev.map(user =>
                 user.userId === userId
                     ? { ...user, role }
@@ -162,7 +182,7 @@ export const ScheduleMeetingModal = ({
         userId: string,
         attendance: "present" | "absent" | "pending"
     ) => {
-        setSelectedUsers(prev =>
+        setUsers(prev =>
             prev.map(user =>
                 user.userId === userId
                     ? { ...user, attendance }
@@ -236,13 +256,6 @@ export const ScheduleMeetingModal = ({
                 onCreated?.();
 
             } else if (mode === "edit" && meeting) {
-                await meetingApi.updateMeeting({
-                    meetId: meeting.meetId,
-                    meetTitle: title,
-                    meetDesc: description,
-                    meetStart: new Date(start).toISOString(),
-                    meetEnd: new Date(end).toISOString()
-                });
 
                 await meetingApi.syncParticipants({
                     meetId: meeting.meetId,
@@ -250,9 +263,19 @@ export const ScheduleMeetingModal = ({
                         userId: user.userId,
                         role: user.role,
                         attendance: user.attendance,
-                    }))
+                    })),
+                    meetStart: new Date(start).toISOString(),
+                    meetEnd: new Date(end).toISOString()
                 });
 
+                await meetingApi.updateMeeting({
+                    meetId: meeting.meetId,
+                    meetTitle: title,
+                    meetDesc: description,
+                    meetStart: new Date(start).toISOString(),
+                    meetEnd: new Date(end).toISOString(),
+                });    
+            
                 alert("Meeting updated successfully!");
                 onUpdated?.();
             }
@@ -277,227 +300,79 @@ export const ScheduleMeetingModal = ({
     if (!open) return null;
 
     return (
-        <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-        onClick={handleClose}
-        >
         <form
             onSubmit={handleSubmit}
             onClick={(e) => e.stopPropagation()}
-            className="flex flex-col gap-y-4 w-full max-w-[480px] max-h-[88vh] overflow-y-auto rounded-[1.5rem] bg-[#1b1b1b] border border-[#242424] px-8 py-7 shadow-2xl text-gray-200"
+            className='form-layout'
         >
-            <button
-                type="button"
-                onClick={handleClose}
-                className="close-right"
-            >
-            ✕
-            </button>
-
-            <div className="flex flex-col items-center justify-center gap-y-2 text-center">
-            <IconMeetings className="w-8 h-8 text-white" />
-
-            <h1 className="text-3xl font-medium text-accent-lime">
-                {mode === "edit" ? "Update Meeting" : "Schedule Meeting"}
-            </h1>
-            </div>
+            <ModalHeader 
+                icon={IconMeetings}
+                iconClassName='w-6 h-6 text-white'
+                title={mode === "edit" ? "Update Meeting" : "Schedule Meeting"}
+                onClose={handleClose}
+            />
 
             {errorMessage && (
-                <div className="rounded-lg border border-red-500 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+                <div className="rounded-lg border border-danger bg-red-500/10 px-4 py-2 text-sm text-danger">
                     {errorMessage}
                 </div>
             )}
 
-            <div>
-            <label className="block mb-2 text-sm font-medium">
-                Meeting Title
-            </label>
-
-            <input
+            <InputText
+                title='Title'
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter meeting title"
-                className="w-full rounded-lg border border-[#333] bg-[#262626] px-4 py-2 outline-none focus:border-accent-lime"
+                className="bg-background"
+                required={true}
+                type='text'
             />
-            </div>
-
-            <div>
-            <label className="block mb-2 text-sm font-medium">
-                Description
-            </label>
-
-            <textarea
-                rows={3}
+            <InputTextArea
+                title='Description'
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Meeting description"
-                className="w-full rounded-lg border border-[#333] bg-[#262626] px-4 py-2 resize-none outline-none focus:border-accent-lime"
+                placeholder="Meeting Description"
+                className="bg-background"
             />
-            </div>
-
-            <div>
-                <label className="block mb-2 text-sm font-medium">
-                    Start Time
-                </label>
-
-                <input
-                    type="datetime-local"
-                    value={start}
-                    onChange={(e) => {
-                        setStart(e.target.value);
-
-                        if (end && e.target.value >= end) {
-                            setEnd("");
-                        }
-                    }}
-                    className="w-full rounded-lg border border-[#333] bg-[#262626] px-4 py-2 outline-none focus:border-accent-lime"
-                />
-            </div>
-
-            <div>
-                <label className="block mb-2 text-sm font-medium">
-                    End Time
-                </label>
-
-                <input
-                    type="datetime-local"
-                    value={end}
-                    min={getMinEndTime()}
-                    onChange={(e) => setEnd(e.target.value)}
-                    className="w-full rounded-lg border border-[#333] bg-[#262626] px-4 py-2 outline-none focus:border-accent-lime"
-                />
-            </div>
-
-            <div>
-            <label className="block mb-2 text-sm font-medium">
-                Invite Participants
-            </label>
-
-            <input
-                type="text"
-                placeholder="Search users..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-lg border border-[#333] bg-[#262626] px-4 py-2 outline-none focus:border-accent-lime mb-3"
+            <InputText
+                title='Start Time'
+                value={start}
+                onChange={(e) => {
+                    setStart(e.target.value);
+                    if (end && e.target.value >= end) {
+                        setEnd("");
+                    }
+                }}
+                required={true}
+                type='datetime-local'
+                className="bg-background"
+            />
+            <InputText
+                title='End Time'
+                value={end}
+                min={getMinEndTime()}
+                onChange={(e) => setEnd(e.target.value)}
+                required={true}
+                type='datetime-local'
+                className="bg-background"
+            />
+            <InputDropdownChip
+                title='Invite Participants'
+                placeholder='Select Members'
+                emptyText='No users found'
+                users={users}
+                selectedUserIds={selectedUserIds}
+                onUserToggle={toggleUser}
+                onRoleUpdate={updateRole}
+                onAttendanceUpdate={updateAttendance}
+                className="bg-background"
             />
 
-            {selectedUsers.map(user => (
-                <div
-                    key={user.userId}
-                    className="rounded-lg bg-[#2b2b2b] p-3 mb-2"
-                >
-                    <div className="flex justify-between">
-                        <span>{user.userName}</span>
-
-                        {user.role !== "organiser" && (
-                            <button onClick={() => toggleParticipant(user)}>
-                                ✕
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="mt-2 flex gap-3">
-
-                        <select
-                            value={user.role}
-                            onChange={e =>
-                                updateRole(
-                                    user.userId,
-                                    e.target.value as
-                                        | "organiser"
-                                        | "participant"
-                                )
-                            }
-                        >
-                            <option value="organiser">
-                                Organiser
-                            </option>
-
-                            <option value="participant">
-                                Participant
-                            </option>
-                        </select>
-
-                        <select
-                            value={user.attendance}
-                            onChange={e =>
-                                updateAttendance(
-                                    user.userId,
-                                    e.target.value as
-                                        | "present"
-                                        | "absent"
-                                        | "pending"
-                                )
-                            }
-                        >
-                            <option value="pending">
-                                Pending
-                            </option>
-
-                            <option value="present">
-                                Present
-                            </option>
-
-                            <option value="absent">
-                                Absent
-                            </option>
-                        </select>
-
-                    </div>
-                </div>
-            ))}
-            
-            <div className="max-h-52 overflow-y-auto rounded-lg border border-[#333] bg-[#262626]">
-                {filteredUsers.map((user) => (
-                <label
-                    key={user.userId}
-                    className="flex justify-between items-center px-4 py-3 border-b border-[#333] cursor-pointer hover:bg-[#303030]"
-                >
-                    <div>
-                    <p className="text-sm font-medium">
-                        {user.userName}
-                    </p>
-
-                    <p className="text-xs text-gray-400">
-                        {user.userEmail}
-                    </p>
-                    </div>
-
-                    <input
-                        type="checkbox"
-                        checked={
-                            selectedUsers.some(
-                                selected => selected.userId === user.userId
-                            )
-                        }
-                        onChange={() =>
-                            toggleParticipant(user as Participant)
-                        }
-                    />
-                </label>
-                ))}
-
-                {filteredUsers.length === 0 && (
-                <div className="text-center py-6 text-gray-400 text-sm">
-                    No users found.
-                </div>
-                )}
-            </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-            <button
-                type="button"
-                onClick={handleClose}
-                className="rounded-lg border border-gray-600 px-5 py-2 text-sm hover:bg-gray-700 transition"
-            >
-                Cancel
-            </button>
-
+            <nav className="flex justify-center gap-3 pt-4">
             <button
                 type="submit"
                 disabled={loading || !isFormValid}
-                className="rounded-lg bg-accent-lime px-5 py-2 text-sm font-semibold text-black hover:opacity-90 disabled:opacity-50"
+                className="btn-lime-outline-solid w-[200px] mx-auto"
             >
                 {loading
                     ? mode === "edit"
@@ -508,8 +383,7 @@ export const ScheduleMeetingModal = ({
                         : "Create Meeting"
                 }
             </button>
-            </div>
+            </nav>
         </form>
-        </div>
     );
 }

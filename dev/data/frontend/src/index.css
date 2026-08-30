@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import "tailwindcss";
 
 /* DESIGN TOKENS (tailwind specific) */
@@ -27,8 +27,8 @@
   --color-accent-teal-bg: #2D3734;
   --color-accent-gold: #EECA5C;
   --color-accent-gold-bg: #3A3729;
-  --color-accent-purple: #B4A0FF;
-  --color-accent-purple-bg: #2D2A37;
+  --color-accent-ultramarine: #3C6CF5;
+  --color-accent-ultramarine-bg: ##2A2E37;
 
   /* functional */
   --color-border: #2C2C2B;
@@ -98,8 +98,27 @@
   .btn-header {
   	@apply inline-flex items-center justify-center gap-2 text-sm font-bold tracking-wider 
         px-4 py-1.5 rounded-xl border border-accent-lime 
-        bg-accent-lime-bg text-accent-lime 
+        bg-accent-lime-bg/80 text-accent-lime 
         hover:bg-accent-lime hover:text-black 
+        transition-all cursor-pointer 
+        active:scale-95 disabled:opacity-50
+        disabled:hover:bg-accent-lime-bg/80 disabled:hover:text-accent-lime;
+  }
+
+  .btn-orange {
+  	@apply inline-flex items-center justify-center gap-2 text-sm font-bold tracking-wider 
+        px-4 py-1.5 rounded-xl border border-warning 
+        bg-accent-lime-bg/80 text-warning 
+        hover:bg-warning hover:text-black 
+        transition-all cursor-pointer 
+        active:scale-95 disabled:opacity-50;
+  }
+
+  .btn-gray {
+  	@apply inline-flex items-center justify-center gap-2 text-sm font-bold tracking-wider 
+        px-4 py-1.5 rounded-xl
+        bg-accent-lime/5 text-foreground-3 border border-foreground-4
+        hover:text-foreground hover:bg-background-2
         transition-all cursor-pointer 
         active:scale-95 disabled:opacity-50;
   }
@@ -116,20 +135,21 @@
         bg-accent-lime/5 text-accent-lime border border-accent-lime hover:bg-accent-lime/10;
   }
 
-  /* .btn-lime-outline {
-  @apply bg-accent-lime-bg text-accent-lime border border-accent-lime px-4 py-1.5 rounded-lg
-        font-bold text-sm tracking-wider hover:brightness-110 transition-opacity
-} */
-
   .btn-lime-outline-solid {
   	@apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-xl 
         transition-all cursor-pointer active:scale-95 disabled:opacity-50
         bg-accent-lime/5 text-accent-lime border border-accent-lime/50 
         hover:bg-accent-lime hover:text-black;
   }
+  .btn-gray-outline-solid {
+  	@apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-xl 
+        transition-all cursor-pointer active:scale-95 disabled:opacity-50
+        bg-accent-lime/5 text-foreground-3 border border-background-4 
+        hover:text-foreground hover:bg-background-2;
+  }
 
   .btn-danger {
-  	@apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-lg 
+  	@apply inline-flex items-center justify-center gap-2 text-sm font-bold py-2.5 px-6 rounded-lg 
         transition-all cursor-pointer active:scale-95 disabled:opacity-50
         bg-red-500 text-black hover:bg-red-600;
   }
@@ -141,7 +161,15 @@
 		hover:bg-danger/20 hover:text-danger;
   }
 
-  .btn-danger-outline-solid {
+  .btn-danger-outline-s {
+  	@apply inline-flex items-center justify-center gap-2 text-sm font-bold tracking-wider 
+        px-4 py-1.5 rounded-xl border border-danger 
+        bg-accent-lime-bg/50 text-danger 
+        hover:bg-danger hover:text-black 
+        transition-all cursor-pointer 
+        active:scale-95 disabled:opacity-50;  }
+
+  .btn-danger-outline-m {
  	 @apply inline-flex items-center justify-center gap-2 text-base font-bold py-2.5 px-6 rounded-xl 
         transition-all cursor-pointer active:scale-95 disabled:opacity-50
         bg-danger/5 border border-danger/50 text-danger 
@@ -149,9 +177,24 @@
   }
 
 
+  /* task list */
+  .task-tab {
+    @apply flex items-center justify-between border border-gray-700 rounded-2xl px-8 py-4 mb-6 font-semibold;
+  }
+  .task-card {
+    @apply bg-background-1 p-6 px-8 rounded-2xl;
+  }
+  .task-desc {
+    @apply text-foreground-3 mb-6 leading-snug;
+  }
+  .task-list-layout {
+    @apply border border-background-3 bg-background-2 rounded-2xl px-4 py-3
+  }
+
   /* forms */
   .input-base {
-    @apply rounded-lg border border-background-2 bg-background-1 px-4 py-2 text-sm text-white outline-none transition-colors focus:border-accent-lime;
+    @apply rounded-lg border border-background-2 bg-background-1 px-4 py-2 text-sm text-white outline-none transition-colors focus:border-accent-lime
+;
   }
 
   .input-label {
@@ -172,6 +215,10 @@
 
   .close-right {
     @apply flex ml-auto text-2xl text-gray-300 hover:text-white
+  }
+
+  .form-layout {
+    @apply flex flex-col gap-y-4 w-[368px] max-h-[90vh] overflow-y-auto rounded-[1.5rem] bg-background-1 border border-[#242424] p-7 py-8 shadow-2xl text-gray-200
   }
 
   /* data & status */
@@ -195,27 +242,180 @@
     @apply absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-background;
   }
 
-  /* livekit class overrides */
-  .lk-chat-header {
-    @apply flex w-full
+  /* LiveKit class overrides */
+  .lk-video-conference {
+    @apply flex h-screen w-full;
   }
+
   .lk-video-conference-inner {
-    @apply flex flex-col h-full w-full
+    @apply flex flex-col flex-1 min-h-0 w-full;
   }
-  .lk-grid-layout-wrapper {
-    @apply !flex !h-full !w-full overflow-y-auto
+
+  .lk-grid-layout-wrapper,
+  .lk-focus-layout-wrapper {
+    @apply flex-1 min-h-0 overflow-y-auto;
   }
-  .lk-chat-form {
-    @apply flex w-full
+
+  .control-bar-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
-  .lk-chat-form-input {
-    @apply rounded-lg border border-background-2 bg-background-1 px-4 py-2 text-sm text-white outline-none transition-colors focus:border-accent-lime;
+
+  .control-bar-wrapper .lk-control-bar {
+    display: flex;
+    flex-wrap: nowrap;
+    width: max-content;
+    min-width: 100%;
   }
+
+  .lk-control-bar {
+    @apply sticky bottom-0 z-50 shrink-0 bg-background-1;
+  }
+
+  .lk-chat-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center;
+    pointer-events: none;
+  }
+  
+  .lk-chat-panel {
+    @apply flex flex-col w-[400px] h-[500px] rounded-2xl overflow-hidden;
+    @apply bg-black text-white shadow-2xl;
+    pointer-events: auto;
+  }
+  
+  /* ── Header (top): title + exit ───────────────────────────── */
+  .lk-chat-header {
+    @apply flex items-center justify-between h-14 px-5 shrink-0;
+    @apply bg-black border-b border-zinc-700;
+  }
+  
+  .lk-chat-title {
+    @apply text-lg font-semibold;
+  }
+  
+  .lk-chat-close {
+    @apply flex items-center justify-center w-8 h-8 rounded-full;
+    @apply text-zinc-400 hover:text-white hover:bg-zinc-800;
+    @apply transition-colors;
+  }
+  
+  /* ── Body: scrollable message list ────────────────────────── */
+  .lk-chat-body {
+    @apply flex-1 min-h-0;
+  }
+  
   .lk-chat-messages {
-    @apply h-full
+    @apply h-full overflow-y-auto p-4 space-y-3 list-none m-0;
   }
-  .lk-chat {
-    @apply flex w-full
+  
+  .lk-chat-entry {
+    @apply flex flex-col gap-0.5;
+  }
+  
+  .lk-chat-entry-name {
+    @apply text-xs font-medium text-accent-lime;
+  }
+  
+  .lk-chat-entry-message {
+    @apply text-sm leading-snug break-words;
+  }
+  
+  .lk-chat-entry-time {
+    @apply text-[10px] text-zinc-500;
+  }
+  
+  /* ── Form (bottom): input + send ──────────────────────────── */
+  .lk-chat-form {
+    @apply flex gap-3 p-4 shrink-0;
+    @apply bg-black border-t border-zinc-700;
+  }
+  
+  .lk-chat-input {
+    @apply flex-1 rounded-xl px-4 py-2;
+    @apply bg-zinc-900 border border-zinc-700;
+    @apply text-white outline-none;
+    @apply focus:border-accent-lime;
+  }
+
+  /* Attendance */
+  .lk-attendance-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center;
+    pointer-events: none;
+  }
+
+  .lk-attendance-panel {
+    @apply flex flex-col w-[300px] h-[350px] rounded-2xl overflow-hidden;
+    @apply bg-black text-white shadow-2xl;
+    pointer-events: auto;
+  }
+
+  /* Header */
+  .lk-attendance-header {
+    @apply flex items-center justify-between h-14 px-5 shrink-0;
+    @apply bg-black border-b border-zinc-700;
+  }
+
+  .lk-attendance-title {
+    @apply text-lg font-semibold;
+  }
+
+  .lk-attendance-close {
+    @apply flex items-center justify-center w-8 h-8 rounded-full;
+    @apply text-zinc-400 hover:text-white hover:bg-zinc-800;
+    @apply transition-colors text-xl;
+  }
+
+  /* Body */
+  .lk-attendance-body {
+    @apply flex-1 min-h-0;
+  }
+
+  .lk-attendance-list {
+    @apply h-full overflow-y-auto p-4 space-y-3;
+  }
+
+  .lk-attendance-entry {
+    @apply flex items-center justify-between gap-3;
+    @apply px-3 py-3 rounded-xl;
+    @apply bg-zinc-900;
+  }
+
+  .lk-attendance-participant {
+    @apply flex flex-col min-w-0;
+  }
+
+  .lk-attendance-name {
+    @apply text-sm font-medium truncate;
+  }
+
+  .lk-attendance-role {
+    @apply text-[10px] text-zinc-500 capitalize;
+  }
+
+  .lk-attendance-select {
+    @apply rounded-lg px-3 py-2;
+    @apply bg-zinc-800 border border-zinc-700;
+    @apply text-sm text-white outline-none;
+    @apply focus:border-accent-lime;
+  }
+
+  .lk-attendance-empty {
+    @apply flex items-center justify-center h-full;
+    @apply text-sm text-zinc-500;
+  }
+
+  /* Footer */
+  .lk-attendance-footer {
+    @apply flex gap-3 p-4 shrink-0;
+    @apply bg-black border-t border-zinc-700;
+  }
+
+  .lk-attendance-save {
+    @apply flex-1 rounded-xl px-4 py-2;
+    @apply bg-accent-lime text-black;
+    @apply font-medium;
+    @apply hover:opacity-90 transition-opacity;
   }
 }
 

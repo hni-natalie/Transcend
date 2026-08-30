@@ -90,7 +90,16 @@ async function validateParticipantConflicts({
     }
 }
 
+function validateRequiredStrings(fields) {
+    for (const [fieldName, value] of Object.entries(fields)) {
+        if (typeof value !== 'string' || value.trim() === '') {
+            throw new Error(`${fieldName} is required and cannot be empty`);
+        }
+    }
+}
+
 module.exports = {
     validateMeetingTime,
-    validateParticipantConflicts
+    validateParticipantConflicts,
+    validateRequiredStrings
 };

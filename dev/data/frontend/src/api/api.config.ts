@@ -33,7 +33,10 @@ export const API_CONFIG = {
     },
     tasks: '/tasks',
     meetings: '/meetings',
+    recordings: '/recordings', 
+	// messages: '/conversations', 
+	activity: '/activity',
     init: '/init',
-	messages: '/conversations', 
+
   }
 } as const;

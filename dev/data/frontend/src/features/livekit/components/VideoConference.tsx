@@ -15,11 +15,15 @@ import {
 import { useCreateLayoutContext } from '@livekit/components-react';
 import { usePinnedTracks, useTracks } from '@livekit/components-react';
 import { Chat, ControlBar, ParticipantTile } from '@/features/livekit';
+import { Rnd } from "react-rnd";
+import { Attendance } from './Attendance';
 
 /**
  * @public
  */
 export interface VideoConferenceProps extends React.HTMLAttributes<HTMLDivElement> {
+  meetId: string;
+  isHost: boolean;
   chatMessageFormatter?: MessageFormatter;
   chatMessageEncoder?: MessageEncoder;
   chatMessageDecoder?: MessageDecoder;
@@ -46,6 +50,8 @@ export interface VideoConferenceProps extends React.HTMLAttributes<HTMLDivElemen
  * @public
  */
 export function VideoConference({
+  meetId,
+  isHost,
   chatMessageFormatter,
   chatMessageDecoder,
   chatMessageEncoder,
@@ -57,6 +63,9 @@ export function VideoConference({
     unreadMessages: 0,
     showSettings: false,
   });
+  
+  const [showAttendance, setShowAttendance] = React.useState(false);
+  
   const lastAutoFocusedScreenShareTrack = React.useRef<TrackReferenceOrPlaceholder | null>(null);
 
   const tracks = useTracks(
@@ -64,7 +73,7 @@ export function VideoConference({
       { source: Track.Source.Camera, withPlaceholder: true },
       { source: Track.Source.ScreenShare, withPlaceholder: false },
     ],
-    { updateOnlyOn: [RoomEvent.ActiveSpeakersChanged], onlySubscribed: false },
+    { onlySubscribed: false },
   );
 
   const widgetUpdate = (state: WidgetState) => {
@@ -121,22 +130,25 @@ export function VideoConference({
   ]);
 
   return (
-    <div className="lk-video-conference" {...props}>
+    <div 
+      className="lk-video-conference" 
+      {...props}
+    >
       {isWeb() && (
         <LayoutContextProvider
           value={layoutContext}
           // onPinChange={handleFocusStateChange}
           onWidgetChange={widgetUpdate}
         >
-          <div className="lk-video-conference-inner">
+          <div className="lk-video-conference-inner flex flex-1 min-w-0 min-h-0">
             {!focusTrack ? (
-              <div className="lk-grid-layout-wrapper">
+              <div className="lk-grid-layout-wrapper flex-1 min-w-0 min-h-0">
                 <GridLayout tracks={tracks}>
                   <ParticipantTile />
                 </GridLayout>
               </div>
             ) : (
-              <div className="lk-focus-layout-wrapper">
+              <div className="lk-focus-layout-wrapper flex-1 min-w-0 min-h-0">
                 <FocusLayoutContainer>
                   <CarouselLayout tracks={carouselTracks}>
                     <ParticipantTile />
@@ -145,19 +157,57 @@ export function VideoConference({
                 </FocusLayoutContainer>
               </div>
             )}
-            <ControlBar controls={{ chat: true, settings: !!SettingsComponent }} />
+            <ControlBar 
+              meetId={meetId} 
+              controls={{ 
+                chat: true, 
+                recording: true, 
+                attendance: isHost,
+                settings: !!SettingsComponent 
+              }}
+              onAttendanceClick={() => setShowAttendance(true)} 
+            />
           </div>
-          <Chat
+          <div
             style={{
-							display: widgetState.showChat ? 'flex' : 'none', 
-							flexDirection: 'column',
-							maxWidth: '300px',
-							width: '100%'
-						}}
-            messageFormatter={chatMessageFormatter}
-            messageEncoder={chatMessageEncoder}
-            messageDecoder={chatMessageDecoder}
-          />
+              visibility: widgetState.showChat ? 'visible' : 'hidden',
+              pointerEvents: 'none', // wrapper never intercepts clicks
+              position: 'absolute',
+              inset: 0,
+              zIndex: 50,
+            }}
+          >
+            <Rnd
+              style={{ pointerEvents: widgetState.showChat ? 'auto' : 'none' }} // only the box itself is clickable
+              default={{
+                x: 20,
+                y: 80,
+                width: window.innerWidth < 640 ? window.innerWidth - 40 : 320,
+                height: window.innerWidth < 640 ? window.innerHeight - 160 : 400,
+              }}
+              minWidth={260}
+              minHeight={300}
+              bounds="window"
+            >
+              <Chat
+                meetId={meetId}
+                className="h-full w-full"
+                messageFormatter={chatMessageFormatter}
+                messageEncoder={chatMessageEncoder}
+                messageDecoder={chatMessageDecoder}
+              />
+            </Rnd>
+          </div>
+
+          {/* Attendance */}
+          {showAttendance && (
+            <Attendance
+              meetId={meetId}
+              onClose={() => setShowAttendance(false)}
+            />
+          )}
+
+          {/* Setting */}
           {SettingsComponent && (
             <div
               className="lk-settings-menu-modal"

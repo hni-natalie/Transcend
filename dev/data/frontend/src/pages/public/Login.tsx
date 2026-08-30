@@ -35,13 +35,32 @@ export const Login = () => {
 
     const onBack = () => { navigate('/'); };
 
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const validateLoginForm = (): string | null => {
+        if (!userEmail.trim() || !userPassword) {
+            return 'Email and password are required.';
+        }
+        if (!EMAIL_REGEX.test(userEmail.trim())) {
+            return 'Please enter a valid email address.';
+        }
+        return null;
+    };
+
     const handleEmailLogin = async (e: React.SubmitEvent) => {
         e.preventDefault();
         setError('');
+
+        const validationError = validateLoginForm();
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
         setLoading(true);
 
         try {
-            const user = await login(userEmail, userPassword);
+            const user = await login(userEmail.trim(), userPassword);
             if (user.roleName === 'Admin') {
                 navigate(R.ADMIN_DASHBOARD);
             } else {
@@ -152,7 +171,7 @@ export const Login = () => {
                     <button 
                         className="
 							w-full py-3 border border-background-4 bg-background-1 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-6 rounded-lg cursor-pointer
-							hover:bg-accent-lime-bg hover:text-accent-lime transition-colors"
+							hover:bg-accent-lime-bg hover:text-accent-lime transition-colors cursor-pointer"
                         onClick={handleGoogleLogin}
                         disabled={!isGoogleSDKLoaded || googleLoading}
                     >
@@ -178,13 +197,20 @@ export const Login = () => {
                             onChange={(e) => setUserPassword(e.target.value)}
                         />
 
-                        <button 
-                            type="submit" 
-                            className="btn-lime w-full mt-3 py-3 text-base lg:text-lg font-bold"
-                            disabled={loading}
-                        >
-                            {loading ? 'Logging in...' : 'Log in'}
-                        </button>
+						<button 
+							type="submit" 
+							className="btn-lime w-full mt-3 py-3 text-base lg:text-lg font-bold group flex items-center justify-center gap-2"
+							disabled={loading}
+						>
+							<span>{loading ? 'Logging in...' : 'Log In'}</span>
+							{!loading && (
+								<span className="inline-block opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300">
+									<svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+									</svg>
+								</span>
+							)}
+						</button>
 
 						{/* Error */}
                         <div className="h-4">
@@ -195,12 +221,15 @@ export const Login = () => {
                 
                 <div className="mt-10 flex flex-col items-center gap-8 text-center">
 					{/* No account */}
-                    <p className="text-sm text-foreground-2">
-                        No account?{' '}
-                        <span className="font-semibold text-foreground-2 underline decoration-foreground-2/30 underline-offset-4 cursor-pointer hover:text-white hover:decoration-white transition-colors">
-                            Contact us
-                        </span>.
-                    </p>
+					<p className="text-sm text-foreground-2">
+						No account?{' '}
+						<a 
+							href="mailto:support@workfrom.com"
+							className="font-semibold text-foreground-2 underline decoration-foreground-2/30 underline-offset-4 cursor-pointer hover:text-white hover:decoration-white transition-colors"
+						>
+							Contact us
+						</a>.
+					</p>
 
 					{/* Legal */}
                     <p className="mt-15 text-[12px] md:text-sm text-foreground-2 leading-relaxed max-w-[320px] md:max-w-none opacity-80">

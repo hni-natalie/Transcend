@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader, IconMessages, IconPlus } from '@shared';
 import  Messaging  from '@features/messages/Messages';
+import { useSocket } from '@/context';
 
 export const Messages = () => {
 	const [showAddForm, setShowAddForm] = useState(false);
+  const { fetchRoomPlayers } = useSocket();
+
+  useEffect(() => {
+    fetchRoomPlayers("Office");
+  }, []);
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0">
@@ -12,7 +19,7 @@ export const Messages = () => {
 		  action={
         	<button
               onClick={() => setShowAddForm(true)}
-              className="btn-header text-base"
+              className="btn-header"
           	>
 			  <IconPlus className="w-4 h-4" />
               Create Message

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { PageHeader, IconMeetings } from '@shared';
-import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal } from '@features/meetings';
+import { PageHeader, IconMeetings, IconPlus, Modal } from '@shared';
+import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal, RecordingModal, MeetingChatModal } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useSocket } from "@/context/SocketContext";
-import type { MeetingDetails, Meeting } from '@features/meetings/meeting.types';
+import type { MeetingDetails, Meeting, Recording, MeetingChatMessage } from '@features/meetings/meeting.types';
 
 type Participant = {
     userId: string;
@@ -83,6 +83,11 @@ export const Meetings = () => {
 	const [selectedMeeting, setSelectedMeeting] = useState<MeetingDetails | null>(null);
 	const [showScheduleModal, setShowScheduleModal] = useState(false);
 	const [editingMeeting, setEditingMeeting] = useState<MeetingDetails | null>(null);
+	const [showRecordingModal, setShowRecordingModal] = useState(false);
+	const [recordings, setRecordings] = useState<Recording[]>([]);
+	const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+	const [showChatModal, setShowChatModal] = useState(false);
+	const [chatMessages, setChatMessages] = useState<MeetingChatMessage[]>([]);
 
 	// ======================
 	// FETCH
@@ -109,9 +114,7 @@ export const Meetings = () => {
 		}
 	}, [user]);
 
-	useEffect(() => {
-		loadMeetings();
-	}, [loadMeetings]);
+	useEffect(() => { loadMeetings(); }, [loadMeetings]);
 
 	const { socket } = useSocket();
 
@@ -221,60 +224,93 @@ export const Meetings = () => {
 	};
 
 	// ======================
+	// VIEW RECORDING
+	// ======================
+	const handleViewRecording = async (meetId: string) => {
+		try {
+			const res = await meetingApi.getRecordings(meetId) as {
+				success: boolean;
+				recordings: Recording[];
+			};
+
+			setRecordings(res.recordings);
+			setSelectedMeetingId(meetId);
+			setShowRecordingModal(true);
+
+		} catch (err) {
+			console.error( "Failed to load recordings:", err );
+		}
+	};
+
+	// ======================
+	// VIEW CHAT HISTORY
+	// ======================
+	const handleViewChat = async (meetId: string) => {
+		try {
+			const res = await meetingApi.getChatMessages(meetId) as {
+				data: MeetingChatMessage[];
+			};
+
+			setChatMessages(res.data);
+			setShowChatModal(true);
+
+		} catch (err) {
+			console.error("Failed to load chat:", err);
+		}
+	};
+
+	// ======================
 	// GROUPING
 	// ======================
 	const grouped = useMemo(() => {
-	const now = new Date(
-		new Date().toLocaleString("en-US", {
-			timeZone: "Asia/Kuala_Lumpur",
-		})
-	);
-
-	const sortAscending = (a: Meeting, b: Meeting) =>
-		new Date(a.meetStart).getTime() -
-		new Date(b.meetStart).getTime();
-
-
-	return {
-		// Today + not finished yet
-		today: joinedMeetings
-			.filter(m => {
-				const start = new Date(m.meetStart);
-				const end = new Date(m.meetEnd);
-
-				return (
-					start.toDateString() === now.toDateString() &&
-					end > now
-				);
+		const now = new Date(
+			new Date().toLocaleString("en-US", {
+				timeZone: "Asia/Kuala_Lumpur",
 			})
-			.sort(sortAscending),
+		);
 
+		const isToday = (date: Date) =>
+			date.toDateString() === now.toDateString();
 
-		// Future meetings
-		upcoming: joinedMeetings
-			.filter(m => {
-				const start = new Date(m.meetStart);
+		const sortAscending = (a: Meeting, b: Meeting) =>
+			new Date(a.meetStart).getTime() -
+			new Date(b.meetStart).getTime();
 
-				return start > now;
-			})
-			.sort(sortAscending),
+		return {
+			// Any meeting today that hasn't ended
+			today: joinedMeetings
+				.filter((m) => {
+					const start = new Date(m.meetStart);
+					const end = new Date(m.meetEnd);
 
+					return isToday(start) && end > now;
+				})
+				.sort(sortAscending),
 
-		// Already ended
-		past: joinedMeetings
-			.filter(m => {
-				const end = new Date(m.meetEnd);
+			// Starts after today
+			upcoming: joinedMeetings
+				.filter((m) => {
+					const start = new Date(m.meetStart);
 
-				return end <= now;
-			})
-			.sort((a, b) =>
-				new Date(b.meetStart).getTime() -
-				new Date(a.meetStart).getTime()
-			),
+					return !isToday(start) && start > now;
+				})
+				.sort(sortAscending),
 
+			// Already ended
+			past: joinedMeetings
+				.filter((m) => {
+					const end = new Date(m.meetEnd);
 
-		mine: myMeetings,
-	};
+					return end <= now;
+				})
+				.sort(
+					(a, b) =>
+						new Date(b.meetStart).getTime() -
+						new Date(a.meetStart).getTime()
+				),
+
+			mine: myMeetings,
+		};
 	}, [joinedMeetings, myMeetings]);
 
 	// ======================
@@ -288,27 +324,28 @@ export const Meetings = () => {
 				action={
 					<button
 						onClick={() => setShowScheduleModal(true)} 
-						className="bg-accent-lime-bg text-accent-lime border border-accent-lime px-4 py-1.5 rounded-lg font-bold text-xs tracking-wider hover:opacity-90 transition-opacity"
+						className="btn-header"
 					>
-						+ Schedule Meeting
+						<IconPlus className="w-4 h-4" />
+						Schedule Meeting
 					</button>
 				}
 			/>
 
 			{message && (
-				<div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-green-100 text-green-700 text-sm font-medium">
+				<div className="mb-2 p-3 px-4 rounded-lg bg-background-2 text-accent-lime text-sm font-medium">
 					{message}
 				</div>
 			)}
 
-			<div className="grid grid-cols-4 gap-3 p-4">
+			<div className="flex-1 overflow-y-auto mt-4">
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 				<MeetingColumn
 					label="Today"
 					action="join"
 					meetings={grouped.today}
 					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
-					onDelete={handleDeleteMeeting}
 					onViewMore={handleViewMore}
 				/>
 
@@ -318,7 +355,6 @@ export const Meetings = () => {
 					meetings={grouped.upcoming}
 					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
-					onDelete={handleDeleteMeeting}
 					onViewMore={handleViewMore}
 				/>
 
@@ -328,8 +364,9 @@ export const Meetings = () => {
 					meetings={grouped.past}
 					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
-					onDelete={handleDeleteMeeting}
 					onViewMore={handleViewMore}
+					onViewRecording={handleViewRecording}
+					onViewChat={handleViewChat}	
 				/>
 
 				<MeetingColumn
@@ -342,24 +379,70 @@ export const Meetings = () => {
 					onViewMore={handleViewMore}
 					onEdit={handleEdit}
 				/>
+				</div>
 			</div>
 
-			<MeetingDetailsModal
-				meeting={selectedMeeting}
+			<Modal
+				isOpen={!!selectedMeeting}
 				onClose={() => setSelectedMeeting(null)}
-			/>
+			>
+				<MeetingDetailsModal
+					meeting={selectedMeeting}
+					onClose={() => setSelectedMeeting(null)}
+				/>
+			</Modal>
 
-			<ScheduleMeetingModal
-				open={showScheduleModal}
-				mode={editingMeeting ? "edit" : "create"}
-				meeting={editingMeeting ?? undefined}
+			<Modal
+				isOpen={!!showChatModal}
+				onClose={() => {
+					setShowChatModal(false);
+					setChatMessages([]);
+				}}
+			>
+				<MeetingChatModal
+					messages={chatMessages}
+					onClose={() => {
+					setShowChatModal(false);
+					setChatMessages([]);
+					}}
+				/>
+			</Modal>
+
+			<Modal
+				isOpen={showRecordingModal}
+				onClose={() => {
+					setShowRecordingModal(false);
+					setRecordings([]);
+				}}
+			>
+				<RecordingModal
+					recordings={recordings}
+					onClose={() => {
+						setShowRecordingModal(false);
+						setRecordings([]);
+					}}
+				/>
+			</Modal>
+
+			<Modal
+				isOpen={showScheduleModal}
 				onClose={() => {
 					setShowScheduleModal(false);
 					setEditingMeeting(null);
 				}}
-				onCreated={loadMeetings}
-				onUpdated={loadMeetings}
-			/>
+			>
+				<ScheduleMeetingModal
+					open={showScheduleModal}
+					mode={editingMeeting ? "edit" : "create"}
+					meeting={editingMeeting ?? undefined}
+					onClose={() => {
+						setShowScheduleModal(false);
+						setEditingMeeting(null);
+					}}
+					onCreated={loadMeetings}
+					onUpdated={loadMeetings}
+				/>
+			</Modal>
 		</>
 	);
 };

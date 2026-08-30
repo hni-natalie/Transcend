@@ -6,17 +6,20 @@ import { useLiveKit, VideoConference } from '@/features/livekit';
 import { PageHeader, IconMeetings } from '@/shared';
 import { useAuth } from '@/features/auth/AuthContext';
 import { meetingApi } from '@/features/meetings/api/meeting.api';
+import { Room, RoomEvent } from 'livekit-client';
 import '@livekit/components-styles';
 
 export function UserMeetingRoom() {
-  const [room, setRoom] = useState(null);
+  const [room, setRoom] = useState<Room | null>(null);
+  const [recordingStatus, setRecordingStatus] = useState('');
 
   const location = useLocation();
   const navigate = useNavigate();
-  console.log("location state:", location.state);
+  // console.log("location state:", location.state);
   
-  const { roomName, meetingTitle, isHost } = location.state || {
+  const { meetId, roomName, meetingTitle, isHost } = location.state || {
     roomName: '',
+    meetId: '',
     meetingTitle: 'Meeting',
     isHost: false,
   };
@@ -32,8 +35,45 @@ export function UserMeetingRoom() {
   }, [isConnectedRoom, getLivekitRoom]);
 
   useEffect(() => {
-    if (room) console.log('Room exists!');
+    if (!room) return;
+
+    console.log('Room exists!');
+    const handleData = (payload: Uint8Array) => {
+      const message = JSON.parse(new TextDecoder().decode(payload));
+
+      if (message.type === 'RECORDING_STARTED')
+        setRecordingStatus('🔴 Recording started');
+
+      if (message.type === 'RECORDING_STOPPED')
+        setRecordingStatus('');
+
+    };
+
+    room.on(RoomEvent.DataReceived, handleData);
+
+    return () => { room.off(RoomEvent.DataReceived, handleData); }
+
+
   }, [room]);
+
+  useEffect(() => {
+    if (!meetId) return;
+
+    const checkRecording = async () => {
+      try {
+        const response = await meetingApi.getRecordingStatus(meetId);
+        console.log('Recording status response:', response);
+
+        if (response.status?.status === 'active' || response.status?.status === 'starting')
+          setRecordingStatus('🔴 Recording started');
+
+      } catch (error) {
+        console.error('Failed to get recording status:', error);
+      }
+    };
+
+    checkRecording();
+  }, [meetId]);
 
   const handleLeave = async () => {
     await disconnect(true);
@@ -64,7 +104,7 @@ export function UserMeetingRoom() {
               <button
                 onClick={handleLeave}
                 disabled={isLoading}
-                className="btn-lime-outline"
+                className="btn-header"
               >
                 Leave Meeting
               </button>
@@ -73,22 +113,34 @@ export function UserMeetingRoom() {
         }
       />
 
-      <div className="flex items-center justify-center h-full">
-        {error ? (
-          <div className="text-center">
-            <p className="text-red-500 font-semibold">
-              Failed to join meeting
-            </p>
-
-            <p>{error}</p>
+      <div className="flex flex-1 min-h-0 min-w-0 flex-col">
+        {recordingStatus && (
+          <div className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 font-medium border-b">
+            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            {recordingStatus}
           </div>
-        ) : !room ? (
-          <p>Connecting...</p>
-        ) : (
-          <RoomContext.Provider value={room}>
-            <VideoConference />
-          </RoomContext.Provider>
         )}
+
+        <div className="flex flex-1 min-h-0">
+          {error ? (
+            <div className="text-center">
+              <p className="text-red-500 font-semibold">
+                Failed to join meeting
+              </p>
+
+              <p>{error}</p>
+            </div>
+          ) : !room ? (
+            <p>Connecting...</p>
+          ) : (
+            <RoomContext.Provider value={room}>
+              <VideoConference 
+                meetId={meetId}
+                isHost={isHost} 
+              />
+            </RoomContext.Provider>
+          )}
+        </div>
       </div>
     </div>
   );

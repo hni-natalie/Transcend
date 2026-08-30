@@ -1,3 +1,4 @@
+// auth.routes
 const router = require('express').Router();
 const { authMiddleware } = require('../middleware/auth.middleware');
 const prisma = require('../../prisma/client');
@@ -5,6 +6,10 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { OAuth2Client } = require('google-auth-library');
+const { logPresenceActivity } = require('../utils/activity');
+const { validateLogin, validateGoogleLogin } = require('../validators/auth.validator');
+const { uploadFile } = require('../services/supabase-storage.service');
+
 
 const JWT_SECRET = fs.readFileSync('/run/secrets/jwt_secret', 'utf8').trim();
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '1d';
@@ -12,6 +17,9 @@ const JWT_EXPIRY = process.env.JWT_EXPIRY || '1d';
 // google oauth client
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+
+// re-download google avatar if the last sync is older than this
+const AVATAR_SYNC_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function verifyGoogleToken(idToken) {
     const ticket = await client.verifyIdToken({
@@ -21,9 +29,35 @@ async function verifyGoogleToken(idToken) {
     return ticket.getPayload();
 }
 
+// downloads google's hotlinked profile photo and re-hosts it on supabase,
+// so clients never hit googleusercontent.com directly (was causing 429s)
+async function syncGoogleAvatar(userId, googlePhotoUrl) {
+    try {
+        const res = await fetch(googlePhotoUrl);
+        if (!res.ok) return null;
+
+        const contentType = res.headers.get('content-type') || 'image/jpeg';
+        const buffer = Buffer.from(await res.arrayBuffer());
+        const fileExt = contentType.split('/').pop();
+        const filePath = `avatars/${userId}/${userId}-${Date.now()}.${fileExt}`;
+
+        return await uploadFile(process.env.SUPABASE_PUBLIC_BUCKET, filePath, buffer, contentType);
+    } catch (err) {
+        console.error('Google avatar sync failed:', err);
+        return null;
+    }
+}
+
 // POST /auth/login — email login
 router.post('/login', async (req, res) => {
-    const { userEmail, userPassword } = req.body;
+    // const { userEmail, userPassword } = req.body;
+	let userEmail, userPassword;
+    try {
+        ({ userEmail, userPassword } = validateLogin(req.body));
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+
 
     try {
         const user = await prisma.user.findUnique({
@@ -61,6 +95,13 @@ router.post('/login', async (req, res) => {
         { expiresIn: JWT_EXPIRY }
         );
 
+		await logPresenceActivity({
+			workspaceId: user.workspaceId,
+			userId: user.userId,
+			action: 'logged in',
+		});
+
+
         res.json({
         token,
         user: {
@@ -83,7 +124,14 @@ router.post('/login', async (req, res) => {
 
 // POST /auth/google — OAuth login (only existing users)
 router.post('/google', async (req, res) => {
-    const { idToken } = req.body;
+    // const { idToken } = req.body;
+	let idToken;
+    try {
+        ({ idToken } = validateGoogleLogin(req.body));
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+
 
     try {
         // verify google token
@@ -112,12 +160,14 @@ router.post('/google', async (req, res) => {
 
         // if user exists but no googleId yet > link google account
         if (!user.googleId) {
+            const syncedAvatarUrl = avatarUrl ? await syncGoogleAvatar(user.userId, avatarUrl) : null;
             user = await prisma.user.update({
                 where: { userId: user.userId },
                 data: {
                     googleId: googleId,
                     authProvider: 'google',
-                    avatarUrl: avatarUrl || user.avatarUrl,
+                    avatarUrl: syncedAvatarUrl || avatarUrl || user.avatarUrl,
+                    avatarSyncedAt: syncedAvatarUrl ? new Date() : undefined,
                 },
                 include: { role: true }
             });
@@ -128,11 +178,20 @@ router.post('/google', async (req, res) => {
             });
         } else if (
             avatarUrl &&
-            (!user.avatarUrl || user.avatarUrl.includes('googleusercontent.com'))
+            (
+                !user.avatarUrl ||
+                user.avatarUrl.includes('googleusercontent.com') ||
+                !user.avatarSyncedAt ||
+                Date.now() - user.avatarSyncedAt.getTime() > AVATAR_SYNC_TTL_MS
+            )
         ) {
+            const syncedAvatarUrl = await syncGoogleAvatar(user.userId, avatarUrl);
             user = await prisma.user.update({
                 where: { userId: user.userId },
-                data: { avatarUrl: avatarUrl },
+                data: {
+                    avatarUrl: syncedAvatarUrl || avatarUrl,
+                    avatarSyncedAt: syncedAvatarUrl ? new Date() : undefined,
+                },
                 include: { role: true }
             });
         }
@@ -154,6 +213,13 @@ router.post('/google', async (req, res) => {
             JWT_SECRET,
             { expiresIn: JWT_EXPIRY }
         );
+
+		await logPresenceActivity({
+			workspaceId: user.workspaceId,
+			userId: user.userId,
+			action: 'logged in',
+		});
+
 
         res.json({
             token,
@@ -186,6 +252,7 @@ router.get('/me', authMiddleware, async (req, res) => {
                 userId: true,
                 userName: true,
                 userEmail: true,
+				workspaceId: true,
                 roleId: true,
                 role: {
                     select: { roleName: true }
@@ -196,6 +263,7 @@ router.get('/me', authMiddleware, async (req, res) => {
                         dpName: true 
                     }
                 },
+                userTitle: true,
                 userStatus: true,
                 avatarUrl: true,
 				authProvider: true,
@@ -213,12 +281,14 @@ router.get('/me', authMiddleware, async (req, res) => {
 
         res.json({
             socketId: user.socketId,
+			workspaceId: user.workspaceId,
             userId: user.userId,
             userName: user.userName,
             userEmail: user.userEmail,
             roleId: user.roleId,
-            roleName: user.role.roleName,
+            role: { roleName: user.role.roleName }, 
 			department: user.department,
+            userTitle: user.userTitle,
             userStatus: user.userStatus,
             avatarUrl: user.avatarUrl ?? null,
 			authProvider: user.authProvider ?? 'email',
@@ -236,7 +306,25 @@ router.get('/me', authMiddleware, async (req, res) => {
 
 // POST /auth/logout — logout (client just discards token)
 router.post('/logout', authMiddleware, async (req, res) => {
-    res.json({ message: 'Logged out successfully' });
+    try {
+        await prisma.user.update({
+            where: { userId: req.user.userId },
+            data: { userStatus: 'offline' }
+        });
+
+        await logPresenceActivity({
+            workspaceId: req.user.workspaceId,
+            userId: req.user.userId,
+            action: 'logged out',
+        });
+
+        const { getIO } = require('../services/socket.service');
+        getIO().emit('user-status-changed', { userId: req.user.userId, status: 'offline' });
+
+        res.json({ message: 'Logged out successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;

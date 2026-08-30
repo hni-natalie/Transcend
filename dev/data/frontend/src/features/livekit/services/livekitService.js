@@ -132,6 +132,7 @@ class LiveKitService {
     
     window.addEventListener('room-error', (event) => {
       console.log('Error! ', event.detail);
+      this._setState.isLoading = false;
     });
   }
 
@@ -177,7 +178,7 @@ class LiveKitService {
       const pa = this.positionalAudios.get(key);
       console.log('[audio] panner position:', pa.panner.positionX?.value, pa.panner.positionY?.value, pa.panner.positionZ?.value);
       console.log('[audio] listener position:', this.audioManager.listener.position);
-      console.warn('[audio] positionalAudio parent:', pa.parent?.name ?? 'NO PARENT — not in scene graph');
+      // console.warn('[audio] positionalAudio parent:', pa.parent?.name ?? 'NO PARENT — not in scene graph', '\nkey: ', key);
   }
 
   // this runs everytime when a track is subscribed
@@ -332,17 +333,27 @@ class LiveKitService {
           await this._room.localParticipant.enableCameraAndMicrophone();
           this.audioManager.setRoom(this._room);
         }
-        else
-          await this.audioManager.initMicrophone(this._room);
+        else {
+          await this._room.localParticipant.setMicrophoneEnabled(true);
+          this.audioManager.setRoom(this._room);
+        }
       } catch (error) {
-        console.error(error);
+        console.error('livekitService: ', error.name, ' ', error);
       
         await this._room?.disconnect();
         this._room = null;
 
         this.setIsConnectedRoom(false);
-        this.setIsLoading(false);
-        this.setError(error.message || "Unable to connect to meeting.");
+        this.setIsLoading(false); // ###
+        if (error.name === 'NotFoundError') {
+          this.setError('No microphone or camera found. Please connect a device and try again.');
+        } else if (error.name === 'NotAllowedError') {
+          this.setError('Camera/microphone access was denied. Please check your browser permissions.');
+        } else {
+          this.setError(error.message || "Unable to connect to meeting.");
+        }
+        alert(this.error);
+        // window.location.reload();
 
         return {
             success: false,
@@ -359,7 +370,7 @@ class LiveKitService {
     } catch (error) {
       // should emit error here to standardize ###
       console.error(error);
-
+      this.setIsLoading(false);
       this.setError(error.message || "Unexpected LiveKit error.");
 
       return {
@@ -381,6 +392,8 @@ class LiveKitService {
   async disconnectFromRoom() {
     if (this._room) {
       try {
+        await this._room.localParticipant.setCameraEnabled(false);
+        await this._room.localParticipant.setMicrophoneEnabled(false);
         await this._room.disconnect();
         this._room = null;
 

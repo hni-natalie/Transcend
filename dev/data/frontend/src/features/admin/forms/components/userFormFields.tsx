@@ -11,7 +11,8 @@ interface UserFormFieldsProps {
     email: string;
     roleId: string;
     deptId: string;
-    location: string;
+	userTitle: string;
+    // location: string;
     photo: string;
     password: string;
   };
@@ -123,14 +124,24 @@ export function UserFormFields({
           placeholder="Select Role"
         />
 
-        <InputDropdown
+		<InputText 
+		  title="Title"
+		  placeholder="Enter Title"
+		  name="userTitle"
+		  value={formData.userTitle}
+		  onChange={onChange}
+		  className="bg-background"
+		/>
+
+
+        {/* <InputDropdown
           title="Location"
           name="location"
           choices={countryOptions}
           value={formData.location}
           onChange={onChange}
           className="bg-background"
-        />
+        /> */}
       </div>
     </>
   );

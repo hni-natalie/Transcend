@@ -7,6 +7,7 @@ export function randomHexColor() {
   return color;
 };
 
-export function randomHslColor() {
-  return `hsl(${Math.random() * 360}, 80%, 80%)`;
+export function randomHslColor( value ) {
+
+  return `hsl(${Math.random() * 360}, 80%, ${value}%)`;
 };

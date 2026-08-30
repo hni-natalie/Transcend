@@ -46,3 +46,44 @@ export type Meeting = {
     status: "scheduled" | "started";
     createdByUserId: string;
 };
+
+
+export type Recording = {
+    recordingId: string;
+    meetId: string;
+    status: 
+        | "starting"
+        | "active"
+        | "stopped"
+        | "completed"
+        | "failed";
+    filename: string;
+    fileUrl: string | null;
+    summary: string | null;
+    summaryStatus: "pending" | "completed" | "failed";
+    createdAt: string;
+};
+
+
+export type MeetingChatMessage = {
+  id: string;
+  meetId: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  createdAt: string;
+}
+
+export type RecordingStatus =
+  | 'starting'
+  | 'active'
+  | 'completed'
+  | 'failed'
+  | 'stopped';
+
+export interface RecordingStatusResponse {
+  success: boolean;
+  status: {
+    status: RecordingStatus;
+  } | null;
+}

@@ -8,18 +8,21 @@ router.use(authMiddleware);
 // self-service (any authenticated user can do these to themselves)
 router.get('/password-rules', userController.getPasswordRules);
 router.post('/change-password', userController.changePassword);
-router.get('/me', userController.getCurrentUser);                   // view own profile
-router.put('/me', userController.updateCurrentUser);                // edit own profile
-// router.put('/me/avatar', userController.updateAvatar);              // upload avatar
+router.get('/me', userController.getCurrentUser);
+router.put('/me', userController.updateCurrentUser);
+router.get('/me/data-export', userController.getMyDataExport);
+router.post('/me/deletion-request', userController.requestAccountDeletion);
+// router.put('/me/avatar', userController.updateAvatar);
 router.patch('/status', authMiddleware, userController.updateUserStatus);
+router.get('/status/:status', userController.getUsersByStatus);
 
-// admin dashboard specific aggregates (Add this here!)
+// admin dashboard specific aggregates
 router.get('/dashboard/metrics', requireAdmin, userController.getDashboardMetrics)
 router.get('/dashboard', authMiddleware, userController.getUserDashboard);
 
 // team directory (other users can see each other)
-router.get('/', userController.getAllUsers);                        // list users (for team directory)
-router.get('/:id', userController.getUserById);                     // view any user profile
+router.get('/', userController.getAllUsers);
+router.get('/:id', userController.getUserById);
 
 // admin only (create, update others, delete)
 router.post('/', requireAdmin, userController.createUser);

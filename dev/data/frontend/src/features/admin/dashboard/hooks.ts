@@ -1,12 +1,75 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '@api/api.client';
 import { useToast } from '@/context/ToastContext';
-import { DbUser, DashboardMetricsResponse } from './types';
+import { useSocket } from '@/context/SocketContext';
+import { activityApi } from '@/features/admin/activity/api/activity.api';
+import { officeService } from '@/features/office/services/office.service';
+import { Space } from '@/shared/types/space.types';
+import { SpaceWithOccupancy } from './types';
+import { DbUser, DashboardMetricsResponse, ActivityItem } from './types';
+
+const OFFICE_SPACE_NAMES = new Set([
+  // shared
+  'The Town Hall',
+  'Meeting Room S',
+  'Meeting Room M',
+  'Meeting Room L',
+
+  // department
+  'Audit Vault',
+  'Creative Lab',
+  'Dev Lab',
+  'Growth Lab',
+  'Logistics Ops Hub',
+  'People Ops Hub',
+]);
+
+// maps dpmt space names to dpmt name for occupancy count
+// use space > dpmt name cz Space.dpId us a UUID (not in DbUser)
+const SPACE_TO_DEPARTMENT_NAME: Record<string, string> = {
+  'Audit Vault': 'Accounts',
+  'Creative Lab': 'Design',
+  'Dev Lab': 'Engineering',
+  'Growth Lab': 'Marketing',
+  'Logistics Ops Hub': 'Operations',
+  'People Ops Hub': 'Human Resources',
+};
+
+const toActivityItem = (e: any): ActivityItem => ({
+  id: e.id,
+  name: e.user,
+  action: e.action,
+  context: e.contextTitle || e.contextDetails || '',
+  time: e.time,
+});
 
 export const useDashboardData = () => {
   const [users, setUsers] = useState<DbUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { showToast } = useToast();
+  const {
+    enableSocket,
+    isConnected,
+    userStatuses,
+    roomOccupancy,
+    subscribeDashboard,
+    unsubscribeDashboard,
+  } = useSocket();
+
+  const [presenceItems, setPresenceItems] = useState<ActivityItem[]>([]);
+  const [tasksItems, setTasksItems] = useState<ActivityItem[]>([]);
+  const [meetingsItems, setMeetingsItems] = useState<ActivityItem[]>([]);
+  const [isActivityLoading, setIsActivityLoading] = useState(true);
+  const [spaces, setSpaces] = useState<Space[]>([]);
+  const [isSpacesLoading, setIsSpacesLoading] = useState(true);
+
+  useEffect(() => { enableSocket(); }, []);
+
+  useEffect(() => {
+    if (!isConnected) return;
+    subscribeDashboard();
+    return () => unsubscribeDashboard();
+  }, [isConnected, subscribeDashboard, unsubscribeDashboard]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -26,16 +89,62 @@ export const useDashboardData = () => {
     fetchDashboardData();
   }, [showToast]);
 
- // METRICS
-  const totalCount = users.length || 1;
-  const onlineUsers = users.filter(u => u.status !== 'offline');
-  const availableCount = users.filter(u => u.status === 'online').length;
-  const focusCount = users.filter(u => u.status === 'focus').length;
-  const inMeetingCount = users.filter(u => u.status === 'in_meeting').length;
+  useEffect(() => {
+    const fetchActivityStreams = async () => {
+      try {
+        const [presenceRes, tasksRes, meetingsRes] = await Promise.all([
+          activityApi.getRecentActivities('Presence', 3),
+          activityApi.getRecentActivities('Tasks', 3),
+          activityApi.getRecentActivities('Meetings', 3),
+        ]);
+        setPresenceItems(presenceRes.data.map(toActivityItem));
+        setTasksItems(tasksRes.data.map(toActivityItem));
+        setMeetingsItems(meetingsRes.data.map(toActivityItem));
+      } catch (err) {
+        console.error('Failed to fetch activity streams:', err);
+        showToast('error', 'Failed to load recent activity');
+      } finally {
+        setIsActivityLoading(false);
+      }
+    };
 
-  const attendancePercentage = ((onlineUsers.length / totalCount) * 100).toFixed(1);
-  const checkedInPercentage = ((availableCount / totalCount) * 100).toFixed(1);
-  const absentPercentage = ((users.filter(u => u.status === 'offline').length / totalCount) * 100).toFixed(1);
+    fetchActivityStreams();
+  }, [showToast]);
+
+  useEffect(() => {
+	const fetchSpaces = async () => {
+		try {
+		const res = await officeService.getAllSpaces();
+		setSpaces((res.data as unknown as Space[]) || []);
+		} catch (err) {
+		console.error('Failed to fetch spaces:', err);
+		showToast('error', 'Failed to load spaces');
+		} finally {
+		setIsSpacesLoading(false);
+		}
+	};
+	fetchSpaces();
+  }, [showToast]);
+
+  const usersWithLiveStatus = users.map(u => ({
+	...u,
+	status: userStatuses[u.id] ?? u.status,
+  }));
+
+  // METRICS — per-status breakdown (feeds the 3 colored rings, unchanged)
+  const totalCount = usersWithLiveStatus.length || 1;
+  const availableCount = usersWithLiveStatus.filter(u => u.status === 'online').length;
+  const focusCount = usersWithLiveStatus.filter(u => u.status === 'focus').length;
+  const inMeetingCount = usersWithLiveStatus.filter(u => u.status === 'in_meeting').length;
+
+  // METRICS — Active / Attendance / Absent summary
+  const activeCount = usersWithLiveStatus.filter(u => u.status === 'online').length;
+  const attendanceCount = usersWithLiveStatus.filter(u => u.status !== 'offline').length;
+  const absentCount = usersWithLiveStatus.filter(u => u.status === 'offline').length;
+
+  const activePercentage = ((activeCount / totalCount) * 100).toFixed(1);
+  const attendancePercentage = ((attendanceCount / totalCount) * 100).toFixed(1);
+  const absentPercentage = ((absentCount / totalCount) * 100).toFixed(1);
 
   const getDepartmentRatio = (deptName: string) => {
     const deptGroup = users.filter(u => u.department === deptName);
@@ -43,26 +152,53 @@ export const useDashboardData = () => {
     return { active, total: deptGroup.length };
   };
 
-  // exclude admin and test users
+  // only get those who are in office with online / meeting status
+  const SPACE_PRESENT_STATUSES = new Set(['online', 'in_meeting']);
+  const getDepartmentSpaceCount = (deptName: string) => {
+    return users.filter(u => u.department === deptName && SPACE_PRESENT_STATUSES.has(u.status)).length;
+  };
+
+  // get occupancy
+  // department - count dpmt members (online/meeting) since they're spawned (no active socket)
+  // shared - use socket RoomOccupancy
+  const spacesWithOccupancy: SpaceWithOccupancy[] = spaces
+    .filter(s => OFFICE_SPACE_NAMES.has(s.spaceName))
+    .map((s) => {
+      if (s.accessLevel === 'department') {
+        const deptName = SPACE_TO_DEPARTMENT_NAME[s.spaceName];
+        const currentOccupancy = deptName ? getDepartmentSpaceCount(deptName) : 0;
+        return { ...s, currentOccupancy };
+      }
+      return {
+        ...s,
+        currentOccupancy: roomOccupancy[s.spaceId] ?? roomOccupancy[s.spaceName] ?? 0,
+      };
+    });
+
   const isExcludedUser = (user: DbUser) => {
     const name = user.name?.toLowerCase() || '';
     return name.includes('admin') || name.includes('administrator') || name.includes('test');
   };
 
   return {
-    users,
+    users: usersWithLiveStatus,
     isLoading,
     metrics: {
       totalCount,
-      onlineUsers,
       availableCount,
       focusCount,
       inMeetingCount,
+      activePercentage,
       attendancePercentage,
-      checkedInPercentage,
       absentPercentage,
     },
+    spaces: spacesWithOccupancy,
+    isSpacesLoading,
     getDepartmentRatio,
     isExcludedUser,
+    presenceItems,
+    tasksItems,
+    meetingsItems,
+    isActivityLoading,
   };
 };

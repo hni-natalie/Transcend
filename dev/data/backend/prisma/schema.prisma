@@ -20,6 +20,7 @@ enum UserStatus {
 enum AccessLevel {
   shared
   department
+  virtual
 }
 
 enum AttendanceStatus {
@@ -63,7 +64,13 @@ enum RecordingStatus {
   stopped
 }
 
-// TO ADD: Messages
+enum SummaryStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
 enum ConversationType {
   direct
   group
@@ -117,6 +124,7 @@ model User {
   userEmail     String     @unique
   userPassword  String?
   userName      String
+  userTitle     String?
   userStatus    UserStatus @default(offline)
 
   roleId        String
@@ -124,6 +132,7 @@ model User {
   dpId          String?
 
   avatarUrl     String?
+  avatarSyncedAt DateTime?
   city          String?
   country       String?
   timezone      String?
@@ -134,6 +143,10 @@ model User {
   socketId      String?
   lastLoginAt   DateTime?
   emailVerified Boolean? @default(false)
+
+  dataExportRequestedAt DateTime?
+  dataExportCompletedAt DateTime?
+  deletionRequestedAt	DateTime?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -155,7 +168,6 @@ model User {
 
   activityLogs 				Activity[]
 
-// TO ADD: Messages
   createdConversations       Conversation[]            @relation("ConversationCreatedBy")
   conversationParticipations ConversationParticipant[]
   messages                   Message[]
@@ -178,11 +190,10 @@ model Workspace {
   meetings   	Meeting[]
   documents   	Document[]
   activityLogs 	Activity[]
-// TO ADD : Messages
   conversations Conversation[]
 }
 
-// SPACES
+// SPACESm 
 // for permission; add in be (canUserAccessSpace(user, space))
 // @@unique([workspaceId, spaceName]) - spacename is now unique, diff workspace can hv same name
 model Space {
@@ -277,10 +288,10 @@ model Meeting {
 
   createdBy User @relation("MeetingCreatedBy", fields: [createdByUserId], references: [userId])
 
-  participants MeetingParticipant[]
-
-  pinnedBy MeetingPin[]
-  Recording       Recording?
+  participants          MeetingParticipant[]
+  pinnedBy              MeetingPin[]
+  recording             Recording[]
+  meetingChatMessages   MeetingChatMessage[]
 
   @@index([workspaceId])
   @@index([spaceId])
@@ -355,7 +366,6 @@ model DocumentChunk {
   @@unique([documentId, chunkIndex])
 }
 
-// TO ADD: Messages
 // CONVERSATION
 // >>> directKey make sure that direct dms stay unique 
 // eg; A+B = convo 1, B+A = convo1 (userIdA:userIdB)
@@ -477,15 +487,34 @@ model Activity {
 }
 
 model Recording {
-  recordingId String          @id
-  meetId      String          @unique
+  recordingId String          @id @default(uuid())
+  meetId      String          
   egressId    String
+  filename    String
   status      RecordingStatus @default(starting)
   fileUrl     String?
+  summaryStatus SummaryStatus @default(pending)
+  summary  String? 
   createdAt   DateTime        @default(now())
-  updatedAt   DateTime
+  updatedAt   DateTime        @updatedAt
+  
   Meeting     Meeting         @relation(fields: [meetId], references: [meetId], onDelete: Cascade)
 
   @@index([egressId])
+  @@index([meetId])
+}
+
+model MeetingChatMessage {
+  id        String   @id @default(uuid())
+
+  meetId    String
+  senderId  String
+  senderName String
+  message   String
+
+  createdAt DateTime @default(now())
+
+  meeting Meeting @relation(fields: [meetId], references: [meetId], onDelete: Cascade)
+
   @@index([meetId])
 }

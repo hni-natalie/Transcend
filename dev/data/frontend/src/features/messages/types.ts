@@ -6,6 +6,7 @@ export interface Profile {
   email?: string;
   role?: string;
   department?: string;
+  departmentId?: string;
   avatarUrl?: string;
   status?: UserBackendStatus;
   isGroup?: boolean;

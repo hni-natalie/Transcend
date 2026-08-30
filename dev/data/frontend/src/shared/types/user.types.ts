@@ -14,6 +14,7 @@ export interface User {
     // role: { roleId: string; roleName: string };
     workspace: { workspaceName: string };
 	  department?: { dpId?: string; dpName: string } | null;
+	userTitle?: string;
     avatarUrl?: string | null;
     city?: string;
     country?: string;
@@ -33,6 +34,7 @@ export interface UserAccount {
 	roleId?: string;
 	department: string;
 	role: string;
+	userTitle?: string;
 	location: string;
 	photo: string;
 	dateJoined: string;
@@ -81,6 +83,11 @@ export type Position = {
 	z:number,
 }
 
+export type Ownership = {
+  ownerId: string | null;
+  timestamp: number | null;
+};
+
 export type Player = {
 	id: string;
     userId?: string;
@@ -88,10 +95,12 @@ export type Player = {
 	roomName?: string;
 	position: Position;
 	rotation?: number;
-	color: string;
+	color?: string;
 	photo: string;
 	audioEnabled?: boolean;
 	speaking?: boolean;
+    dpId?: string;
+    ownership?: Ownership;
 }
 
 /* **************************************************************
@@ -113,6 +122,7 @@ export const toUserAccount = (user: User): UserAccount => {
         roleId: user.roleId ?? user.role?.roleId,
         department: user.department?.dpName ?? '-',
         role: user.role?.roleName ?? '-',
+		userTitle: user.userTitle ?? '-',
         location: user.country ?? '-',
         photo: user.avatarUrl ?? '',
         dateJoined: user.createdAt 
