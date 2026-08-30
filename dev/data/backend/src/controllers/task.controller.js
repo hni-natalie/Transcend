@@ -1,5 +1,10 @@
 const taskService = require('../services/task.service');
 const { getIO } = require("../services/socket.service");
+const {
+    validateCreateTask,
+	validateUpdateTask
+} = require('../validators/task.validator');
+
 
 const taskController = {
 
@@ -34,15 +39,23 @@ const taskController = {
 
 	async createTask(req, res) {
 		try {
-			
-			const { taskTitle, taskPriority, taskDesc, dueDate, assignedUserIds } = req.body;
-			
-			if (!taskTitle || !taskPriority) {
-				return res.status(400).json({ error: 'taskTitle and taskPriority are required' });
+			let validated;
+			try {
+				validated = validateCreateTask(req.body);
+			} catch (validationErr) {
+				return res.status(400).json({ success: false, message: validationErr.message });
 			}
-
+			
+			const { taskTitle, taskPriority, taskDesc, dueDate, assignedUserIds } = validated;
+			
 			const workspaceId = req.user.workspaceId;
 			const createdByUserId = req.user.userId;
+
+			if (!workspaceId || !createdByUserId) {
+				return res.status(400).json({ success: false, message: 'Workspace ID and User ID are required' });
+			}
+
+			// Create the task using the service
 
 			const newTask = await taskService.createTask({
 				taskTitle,
@@ -66,9 +79,16 @@ const taskController = {
 		try {
 			const { id } = req.params;
 			const userId = req.user.userId;
+			
+			let validated;
+			try {
+				validated = validateUpdateTask(req.body);
+			} catch (validationErr) {
+				return res.status(400).json({ success: false, message: validationErr.message });
+			}
 
 			// const updatedTask = await taskService.updateTask(id, userId, req.body);
-			const updatedTask = await taskService.updateTaskWithLogging(id, userId, req.body);
+			const updatedTask = await taskService.updateTaskWithLogging(id, userId, validated);
 			getIO().emit("taskUpdated");
 			return res.json(updatedTask);
 

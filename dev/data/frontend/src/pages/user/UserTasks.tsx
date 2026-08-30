@@ -296,7 +296,7 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
       name: assignment.user.userName,
       email: assignment.user.userEmail,
       role: assignment.user.role?.roleName ?? "Unknown",
-      photo: assignment.user.avatarUrl ?? "" ,
+      photo: assignment.user.avatarUrl || "/default-avatar.png",
     }));
     
   return (
@@ -372,18 +372,20 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
 
       <div className="flex items-center">
         {assignedUsersChips.map((user, index) => (
-          <div
-            key = {user.email ?? `${user.name}-${index}`}
-            className={index > 0 ? '-ml-3' : ""}
-            title= {user.name}
-            >
-              <UserChip
-                {...user}
-                expandStatus="collapsed"
-                />
-          </div>
+          <img
+            key={user.email ?? `${user.name}-${index}`}
+            src={user.photo}
+            alt={`${user.name}'s avatar`}
+            title={user.name}
+            className={`w-10 h-10 rounded-full object-cover border-2 border-[#1f1f1f] ${
+              index > 0 ? "-ml-3" : ""
+            }`}
+            onError={(event) => {
+              event.currentTarget.src = "/default-avatar.png";
+            }}
+          />
         ))}
-     </div>
+      </div>
     </div>
   );
 };
@@ -430,7 +432,6 @@ const TaskColumn = ({
 };
 
 export const Tasks = () => {
-  const { socket } = useSocket();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -440,7 +441,8 @@ export const Tasks = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTasks = useCallback(async () => {
+
+  const fetchTasks = async () => {
     try 
     {
       setLoading(true);
@@ -457,25 +459,7 @@ export const Tasks = () => {
     {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => { fetchTasks(); }, [fetchTasks]);
-
-  useEffect(() => {
-    if (!socket)
-      return;
-    
-    const handleTaskUpdated = () => {
-      fetchTasks();
-    };
-
-    socket.on("taskUpdated", handleTaskUpdated);
-
-    return () => {
-      socket.off("taskUpdated", handleTaskUpdated);
-    };
-  }, [socket, fetchTasks])
- 
+  };
 
   const handleTaskClick = async (id: string) => {
     try 
@@ -667,4 +651,3 @@ export const Tasks = () => {
     </>
   );
 };
-
