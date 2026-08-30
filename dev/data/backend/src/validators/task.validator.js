@@ -1,5 +1,8 @@
-const prisma = require('../../prisma/client');
-const { isNonEmptyString, isValidEmail, isValidId, containsSuspiciousMarkup } = require('./common.validator');
+const {
+	isNonEmptyString,
+	isValidId,
+	containsSuspiciousMarkup
+} = require('./common.validator');
 
 const VALID_TASK_STATUS = [
 	'not_started',
@@ -16,41 +19,98 @@ const VALID_TASK_PRIORITY = [
 const TITLE_MAX_LENGTH = 50;
 const DESC_MAX_LENGTH = 200;
 
-function validateCreateTask({title, priority, desc, date, userIds}) {
 
+// Check whether an optional field was actually provided
+const hasValue = value =>
+	value !== undefined &&
+	value !== null &&
+	value !== '';
+
+
+// Validate text fields such as title and description
+function validateText(value, fieldName, maxLength) {
+	if (!hasValue(value)) return;
+
+	if (typeof value !== 'string') {
+		throw new Error(`${fieldName} must be a string`);
+	}
+
+	if (containsSuspiciousMarkup(value)) {
+		throw new Error(`${fieldName} contains characters that are not allowed`);
+	}
+
+	if (value.length > maxLength) {
+		throw new Error(`${fieldName} must be under ${maxLength} characters`);
+	}
+}
+
+
+// Validate enum-like fields
+function validateOption(value, validOptions, fieldName) {
+	if (hasValue(value) && !validOptions.includes(value)) {
+		throw new Error(`Invalid ${fieldName}`);
+	}
+}
+
+
+// Validate user ID arrays
+function validateUserIds(userIds, required = false) {
+	if (!hasValue(userIds)) {
+		if (required) {
+			throw new Error('Invalid assigned user IDs');
+		}
+
+		return;
+	}
+
+	if (
+		!Array.isArray(userIds) ||
+		userIds.some(id => !isValidId(id))
+	) {
+		throw new Error('Invalid assigned user IDs');
+	}
+}
+
+
+function validateDate(date) {
+	if (hasValue(date) && isNaN(Date.parse(date))) {
+		throw new Error('Invalid due date format');
+	}
+}
+
+
+function validateCreateTask({
+	title,
+	priority,
+	desc,
+	date,
+	userIds
+}) {
 	if (!isNonEmptyString(title)) {
 		throw new Error('Task title is required');
 	}
-	if (containsSuspiciousMarkup(title)) {
-		throw new Error('Task title contains characters that are not allowed');
-	}
-	if (title.length > TITLE_MAX_LENGTH) {
-		throw new Error(`Task title must be under ${TITLE_MAX_LENGTH} characters`);
-	}
+
+	validateText(title, 'Task title', TITLE_MAX_LENGTH);
 
 	if (!isNonEmptyString(priority)) {
 		throw new Error('Task priority is required');
 	}
 
-	if (!VALID_TASK_PRIORITY.includes(priority)) {
-		throw new Error('Invalid task priority');
-	}
+	validateOption(
+		priority,
+		VALID_TASK_PRIORITY,
+		'task priority'
+	);
 
-	if (desc !== undefined && desc !== null && desc !== '' && desc.length > DESC_MAX_LENGTH) {
-		throw new Error(`Task description must be under ${DESC_MAX_LENGTH} characters`);
-	}
+	validateText(
+		desc,
+		'Task description',
+		DESC_MAX_LENGTH
+	);
 
-	if (desc !== undefined && desc !== null && desc !== '' && containsSuspiciousMarkup(desc)) {
-		throw new Error('Task description contains characters that are not allowed');
-	}
+	validateDate(date);
 
-	if (date !== undefined && date !== null && date !== '' && isNaN(Date.parse(date))) {
-		throw new Error('Invalid due date format');
-	}
-
-	if (!Array.isArray(userIds) || userIds.some(id => !isValidId(id))) {
-		throw new Error('Invalid assigned user IDs');
-	}
+	validateUserIds(userIds, true);
 
 	return {
 		taskTitle: title,
@@ -62,38 +122,41 @@ function validateCreateTask({title, priority, desc, date, userIds}) {
 }
 
 
+function validateUpdateTask({
+	title,
+	priority,
+	desc,
+	date,
+	status,
+	assignedUserIds
+}) {
+	validateText(
+		title,
+		'Task title',
+		TITLE_MAX_LENGTH
+	);
 
-function validateUpdateTask({title, priority, desc, date, status, assignedUserIds}) {
-	
-	if (title !== undefined && title !== null && title !== '' && containsSuspiciousMarkup(title)) {	
-		throw new Error('Task title contains characters that are not allowed');
-	}
-	if (title !== undefined && title !== null && title !== '' && title.length > TITLE_MAX_LENGTH) {
-		throw new Error(`Task title must be under ${TITLE_MAX_LENGTH} characters`);
-	}
+	validateOption(
+		priority,
+		VALID_TASK_PRIORITY,
+		'task priority'
+	);
 
-	if (priority !== undefined && priority !== null && priority !== '' && !VALID_TASK_PRIORITY.includes(priority)) {
-		throw new Error('Invalid task priority');
-	}
+	validateText(
+		desc,
+		'Task description',
+		DESC_MAX_LENGTH
+	);
 
-	if (desc !== undefined && desc !== null && desc !== '' && containsSuspiciousMarkup(desc)) {
-		throw new Error('Task description contains characters that are not allowed');
-	}
-	if (desc !== undefined && desc !== null && desc !== '' && desc.length > DESC_MAX_LENGTH) {
-		throw new Error(`Task description must be under ${DESC_MAX_LENGTH} characters`);
-	}
+	validateDate(date);
 
-	if (date !== undefined && date !== null && date !== '' && isNaN(Date.parse(date))) {
-		throw new Error('Invalid due date format');
-	}
+	validateOption(
+		status,
+		VALID_TASK_STATUS,
+		'task status'
+	);
 
-	if (status !== undefined && status !== null && status !== '' && !VALID_TASK_STATUS.includes(status)) {
-		throw new Error('Invalid task status');
-	}
-
-	if (assignedUserIds !== undefined && assignedUserIds !== null && assignedUserIds !== '' && (!Array.isArray(assignedUserIds) || assignedUserIds.some(id => !isValidId(id)))) {
-		throw new Error('Invalid assigned user IDs');
-	}
+	validateUserIds(assignedUserIds);
 
 	return {
 		taskTitle: title,
@@ -101,10 +164,10 @@ function validateUpdateTask({title, priority, desc, date, status, assignedUserId
 		taskDesc: desc,
 		dueDate: date,
 		taskStatus: status,
-		assignedUserIds: assignedUserIds,
+		assignedUserIds,
 	};
-	
 }
+
 
 module.exports = {
 	validateCreateTask,
