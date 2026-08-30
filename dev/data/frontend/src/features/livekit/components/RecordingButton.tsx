@@ -3,9 +3,11 @@ import { IconRecording } from '@/shared';
 import { meetingApi } from '@/features/meetings/api/meeting.api';
 import { useRoomContext } from '@livekit/components-react';
 
-interface RecordingButtonProps { meetId: string; }
+interface RecordingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  meetId: string;
+}
 
-export function RecordingButton({ meetId }: RecordingButtonProps) {
+export function RecordingButton({ meetId, ...props }: RecordingButtonProps) {
   const room = useRoomContext();
 
   const [isRecording, setIsRecording] = useState(false);
@@ -52,12 +54,13 @@ export function RecordingButton({ meetId }: RecordingButtonProps) {
 
   return (
     <button
-      className="lk-button flex items-center gap-2"
+      className="lk-button"
       onClick={toggleRecording}
       disabled={loading}
+      {...props}
     >
       <IconRecording
-        className={isRecording ? 'recording-active' : ''}
+        className={`w-6 h-6 ${isRecording ? 'recording-active' : ''}`}
       />
 
       <span>

@@ -269,6 +269,35 @@ export const IconMute = ({ className, onClick }: IconProps) => (
   </svg>
 );
 
+export const IconMic = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+  xmlns="http://www.w3.org/2000/svg"
+  width={16} height={16}
+  viewBox="0 0 16 16"
+  fill="currentColor"
+  {...props}
+>
+    <path
+      fillRule="evenodd"
+      d="M2.975 8.002a.5.5 0 0 1 .547.449 4.5 4.5 0 0 0 8.956 0 .5.5 0 1 1 .995.098A5.5 5.5 0 0 1 8.5 13.478V15h2a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h2v-1.522a5.5 5.5 0 0 1-4.973-4.929.5.5 0 0 1 .448-.547"
+      clipRule="evenodd"
+    />
+    <path d="M5 3a3 3 0 1 1 6 0v5a3 3 0 0 1-6 0z" />
+  </svg>
+);
+
+export const IconMicDisabled = (props: SVGProps<SVGSVGElement>) => (
+  <svg 
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    fill="currentColor"
+    viewBox="0 0 16 16"
+  >
+    <path d="M12.227 11.52a5.48 5.48 0 0 0 1.246-2.97.5.5 0 0 0-.995-.1 4.5 4.5 0 0 1-.962 2.359l-1.07-1.07C10.794 9.247 11 8.647 11 8V3a3 3 0 0 0-6 0v1.293L1.354.646a.5.5 0 1 0-.708.708l14 14a.5.5 0 0 0 .708-.708zM8 12.5c.683 0 1.33-.152 1.911-.425l.743.743c-.649.359-1.378.59-2.154.66V15h2a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h2v-1.522a5.5 5.5 0 0 1-4.973-4.929.5.5 0 0 1 .995-.098A4.5 4.5 0 0 0 8 12.5" />
+    <path d="M8.743 10.907 5 7.164V8a3 3 0 0 0 3.743 2.907" />
+  </svg>
+);
+
 export const IconSpeak = ({ className, onClick }: IconProps) => (
   <svg
     onClick={onClick}
@@ -860,7 +889,7 @@ export const IconGroup = ({ className }: IconProps) => (
 export const IconChat = ({ className }: IconProps) => (
   <svg 
     className={className}
-    xmlns="http://www.w3.org/2000/svg" width={16} height={18} fill="none"
+    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 18" fill="none"
   >
     <path
       fill="currentColor"
@@ -880,7 +909,10 @@ export const IconChat = ({ className }: IconProps) => (
 export const IconScreenShare = (props: SVGProps<SVGSVGElement>) => (
   <svg
     {...props}
-    xmlns="http://www.w3.org/2000/svg" width={20} height={16} fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    width={20} height={16}
+    viewBox="0 0 20 16"
+    fill="none"
   >
     <path
       fill="currentColor"
@@ -900,7 +932,10 @@ export const IconScreenShare = (props: SVGProps<SVGSVGElement>) => (
 export const IconLockLocked = (props: SVGProps<SVGSVGElement>) => (
   <svg
     {...props}
-    xmlns="http://www.w3.org/2000/svg" width={16} height={16} fill="none"
+    xmlns="http://www.w3.org/2000/svg" 
+    width={16} height={16}
+    viewBox="0 0 16 16"
+    fill="none"
   >
     <path
       fill="currentcolor"
@@ -920,12 +955,7 @@ export const IconRecording = (props: SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     {...props}
   >
-    <circle
-      cx="12"
-      cy="12"
-      r="8"
-      fill="currentColor"
-    />
+    <path d="M12 18C13.5913 18 15.1174 17.3679 16.2426 16.2426C17.3679 15.1174 18 13.5913 18 12C18 10.4087 17.3679 8.88258 16.2426 7.75736C15.1174 6.63214 13.5913 6 12 6C10.4087 6 8.88258 6.63214 7.75736 7.75736C6.63214 8.88258 6 10.4087 6 12C6 13.5913 6.63214 15.1174 7.75736 16.2426C8.88258 17.3679 10.4087 18 12 18ZM12 1.5C9.21523 1.5 6.54451 2.60625 4.57538 4.57538C2.60625 6.54451 1.5 9.21523 1.5 12C1.5 14.7848 2.60625 17.4555 4.57538 19.4246C6.54451 21.3938 9.21523 22.5 12 22.5C14.7848 22.5 17.4555 21.3938 19.4246 19.4246C21.3938 17.4555 22.5 14.7848 22.5 12C22.5 9.21523 21.3938 6.54451 19.4246 4.57538C17.4555 2.60625 14.7848 1.5 12 1.5ZM3 12C3 10.8181 3.23279 9.64778 3.68508 8.55585C4.13738 7.46392 4.80031 6.47177 5.63604 5.63604C6.47177 4.80031 7.46392 4.13738 8.55585 3.68508C9.64778 3.23279 10.8181 3 12 3C13.1819 3 14.3522 3.23279 15.4442 3.68508C16.5361 4.13738 17.5282 4.80031 18.364 5.63604C19.1997 6.47177 19.8626 7.46392 20.3149 8.55585C20.7672 9.64778 21 10.8181 21 12C21 14.3869 20.0518 16.6761 18.364 18.364C16.6761 20.0518 14.3869 21 12 21C9.61305 21 7.32387 20.0518 5.63604 18.364C3.94821 16.6761 3 14.3869 3 12Z" fill="currentcolor"/>
   </svg>
 );
 

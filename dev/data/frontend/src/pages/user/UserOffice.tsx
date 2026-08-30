@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { Physics } from '@react-three/cannon';
 import { PerspectiveCamera, MapControls, SpotLight, Plane } from '@react-three/drei';
 import { useSocket } from '@/context/SocketContext';
-import { PageHeader, IconOffice, LoadingState } from '@shared';;
+import { PageHeader, IconOffice, LoadingState, BlinkingText } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceSpace } from '@features/livekit';
 import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject, SpawnParticle } from '@features/office';
 import { KeyboardProvider, PositionProvider } from '@/context';
@@ -34,7 +34,6 @@ export function Office({ roomName } : SpaceProps ) {
 	const listenerRef = useRef<THREE.AudioListener | null>(null);
 	/* ------------- general  ------------- */
   const [error, setError] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const { loading: spaceLayoutLoading } = useOfficeSpaceLayout();
 
 	const isConnectedRoomRef = useRef(isConnectedRoom);
@@ -113,18 +112,17 @@ export function Office({ roomName } : SpaceProps ) {
             roomName={roomName} 
             joinText={`Join ${roomName} Room`}
 						mode="room"
-						className={ isLoading || spaceLayoutLoading ? 'btn-header cursor-not-allowed' : 'btn-header' }
+						className={ spaceLayoutLoading ? 'btn-header cursor-not-allowed' : 'btn-header' }
           />
         }
       />
 
-		{isLoading &&
-		<LoadingState message="Initializing Office resources..." size="full" />
-		}
+		{spaceLayoutLoading ? (
+			<LoadingState message="Initializing Office resources..." size="full" className='flex-1' />
+		) : (
 		<div className='flex-1 relative'>
 			<Canvas
 				className=''
-        onCreated={(state) => { setIsLoading(false) }}
 			>
 			<Physics>
 				<SpaceProvider localPlayerRef={localPlayerRef} roomName={roomName}>
@@ -186,6 +184,7 @@ export function Office({ roomName } : SpaceProps ) {
 			</Canvas>
 			{error && (<div className='text-danger'>{error}</div>)}
 		</div>
+		)}
 
 	</div>
 

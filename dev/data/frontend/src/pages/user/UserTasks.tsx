@@ -1,4 +1,4 @@
-import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, UserChipItem, IconPlus, LoadingState, Modal, IconClose, ModalHeader } from '@shared';
+import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, UserChipItem, IconPlus, LoadingState, Modal, IconClose, ModalHeader, DefaultAvatar, AlertBanner } from '@shared';
 import { useEffect, useMemo, useState } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
@@ -28,8 +28,9 @@ const taskPriorityOptions : DropdownChoice[] = [
 	{ id: 'high', name: 'High Priority' }
 ];
 
-const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
+const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
   task: Task;
+  error: string;
   onClose: () => void;
   onUpdate: (
     taskId: string,
@@ -100,7 +101,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
           className="bg-background"
         />
 
-      <div className='flex justify-center pt-4'>
+      <div className='flex flex-col justify-center pt-4 gap-2'>
         <button
           onClick={() =>
             onUpdate(task.taskId, {
@@ -116,6 +117,9 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
         >
           {loading ? 'Saving...' : 'Save Changes'}
         </button>
+        {error &&
+          <p className='text-danger text-center text-sm'>{error}</p>
+        }
       </div>
     </div>
   );
@@ -204,8 +208,6 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
     });
   }
 
-  const selectedUsers = users.filter((user) => selectedUserIds.includes(user.userId));
-  // const selectedText = selectedUsers.length > 0 ? selectedUsers.map((user) => user.userName).join(', ') : 'Select members';
   const handleSubmit = () => {
     onSubmit({
       taskTitle,
@@ -296,7 +298,7 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
       name: assignment.user.userName,
       email: assignment.user.userEmail,
       role: assignment.user.role?.roleName ?? "Unknown",
-      photo: assignment.user.avatarUrl || "/default-avatar.png",
+      photo: assignment.user.avatarUrl || null,
     }));
     
   return (
@@ -304,13 +306,13 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
       // onClick={onClick}
       className="relative task-card hover:border-lime-300 transition-all"
     >
-      <div className="absolute right-6 top-6">
+      <div className="absolute right-4 top-6 cursor-pointer">
       <button
         onClick={(e) => {
           // e.stopPropagation();
           setShowMenu(!showMenu);
         }}
-        className="text-2xl text-gray-300"
+        className="text-2xl text-gray-300 w-8 h-10 flex text-center justify-center rounded-md hover:bg-background-3"
       >
         ⋮
       </button>
@@ -372,18 +374,30 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
 
       <div className="flex items-center">
         {assignedUsersChips.map((user, index) => (
-          <img
-            key={user.email ?? `${user.name}-${index}`}
-            src={user.photo}
-            alt={`${user.name}'s avatar`}
-            title={user.name}
-            className={`w-10 h-10 rounded-full object-cover border-2 border-[#1f1f1f] ${
-              index > 0 ? "-ml-3" : ""
-            }`}
-            onError={(event) => {
-              event.currentTarget.src = "/default-avatar.png";
-            }}
-          />
+          user.photo ? (
+            <img
+              key={user.email ?? `${user.name}-${index}`}
+              src={user.photo}
+              alt={`${user.name}'s avatar`}
+              title={user.name}
+              className={`w-10 h-10 rounded-full object-cover border-2 border-[#1f1f1f] ${
+                index > 0 ? "-ml-3" : ""
+              }`}
+              onError={(event) => {
+                event.currentTarget.src = "/default-avatar.png";
+              }}
+            />
+          ) : (
+            <DefaultAvatar
+              key={user.email ?? `${user.name}-${index}`}
+              name={user.name}
+              title={user.name}
+              email={user.email}
+              className={`w-10 h-10 ${
+                index > 0 ? "-ml-3" : ""
+              }`}
+            />
+          )
         ))}
       </div>
     </div>
@@ -556,6 +570,12 @@ export const Tasks = () => {
     fetchTasks();
   }, []);
 
+  useEffect(() => {
+    if (error) {
+      setSelectedTask(null);
+    }
+  }, [error]);
+
   const groupedTasks = useMemo(() => {
     const now = Date.now();
     return {
@@ -574,9 +594,9 @@ export const Tasks = () => {
     );
   }
 
-  if (error) {
-    return <p className="p-6 text-red-400">{error}</p>;
-  }
+  // if (error) {
+  //   return <p className="p-6 text-red-400">{error}</p>;
+  // }
 
   return (
     <>
@@ -593,6 +613,13 @@ export const Tasks = () => {
         </button>
         }
       />
+
+      { error && (
+        <AlertBanner
+          message={error}
+          className='text-danger'
+        />
+      )}
 			<div className="flex-1 overflow-y-auto mt-4">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <TaskColumn
@@ -638,6 +665,7 @@ export const Tasks = () => {
           onClose={() => setSelectedTask(null)}
           onUpdate={handleUpdateTask}
           loading={updateLoading}
+          error={error}
         />
       </Modal>
 
