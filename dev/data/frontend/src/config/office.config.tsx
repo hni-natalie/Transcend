@@ -30,10 +30,10 @@ export const officeSceneConfig = {
 					'hsl(193, 35%, 65%)',	// blue
 			],
 			fresh: [
-					'#5F6B6C',
-					'#D1DF83',
-					'#524436',
-					'#90B8BC',
+					'hsl(185, 7%, 65%)',	// gray
+					'hsl(67, 90%, 80%)',	// yellow
+					'hsl(165, 60%, 80%)',	// green
+					'hsl(185, 35%, 80%)',	// blue
 			],
 		}
 	}
