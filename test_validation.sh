@@ -73,6 +73,9 @@ CHANGE_PASSWORD_ROUTE="/api/users/change-password"
  
 UPDATE_USER_ROUTE_TEMPLATE="/api/users/{ID}"
 RESET_PASSWORD_ROUTE_TEMPLATE="/api/users/{ID}/reset-password"
+
+CREATE_TASK_ROUTE="/api/tasks"
+UPDATE_TASK_ROUTE_TEMPLATE="/api/tasks/{ID}"
  
 ME_ROUTE="/api/users/me"
  
@@ -600,6 +603,198 @@ else
         -H "Content-Type: application/json" \
         -d '{"newPassword":"SomethingStrong1!"}'
  
+fi
+
+# ===========================================================================
+# TASK — createTask validation
+# ===========================================================================
+
+echo ""
+echo "=================================================="
+echo "TASK — createTask"
+echo "=================================================="
+
+if [ -z "$USER_TOKEN" ]; then
+
+    skip_test "createTask: missing title"
+    skip_test "createTask: suspicious title"
+    skip_test "createTask: missing priority"
+    skip_test "createTask: invalid priority"
+    skip_test "createTask: suspicious description"
+    skip_test "createTask: invalid date"
+    skip_test "createTask: userIds wrong type"
+    skip_test "createTask: invalid userId"
+
+else
+
+    USER_AUTH_HEADER="$(user_auth_header)"
+
+    run_test "createTask: missing title" 400 \
+        -X POST "$BASE_URL$CREATE_TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "priority":"high",
+            "userIds":[]
+        }'
+
+    run_test "createTask: suspicious title" 400 \
+        -X POST "$BASE_URL$CREATE_TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "title":"<script>alert(1)</script>",
+            "priority":"high",
+            "userIds":[]
+        }'
+
+    run_test "createTask: missing priority" 400 \
+        -X POST "$BASE_URL$CREATE_TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "title":"Test task",
+            "userIds":[]
+        }'
+
+    run_test "createTask: invalid priority" 400 \
+        -X POST "$BASE_URL$CREATE_TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "title":"Test task",
+            "priority":"urgent",
+            "userIds":[]
+        }'
+
+    run_test "createTask: suspicious description" 400 \
+        -X POST "$BASE_URL$CREATE_TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "title":"Test task",
+            "priority":"high",
+            "desc":"<img src=x onerror=alert(1)>",
+            "userIds":[]
+        }'
+
+    run_test "createTask: invalid date" 400 \
+        -X POST "$BASE_URL$CREATE_TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "title":"Test task",
+            "priority":"high",
+            "date":"not-a-date",
+            "userIds":[]
+        }'
+
+    run_test "createTask: userIds wrong type" 400 \
+        -X POST "$BASE_URL$CREATE_TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "title":"Test task",
+            "priority":"high",
+            "userIds":"abc"
+        }'
+
+    run_test "createTask: invalid userId" 400 \
+        -X POST "$BASE_URL$CREATE_TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "title":"Test task",
+            "priority":"high",
+            "userIds":["not-a-valid-id"]
+        }'
+
+fi
+
+# ===========================================================================
+# TASK — updateTask validation
+# ===========================================================================
+
+echo ""
+echo "=================================================="
+echo "TASK — updateTask"
+echo "=================================================="
+
+if [ -z "$USER_TOKEN" ]; then
+
+    skip_test "updateTask: suspicious title"
+    skip_test "updateTask: invalid priority"
+    skip_test "updateTask: suspicious description"
+    skip_test "updateTask: invalid date"
+    skip_test "updateTask: invalid status"
+    skip_test "updateTask: assignedUserIds wrong type"
+    skip_test "updateTask: invalid assigned user ID"
+
+elif [ -z "$TEST_TASK_ID" ]; then
+
+    skip_test "updateTask tests: TEST_TASK_ID not provided"
+
+else
+
+    USER_AUTH_HEADER="$(user_auth_header)"
+    TASK_ROUTE="${UPDATE_TASK_ROUTE_TEMPLATE/\{ID\}/$TEST_TASK_ID}"
+
+    run_test "updateTask: suspicious title" 400 \
+        -X PUT "$BASE_URL$TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "title":"<script>alert(1)</script>"
+        }'
+
+    run_test "updateTask: invalid priority" 400 \
+        -X PUT "$BASE_URL$TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "priority":"urgent"
+        }'
+
+    run_test "updateTask: suspicious description" 400 \
+        -X PUT "$BASE_URL$TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "desc":"<script>alert(1)</script>"
+        }'
+
+    run_test "updateTask: invalid date" 400 \
+        -X PUT "$BASE_URL$TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "date":"not-a-date"
+        }'
+
+    run_test "updateTask: invalid status" 400 \
+        -X PUT "$BASE_URL$TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "status":"random"
+        }'
+
+    run_test "updateTask: assignedUserIds wrong type" 400 \
+        -X PUT "$BASE_URL$TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "assignedUserIds":"abc"
+        }'
+
+    run_test "updateTask: invalid assigned user ID" 400 \
+        -X PUT "$BASE_URL$TASK_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "assignedUserIds":["not-a-valid-id"]
+        }'
+
 fi
  
 # ===========================================================================
