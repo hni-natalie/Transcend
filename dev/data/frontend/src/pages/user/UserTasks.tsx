@@ -1,12 +1,9 @@
-import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, UserChipItem, User } from '@shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, UserChipItem, IconPlus, LoadingState, Modal, IconClose, ModalHeader } from '@shared';
+import { useEffect, useMemo, useState } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
 import { InputTextArea } from '@/shared/ui/InputTextArea';
-import { InputDropdownChecklist } from '@/shared/ui/InputDropdownChecklist';
-import { useSocket } from "@/context/SocketContext";
-import { UserChip } from '@features/users';
-
+import { InputDropdownChecklist, EmptyCard } from '@/shared';
 import { DropdownChoice } from '@/shared/types/ui.types';
 
 type TaskMember = {
@@ -52,31 +49,28 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
   const [dueDate, setDueDate] = useState( task.dueDate ? task.dueDate.split('T')[0] : '');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="flex flex-col gap-y-4 w-full max-w-[480px] max-h-[88vh] overflow-y-auto rounded-[1.5rem] bg-[#1b1b1b] border border-[#242424] px-8 py-7 shadow-2xl text-gray-200">
-        <button
-          onClick={onClose}
-          className="close-right"
-        >
-          ×
-        </button>
-        <div className='flex flex-col gap-y-2 items-center justify-center text-center text-4xl'>
-          <IconTasks className='text-white w-6 h-6' />
-          <h1 className="font-medium text-accent-lime">Edit Task</h1>
-        </div>
+    <div className="form-layout">
 
+        <ModalHeader 
+          icon={IconTasks}
+          iconClassName='text-white w-6 h-6'
+          title='Edit Task'
+          onClose={onClose}
+        />
         <InputText
           title='Title'
           type='text'
           placeholder='Task Title'
           value={taskTitle}
           onChange={(e) => setTaskTitle(e.target.value)}
+          className="bg-background"
         />
         <InputTextArea
           title='Description'
           value={taskDesc}
           onChange={(e) => setTaskDesc(e.target.value)}
           placeholder="No description"
+          className="bg-background"
         />
         <InputDropdown
           title='Status'
@@ -86,7 +80,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
             setTaskStatus(e.target.value as 'not_started' | 'in_progress' | 'done')
           }
           placeholder='--- Select Task Status ---'
-          className='appearance-auto'
+          className='appearance-auto bg-background'
         />
         <InputDropdown
           title='Priority'
@@ -96,15 +90,17 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
             setTaskPriority(e.target.value as 'low' | 'medium' | 'high')
           }
           placeholder='--- Select Task Priority ---'
-          className='appearance-auto'
+          className='appearance-auto bg-background'
         />
         <InputText 
           title='Due Date'
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
           type='date'
+          className="bg-background"
         />
 
+      <div className='flex justify-center pt-4'>
         <button
           onClick={() =>
             onUpdate(task.taskId, {
@@ -116,7 +112,8 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
             })
           }
           disabled={loading || !taskTitle}
-          className="w-full rounded-xl bg-lime-300 py-3 font-bold text-black disabled:opacity-50">
+          className='btn-lime-outline-solid w-[200px] mx-auto'
+        >
           {loading ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
@@ -220,20 +217,13 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
  };
 
     return (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm">
-    <div className="flex flex-col gap-y-4 w-full max-w-[480px] max-h-[92vh] overflow-y-auto rounded-[2rem] bg-[#1b1b1b] border border-[#242424] px-12 py-10 shadow-2xl text-gray-200">
-      
-      <button
-        onClick={onClose}
-        className='close-right text-4xl'
-      >
-        ×
-      </button>
-
-      <div className='flex flex-col gap-y-2 items-center justify-center text-center text-4xl'>
-        <IconTaskAdd className='text-white w-8 h-8' />
-        <h1 className="font-medium text-accent-lime">Create New Task</h1>
-      </div>
+    <div className='form-layout'>
+      <ModalHeader 
+        icon={IconTasks}
+        iconClassName='text-white w-6 h-6'
+        title='Create New Task'
+        onClose={onClose}
+      />
 
       <InputText
         title='Title'
@@ -242,12 +232,14 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
         required={true}
         placeholder='Task Title'
         type='text'
+        className="bg-background"
       />
       <InputTextArea
         title='Description'
         value={taskDesc}
         onChange={(e) => setTaskDesc(e.target.value)}
         placeholder="Task Description"
+        className="bg-background"
       />
       <InputDropdown 
         title='Priority'
@@ -257,7 +249,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
         onChange={(e) =>
           setTaskPriority(e.target.value as "low" | "medium" | "high")
         }
-        className='appearance-auto'
+        className='appearance-auto bg-background'
       />
       <InputText
         title='Due Date'
@@ -265,6 +257,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
         onChange={(e) => setDueDate(e.target.value)}
         required={true}
         type='date'
+        className="bg-background"
       />
       <InputDropdownChecklist
         title='Task Members'
@@ -273,18 +266,18 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading,}: {
         users={users}
         selectedUserIds={selectedUserIds}
         onUserToggle={toggleUser}
+        className="bg-background"
       />
-
-
-      <button
-        onClick={handleSubmit}
-        disabled={loading || !taskTitle}
-        className="mt-6 w-full rounded-2xl bg-lime-300 py-4 text-2xl font-bold text-black hover:brightness-110 disabled:opacity-50"
-      >
-        {loading ? "Creating..." : "Create Task"}
-      </button>
+      <div className='flex justify-center pt-4'>
+        <button
+          onClick={handleSubmit}
+          disabled={loading || !taskTitle}
+          className='btn-lime-outline-solid w-[200px] mx-auto'
+        >
+          {loading ? "Creating..." : "Create Task"}
+        </button>
+      </div>
     </div>
-  </div>
 );
 };
 
@@ -309,7 +302,7 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
   return (
     <div
       // onClick={onClick}
-      className="relative p-6 rounded-2xl bg-[#1f1f1f]  shadow-lg hover:border-lime-300 transition-all cursor-pointer"
+      className="relative task-card hover:border-lime-300 transition-all"
     >
       <div className="absolute right-6 top-6">
       <button
@@ -354,27 +347,26 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
       )}
     </div>
 
-      <h2 className="text-2xl font-semibold mb-3 pr-8">
+      <h2 className="text-xl font-semibold mb-4 pr-8">
         {task.taskTitle}
       </h2>
 
-      <p className="text-gray-400 mb-6">
+      <p className="task-desc">
         {task.taskDesc || 'No description'}
       </p>
 
-      <p className={`text-lg font-medium ${
+      <p className={`font-medium capitalize ${
           priority === 'high'
             ? 'text-accent-lime'
             : priority === 'medium'
             ? 'text-yellow-300'
             : 'text-gray-400'
         }`}>
-        {priority ? `${priority} Priority` : 'No Priority'}
+        {priority || 'No'} Priority
       </p>
 
-      <p className="text-lg mb-4">
-       
-        {task.taskStatus != 'done' ? 'Due on :' : 'Completed on :'}{' '}
+      <p className="mb-4 whitespace-pre">
+        {task.taskStatus != 'done' ? 'Due on  ·' : 'Completed on  ·'}{'  '}
         {displayDate ? new Date(displayDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric',}): '-'}
       </p>
 
@@ -409,16 +401,19 @@ const TaskColumn = ({
 }) => {
   return (
     <div>
-      <div className="flex items-center justify-between border border-gray-700 rounded-2xl px-6 py-4 mb-6">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <span className="text-2xl font-bold text-accent-lime">
+      <div className='task-tab'>
+        <h2 className="text-lg">{title}</h2>
+        <span className="text-2xl text-accent-lime">
           {tasks.length}
         </span>
       </div>
 
       <div className="space-y-6">
         {tasks.length === 0 ? (
-          <p className="text-content-2">No tasks found.</p>
+          <EmptyCard 
+            title='No tasks found'
+            desc='Nothing assigned at the moment'
+          />
         ) : (
           tasks.map((task) => (
             <TaskCard
@@ -588,7 +583,11 @@ export const Tasks = () => {
   }, [tasks]);
 
   if (loading) {
-    return <p className="p-6">Loading tasks...</p>;
+    return (
+      <div className='flex h-full justify-center'>
+        <LoadingState message="Loading tasks..." size="full" />
+      </div>
+    );
   }
 
   if (error) {
@@ -597,47 +596,48 @@ export const Tasks = () => {
 
   return (
     <>
-      <div className="flex items-center justify-between px-6">
-        <PageHeader
-          icon={<IconTasks className="w-7 h-7" />}
-          title="Tasks"
-        />
-
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="btn-lime-outline"
-        >
-          + Add Task
+      <PageHeader
+        icon={<IconTasks className="w-7 h-7" />}
+        title="Tasks"
+        action={
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="btn-header"
+          >
+            <IconPlus className="w-4 h-4" />
+            Add Task
         </button>
-      </div>
+        }
+      />
+			<div className="flex-1 overflow-y-auto mt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <TaskColumn
+            title="Backlog"
+            tasks={groupedTasks.backlog}
+            onTaskClick={handleTaskClick}
+            onDelete={handleDeleteTask}
+          />
+          <TaskColumn
+            title="Upcoming"
+            tasks={groupedTasks.upcoming}
+            onTaskClick={handleTaskClick}
+            onDelete={handleDeleteTask}
+          />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 p-6">
-        <TaskColumn
-          title="Backlog"
-          tasks={groupedTasks.backlog}
-          onTaskClick={handleTaskClick}
-          onDelete={handleDeleteTask}
-        />
-        <TaskColumn
-          title="Upcoming"
-          tasks={groupedTasks.upcoming}
-          onTaskClick={handleTaskClick}
-          onDelete={handleDeleteTask}
-        />
+          <TaskColumn
+            title="In Progress"
+            tasks={groupedTasks.inProgress}
+            onTaskClick={handleTaskClick}
+            onDelete={handleDeleteTask}
+          />
 
-        <TaskColumn
-          title="In Progress"
-          tasks={groupedTasks.inProgress}
-          onTaskClick={handleTaskClick}
-          onDelete={handleDeleteTask}
-        />
-
-        <TaskColumn
-          title="Done"
-          tasks={groupedTasks.done}
-          onTaskClick={handleTaskClick}
-          onDelete={handleDeleteTask}
-        />
+          <TaskColumn
+            title="Done"
+            tasks={groupedTasks.done}
+            onTaskClick={handleTaskClick}
+            onDelete={handleDeleteTask}
+          />
+        </div>
       </div>
 
       {detailLoading && (
@@ -648,22 +648,22 @@ export const Tasks = () => {
         </div>
       )}
 
-      {selectedTask && (
+      <Modal isOpen={!!selectedTask} onClose={() => setSelectedTask(null)}>
         <TaskDetailModal
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
           onUpdate={handleUpdateTask}
           loading={updateLoading}
         />
-      )}
+      </Modal>
 
-      {showCreateModal && (
+      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)}>
         <CreateTaskModal
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateTask}
           loading={createLoading}
         />
-      )}
+      </Modal>
     </>
   );
 };

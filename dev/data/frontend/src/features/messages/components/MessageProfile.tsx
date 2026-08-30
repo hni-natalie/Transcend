@@ -4,6 +4,10 @@ import type { IconProps } from '@shared';
 import type { Attachment, Link, Profile } from '../types';
 import { UserRow, SelectToggle, RemoveButton } from './UserRow';
 import { ChatAvatar } from './ChatAvatar';
+import { useLiveKit } from '@/features/livekit';
+import { useOfficeSpaceLayout } from '@/features/office/context/SpaceLayoutContext';
+import { useSocket } from '@/context';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
 
 interface InvitableGroup {
   id: string;
@@ -30,6 +34,7 @@ interface ActionButton {
   label: string;
   onClick?: () => void;
   isActive?: boolean;
+  disabled?: boolean;
 }
 
 export function MessageProfile({
@@ -49,6 +54,22 @@ export function MessageProfile({
   const [showInvite, setShowInvite] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const { connect, isConnectedRoom, locateOfficeUser } = useLiveKit("Office");
+  const { positionedPlanes, loading: spaceLayoutLoading } = useOfficeSpaceLayout();
+  const { roomPlayers } = useSocket();
+
+  const getDeptSpawnPos = (dpId?: string) => {
+    if (!dpId || spaceLayoutLoading || !positionedPlanes) return undefined;
+    const plane = positionedPlanes.find((p) => p.departmentId === dpId);
+    return plane ? { x: plane.x, y: 0, z: plane.z } : undefined;
+  };
+
+  const getTargetPos = (targetContact: Profile) => {
+    const livePlayer = roomPlayers.find((p) => p.userId === targetContact.id);
+    return livePlayer?.position ?? null;
+    // return livePlayer?.position ?? getDeptSpawnPos(targetContact.departmentId);
+  };
+
 
   useEffect(() => {
     setShowMembers(false);
@@ -124,12 +145,20 @@ export function MessageProfile({
     setInviteSearch('');
   };
 
+  const targetPos = getTargetPos(contact);
+
   const actionButtons: ActionButton[] = [
     { icon: IconMessagePin, label: isPinned ? 'Unpin' : 'Pin', onClick: onTogglePin, isActive: isPinned },
     { icon: IconMemberAdd, label: 'Invite', onClick: toggleInvite, isActive: showInvite },
     contact.isGroup
       ? { icon: IconMembers, label: 'Members', onClick: toggleMembers, isActive: showMembers }
-      : { icon: IconOffice, label: 'Locate', onClick: undefined, isActive: false },
+      : {
+          icon: IconOffice,
+          label: 'Locate',
+          onClick: locateOfficeUser(R.USER_OFFICE, targetPos),
+          isActive: false,
+          disabled: spaceLayoutLoading || !targetPos,
+        },
   ];
 
   const memberCount = contact.memberCount ?? contact.members?.length ?? 0;
@@ -154,14 +183,17 @@ export function MessageProfile({
       </div>
 
       <div className="flex gap-2.5 mt-8 mb-10">
-        {actionButtons.map(({ icon: Icon, label, onClick, isActive }) => {
+        {actionButtons.map(({ icon: Icon, label, onClick, isActive, disabled }) => {
           const isUnpin = label === 'Unpin';
 
           return (
             <button
               key={label}
               onClick={onClick}
-              className={`flex-1 flex flex-col items-center gap-1.5 bg-background-2 rounded-xl py-3 px-1.5 text-[11px] transition-colors cursor-pointer ${
+              disabled={disabled}
+              className={`flex-1 flex flex-col items-center gap-1.5 bg-background-2 rounded-xl py-3 px-1.5 text-[11px] transition-colors ${
+                disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+              } ${
                 isActive
                   ? isUnpin
                     ? 'text-foreground-3 hover:bg-background-3 hover:text-foreground'

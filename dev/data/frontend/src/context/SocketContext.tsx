@@ -206,6 +206,11 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
           detail: data 
         }));
       });
+
+      socketInstance.on('existing-room-players', (data) => {
+        console.log(`[existing-room-players]:`, data);
+        setRoomPlayers(data);
+      })
     
       socketInstance.on('player-left-room', (data) => {
         console.log(`User ${data.playerName} id:${data.id} left ${data.roomName}`);
@@ -266,6 +271,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
         socket.off('object-acquired');
         socket.off('object-released');
         socket.off('room-joined');
+        socket.off('existing-room-players');
         socket.off('existing-room-objects');
         socket.off('existing-room-particles');
         socket.off('player-left-room');
@@ -284,7 +290,9 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
   }, [shouldConnect]);
   
 
-  /* Helper functions */
+  /* **************************************************************
+   * Helper functions
+   * **************************************************************/
   const getToken = () => localStorage.getItem('token');
   const enableSocket = () => setShouldConnect(true);
   const getPlayerCount = () => players.length;

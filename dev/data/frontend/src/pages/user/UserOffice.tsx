@@ -1,15 +1,16 @@
 import { useRef, useState, useEffect } from 'react';
 import * as THREE from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
+import { useLocation } from 'react-router-dom';
 import { Physics } from '@react-three/cannon';
 import { PerspectiveCamera, MapControls, SpotLight, Plane } from '@react-three/drei';
 import { useSocket } from '@/context/SocketContext';
-import { PageHeader, IconOffice, Player, MenuSide } from '@shared';;
+import { PageHeader, IconOffice, LoadingState } from '@shared';;
 import { useLiveKit, isAudioSupported, ButtonVoiceSpace } from '@features/livekit';
 import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject, SpawnParticle } from '@features/office';
 import { KeyboardProvider, PositionProvider } from '@/context';
-import { officeSceneConfig as conf } from '@/config/office.config';
 import { SpaceProvider } from '@/features/office/context/SpaceContext';
+import { useOfficeSpaceLayout } from '@/features/office/context/SpaceLayoutContext';
 
 // Main Scene
 interface SpaceProps {
@@ -17,23 +18,25 @@ interface SpaceProps {
 }
 
 export function Office({ roomName } : SpaceProps ) {
+	/* ------------- nav  ------------- */
+	const location = useLocation();
+	const spawnPosition = location.state?.targetPosition;
 	/* ------------- sockets  ------------- */
 	const { enableSocket, socket, players, fetchRoomPlayers, roomPlayers, localPlayerId } = useSocket();
 	const { disconnect, getAudioListener, getPositionalAudio, isPlayerAudioReady, isConnectedRoom } = useLiveKit(roomName);
 	/* ------------- threejs  ------------- */
   const localPlayerRef = useRef<THREE.Group>(null);
-  const groundRef = useRef<THREE.Mesh>(null);
 	const controlsRef = useRef<React.ElementRef<typeof MapControls>>(null);
 	const cameraRef = useRef<THREE.Camera>(null);
 	const clickPoint = useRef(null);
-	// const [lightTarget, setLightTarget] = useState(null);
 	const lightTargetRef = useRef<THREE.Object3D>(null);
 
-	const hasMouseMoved = useRef(false);
-	const hasMouseDown = useRef(false);
 	const listenerRef = useRef<THREE.AudioListener | null>(null);
 	/* ------------- general  ------------- */
   const [error, setError] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { loading: spaceLayoutLoading } = useOfficeSpaceLayout();
+
 	const isConnectedRoomRef = useRef(isConnectedRoom);
 
 	const handleUncaughtRejection = async ( event:PromiseRejectionEvent ) => {
@@ -110,13 +113,19 @@ export function Office({ roomName } : SpaceProps ) {
             roomName={roomName} 
             joinText={`Join ${roomName} Room`}
 						mode="room"
+						className={ isLoading || spaceLayoutLoading ? 'btn-header cursor-not-allowed' : 'btn-header' }
           />
         }
       />
 
-		{/* <div className='bg-background p-8 flex w-full'> */}
+		{isLoading &&
+		<LoadingState message="Initializing Office resources..." size="full" />
+		}
 		<div className='flex-1 relative'>
-			<Canvas className=''>
+			<Canvas
+				className=''
+        onCreated={(state) => { setIsLoading(false) }}
+			>
 			<Physics>
 				<SpaceProvider localPlayerRef={localPlayerRef} roomName={roomName}>
 				<PositionProvider roomName={roomName}>
@@ -142,7 +151,7 @@ export function Office({ roomName } : SpaceProps ) {
 						minAzimuthAngle={0}						// min left rotation
 						maxAzimuthAngle={0}						// max right rotation
 					/>
-					<CameraTracking isConnectedRoom={isConnectedRoom} clickPoint={clickPoint} localPlayerRef={localPlayerRef} controlsRef={controlsRef} />
+					<CameraTracking isConnectedRoom={isConnectedRoom} clickPoint={clickPoint} localPlayerRef={localPlayerRef} controlsRef={controlsRef} spawnPosition={spawnPosition} />
 
 					<ambientLight intensity={0.8} />
 					<spotLight

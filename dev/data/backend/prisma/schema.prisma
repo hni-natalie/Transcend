@@ -132,6 +132,7 @@ model User {
   dpId          String?
 
   avatarUrl     String?
+  avatarSyncedAt DateTime?
   city          String?
   country       String?
   timezone      String?

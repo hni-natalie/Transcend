@@ -245,6 +245,7 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 							ref={lightTargetRef} 
 							position={[0, 2, 0]}  // ← Light points here
 						/>
+						{lightTargetRef &&
 						<spotLight
 							position={[0, 0, 1]}
 							color="#ffeedd"
@@ -255,6 +256,7 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 							distance={20}
 							target={lightTargetRef.current}
 						/>
+						}
 					</group>
 				)}
 				{texture ? (

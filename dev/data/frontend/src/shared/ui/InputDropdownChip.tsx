@@ -1,5 +1,14 @@
+/* 
+  Extended from InputDropdownChecklist,
+  now it shows selection as chips when list is checked
+  currently only for meetings, not yet refactor to universal
+*/
+
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { IconDown } from './Icons';
+import { IconClose, IconDown } from './Icons';
+import type { MeetingDetails, Participant } from "@features/meetings/meeting.types";
+import { DropdownChoice, OptionProps } from "@/shared/types/ui.types";
+import { InputDropdown } from './InputDropdown';
 
 interface User {
   userId: string;
@@ -13,16 +22,30 @@ interface InputDropdownProps {
   required?: boolean;
   placeholder?: string;
   emptyText?: string;
+  options?: OptionProps[]; // Array of arrays of DropdownChoice
   error?: string;
   disabled?: boolean;
   className?: string;
-  // New props for custom dropdown
-  users?: User[];
+  users?: any[];
   selectedUserIds?: string[];
   onUserToggle?: (userId: string) => void;
+  onParticipantToggle?: (user: Participant) => void;
+  onRoleUpdate?: (userId: string, role: 'organiser' | 'participant') => void;
+  onAttendanceUpdate?: (userId: string, attendance: 'present' | 'absent' | 'pending') => void;
 }
 
-export function InputDropdownChecklist({ 
+const roleOptions : DropdownChoice[] = [
+    { id: 'organiser', name: 'Organiser' },
+    { id: 'participant', name: 'Participant' },
+];
+const attendanceOptions : DropdownChoice[] = [
+    { id: 'pending', name: 'Pending' },
+    { id: 'present', name: 'Present' },
+    { id: 'absent', name: 'Absent' },
+];
+
+
+export function InputDropdownChip({ 
   title,
   name,
   required = false,
@@ -31,9 +54,14 @@ export function InputDropdownChecklist({
   error = '',
   disabled = false,
   className = '',
-  users = [],
+  users = [], // is just name + email
+  // extendedUsers = [], // + dropdown fields
   selectedUserIds = [],
-  onUserToggle
+  options,
+  onUserToggle,
+  onParticipantToggle,
+  onRoleUpdate,
+  onAttendanceUpdate
 }: InputDropdownProps) {
   const [memberOpen, setMemberOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -50,20 +78,38 @@ export function InputDropdownChecklist({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  // Get selected label for display
-  const selectedUsers = users.filter((user) => selectedUserIds.includes(user.userId));
-  const selectedText = selectedUsers.length > 0 ? selectedUsers.map((user) => user.userName).join(', ') : placeholder;
+  
+  // Display searched user
   const filteredUsers = useMemo(() => {
       return users.filter((user) =>
       user.userName.toLowerCase().includes(search.toLowerCase())
       );
   }, [users, search]);
 
-  // Handle user toggle (for multi-select with users)
+  const selectedUsers = useMemo(() => {
+      return users.filter(user => selectedUserIds.includes(user.userId));
+  }, [users, selectedUserIds]);
+
+  const selectedText = selectedUsers.length > 0 ? selectedUsers.map((user) => user.userName).join(', ') : placeholder;
+
   const handleUserToggle = (userId: string) => {
     if (onUserToggle) {
       onUserToggle(userId);
+    }
+  };
+  const handleParticipantToggle = (user: Participant) => {
+    if (onParticipantToggle) {
+      onParticipantToggle(user);
+    }
+  };
+  const handleRoleUpdate = (userId: string, role: 'organiser' | 'participant') => {
+    if (onRoleUpdate) {
+      onRoleUpdate(userId, role);
+    }
+  };
+  const handleAttendanceUpdate = (userId: string, attendance: 'present' | 'absent' | 'pending') => {
+    if (onAttendanceUpdate) {
+      onAttendanceUpdate(userId, attendance);
     }
   };
 
@@ -96,7 +142,7 @@ export function InputDropdownChecklist({
 
         {memberOpen && !disabled && (
           <div className="max-h-72 overflow-y-auto
-          mt-2 bg-background-1 border border-background-4 rounded-xl shadow-2xl z-50 py-1.5">
+            mt-2 bg-background-1 border border-background-4 rounded-xl shadow-2xl z-50 py-1.5">
             {users.length === 0 ? (
               <p className="px-4 py-3 text-sm text-gray-400">
                 {emptyText}
@@ -126,7 +172,7 @@ export function InputDropdownChecklist({
                       onChange={() => handleUserToggle(user.userId)}
                       className="h-5 w-5 accent-lime-300"
                     />
-                    <div>
+                    <div className='flex flex-col'>
                       <p>{user.userName}</p>
                       <p className="text-sm text-foreground-3/90">{user.userEmail}</p>
                     </div>
@@ -138,6 +184,43 @@ export function InputDropdownChecklist({
           </div>
         )}
       </div>
+
+      {selectedUsers.map(user => (
+        <div
+            key={user.userId}
+            className="rounded-lg bg-background p-2 px-4 mb-1"
+        >
+          <div className="flex justify-between">
+            <div>
+              <span className="text-sm">{user.userName}</span>
+              <div className="mt-2 flex gap-3 text-sm">
+                  <InputDropdown
+                      choices={roleOptions}
+                      value={user.role}
+                      onChange={e =>
+                        handleRoleUpdate(
+                          user.userId,
+                          e.target.value as | "organiser" | "participant"
+                        )
+                      }
+                      className="text-xs"
+                  />
+                  <InputDropdown
+                      choices={attendanceOptions}
+                      value={user.attendance}
+                      onChange={(e) => handleAttendanceUpdate(user.userId, e.target.value as | "present" | "absent" | "pending")}
+                      className="text-xs"
+                  />
+              </div>
+            </div>
+            {user.role !== "organiser" && (
+                <button className="cursor-pointer" onClick={() => handleUserToggle(user.userId)}>
+                  <IconClose className="w-6 h-6" />
+                </button>
+            )}
+          </div>
+        </div>
+      ))}
 
       {error && <span className="error-message">{error}</span>}
     </div>

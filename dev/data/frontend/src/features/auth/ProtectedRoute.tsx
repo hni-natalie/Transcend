@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useAuth } from './AuthContext';
+import { LoadingState } from '@/shared';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,7 +12,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (<LoadingState message="Loading..." size="full" />);
   }
 
   if (!isAuthenticated) {
@@ -29,8 +30,7 @@ export const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) 
-	return 
-		<div>Loading...</div>;
+    return (<LoadingState message="Loading..." size="full" />);
 
   if (isAuthenticated) {
     if (user?.roleName === 'Admin') {
