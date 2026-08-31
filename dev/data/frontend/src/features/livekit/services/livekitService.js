@@ -7,7 +7,7 @@
  future need to separate messaging & audio room (prob)
 */
 
-import { Room, RoomEvent, Track } from 'livekit-client';
+import { Room, RoomEvent, Track, isBrowserSupported } from 'livekit-client';
 import { AudioManager } from './audioManager';
 import * as THREE from 'three';
 
@@ -39,6 +39,7 @@ class LiveKitService {
       isMuted: false,
       joinCount: 0,
       isLoading: false,
+      loadingRoomName: null,
       readyStreams: new Set(),
       error: null
     }
@@ -82,8 +83,12 @@ class LiveKitService {
     this._setState({ isConnectedRoom:status });
   }
 
-  setIsLoading(status) {
-      this._setState({ isLoading:status });
+  setIsLoading(status, roomName) {
+    const updates = { isLoading: status };
+    if (roomName) {
+      updates.loadingRoomName = roomName;
+    }
+    this._setState(updates);
   }
 
   setIsMuted(status) {
@@ -106,6 +111,9 @@ class LiveKitService {
     this._setState({ readyStreams:newSet });
   }
 
+  checkBrowserSupport() {
+    return isBrowserSupported();
+  }
   /*
     mode must be either "room" || "call" || "video"
     room: spatial audio, call: non spatial audio, video: video call
@@ -344,7 +352,7 @@ class LiveKitService {
         this._room = null;
 
         this.setIsConnectedRoom(false);
-        this.setIsLoading(false); // ###
+        this.setIsLoading(false);
         if (error.name === 'NotFoundError') {
           this.setError('No microphone or camera found. Please connect a device and try again.');
         } else if (error.name === 'NotAllowedError') {
@@ -364,7 +372,7 @@ class LiveKitService {
       console.log('Connected to room:', this._room);
       this.setIsConnectedRoom(true);
       this.setCurrentRoomName(this._room.name);
-      this.setIsLoading(false);
+      this.setIsLoading(false, this._room.name);
       return { success: true, room: this._room };
       
     } catch (error) {

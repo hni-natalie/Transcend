@@ -3,6 +3,8 @@ import { IconInfo, IconMeetingAdd, IconPhone, IconProfile, IconVideo } from '@sh
 import type { Profile } from '../types';
 import { formatClockTime } from '../lib/format';
 import { ChatAvatar } from './ChatAvatar';
+import { ButtonVoiceRoom } from '@/features/livekit';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
 
 export const Tooltip = ({ children, text }: { children: React.ReactNode; text: string }) => (
   <div className="relative group">
@@ -16,11 +18,12 @@ export const Tooltip = ({ children, text }: { children: React.ReactNode; text: s
 
 interface MessageHeaderProps {
   contact: Profile;
+  directKey?: string | null;
   isInfoOpen: boolean;
   onToggleInfo: () => void;
 }
 
-export function MessageHeader({ contact, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
+export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
   const [localTime, setLocalTime] = useState(() => formatClockTime());
 
   useEffect(() => {
@@ -59,21 +62,37 @@ export function MessageHeader({ contact, isInfoOpen, onToggleInfo }: MessageHead
           <>
             {/* KIV: if too complicated, can take these features out */}
             <Tooltip text="Call">
-              <button
+              <div
                 aria-label="Call"
-                className="flex p-1.5 rounded-lg cursor-pointer hover:text-foreground transition-colors"
+                className="flex p-1.5 rounded-lg cursor-pointer transition-colors"
               >
-                <IconPhone className="stroke-currentColor w-[19px] h-[19px]" />
-              </button>
+                <ButtonVoiceRoom
+                  mode="call"
+                  className='border-0 cursor-pointer hover:text-foreground'
+                  roomName={directKey?? 'voice-room'}
+                  joinText={<IconPhone className="stroke-currentColor hover:text-foreground w-[19px] h-[19px]" />}
+                  leaveText={<IconPhone className="stroke-currentColor hover:text-foreground text-danger w-[19px] h-[19px] rotate-135" />}
+                  loadingText=' '
+                />
+              </div>
             </Tooltip>
 
             <Tooltip text="Video Call">
-              <button
+              <div
                 aria-label="Video call"
                 className="flex p-1.5 rounded-lg cursor-pointer hover:text-foreground transition-colors"
               >
-                <IconVideo className="stroke-currentColor w-[22px] h-[22px]" />
-              </button>
+                <ButtonVoiceRoom
+                  mode="video"
+                  joinText={<IconVideo className="cursor-pointer stroke-currentColor w-[22px] h-[22px]" />}
+                  roomName={directKey ?? 'video-room'}
+                  meetingTitle='Video Call'
+                  // meetId={meeting.id}
+                  joinTo={R.USER_VIDEOCALL}
+                  leaveTo={R.USER_MESSAGES}
+                  className="border-0"
+                />
+              </div>
             </Tooltip>
           </>
         )}

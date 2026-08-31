@@ -246,6 +246,8 @@ export function mapConversation(conversation: ConversationResponse, currentUserI
   return {
     conversationId: conversation.conversationId,
 
+    directKey: conversation.directKey ?? undefined,
+
     name:
       conversation.type === 'group'
         ? conversation.groupName ?? ''
