@@ -15,18 +15,65 @@ export interface Profile {
 }
 
 export interface Conversation {
-  id: string;
+  conversationId: string;
   name: string;
   type: 'direct' | 'group';
   pinned?: boolean;
+
   userId?: string;
-  members?: Profile[];
-  status?: UserBackendStatus;
+  participants?: Profile[];
+
+  userStatus?: UserBackendStatus;
   avatarUrl?: string;
   lastMessage?: LastMessage;
+
   unreadCount?: number;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface ConversationResponse {
+  conversationId: string;
+
+  type: 'direct' | 'group';
+
+  groupName: string | null;
+
+  avatarUrl: string | null;
+
+  pins: {
+    userId: string;
+  }[];
+
+  participants: {
+    userId: string;
+    lastReadAt: string | null;
+
+    user: {
+      userId: string;
+      userName: string;
+      avatarUrl: string | null;
+      userStatus: UserBackendStatus | null;
+    };
+  }[];
+
+  messages: {
+    messageId: string;
+    text: string | null;
+    createdAt: string;
+
+    author: {
+      userId: string;
+      userName: string;
+      avatarUrl: string | null;
+    };
+  }[];
+
+  unreadCount: number;
+
+  createdAt: string;
+
+  updatedAt: string;
 }
 
 export interface LastMessage {
@@ -45,9 +92,29 @@ export interface Message {
   createdAt: string;
   text?: string;
   callNote?: string;
-  link?: { url: string }; // later remove after BE
-//   linkUrl?: string; // uncommment for BE
+  // link?: { url: string }; // later remove after BE
+  linkUrl?: string; // uncommment for BE
   attachments?: Attachment[];
+}
+
+export interface MessageResponse {
+  messageId: string;
+  conversationId: string;
+  text: string | null;
+  createdAt: string;
+
+  author: {
+    userId: string;
+    userName: string;
+    avatarUrl: string | null;
+  };
+
+  attachments?: Attachment[];
+}
+
+export interface SendMessageInput {
+  text?: string;
+  attachments?: UploadedAttachment[];
 }
 
 export interface DayGroup {
@@ -68,10 +135,26 @@ export interface Attachment {
   mimeType?: string;
 }
 
+export interface UploadedAttachment {
+  name: string;
+  kind: 'pdf' | 'image' | 'document';
+  sizeInBytes: number;
+  url: string;
+  path: string;
+  mimeType: string;
+}
+
+
+
 export interface Link {
   id: string;
   name: string;
   url: string;
 }
 
-
+export interface InvitableGroup {
+  id: string;
+  name: string;
+  memberCount?: number;
+  members?: unknown[];
+}

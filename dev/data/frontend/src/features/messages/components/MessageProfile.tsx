@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { IconFile, IconImage, IconLink, IconMemberAdd, IconMembers, IconMessagePin, IconOffice } from '@shared';
 import type { IconProps } from '@shared';
-import type { Attachment, Link, Profile } from '../types';
+import type { Attachment, Link, Profile, InvitableGroup } from '../types';
 import { UserRow, SelectToggle, RemoveButton } from './UserRow';
 import { ChatAvatar } from './ChatAvatar';
 import { useLiveKit } from '@/features/livekit';
@@ -10,12 +10,6 @@ import { useSocket } from '@/context';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { Tooltip } from '@features/messages/components/MessageHeader';
 
-interface InvitableGroup {
-  id: string;
-  name: string;
-  memberCount?: number;
-  members?: unknown[];
-}
 
 interface MessageProfileProps {
   contact: Profile;
@@ -73,6 +67,7 @@ export function MessageProfile({
   };
 
 
+  // console.log('debugging group messages: ', groupMessages);
   useEffect(() => {
     setShowMembers(false);
     setShowInvite(false);

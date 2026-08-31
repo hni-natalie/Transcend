@@ -6,8 +6,9 @@ import { Sidebar, MessageHeader, MessageList, Composer, MessageProfile } from '.
 import { FormNewMessage } from './form/FormNewMessage';
 import { useProfile, useCreateConversation, useConversations, useMessages } from './hooks';
 import type { CreateConversationInput } from './hooks';
-import type { Attachment, Conversation, Message } from './types';
-import { buildLastMessagePreview, extractAttachmentsFromDayGroups, extractLinksFromDayGroups, personalizeGroupMessages, personalizeMessages, toGroupProfile, toProfile } from './lib/mappers';
+import type { Attachment, Conversation, Message, UploadedAttachment } from './types';
+import { buildLastMessagePreview, extractAttachmentsFromDayGroups, extractLinksFromDayGroups, toGroupProfile, toProfile, mapConversationsToInvitableGroups } from './lib/mappers';
+
 
 interface MessagingProps {
   showAddForm: boolean;
@@ -52,52 +53,78 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
 
   const usersById = useMemo(() => new Map(filteredUsers.map((user) => [user.userId, user])), [filteredUsers]);
 
+  //auto select first conversation
   useEffect(() => {
     if (allConversations.length === 0) {
       return;
     }
 
     const selectedStillExists =
-      selectedConversation.id && allConversations.some((conversation) => conversation.id === selectedConversation.id);
+      selectedConversation.id && allConversations.some((conversation) => conversation.conversationId === selectedConversation.id);
 
     if (selectedStillExists) {
       return;
     }
 
     const firstConversation = allConversations[0];
+    // console.log('debugging first conversationinfo: ', firstConversation)
 
-    setSelectedConversation({ id: firstConversation.id, type: firstConversation.type });
-    markConversationRead(firstConversation.id);
+    setSelectedConversation({ id: firstConversation.conversationId, type: firstConversation.type });
+    // console.log('debugging: check conversationid', firstConversation.conversationId)
+    markConversationRead(firstConversation.conversationId);
   }, [allConversations, selectedConversation.id, markConversationRead]);
+
+  useEffect(() => {
+    if (!selectedConversation.id) {
+      return;
+    }
+
+    const selected = allConversations.find(
+      (conversation) =>
+        conversation.conversationId === selectedConversation.id
+    );
+
+    if (!selected?.unreadCount) {
+      return;
+    }
+
+    markConversationRead(selectedConversation.id);
+
+  }, [
+    allConversations,
+    selectedConversation.id,
+    markConversationRead
+  ]);
 
   const isSelectedNew = newConversationIds.has(selectedConversation.id);
 
-  const { messages: conversationMessages, loadIfNeeded, sendMessage } = useMessages({
+  const { messages: conversationMessages, sendMessage } = useMessages({
     conversationId: selectedConversation.id || undefined,
-    kind: selectedConversation.type,
-    isNew: isSelectedNew,
+    kind: selectedConversation.type
   });
 
-  useEffect(() => {
-    loadIfNeeded();
-  }, [selectedConversation.id, selectedConversation.type, isSelectedNew, loadIfNeeded]);
+  // useEffect(() => {
+  //   loadIfNeeded();
+  // }, [selectedConversation.id, selectedConversation.type, isSelectedNew, loadIfNeeded]);
 
   const currentAttachments = useMemo(() => extractAttachmentsFromDayGroups(conversationMessages), [conversationMessages]);
   const currentLinks = useMemo(() => extractLinksFromDayGroups(conversationMessages), [conversationMessages]);
 
   const currentChat = useMemo(() => {
-    const selected = allConversations.find((conversation) => conversation.id === selectedConversation.id);
+    const selected = allConversations.find((conversation) => conversation.conversationId === selectedConversation.id);
+
 
     if (!selected) {
       return null;
     }
 
     if (selected.type === 'group') {
-      const members = selected.members ?? [];
+      const members = selected.participants ?? [];
 
       return {
         profile: toGroupProfile(selected, members),
-        messages: isSelectedNew ? [] : personalizeGroupMessages(conversationMessages, members, currentUser?.userName, currentUser?.avatarUrl ?? undefined),
+        // messages: isSelectedNew ? [] : personalizeGroupMessages(conversationMessages, members, currentUser?.userName, currentUser?.avatarUrl ?? undefined),
+        messages: conversationMessages,
         attachments: isSelectedNew ? [] : currentAttachments,
         links: isSelectedNew ? [] : currentLinks,
       };
@@ -112,44 +139,97 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
 
     return {
       profile,
-      messages: isSelectedNew ? [] : personalizeMessages(conversationMessages, profile, currentUser?.userName, currentUser?.avatarUrl ?? undefined),
+      // messages: isSelectedNew ? [] : personalizeMessages(conversationMessages, profile, currentUser?.userName, currentUser?.avatarUrl ?? undefined),
+      messages: conversationMessages,
       attachments: isSelectedNew ? [] : currentAttachments,
       links: isSelectedNew ? [] : currentLinks,
     };
   }, [allConversations, selectedConversation.id, usersById, conversationMessages, currentUser?.userName, currentAttachments, currentLinks, isSelectedNew]);
 
-  const handleCreateConversation = async (data: CreateConversationInput & { message?: string }) => {
+  // if the user is not in the group, show invite, else dont show
+  const invitableGroups = useMemo(() => {
+    if (!currentChat || currentChat.profile.isGroup) {
+      return [];
+    }
+
+    const targetUserId = currentChat.profile.id;
+
+    const availableGroups = allConversations.filter(
+      (conversation) =>
+        conversation.type === 'group' &&
+        !conversation.participants?.some(
+          (participant) => participant.id === targetUserId
+        )
+    );
+
+    return mapConversationsToInvitableGroups(availableGroups);
+  }, [allConversations, currentChat]);
+
+  // console.log('debuggingg current chat profile:', currentChat?.profile);
+
+  // const handleCreateConversation = async (data: CreateConversationInput & { message?: string }) => {
+  //   try {
+  //     const created = await createConversation(data);
+
+  //     const usersForConversation = data.participantIds
+  //       .map((id) => filteredUsers.find((user) => user.userId === id))
+  //       .filter((user): user is User => Boolean(user));
+
+  //     const now = new Date().toISOString();
+
+  //     const conversation: Conversation = {
+  //       conversationId: created.conversationId,
+  //       name: data.isGroup ? data.groupName || 'New Group' : usersForConversation[0]?.userName || usersForConversation[0]?.userEmail || 'New Conversation',
+  //       type: data.isGroup ? 'group' : 'direct',
+  //       userId: data.isGroup ? undefined : data.participantIds[0],
+  //       participants: data.isGroup ? usersForConversation.map(toProfile) : undefined,
+  //       userStatus: data.isGroup ? undefined : usersForConversation[0]?.userStatus || 'offline',
+  //       avatarUrl: data.isGroup ? undefined : usersForConversation[0]?.avatarUrl || undefined,
+  //       pinned: false,
+  //       lastMessage: undefined,
+  //       createdAt: created.createdAt || now,
+  //       updatedAt: data.message ? now : undefined,
+  //     };
+
+  //     addConversation(conversation);
+
+  //     setNewConversationIds((previous) => new Set(previous).add(conversation.conversationId));
+
+  //     setSelectedConversation({ id: conversation.conversationId, type: conversation.type });
+
+  //     if (data.message) {
+  //       updateConversationLastMessage(conversation.conversationId, {
+  //         text: data.message,
+  //         author: currentUser?.userName || 'You',
+  //         createdAt: now,
+  //       });
+  //     }
+
+  //     onCloseAddForm();
+  //   } catch (error) {
+  //     console.error('Failed to create conversation:', error);
+  //   }
+  // };
+  const handleCreateConversation = async ( data: CreateConversationInput & { message?: string }) => {
     try {
       const created = await createConversation(data);
 
-      const usersForConversation = data.userIds
-        .map((id) => filteredUsers.find((user) => user.userId === id))
-        .filter((user): user is User => Boolean(user));
+      // created is already a complete mapped Conversation
+      addConversation(created);
 
-      const now = new Date().toISOString();
+      setNewConversationIds((previous) =>
+        new Set(previous).add(created.conversationId)
+      );
 
-      const conversation: Conversation = {
-        id: created.id,
-        name: data.isGroup ? data.groupName || 'New Group' : usersForConversation[0]?.userName || usersForConversation[0]?.userEmail || 'New Conversation',
-        type: data.isGroup ? 'group' : 'direct',
-        userId: data.isGroup ? undefined : data.userIds[0],
-        members: data.isGroup ? usersForConversation.map(toProfile) : undefined,
-        status: data.isGroup ? undefined : usersForConversation[0]?.userStatus || 'offline',
-        avatarUrl: data.isGroup ? undefined : usersForConversation[0]?.avatarUrl || undefined,
-        pinned: false,
-        lastMessage: undefined,
-        createdAt: created.createdAt || now,
-        updatedAt: data.message ? now : undefined,
-      };
-
-      addConversation(conversation);
-
-      setNewConversationIds((previous) => new Set(previous).add(conversation.id));
-
-      setSelectedConversation({ id: conversation.id, type: conversation.type });
+      setSelectedConversation({
+        id: created.conversationId,
+        type: created.type,
+      });
 
       if (data.message) {
-        updateConversationLastMessage(conversation.id, {
+        const now = new Date().toISOString();
+
+        updateConversationLastMessage(created.conversationId, {
           text: data.message,
           author: currentUser?.userName || 'You',
           createdAt: now,
@@ -163,16 +243,16 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
   };
 
   const handleConversationSelect = (conversation: Conversation) => {
-    setSelectedConversation({ id: conversation.id, type: conversation.type });
-	markConversationRead(conversation.id);
+    setSelectedConversation({ id: conversation.conversationId, type: conversation.type });
+	markConversationRead(conversation.conversationId);
   };
 
-  const handleInviteUsersToGroup = (userIds: string[]) => {
+  const handleInviteUsersToGroup = (participantIds: string[]) => {
     if (!selectedConversation.id) {
       return;
     }
 
-    const invited = filteredUsers.filter((user) => userIds.includes(user.userId)).map(toProfile);
+    const invited = filteredUsers.filter((user) => participantIds.includes(user.userId)).map(toProfile);
 
     addMembersToConversation(selectedConversation.id, invited);
   };
@@ -182,7 +262,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       return;
     }
 
-    addMembersToConversation(`group-${groupId}`, [currentChat.profile]);
+    addMembersToConversation(groupId, [currentChat.profile]);
   };
 
   const handleRemoveMember = (userId: string) => {
@@ -201,35 +281,39 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
     if (!conversationPendingDeletion) {
       return;
     }
-    removeConversation(conversationPendingDeletion.id);
+    removeConversation(conversationPendingDeletion.conversationId);
     setConversationPendingDeletion(null);
   };
 
-  const handleSendMessage = (text: string, attachments?: Attachment[]) => {
+  const handleSendMessage = (text: string, attachments?: UploadedAttachment[]) => {
+    console.log('DEBUGGING FE attachments before sending:', attachments);
     if (!selectedConversation.id || (!text.trim() && !attachments?.length)) {
       return;
     }
 
     const now = new Date();
 
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId: selectedConversation.id,
-      author: currentUser?.userName || 'You',
-      authorId: currentUser?.userId || undefined,
-      isSelf: true,
-      createdAt: now.toISOString(),
-      text: text.trim() || undefined,
-      attachments,
-    };
+    // const newMessage: Message = {
+    //   id: `msg-${Date.now()}`,
+    //   conversationId: selectedConversation.id,
+    //   author: currentUser?.userName || 'You',
+    //   authorId: currentUser?.userId || undefined,
+    //   isSelf: true,
+    //   createdAt: now.toISOString(),
+    //   text: text.trim() || undefined,
+    //   attachments,
+    // };
 
-    sendMessage(selectedConversation.id, newMessage);
-
+    sendMessage({text: text.trim() || undefined, attachments});
     updateConversationLastMessage(
       selectedConversation.id,
-      buildLastMessagePreview(newMessage)!,
+      {
+        text: text.trim() || 'Attachment',
+        author: currentUser?.userName || 'You',
+        createdAt: now.toISOString(),
+      }
     );
-
+    
     setNewConversationIds((previous) => {
       if (!previous.has(selectedConversation.id)) {
         return previous;
@@ -292,11 +376,11 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
               attachments={currentChat.attachments}
               links={currentChat.links}
               inviteUsers={filteredUsers.map(toProfile)}
-              groupMessages={groupMessages}
+              groupMessages={invitableGroups}
               onInviteUsers={handleInviteUsersToGroup}
               onJoinGroup={handleJoinGroup}
               onRemoveMember={handleRemoveMember}
-              isPinned={pinnedConversations.some((conversation) => conversation.id === selectedConversation.id)}
+              isPinned={pinnedConversations.some((conversation) => conversation.conversationId === selectedConversation.id)}
               onTogglePin={() => togglePin(selectedConversation.id)}
             />
           </div>
