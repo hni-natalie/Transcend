@@ -18,11 +18,12 @@ export const Tooltip = ({ children, text }: { children: React.ReactNode; text: s
 
 interface MessageHeaderProps {
   contact: Profile;
+  directKey?: string | null;
   isInfoOpen: boolean;
   onToggleInfo: () => void;
 }
 
-export function MessageHeader({ contact, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
+export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
   const [localTime, setLocalTime] = useState(() => formatClockTime());
 
   useEffect(() => {
@@ -68,7 +69,7 @@ export function MessageHeader({ contact, isInfoOpen, onToggleInfo }: MessageHead
                 <ButtonVoiceRoom
                   mode="call"
                   className='border-0 cursor-pointer hover:text-foreground'
-                  roomName='voice-room'
+                  roomName={directKey?? 'voice-room'}
                   joinText={<IconPhone className="stroke-currentColor hover:text-foreground w-[19px] h-[19px]" />}
                   leaveText={<IconPhone className="stroke-currentColor hover:text-foreground text-danger w-[19px] h-[19px] rotate-135" />}
                   loadingText=' '
@@ -84,7 +85,7 @@ export function MessageHeader({ contact, isInfoOpen, onToggleInfo }: MessageHead
                 <ButtonVoiceRoom
                   mode="video"
                   joinText={<IconVideo className="cursor-pointer stroke-currentColor w-[22px] h-[22px]" />}
-                  roomName='video-room'
+                  roomName={directKey ?? 'video-room'}
                   meetingTitle='Video Call'
                   // meetId={meeting.id}
                   joinTo={R.USER_VIDEOCALL}

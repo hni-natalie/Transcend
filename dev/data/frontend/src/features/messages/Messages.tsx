@@ -268,7 +268,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
         <main className="flex flex-col flex-1 min-w-0 bg-background-1 rounded-3xl my-4 shadow-lg overflow-visible">
           {currentChat ? (
             <>
-              <MessageHeader contact={currentChat.profile} isInfoOpen={isInfoOpen} onToggleInfo={toggleInfo} />
+              <MessageHeader contact={currentChat.profile} directKey={selectedConversation.directKey} isInfoOpen={isInfoOpen} onToggleInfo={toggleInfo} />
 
               <MessageList dayGroups={currentChat.messages} />
 
