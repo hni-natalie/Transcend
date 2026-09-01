@@ -6,7 +6,7 @@ let transporter = null;
 function getTransporter() {
   if (transporter) return transporter;
 
-  const smtpUser = process.env.SMTP_USER ;
+  const smtpUser = secrets.SMTP_USER ;
   const smtpPass = secrets.SMTP_PASSWORD; 
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = Number(process.env.SMTP_PORT);

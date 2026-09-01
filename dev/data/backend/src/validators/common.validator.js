@@ -1,5 +1,7 @@
 const { validate: isUUID, version: uuidVersion } = require('uuid');
 
+// checks for basic email shape
+// some char, an @, a dot(.), not whitespace or extra @ allowed
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function isNonEmptyString(value) {
