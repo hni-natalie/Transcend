@@ -44,18 +44,20 @@ const toActivityItem = (e: any): ActivityItem => ({
 });
 
 export const useDashboardData = () => {
+	const { showToast } = useToast();
+	const {
+	  enableSocket,
+	  isConnected,
+	  userStatuses,
+	  roomOccupancy,
+	  latestActivity,
+	  activitySeq,
+	  subscribeActivity,
+	  unsubscribeActivity,
+	} = useSocket();
+
   const [users, setUsers] = useState<DbUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { showToast } = useToast();
-  const {
-    enableSocket,
-    isConnected,
-    userStatuses,
-    roomOccupancy,
-    subscribeDashboard,
-    unsubscribeDashboard,
-  } = useSocket();
-
   const [presenceItems, setPresenceItems] = useState<ActivityItem[]>([]);
   const [tasksItems, setTasksItems] = useState<ActivityItem[]>([]);
   const [meetingsItems, setMeetingsItems] = useState<ActivityItem[]>([]);
@@ -67,9 +69,9 @@ export const useDashboardData = () => {
 
   useEffect(() => {
     if (!isConnected) return;
-    subscribeDashboard();
-    return () => unsubscribeDashboard();
-  }, [isConnected, subscribeDashboard, unsubscribeDashboard]);
+    subscribeActivity();
+    return () => unsubscribeActivity();
+  }, [isConnected, subscribeActivity, unsubscribeActivity]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -112,6 +114,32 @@ export const useDashboardData = () => {
   }, [showToast]);
 
   useEffect(() => {
+    if (!latestActivity || activitySeq === 0) return;
+
+    const item = toActivityItem(latestActivity);
+
+    if (latestActivity.type === 'presence') {
+      setPresenceItems((prev) =>
+        [item, ...prev.filter((entry) => entry.id !== item.id)].slice(0, 3)
+      );
+      return;
+    }
+
+    if (latestActivity.type === 'task') {
+      setTasksItems((prev) =>
+        [item, ...prev.filter((entry) => entry.id !== item.id)].slice(0, 3)
+      );
+      return;
+    }
+
+    if (latestActivity.type === 'meeting') {
+      setMeetingsItems((prev) =>
+        [item, ...prev.filter((entry) => entry.id !== item.id)].slice(0, 3)
+      );
+    }
+  }, [activitySeq, latestActivity]);
+
+  useEffect(() => {
 	const fetchSpaces = async () => {
 		try {
 		const res = await officeService.getAllSpaces();
@@ -152,8 +180,8 @@ export const useDashboardData = () => {
     return { active, total: deptGroup.length };
   };
 
-  // only get those who are in office with online / meeting status
-  const SPACE_PRESENT_STATUSES = new Set(['online', 'in_meeting']);
+  // only get those who are in office with online / focus / in meeting
+  const SPACE_PRESENT_STATUSES = new Set(['online', 'focus', 'in_meeting']);
   const getDepartmentSpaceCount = (deptName: string) => {
     return users.filter(u => u.department === deptName && SPACE_PRESENT_STATUSES.has(u.status)).length;
   };
