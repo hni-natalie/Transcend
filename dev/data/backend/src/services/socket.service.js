@@ -145,6 +145,19 @@ const socketService = (io) => {
       }
     });
 
+    socket.on('initiate-call', ({ directKey, selectedRoomName }) => {
+      if (!directKey) return;
+      const targetUserId = directKey.split(':').find((id) => id !== player.userId);
+      const target = Array.from(players.values()).find((p) => p.userId === targetUserId);
+      if (!target) return; // callee offline
+
+      io.to(target.id).emit('incoming-call', {
+        caller: player.userId,
+        directKey,
+        roomName: selectedRoomName,
+      });
+    });
+
     socket.on('room-spawn-pos', async (data) => {
       let roomData = rooms.get(data.roomName);
       if (!roomData) {
@@ -461,7 +474,17 @@ const socketService = (io) => {
           console.log(`Room ${roomName} closed.`);
         }
 
-        emitOccupancyUpdate(roomName); 
+        emitOccupancyUpdate(roomName);
+      }
+
+      const directCallMatch = roomName.match(/^(.+):(voice|video)$/);
+      if (directCallMatch) {
+        const directKey = directCallMatch[1];
+        const targetUserId = directKey.split(':').find((id) => id !== player.userId);
+        const target = Array.from(players.values()).find((p) => p.userId === targetUserId);
+        if (target) {
+          io.to(target.id).emit('call-ended', { directKey });
+        }
       }
     }
   });

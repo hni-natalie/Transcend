@@ -3,8 +3,9 @@ import { IconInfo, IconMeetingAdd, IconPhone, IconProfile, IconVideo } from '@sh
 import type { Profile } from '../types';
 import { formatClockTime } from '../lib/format';
 import { ChatAvatar } from './ChatAvatar';
-import { ButtonVoiceRoom } from '@/features/livekit';
+import { ButtonVoiceMsg } from '@/features/livekit';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
+import { useSocket } from '@/context/SocketContext';
 
 export const Tooltip = ({ children, text, className }: { children: React.ReactNode; text: string, className?: string }) => (
   <div className={`relative group ${className}`}>
@@ -25,6 +26,8 @@ interface MessageHeaderProps {
 
 export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
   const [localTime, setLocalTime] = useState(() => formatClockTime());
+  const { incomingCalls } = useSocket();
+  const isRinging = !!directKey && !!incomingCalls[directKey];
 
   useEffect(() => {
     const interval = setInterval(() => setLocalTime(formatClockTime()), 60000);
@@ -67,14 +70,16 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                 aria-label="Call"
                 className="flex p-1.5 rounded-lg cursor-pointer transition-colors"
               >
-                <ButtonVoiceRoom
+                <ButtonVoiceMsg
                   mode="call"
                   className='border-0 cursor-pointer hover:text-foreground'
                   roomName={`${directKey ?? 'room'}:voice`}
+                  directKey={directKey ?? undefined}
                   joinText={<IconPhone className="stroke-currentColor hover:text-foreground w-[19px] h-[19px]" />}
                   leaveText={<IconPhone className="stroke-currentColor hover:text-foreground text-danger w-[19px] h-[19px] rotate-135" />}
                   loadingText=' '
                 />
+                {isRinging && <p className='pr-1'>Calling...</p>}
               </div>
             </Tooltip>
 
@@ -83,10 +88,11 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                 aria-label="Video call"
                 className="flex p-1.5 rounded-lg cursor-pointer hover:text-foreground transition-colors"
               >
-                <ButtonVoiceRoom
+                <ButtonVoiceMsg
                   mode="video"
                   joinText={<IconVideo className="cursor-pointer stroke-currentColor w-[22px] h-[22px]" />}
                   roomName={`${directKey ?? 'room'}:video`}
+                  directKey={directKey ?? undefined}
                   meetingTitle={`Call with ${contact.name}`}
                   // meetId={meeting.id}
                   joinTo={R.USER_VIDEOCALL}

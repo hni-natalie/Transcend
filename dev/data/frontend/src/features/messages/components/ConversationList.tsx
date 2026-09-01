@@ -3,6 +3,7 @@ import { EmptyState, LoadingState } from '@shared';
 import type { Conversation } from '../types';
 import { getConversationPreview } from '../lib/mappers';
 import { ChatAvatar } from './ChatAvatar';
+import { useSocket } from '@/context/SocketContext';
 
 interface ConversationGroupProps {
   label: string;
@@ -13,6 +14,8 @@ interface ConversationGroupProps {
 }
 
 function ConversationGroup({ label, conversations, activeConversationId, onSelect, onDeleteRequest }: ConversationGroupProps) {
+  const { incomingCalls } = useSocket();
+
   return (
     <div className="mb-6">
       <p className="px-1 pb-1.5 text-base font-semibold uppercase tracking-wider text-foreground-4">{label}</p>
@@ -21,6 +24,7 @@ function ConversationGroup({ label, conversations, activeConversationId, onSelec
         {conversations.map((conversation) => {
           const isActive = conversation.conversationId === activeConversationId;
           const hasUnread = (conversation.unreadCount ?? 0) > 0;
+          const isRinging = !!conversation.directKey && !!incomingCalls[conversation.directKey];
 
           return (
             <li
@@ -52,6 +56,7 @@ function ConversationGroup({ label, conversations, activeConversationId, onSelec
                   {getConversationPreview(conversation)}
                 </p>
               </div>
+              {isRinging && <p className="pr-2 text-accent-lime text-base font-medium">Calling</p>}
 
               <div className="relative shrink-0 w-6 h-6 flex items-center justify-center">
                 {hasUnread && (

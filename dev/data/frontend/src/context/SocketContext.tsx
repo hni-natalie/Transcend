@@ -34,6 +34,7 @@ interface SocketContextType {
   activitySeq: number;
   subscribeDashboard: () => void;
   unsubscribeDashboard: () => void;
+  incomingCalls: Record<string, { caller: string; roomName: string }>;
 }
 
 // 2. Pass the interface to createContext
@@ -82,6 +83,8 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
   // for /admin/activity
   const [latestActivity, setLatestActivity] = useState<any>(null);
   const [activitySeq, setActivitySeq] = useState<number>(0);
+
+  const [incomingCalls, setIncomingCalls] = useState<Record<string, { caller:string; roomName:string }>>({});
 
   useEffect(() => {
     const token = getToken();
@@ -136,6 +139,23 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
 
       socketInstance.on('existing-room-particles', (objects) => {
         setRoomParticles(objects);
+      });
+
+      /* Events: Direct calls */
+      socketInstance.on('incoming-call', (data: { caller: string; directKey: string; roomName: string }) => {
+        setIncomingCalls((prev) => ({
+          ...prev,
+          [data.directKey]: { caller: data.caller, roomName: data.roomName }
+        }));
+      });
+
+      socketInstance.on('call-ended', (data: { directKey: string }) => {
+        setIncomingCalls((prev) => {
+          if (!(data.directKey in prev)) return prev;
+          const next = { ...prev };
+          delete next[data.directKey];
+          return next;
+        });
       });
 
       socketInstance.on('player-joined', (data) => {
@@ -380,6 +400,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     activitySeq,
     subscribeDashboard,
     unsubscribeDashboard,
+    incomingCalls,
   };
 
   return (
