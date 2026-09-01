@@ -45,7 +45,7 @@ const roleController = {
         }
     }
 
-    // extra feature for later
+    // for future
     // async updateRole(req, res) {
     //     try {
     //         const { roleId } = req.params;

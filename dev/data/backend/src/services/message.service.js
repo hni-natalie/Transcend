@@ -1,5 +1,5 @@
 const prisma = require('../../prisma/client');
-const { uploadFile } = require('../services/supabase-storage.service');
+const { uploadFile } = require('../services/supabase.service');
 
 
 function createDirectKey(userId1, userId2) {
@@ -511,7 +511,7 @@ const messageService = {
 	const filePath = `chat/${message.conversationId}/${messageId}/${fileName}`;
 
 	const publicUrl = await uploadFile(
-		process.env.SUPABASE_PUBLIC_BUCKET,
+		process.env.SUPABASE_ATTACHMENT_BUCKET,
 		filePath,
 		file.buffer,
 		file.mimetype

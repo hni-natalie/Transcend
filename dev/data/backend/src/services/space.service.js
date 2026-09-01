@@ -27,25 +27,25 @@ const spaceService = {
             spaceName,
             workspaceId,
             departmentId,
-            keyPersonId,
+            // keyPersonId,
             accessLevel,
-            isPublicBook,
+            // isPublicBook,
             userCapacity
         } = spaceData;
 
         const data = {
             spaceName,
             accessLevel,
-            isPublicBook,
+            // isPublicBook,
             userCapacity,
 
             workspace: {
                 connect: { workspaceId }
             },
 
-            keyPerson: {
-                connect: { userId: keyPersonId }
-            }
+            // keyPerson: {
+            //     connect: { userId: keyPersonId }
+            // }
         };
 
         // Optional department
@@ -77,13 +77,13 @@ const spaceService = {
         }
 
         // Handle keyPerson relation
-        if (spaceData.keyPersonId) {
-            data.keyPerson = {
-                connect: { userId: spaceData.keyPersonId }
-            };
+        // if (spaceData.keyPersonId) {
+        //     data.keyPerson = {
+        //         connect: { userId: spaceData.keyPersonId }
+        //     };
 
-            delete data.keyPersonId;
-        }
+        //     delete data.keyPersonId;
+        // }
 
         return prisma.space.update({
             where: { spaceId },

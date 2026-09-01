@@ -3,7 +3,6 @@ const { authMiddleware } = require('../middleware/auth.middleware');
 const meetingController = require('../controllers/meeting.controller');
 const meetingChatController = require('../controllers/meetingChat.controller');
 
-// all routes require authentication (must be logged in)
 router.use(authMiddleware);
 
 router.get('/', meetingController.getAllMeetings);

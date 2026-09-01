@@ -57,7 +57,7 @@ const departmentController = {
         }
     }
 
-    // extra feature for later
+    // for future
     // async deleteDepartment(req, res) {
     //     try {
     //         const { dpId } = req.params;
