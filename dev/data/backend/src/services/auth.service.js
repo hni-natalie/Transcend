@@ -4,13 +4,15 @@ const { JWT_SECRET } = require('../utils/secrets');
 const { OAuth2Client } = require('google-auth-library');
 const prisma = require('../../prisma/client');
 const { logPresenceActivity } = require('../utils/activity');
+const { uploadFile } = require('./supabase.service');
 
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '1d';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-
 const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
-
 const USER_INCLUDE = { role: true, department: true };
+
+// re-download google avatar if the last sync is older than this
+const AVATAR_SYNC_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 class AuthError extends Error {
   constructor(status, message) {
@@ -77,7 +79,7 @@ async function loginWithPassword(userEmail, userPassword) {
   }
 
   if (!user.userPassword) {
-    throw new AuthError(401, 'This account uses Google login. Please continue with Google');
+        throw new AuthError(401, 'Please login with Google');
   }
 
   const match = await bcrypt.compare(userPassword, user.userPassword);
@@ -86,6 +88,25 @@ async function loginWithPassword(userEmail, userPassword) {
   }
 
   return finalizeLogin(user);
+}
+
+// downloads google's hotlinked profile photo and re-hosts it on supabase,
+// so clients never hit googleusercontent.com directly (was causing 429s)
+async function syncGoogleAvatar(userId, googlePhotoUrl) {
+  try {
+    const res = await fetch(googlePhotoUrl);
+    if (!res.ok) return null;
+
+    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const fileExt = contentType.split('/').pop();
+    const filePath = `avatars/${userId}/${userId}-${Date.now()}.${fileExt}`;
+
+    return await uploadFile(process.env.SUPABASE_PUBLIC_BUCKET, filePath, buffer, contentType);
+  } catch (err) {
+    console.error('Google avatar sync failed:', err);
+    return null;
+  }
 }
 
 async function verifyGoogleToken(idToken) {
@@ -117,22 +138,37 @@ async function loginWithGoogle(idToken) {
 
   if (!user.googleId) {
     // link google account
+	const syncedAvatarUrl = avatarUrl ? await syncGoogleAvatar(user.userId, avatarUrl) : null;
     user = await prisma.user.update({
       where: { userId: user.userId },
       data: {
         googleId,
         authProvider: 'google',
-        avatarUrl: avatarUrl || user.avatarUrl,
+        avatarUrl: syncedAvatarUrl || avatarUrl || user.avatarUrl,
+        avatarSyncedAt: syncedAvatarUrl ? new Date() : undefined,
       },
       include: USER_INCLUDE,
     });
   } else if (user.googleId !== googleId) {
     // security: google id mismatch
     throw new AuthError(401, 'This email is linked to a different Google account.');
-  } else if (avatarUrl && (!user.avatarUrl || user.avatarUrl.includes('googleusercontent.com'))) {
+    } else if (
+    avatarUrl &&
+    (
+      !user.avatarUrl ||
+      user.avatarUrl.includes('googleusercontent.com') ||
+      !user.avatarSyncedAt ||
+      Date.now() - user.avatarSyncedAt.getTime() > AVATAR_SYNC_TTL_MS
+    )
+  ) {
+    const syncedAvatarUrl = await syncGoogleAvatar(user.userId, avatarUrl);
+
     user = await prisma.user.update({
       where: { userId: user.userId },
-      data: { avatarUrl },
+      data: {
+        avatarUrl: syncedAvatarUrl || avatarUrl,
+        avatarSyncedAt: syncedAvatarUrl ? new Date() : undefined,
+      },
       include: USER_INCLUDE,
     });
   }
