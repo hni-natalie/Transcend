@@ -3,7 +3,7 @@
 	that generates token
 */
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { livekitService } from '@/features/livekit/services/livekitService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
@@ -52,6 +52,10 @@ export function useLiveKit( roomName:string ) {
     }
   }, [location]);
 
+  const isCurrentLoading = useMemo(() => {
+    return state.loadingRoomName === roomName && state.isLoading;
+  }, [state.loadingRoomName, state.isLoading, roomName]);
+
   /* 
     calls socket.emit join-room to backend, backend creates room token
     then route back to connectToRoom in livekitService, create Room() in frontend
@@ -60,8 +64,12 @@ export function useLiveKit( roomName:string ) {
   const connect = async ( mode:LivekitMode ) => {
 
     console.log("🔥 useLiveKit connect called", { roomName, mode });
+    if (!livekitService.checkBrowserSupport()) {
+      console.warn('LiveKitService: Browser not supported');
+      alert('LiveKitService: Browser not supported for livekit features!');
+    }
     livekitService.clearError();
-    setIsLoading(true)
+    setIsLoading(true, roomName)
     setIsMuted(livekitService.audioManager.getMuteState());
     livekitService.init(mode); // init once only
     await livekitService.audioManager.resumeListener(); // .resume onClick
@@ -78,7 +86,7 @@ export function useLiveKit( roomName:string ) {
 
   const disconnect = async ( showLoading:boolean ) => {
     if (showLoading)
-      setIsLoading(true);
+      setIsLoading(true, roomName);
     leaveRoom(roomName); // emit leave-room signal to backend
     await livekitService.disconnectFromRoom(); // frontend cleanup, setLoading false 
   };
@@ -122,8 +130,8 @@ export function useLiveKit( roomName:string ) {
   const setIsConnectedRoom = useCallback(( status:boolean ) => {
     livekitService.setIsConnectedRoom(status);
   }, []);
-  const setIsLoading = useCallback(( status:boolean ) => {
-    livekitService.setIsLoading(status);
+  const setIsLoading = useCallback(( status:boolean, roomName:string ) => {
+    livekitService.setIsLoading(status, roomName);
   }, []);
   const setIsMuted = useCallback(( status:boolean ) => {
     livekitService.setIsMuted(status);
@@ -144,6 +152,8 @@ export function useLiveKit( roomName:string ) {
           activePlane: state.activePlane,
           isConnectedRoom: state.isConnectedRoom,
           currentRoomName: state.currentRoomName,
+          isCurrentLoading,
+          isBrowserSupported: livekitService.checkBrowserSupport(),
           isPlayerAudioReady,
           getMediaStream, getPositionalAudio, getAudioListener, getLivekitRoom,
           error: state.error,

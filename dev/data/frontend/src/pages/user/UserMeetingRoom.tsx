@@ -17,11 +17,12 @@ export function UserMeetingRoom() {
   const navigate = useNavigate();
   // console.log("location state:", location.state);
   
-  const { meetId, roomName, meetingTitle, isHost } = location.state || {
+  const { meetId, roomName, meetingTitle, isHost, leaveTo } = location.state || {
     roomName: '',
     meetId: '',
     meetingTitle: 'Meeting',
     isHost: false,
+    leaveTo: R.USER_MEETINGS,
   };
 
   const { isConnectedRoom, getLivekitRoom, disconnect, isLoading, error } =
@@ -83,7 +84,7 @@ export function UserMeetingRoom() {
       console.log("Meeting ended");
     }
 
-    navigate(R.USER_MEETINGS);
+    navigate(leaveTo);
   };
 
   return (
@@ -94,7 +95,7 @@ export function UserMeetingRoom() {
         action={
           error ? (
             <button
-              onClick={() => navigate(R.USER_MEETINGS)}
+              onClick={() => navigate(leaveTo)}
               className="btn-header"
             >
               Return Back
