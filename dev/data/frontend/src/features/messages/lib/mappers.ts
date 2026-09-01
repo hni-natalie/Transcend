@@ -242,6 +242,7 @@ export function mapConversation(conversation: ConversationResponse, currentUserI
   );
 
   const latestMessage = conversation.messages[0];
+  // console.log('DEBUGGING Convrersation: ', conversation);
 
   return {
     conversationId: conversation.conversationId,

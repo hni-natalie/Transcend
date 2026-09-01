@@ -100,6 +100,7 @@ const messageService = {
 				avatarUrl: true,
 				createdAt: true,
 				updatedAt: true,
+				directKey: true,
 
 			pins: {
 				where: {

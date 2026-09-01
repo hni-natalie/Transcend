@@ -39,6 +39,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
     console.log('Schedule meeting for group:', contact.name);
   };
 
+  // console.log('DEBUGG directKey: ', directKey);
   return (
     <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
       <div className="flex items-center gap-3">

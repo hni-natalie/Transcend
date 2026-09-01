@@ -50,13 +50,15 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
   const [conversationPendingDeletion, setConversationPendingDeletion] = useState<Conversation | null>(null);
 
   const selectedConversationData = useMemo(
-  () =>
-    allConversations.find(
-      (conversation) =>
-        conversation.conversationId === selectedConversation.id
-    ),
-  [allConversations, selectedConversation.id]
-);
+    () =>
+      allConversations.find(
+        (conversation) =>
+          conversation.conversationId === selectedConversation.id
+      ),
+    [allConversations, selectedConversation.id]
+  );
+  // console.log('DEBUGGING selectedConversationData: ', selectedConversationData);
+  // console.log('DEBUGGING selectedConversation: ', selectedConversation);
 
   const filteredUsers = users;
 
