@@ -1,4 +1,4 @@
-const { supabase } = require("./supabase.service.js");
+const { supabase } = require("../services/supabase.service.js");
 
 const updateSocketId = async (socketId, userId, userStatus) => {
     const { data, error } = await supabase
