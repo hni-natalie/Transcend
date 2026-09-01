@@ -209,7 +209,7 @@ export function ControlBar({
         )}
 
         {visibleControls.recording && meetId && (
-          <RecordingButton meetId={meetId}/>
+          <RecordingButton meetId={meetId} showText={showText}/>
         )}
 
         {visibleControls.attendance && meetId && (

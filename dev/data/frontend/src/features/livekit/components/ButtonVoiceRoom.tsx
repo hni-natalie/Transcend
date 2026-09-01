@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLiveKit } from "@features/livekit";
-import { IconMute, IconSpeak } from "@shared/ui/Icons";
+import { IconMic, IconMicDisabled } from "@shared/ui/Icons";
 import { useSocket } from "@/context/SocketContext";
 import { ButtonLoading } from "@/shared/ui/ButtonLoading";
 import { LivekitMode } from "@/shared/types/livekit.types";
@@ -172,9 +172,9 @@ export function ButtonVoiceRoom({
               className={`${isMuted ? "btn-outline" : finalClassName} rounded-full transition-colors duration-500 p-1`}
             >
               {isMuted ? (
-                <IconMute className="w-4 h-4 text-border-2" />
+                <IconMicDisabled className="w-4 h-4 text-border-2" />
               ) : (
-                <IconSpeak className="w-4 h-4" />
+                <IconMic className="w-4 h-4" />
               )}
             </button>
           )}

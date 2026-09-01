@@ -15,6 +15,7 @@ export { FilterLayout } from './layout/FilterLayout';
 // lib
 export { countryOptions } from './lib/constants/countries'
 export { timezoneOptions } from './lib/constants/timezones'
+export { attendanceOptions } from './lib/constants/attendance'
 export * from './lib/constants/userStatus';
 
 // types

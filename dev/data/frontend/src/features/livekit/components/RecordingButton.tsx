@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { IconRecording } from '@/shared';
+import { IconRecording, IconRecordingStop } from '@/shared';
 import { meetingApi } from '@/features/meetings/api/meeting.api';
 import { useRoomContext } from '@livekit/components-react';
 
 interface RecordingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   meetId: string;
+  showText: boolean;
 }
 
-export function RecordingButton({ meetId, ...props }: RecordingButtonProps) {
+export function RecordingButton({ meetId, showText, ...props }: RecordingButtonProps) {
   const room = useRoomContext();
 
   const [isRecording, setIsRecording] = useState(false);
@@ -59,12 +60,13 @@ export function RecordingButton({ meetId, ...props }: RecordingButtonProps) {
       disabled={loading}
       {...props}
     >
-      <IconRecording
-        className={`w-6 h-6 ${isRecording ? 'recording-active' : ''}`}
-      />
-
+      {isRecording ? (
+        <IconRecordingStop className='w-6 h-6'/>
+      ) : (
+        <IconRecording className='w-6 h-6'/>
+      )}
       <span>
-        {isRecording ? 'Stop Recording' : 'Record'}
+        {showText && (isRecording ? 'Stop Recording' : 'Record')}
       </span>
     </button>
   );

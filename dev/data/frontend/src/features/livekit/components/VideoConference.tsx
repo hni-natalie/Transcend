@@ -164,7 +164,7 @@ export function VideoConference({
                 attendance: isHost,
                 settings: !!SettingsComponent 
               }}
-              onAttendanceClick={() => setShowAttendance(true)} 
+              onAttendanceClick={() => setShowAttendance((prev) => !prev)} 
             />
           </div>
           <div

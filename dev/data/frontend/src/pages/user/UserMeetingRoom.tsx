@@ -95,7 +95,7 @@ export function UserMeetingRoom() {
           error ? (
             <button
               onClick={() => navigate(R.USER_MEETINGS)}
-              className="btn-lime-outline"
+              className="btn-header"
             >
               Return Back
             </button>
@@ -121,14 +121,14 @@ export function UserMeetingRoom() {
           </div>
         )}
 
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0 justify-center items-center">
           {error ? (
             <div className="text-center">
-              <p className="text-red-500 font-semibold">
+              <p className="text-danger font-semibold">
                 Failed to join meeting
               </p>
 
-              <p>{error}</p>
+              <p className='text-foreground-3'>{error}</p>
             </div>
           ) : !room ? (
             <LoadingState message="Connecting..." size="full" className='flex-1' />
