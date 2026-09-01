@@ -32,8 +32,8 @@ interface SocketContextType {
   roomOccupancy: Record<string, number>;
   latestActivity: any;
   activitySeq: number;
-  subscribeDashboard: () => void;
-  unsubscribeDashboard: () => void;
+  subscribeActivity: () => void;
+  unsubscribeActivity: () => void;
 }
 
 // 2. Pass the interface to createContext
@@ -337,15 +337,15 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     socket?.emit('request-room-players', { roomName });
   };
 
-  const subscribeDashboard = useCallback(() => {
+  const subscribeActivity = useCallback(() => {
     if (socket && isConnected) {
-      socket.emit('subscribe-dashboard');
+      socket.emit('subscribe-activity');
     }
   }, [socket, isConnected]);
 
-  const unsubscribeDashboard = useCallback(() => {
+  const unsubscribeActivity = useCallback(() => {
     if (socket && isConnected) {
-      socket.emit('unsubscribe-dashboard');
+      socket.emit('unsubscribe-activity');
     }
   }, [socket, isConnected]);
 
@@ -372,8 +372,8 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     roomOccupancy,
     latestActivity,
     activitySeq,
-    subscribeDashboard,
-    unsubscribeDashboard,
+    subscribeActivity,
+    unsubscribeActivity,
   };
 
   return (
