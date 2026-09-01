@@ -30,10 +30,14 @@ export interface Conversation {
   unreadCount?: number;
   createdAt: string;
   updatedAt?: string;
+
+  directKey?: string;
 }
 
 export interface ConversationResponse {
   conversationId: string;
+
+  directKey: string | null;
 
   type: 'direct' | 'group';
 

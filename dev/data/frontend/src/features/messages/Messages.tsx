@@ -49,6 +49,17 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
   });
   const [conversationPendingDeletion, setConversationPendingDeletion] = useState<Conversation | null>(null);
 
+  const selectedConversationData = useMemo(
+    () =>
+      allConversations.find(
+        (conversation) =>
+          conversation.conversationId === selectedConversation.id
+      ),
+    [allConversations, selectedConversation.id]
+  );
+  // console.log('DEBUGGING selectedConversationData: ', selectedConversationData);
+  // console.log('DEBUGGING selectedConversation: ', selectedConversation);
+
   const filteredUsers = users;
 
   const usersById = useMemo(() => new Map(filteredUsers.map((user) => [user.userId, user])), [filteredUsers]);
@@ -352,7 +363,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
         <main className="flex flex-col flex-1 min-w-0 bg-background-1 rounded-3xl my-4 shadow-lg overflow-visible">
           {currentChat ? (
             <>
-              <MessageHeader contact={currentChat.profile} isInfoOpen={isInfoOpen} onToggleInfo={toggleInfo} />
+              <MessageHeader contact={currentChat.profile} directKey={selectedConversationData?.directKey} isInfoOpen={isInfoOpen} onToggleInfo={toggleInfo} />
 
               <MessageList dayGroups={currentChat.messages} />
 

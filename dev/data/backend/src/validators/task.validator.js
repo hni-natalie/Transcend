@@ -174,7 +174,6 @@ function validateUpdateTask({
 }
 
 
-
 module.exports = {
 	validateCreateTask,
 	validateUpdateTask,
