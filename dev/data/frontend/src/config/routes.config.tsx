@@ -5,13 +5,13 @@ import { Landing, Login, Terms, Privacy,
 		UserDashboard, Office, OfficeRoom, Tasks, Meetings, Messages, UserSettings, UserMeetingRoom 
 		} from '@pages';
 
-export interface RouteConfig {
+interface RouteConfig {
   path: string;
   element: React.ReactNode;
   title: string;
   requiresAuth?: boolean;
   allowedRoles?: string[];
-  isGuestOnly?: boolean;		// redirects to dashboard if logged in
+  isGuestOnly?: boolean;
 }
 
 export const routes: RouteConfig[] = [
@@ -81,14 +81,6 @@ export const routes: RouteConfig[] = [
 		requiresAuth: true,
 		allowedRoles: ['Admin'],
 	},
-	// {
-	// 	path: R.ADMIN_SETTINGS,
-	// 	element: <AdminSettings />,
-	// 	title: 'Settings · Admin · WorkFrom,',
-	// 	requiresAuth: true,
-	// 	allowedRoles: ['Admin'],
-	// },
-
 
 	// User 
 	{

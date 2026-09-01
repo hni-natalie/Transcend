@@ -3,6 +3,7 @@ import { API_CONFIG } from '@api/api.config';
 
 class ApiClient {
   private client: AxiosInstance;
+  private onSessionExpiredHandler: (() => void) | null = null;
   
   constructor() {
     this.client = axios.create({
@@ -29,15 +30,14 @@ class ApiClient {
 	this.client.interceptors.response.use(
 	  (response) => response.data,
 	  (error: AxiosError) => {
-		// handle unauthorized
 		if (error.response?.status === 401) {
-		  // check if it's login/register endpoint
 		  const isAuthEndpoint = error.config?.url?.includes('/auth/login') || 
 								error.config?.url?.includes('/auth/google');
 		
 		  if (!isAuthEndpoint) {
-		  // only clear token and show session expired for non-auth endpoints
-			localStorage.removeItem('token');
+			if (this.onSessionExpiredHandler) {
+				this.onSessionExpiredHandler();
+			}
 			throw new Error('SESSION_EXPIRED');
 		  }
 		}
@@ -84,6 +84,11 @@ class ApiClient {
         }
       },
     });
+  }
+
+// Register callback for when session expires (401 on non-auth endpoint)
+  registerSessionExpiredHandler(handler: () => void) {
+    this.onSessionExpiredHandler = handler;
   }
 }
 
