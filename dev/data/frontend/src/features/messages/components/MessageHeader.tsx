@@ -70,7 +70,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                 <ButtonVoiceRoom
                   mode="call"
                   className='border-0 cursor-pointer hover:text-foreground'
-                  roomName={directKey?? 'voice-room'}
+                  roomName={`${directKey ?? 'room'}:voice`}
                   joinText={<IconPhone className="stroke-currentColor hover:text-foreground w-[19px] h-[19px]" />}
                   leaveText={<IconPhone className="stroke-currentColor hover:text-foreground text-danger w-[19px] h-[19px] rotate-135" />}
                   loadingText=' '
@@ -86,8 +86,8 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                 <ButtonVoiceRoom
                   mode="video"
                   joinText={<IconVideo className="cursor-pointer stroke-currentColor w-[22px] h-[22px]" />}
-                  roomName={directKey ?? 'video-room'}
-                  meetingTitle={`Video Call with ${contact.name}`}
+                  roomName={`${directKey ?? 'room'}:video`}
+                  meetingTitle={`Call with ${contact.name}`}
                   // meetId={meeting.id}
                   joinTo={R.USER_VIDEOCALL}
                   leaveTo={R.USER_MESSAGES}
