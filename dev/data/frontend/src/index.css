@@ -328,7 +328,7 @@
   }
   
   .lk-chat-entry-name {
-    @apply text-xs font-medium text-accent-lime;
+    @apply text-sm font-semibold text-accent-lime mb-4!;
   }
   
   .lk-chat-entry-message {

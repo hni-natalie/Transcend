@@ -159,28 +159,30 @@ export function Chat({
             {chatMessages.map((msg, idx, all) => {
               const hideName = idx >= 1 && all[idx - 1].from === msg.from;
               const hideTimestamp =
-                idx >= 1 && msg.timestamp - all[idx - 1].timestamp < 60_000;
+                idx >= 1 && all[idx - 1].from === msg.from && msg.timestamp - all[idx - 1].timestamp < 60_000;
  
               return (
                 <li key={msg.id ?? idx} className="lk-chat-entry">
-                  {(!hideName || !hideTimestamp) && (
-                    <div className={`flex ${idx >= 1 ? 'mt-5!' : ''}`}>
+                  <div className={`flex gap-1 ${!hideName && !hideTimestamp && idx >= 1 ? 'mt-7!' : ''}`}>
+
+                  <div className='flex flex-col'>
                     {!hideName && (
                       <span className="lk-chat-entry-name">{msg.from?.name ?? 'Unknown'}</span>
                     )}
-                    {!hideTimestamp && (
-                      <time className="lk-chat-entry-time">
-                        {new Date(msg.timestamp).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </time>
-                    )}
+                    <p className="lk-chat-entry-message">
+                      {messageFormatter ? messageFormatter(msg.message) : msg.message}
+                    </p>
                   </div>
+
+                  {!hideTimestamp && (
+                    <time className="lk-chat-entry-time">
+                      {new Date(msg.timestamp).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </time>
                   )}
-                  <p className="lk-chat-entry-message">
-                    {messageFormatter ? messageFormatter(msg.message) : msg.message}
-                  </p>
+                  </div>
                 </li>
               );
             })}
