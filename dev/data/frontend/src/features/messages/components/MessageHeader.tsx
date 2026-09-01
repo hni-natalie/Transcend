@@ -86,7 +86,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                   mode="video"
                   joinText={<IconVideo className="cursor-pointer stroke-currentColor w-[22px] h-[22px]" />}
                   roomName={directKey ?? 'video-room'}
-                  meetingTitle='Video Call'
+                  meetingTitle={`Video Call with ${contact.name}`}
                   // meetId={meeting.id}
                   joinTo={R.USER_VIDEOCALL}
                   leaveTo={R.USER_MESSAGES}
