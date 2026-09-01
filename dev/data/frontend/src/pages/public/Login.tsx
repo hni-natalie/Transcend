@@ -24,7 +24,7 @@ const loginInputClass = [
 
 export const Login = () => {
     const navigate = useNavigate();
-    const { googleLogin, login } = useAuth(); 
+    const { googleLogin, login } = useAuth();
     const [userEmail, setUserEmail] = useState<string>('');
     const [userPassword, setUserPassword] = useState<string>('');
     const [error, setError] = useState<string>('');
@@ -100,7 +100,7 @@ export const Login = () => {
     useEffect(() => {
         if (isGoogleSDKLoaded && !googleInitialized.current) {
             googleInitialized.current = true;
-            
+
             window.google?.accounts.id.initialize({
                 client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
                 callback: async (response: any) => {
@@ -127,39 +127,38 @@ export const Login = () => {
             setError('Google login is still loading. Please try again.');
             return;
         }
-        
+
         setGoogleLoading(true);
 
-	// timeout if no prompt
-    const timeoutId = setTimeout(() => {
-        setGoogleLoading(false);
-        setError('Google login timed out. Please try again.');
-    }, 10000); // 10 second timeout
-    
-    // prompt callback handles success/error
-    window.google?.accounts.id.prompt((notification: any) => {
-        clearTimeout(timeoutId);
-        
-        if (notification.isNotDisplayed()) {
-            setError(`Google login couldn't display: ${notification.getNotDisplayedReason()}`);
+        // timeout if no prompt
+        const timeoutId = setTimeout(() => {
             setGoogleLoading(false);
-        }
-        
-        if (notification.isSkippedMoment()) {
-            // popup closed or canceled
-            setGoogleLoading(false);
-        }
+            setError('Google login timed out. Please try again.');
+        }, 10000); // 10 second timeout
 
-	    // if notification is displayed, keep loading true
-        // callback will handle success via the initialize callback
-    });
-};
+        // prompt callback handles success/error
+        window.google?.accounts.id.prompt((notification: any) => {
+            clearTimeout(timeoutId);
 
+            if (notification.isNotDisplayed()) {
+                setError(`Google login couldn't display: ${notification.getNotDisplayedReason()}`);
+                setGoogleLoading(false);
+            }
+
+			// popup closed / cancelled
+            if (notification.isSkippedMoment()) {
+                setGoogleLoading(false);
+            }
+
+            // if notification is displayed, keep loading true
+            // callback will handle success via the initialize callback
+        });
+    };
 
     return (
         <div className="h-screen w-screen bg-background flex justify-center items-center m-0">
             <div className="w-full max-w-[500px] flex flex-col items-center">
-                <h1 
+                <h1
                     className="brand-logo-lean text-[48px] font-bold mb-9"
                     onClick={onBack}
                 >
@@ -168,10 +167,8 @@ export const Login = () => {
 
                 <div className="w-[60%]">
                     {/* Google Login */}
-                    <button 
-                        className="
-							w-full py-3 border border-background-4 bg-background-1 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-6 rounded-lg cursor-pointer
-							hover:bg-accent-lime-bg hover:text-accent-lime transition-colors cursor-pointer"
+                    <button
+                        className="w-full py-3 border border-background-4 bg-background-1 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-6 rounded-lg cursor-pointer hover:bg-accent-lime-bg hover:text-accent-lime transition-colors"
                         onClick={handleGoogleLogin}
                         disabled={!isGoogleSDKLoaded || googleLoading}
                     >
@@ -179,13 +176,13 @@ export const Login = () => {
                         {googleLoading ? 'Logging in...' : 'Continue with Google'}
                     </button>
 
-					{/* Email Login */}
+                    {/* Email Login */}
                     <div className="my-6 text-foreground-4 text-sm w-full text-center">or</div>
                     <form className="w-full flex flex-col gap-6" onSubmit={handleEmailLogin}>
                         <input
                             type="email"
                             placeholder="Email"
-                            className={loginInputClass} 
+                            className={loginInputClass}
                             value={userEmail}
                             onChange={(e) => setUserEmail(e.target.value)}
                         />
@@ -197,52 +194,52 @@ export const Login = () => {
                             onChange={(e) => setUserPassword(e.target.value)}
                         />
 
-						<button 
-							type="submit" 
-							className="btn-lime w-full mt-3 py-3 text-base lg:text-lg font-bold group flex items-center justify-center gap-2"
-							disabled={loading}
-						>
-							<span>{loading ? 'Logging in...' : 'Log In'}</span>
-							{!loading && (
-								<span className="inline-block opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300">
-									<svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-										<path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-									</svg>
-								</span>
-							)}
-						</button>
+                        <button
+                            type="submit"
+                            className="btn-lime w-full mt-3 py-3 text-base lg:text-lg font-bold group flex items-center justify-center gap-2"
+                            disabled={loading}
+                        >
+                            <span>{loading ? 'Logging in...' : 'Log In'}</span>
+                            {!loading && (
+                                <span className="inline-block opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                    </svg>
+                                </span>
+                            )}
+                        </button>
 
-						{/* Error */}
+                        {/* Error */}
                         <div className="h-4">
                             {error && <p className="error-message text-center text-sm lg:text-base">{error}</p>}
                         </div>
                     </form>
                 </div>
-                
-                <div className="mt-10 flex flex-col items-center gap-8 text-center">
-					{/* No account */}
-					<p className="text-sm text-foreground-2">
-						No account?{' '}
-						<a 
-							href="mailto:support@workfrom.com"
-							className="font-semibold text-foreground-2 underline decoration-foreground-2/30 underline-offset-4 cursor-pointer hover:text-white hover:decoration-white transition-colors"
-						>
-							Contact us
-						</a>.
-					</p>
 
-					{/* Legal */}
+                <div className="mt-10 flex flex-col items-center gap-8 text-center">
+                    {/* No account */}
+                    <p className="text-sm text-foreground-2">
+                        No account?{' '}
+                        <a
+                            href="mailto:support@workfrom.com"
+                            className="font-semibold text-foreground-2 underline decoration-foreground-2/30 underline-offset-4 cursor-pointer hover:text-white hover:decoration-white transition-colors"
+                        >
+                            Contact us
+                        </a>.
+                    </p>
+
+                    {/* Legal */}
                     <p className="mt-15 text-[12px] md:text-sm text-foreground-2 leading-relaxed max-w-[320px] md:max-w-none opacity-80">
                         By continuing, you acknowledge that you understand <br className="hidden md:block" />
                         and agree to the{' '}
-                        <span 
+                        <span
                             className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
                             onClick={() => navigate(R.TERMS)}
                         >
                             Terms & Conditions
                         </span>
                         {' '}and{' '}
-                        <span 
+                        <span
                             className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
                             onClick={() => navigate(R.PRIVACY)}
                         >

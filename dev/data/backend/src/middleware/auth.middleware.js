@@ -1,7 +1,5 @@
-const fs = require('fs');
+const { JWT_SECRET } = require('../utils/secrets');
 const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = fs.readFileSync('/run/secrets/jwt_secret', 'utf8').trim();
 
 function authMiddleware(req, res, next) {
 	const authHeader = req.headers.authorization;

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authService } from './auth.service';
+import { authApi } from './auth.api';
 import type { AuthUser } from './auth.types';
 import { toAuthUser } from './auth.types';
 import { UserBackendStatus } from '@shared';
@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // update user status on backend and update local state
   const updateUserStatus = async (status: UserBackendStatus) => {
     try {
       await apiClient.patch('/users/status', { status });
@@ -34,14 +35,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const getToken = () => localStorage.getItem('token');
   const setToken = (token: string) => localStorage.setItem('token', token);
   
-  // 1. Updated removeToken to also clean up the socket sessionId
   const removeToken = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('sessionId'); 
   };
 
-  // App bootstrap - restore auth from token
   useEffect(() => {
+	// Register global session expired handler for mid-session 401s
+    apiClient.registerSessionExpiredHandler(() => {
+      removeToken();
+      setUser(null);
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    });
+
+
     const bootstrapAuth = async () => {
       const token = getToken();
       
@@ -51,7 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        const userData = await authService.getMe();
+        const userData = await authApi.getMe();
         setUser(toAuthUser(userData));
       } catch (error) {
         if (error instanceof Error && error.message === 'SESSION_EXPIRED') {
@@ -68,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const googleLogin = async (idToken: string): Promise<AuthUser> => {
-    const response = await authService.googleLogin(idToken);
+    const response = await authApi.googleLogin(idToken);
     const authUser = toAuthUser(response.user);
     setToken(response.token);
     setUser(authUser);
@@ -76,14 +85,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email: string, password: string): Promise<AuthUser> => {
-    const response = await authService.login(email, password);
+    const response = await authApi.login(email, password);
     const authUser = toAuthUser(response.user);
     setToken(response.token);
     setUser(authUser);
     return authUser; 
   };
 
-  // 2. Added inside the logout cleanup path
   const logout = async () => {
     try {
       await apiClient.post('/auth/logout');
@@ -92,7 +100,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       removeToken(); 
       setUser(null);
-      window.location.href = '/login';
+	  if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+
+    //   window.location.href = '/login';
     }
   };
 

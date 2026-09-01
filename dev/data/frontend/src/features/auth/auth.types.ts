@@ -16,9 +16,9 @@ export interface AuthUser {
   avatarUrl: string | null;
 }
 
-export interface AuthResponse {
+export interface LoginResponse {
   token: string;
-  user: AuthUser;
+  user: User;
 }
 
 // helper to convert backend user to authUser
