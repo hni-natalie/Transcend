@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchAllUsers } from '@features/users';
+import { userApi } from '@features/users';
 import { User } from '@shared';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -23,7 +23,7 @@ export function useUsers(options: UseUsersOptions = {}) {
     setError(null);
     
     try {
-      const allUsers = await fetchAllUsers();
+      const allUsers = await userApi.fetchAllUsers();
       
       let filteredUsers = allUsers;
 

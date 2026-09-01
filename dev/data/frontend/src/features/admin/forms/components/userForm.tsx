@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { usePasswordField } from '@shared/ui/PasswordField';
+import { userApi, CreateUserRequest, UpdateUserRequest } from '@features/users'
 import { UserFormFields } from './userFormFields';
 import { useRolesAndDepartments, useAvatarUpload, UserTableRow, IconClose } from '@shared';
-import { createUser, updateUser, resetUserPassword } from '@features/users';
 import { useToast } from '@/context/ToastContext';
 
 interface UserFormProps {
@@ -10,7 +10,7 @@ interface UserFormProps {
   user?: UserTableRow;
   onClose: () => void;
   onSuccess: () => void;
-  onDelete?: () => void;
+  onDelete?: () => Promise<void> | void;
 }
 
 export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormProps) {
@@ -36,7 +36,6 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
         roleId: user.roleId || '',
         deptId: user.deptId || '',
 		userTitle: user.userTitle || '',
-        // location: user.location || '',
         photo: user.photo || '',
         password: '',
       };
@@ -49,7 +48,6 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
       roleId: '',
       deptId: '',
 	  userTitle: '',
-    //   location: '',
       photo: '',
       password: '',
     };
@@ -57,13 +55,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
 
   const [formData, setFormData] = useState(getInitialFormData);
 
-  const { 
-    isUploading, 
-    setAvatarUrl,
-	handleFileUpload,
-    uploadPendingForUser,
-    pendingFile 
-  } = useAvatarUpload({
+  const { isUploading, uploadError, setAvatarUrl, handleFileUpload, uploadPendingForUser, pendingFile } = useAvatarUpload({
     targetUserId: isEdit ? user?.userId : undefined,
     onSuccess: (url) => {
         setFormData(prev => ({ ...prev, photo: url }));
@@ -159,22 +151,23 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
   try {
     if (isEdit && user) {
       // update user (without password update)
-      const updateData: any = {
+    //   const updateData: any = {
+	  const updateData: Partial<UpdateUserRequest> = {
         name: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
         roleId: formData.roleId,
         dpId: formData.deptId || undefined,
 		userTitle: formData.userTitle || undefined,
         // country: formData.location || undefined,
-        avatarUrl: formData.photo || undefined,
+        // avatarUrl: formData.photo || undefined,
       };
 
-      await updateUser(user.userId, updateData);
+      await userApi.updateUser(user.userId, updateData);
 
       // password update (admin dont need old password - /reset-password in be)
       if (formData.password && formData.password.trim() !== '') {
         try {
-          await resetUserPassword(user.userId, formData.password);
+          await userApi.resetUserPassword(user.userId, formData.password);
           showToast('success', 'User updated and password reset successfully!');
         } catch (passwordErr) {
           const errorMessage = passwordErr instanceof Error ? passwordErr.message : 'Failed to reset password';
@@ -190,17 +183,17 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
       onClose();
     } else {
 	  // create user
-      const userData: any = {
+    //   const userData: any = {
+	  const userData: CreateUserRequest = {
         email: formData.email,
         name: `${formData.firstName} ${formData.lastName}`.trim(),
         roleId: formData.roleId,
-        workspaceId: '',
         dpId: formData.deptId || undefined,
 		userTitle: formData.userTitle || undefined,
         password: formData.password || undefined,
       };
 
-      const response = await createUser(userData);
+      const response = await userApi.createUser(userData);
 
       if (response.success) {
         if (pendingFile && response.data.userId) {
@@ -273,6 +266,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
             departmentOptions={departmentOptions}
             roleOptions={roleOptions}
             isLoadingData={isLoadingData}
+			uploadError={uploadError} 
             showPhoto={true}
             isUploading={isUploading}
             userDisplayName={`${formData.firstName} ${formData.lastName}`.trim() || 'User'}
@@ -282,7 +276,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
           <div className="flex gap-3 pt-4">
 			<button
 				type="submit"
-				disabled={isSubmitting}
+				disabled={isSubmitting || !!uploadError} 
 				className={`${isEdit ? 'flex-1' : 'w-[200px] mx-auto'} btn-lime-outline-solid`}
 			>
 				{submitLabel}

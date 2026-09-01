@@ -1,7 +1,7 @@
 import React from 'react';
 import { getStatusColors, getStatusDisplay, UserBackendStatus } from '@shared';
 
-export interface UserStatusBadgeProps {
+interface UserStatusBadgeProps {
   status: UserBackendStatus;
   showDot?: boolean;
 }
