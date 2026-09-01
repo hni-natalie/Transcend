@@ -1,10 +1,6 @@
-// const { apiClient }         = require('../api/api.client.js')
-const { apiClient } 				=	require("../api/api.client.js");
+const { apiClient } 		= require("../api/api.client.js");
 const { randomHslColor }    = require('../utils/color.js');
 const { v4:uuidv4 }         = require('uuid')
-
-
-/* ***************************************************************** */
 
 /**
  * Creates a player object with default values

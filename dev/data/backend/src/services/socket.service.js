@@ -6,7 +6,7 @@
 const { generateRoomToken }                = require('../routes/livekit.js');
 const { randomHslColor }                   = require('../utils/color.js');
 const { apiClient }                        = require('../api/api.client.js');
-const { updateSocketId }                   = require('./supabase-utils.service.js');
+const { updateSocketId }                   = require('../utils/socketStatus.js');
 const prisma                               = require('../../prisma/client');
 const { logSpaceActivity, logMeetingActivity } = require('../utils/activity');
 const { initRoomData, createPlayer, initRoomSpawnPos, getSpawnPosFromDpId, initRoomComponents } = require('../utils/socket');
@@ -89,8 +89,8 @@ const socketService = (io) => {
     // ----------------------------------------------------
 
     // Dashboard subscribes to live occupancy updates
-    socket.on('subscribe-dashboard', () => {
-      socket.join('dashboard-viewers');
+    socket.on('subscribe-activity', () => {
+      socket.join('activity-viewers');
       const snapshot = Array.from(spaceOccupancy.entries()).map(([spaceId, count]) => ({
         spaceId,
         count,
@@ -104,8 +104,8 @@ const socketService = (io) => {
       socket.emit('space-occupancy-snapshot', snapshot);
     });
 
-    socket.on('unsubscribe-dashboard', () => {
-      socket.leave('dashboard-viewers');
+    socket.on('unsubscribe-activity', () => {
+      socket.leave('activity-viewers');
     });
 
     setTimeout(() => {
@@ -361,7 +361,7 @@ const socketService = (io) => {
     function emitOccupancyUpdate(roomName) {
       const roomData = rooms.get(roomName);
       const count = roomData ? roomData.users.length : 0;
-      io.to('dashboard-viewers').emit('space-occupancy-changed', { roomName, count });
+      io.to('activity-viewers').emit('space-occupancy-changed', { roomName, count });
     }
 
     async function setUserSpacePresence(socket, nextSpaceId) {
@@ -401,7 +401,7 @@ const socketService = (io) => {
         spaceOccupancy.set(spaceId, nextCount);
       }
 
-      io.to('dashboard-viewers').emit('space-occupancy-changed', { spaceId, count: nextCount });
+      io.to('activity-viewers').emit('space-occupancy-changed', { spaceId, count: nextCount });
     }
 
     async function logSpaceActivityForSpace(socket, spaceId, action) {
