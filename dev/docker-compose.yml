@@ -65,9 +65,14 @@ services:
       - app_mock
       - livekit_api_key
       - livekit_api_secret
+      - database_url
+      - direct_url
+      - supabase_service_role_key
       - supabase_s3_access_key
       - supabase_s3_secret_key
+      - google_client_secret
       - google_ai_api_key
+      - smtp_user
       - smtp_password
     volumes:
       - backend_app:/app:nocopy
@@ -118,11 +123,21 @@ secrets:
     file: ./secrets/livekit_api_key.txt
   livekit_api_secret:
     file: ./secrets/livekit_api_secret.txt
+  database_url:
+    file: ./secrets/database_url.txt
+  direct_url:
+    file: ./secrets/direct_url.txt
+  supabase_service_role_key:
+    file: ./secrets/supabase_service_role_key.txt
   supabase_s3_access_key:
     file: ./secrets/supabase_s3_access_key.txt
   supabase_s3_secret_key:
     file: ./secrets/supabase_s3_secret_key.txt
+  google_client_secret:
+    file: ./secrets/google_client_secret.txt
   google_ai_api_key:
     file: ./secrets/google_ai_api_key.txt
+  smtp_user:
+    file: ./secrets/smtp_user.txt
   smtp_password:
     file: ./secrets/smtp_password.txt
