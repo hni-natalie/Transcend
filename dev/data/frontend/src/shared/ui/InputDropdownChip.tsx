@@ -188,7 +188,7 @@ export function InputDropdownChip({
       {selectedUsers.map(user => (
         <div
             key={user.userId}
-            className="rounded-lg bg-background p-2 px-4 mb-1"
+            className="rounded-xl bg-background p-2 px-4 mb-1"
         >
           <div className="flex justify-between">
             <div>

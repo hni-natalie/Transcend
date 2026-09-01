@@ -122,17 +122,17 @@ export function UserMeetingRoom() {
           </div>
         )}
 
-        <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0 justify-center items-center">
           {error ? (
-            <div className="text-center flex flex-col w-full justify-center">
+            <div className="text-center">
               <p className="text-danger font-semibold">
                 Failed to join meeting
               </p>
 
-              <p>{error}</p>
+              <p className='text-foreground-3'>{error}</p>
             </div>
           ) : !room ? (
-            <LoadingState message="Connecting..." size="full" />
+            <LoadingState message="Connecting..." size="full" className='flex-1' />
           ) : (
             <RoomContext.Provider value={room}>
               <VideoConference 

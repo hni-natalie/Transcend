@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useMaybeLayoutContext } from '@livekit/components-react';
 import { meetingApi } from '@features/meetings';
+import { IconClose, InputDropdown, attendanceOptions } from '@/shared';
 
 export type AttendanceStatus = 'present' | 'absent' | 'pending';
 
@@ -138,7 +139,7 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
               onClick={onClose}
               aria-label="Close attendance"
             >
-              ×
+              <IconClose className="w-8 h-8" />
             </button>
           )}
         </div>
@@ -168,7 +169,8 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
                     </span>
                   </div>
 
-                  <select
+                  <InputDropdown
+                    choices={attendanceOptions}
                     value={
                       attendance[participant.userId] ??
                       participant.attendance
@@ -179,12 +181,8 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
                         event.target.value as AttendanceStatus,
                       )
                     }
-                    className="lk-attendance-select"
-                  >
-                    <option value="present">Present</option>
-                    <option value="absent">Absent</option>
-                    <option value="pending">Pending</option>
-                  </select>
+                    className="text-xs bg-background-3"
+                  />
                 </div>
               ))
             )}
@@ -194,7 +192,7 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
         <div className="lk-attendance-footer">
           <button
             type="button"
-            className="lk-attendance-save"
+            className="btn-lime-outline-solid w-[200px] mx-auto"
             onClick={handleSave}
             disabled={
               isLoading ||

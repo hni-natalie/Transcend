@@ -5,7 +5,7 @@
 import { useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useLiveKit } from '@features/livekit'
-import { IconMute, IconSpeak } from '@shared/ui/Icons';
+import { IconMic, IconMicDisabled, IconMute, IconSpeak } from '@shared/ui/Icons';
 import { useSocket } from '@/context/SocketContext';
 import { ButtonLoading } from "@/shared/ui/ButtonLoading";
 import { LivekitMode } from "@/shared/types/livekit.types";
@@ -89,7 +89,7 @@ export function ButtonVoiceSpace( { joinText='Join Room', leaveText='Leave Room'
           {/* mute/unmute button */}
           { showMute &&
           <button onClick={toggleMute} disabled={isLoading} className={`${isMuted ? 'btn-outline' : finalClassName} rounded-full transition-colors duration-500 p-1`}>
-            { isMuted ? <IconMute className="w-4 h-4 text-border-2"/> : <IconSpeak className="w-4 h-4"/> }
+            { isMuted ? <IconMicDisabled className="w-4 h-4 text-border-2"/> : <IconMic className="w-4 h-4"/> }
           </button>
           }
         </div>

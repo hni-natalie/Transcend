@@ -6,8 +6,8 @@ import { ChatAvatar } from './ChatAvatar';
 import { ButtonVoiceRoom } from '@/features/livekit';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 
-export const Tooltip = ({ children, text }: { children: React.ReactNode; text: string }) => (
-  <div className="relative group">
+export const Tooltip = ({ children, text, className }: { children: React.ReactNode; text: string, className?: string }) => (
+  <div className={`relative group ${className}`}>
     {children}
 
     <div className="mt-2.5 absolute top-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 text-base text-white bg-background-2 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
