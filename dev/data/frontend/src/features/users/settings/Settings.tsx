@@ -19,13 +19,14 @@ export function Settings() {
     }
   }, [isGoogleUser, activeSection]);
 
+  const { isUploading, handleAvatarUpload, uploadPendingForSelf } = useAvatarUpload({ onSuccess: setAvatarUrl, });
+  
   const { isSaving: isSavingProfile, handleProfileChange, handleProfileSave } =
-    useProfileSave(profile, setProfile);
+    useProfileSave(profile, setProfile, uploadPendingForSelf);
 
   const { passwords, isSaving: isSavingPassword, handlePasswordChange, handlePasswordSave } =
     usePasswordSave(isGoogleUser);
 
-  const { isUploading, handleAvatarUpload } = useAvatarUpload({ onSuccess: setAvatarUrl, });
 
   const { isRequesting: isRequestingData, lastExport, handleRequestData } = usePrivacyData();
   const {

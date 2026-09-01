@@ -1,5 +1,4 @@
 import { PageHeader, IconSettings } from '@shared';
-// add features
 
 export const AdminSettings = () => {
   return (
