@@ -7,6 +7,7 @@ import { MenuConfig, MenuItem, IconCollapse, IconLogout, LoadingState, useUserLo
 import { useLiveKit } from '@features/livekit'
 import { useUserStatusSync } from '@shared';
 import { useSocket } from '@/context/SocketContext';
+import { useOfficeSpaceLayout } from '@/features/office/context/SpaceLayoutContext';
 
 const getMenuForPath = ( pathname:string ): MenuConfig => {
   return pathname.startsWith('/admin') ? adminMenuConfig : userMenuConfig;
@@ -31,6 +32,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
   const [isHovering, setIsHovering] = useState(false);
 
   const { location: userLocation, isLoading: locationLoading, error: locationError } = useUserLocation();
+  const { loading: layoutLoading } = useOfficeSpaceLayout();
   const { isConnected } = useSocket();
   const { connect, isConnectedRoom, isLoading } = useLiveKit("Office");
 
@@ -78,7 +80,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     name: user.userName,
     email: user.userEmail,
     role: user.roleName,
-    photo: user.avatarUrl || '/default-avatar.png',
+    photo: user.avatarUrl || null,
     status: user.userStatus as UserBackendStatus,
   };
 
@@ -182,8 +184,9 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
                 <button
                   onClick={() => handleJoinOffice(item.href)}
                   className={`${linkClass({ isActive:location.pathname === item.href })} w-full 
-                              ${isConnectedRoom || !isConnected ? '' : 'cursor-pointer'} `}
-                  disabled={isConnectedRoom || isLoading || !isConnected}
+                              ${isConnectedRoom || !isConnected || layoutLoading ? 'cursor-not-allowed' : 'cursor-pointer'} `}
+                  disabled={isConnectedRoom || isLoading || layoutLoading || !isConnected}
+                  title={`${isConnectedRoom || isLoading || layoutLoading || !isConnected ? 'Refresh to connect Office' : '' }`}
                 >
                   {linkContent(item)}
                 </button>

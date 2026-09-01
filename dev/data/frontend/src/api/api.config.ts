@@ -30,7 +30,7 @@ export const API_CONFIG = {
     tasks: '/tasks',
     meetings: '/meetings',
     recordings: '/recordings', 
-	// messages: '/conversations', 
+	messages: '/messages', 
 	activity: '/activity',
     init: '/init',
 

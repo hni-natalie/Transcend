@@ -15,7 +15,7 @@ import {
   useMaybeTrackRefContext,
 } from '@livekit/components-react';
 import { useAuth } from '@/features/auth';
-import { IconLockLocked, IconScreenShare } from '@/shared';
+import { IconLockLocked, IconMicDisabled, IconScreenShare } from '@/shared';
 import { ParticipantAvatar } from './ParticipantAvatar';
 
 /**
@@ -137,6 +137,7 @@ export const ParticipantTile: (
             {children ?? (
               <>
                 {isTrackReference(trackReference) &&
+                !trackReference.publication.isMuted &&
                 (trackReference.publication?.kind === 'video' ||
                   trackReference.source === Track.Source.Camera ||
                   trackReference.source === Track.Source.ScreenShare) ? (
@@ -167,12 +168,14 @@ export const ParticipantTile: (
                             source: Track.Source.Microphone,
                           }}
                           show={'muted'}
-                        ></TrackMutedIndicator>
+                        >
+                          <IconMicDisabled className='w-4.5 h-4.5' />
+                        </TrackMutedIndicator>
                         <ParticipantName />
                       </>
                     ) : (
                       <>
-                        <IconScreenShare style={{ marginRight: '0.25rem' }} />
+                        <IconScreenShare className='w-4.5 h-4.5' style={{ marginRight: '0.25rem' }} />
                         <ParticipantName>&apos;s screen</ParticipantName>
                       </>
                     )}

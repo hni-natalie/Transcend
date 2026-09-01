@@ -296,8 +296,19 @@ const socketService = (io) => {
     socket.on('request-room-players', async ({ roomName }) => {
       let roomData = rooms.get(roomName);
       if (!roomData) {
-        socket.emit('existing-room-players', []);
-        return;
+        roomData = await initRoomData(rooms, roomName);
+        
+        await new Promise((resolve) => {
+          socket.emit('get-room-spawn-pos', { roomName });
+          socket.once('room-spawn-pos', (data) => {
+            resolve(data);
+          });
+          setTimeout(() => {
+            resolve(null);
+          }, 5000);
+        });
+      } else if (roomData.users.length === 0) {
+        await initRoomComponents(roomData);
       }
       socket.emit('existing-room-players', roomData?.users || []);
     });

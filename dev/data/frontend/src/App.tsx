@@ -1,8 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { routes } from './config/routes.config';
 import { AppLayout } from '@shared/layout/AppLayout';
 import { SocketProvider } from '@/context/SocketContext';
+import { SpaceLayoutProvider } from '@/features/office/context/SpaceLayoutContext';
 import { AuthProvider } from '@/features/auth/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { ProtectedRoute, GuestRoute } from '@/features/auth/ProtectedRoute';
@@ -23,6 +24,9 @@ function AppRoutes() {
   return (
     <div className="w-full overflow-x-hidden">
       <Routes>
+        {/* redirection */}
+        <Route path="/user" element={<Navigate to="/user/dashboard" replace />} />
+
         {/* Guest-only routes (login page) - redirects if logged in */}
         {guestRoutes.map(route => (
           <Route 
@@ -70,9 +74,11 @@ export function App() {
     <Router>
       <AuthProvider>
         <SocketProvider>
-		  <ToastProvider>
-			<AppRoutes />
-		  </ToastProvider>
+          <SpaceLayoutProvider roomName='Office'>
+            <ToastProvider>
+              <AppRoutes />
+            </ToastProvider>
+          </SpaceLayoutProvider>
         </SocketProvider>
       </AuthProvider>
     </Router>

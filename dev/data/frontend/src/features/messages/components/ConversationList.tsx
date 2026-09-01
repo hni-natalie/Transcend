@@ -19,19 +19,19 @@ function ConversationGroup({ label, conversations, activeConversationId, onSelec
 
       <ul className="space-y-0.5">
         {conversations.map((conversation) => {
-          const isActive = conversation.id === activeConversationId;
+          const isActive = conversation.conversationId === activeConversationId;
           const hasUnread = (conversation.unreadCount ?? 0) > 0;
 
           return (
             <li
-              key={conversation.id}
+              key={conversation.conversationId}
               onClick={() => onSelect?.(conversation)}
               className={`group flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors hover:bg-background-1 ${
                 isActive ? 'bg-background-2' : ''
               }`}
             >
               <ChatAvatar
-                status={conversation.type === 'group' ? undefined : conversation.status}
+                status={conversation.type === 'group' ? undefined : conversation.userStatus}
                 name={conversation.name}
                 photo={conversation.avatarUrl}
                 isGroup={conversation.type === 'group'}

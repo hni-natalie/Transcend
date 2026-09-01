@@ -3,6 +3,7 @@ import { getInitials } from "@shared";
 interface DefaultAvatarProps {
   name: string;
   email?: string;
+  title?: string;
   className?: string;
   bgColor?: string;
   textColor?: string;
@@ -13,6 +14,7 @@ interface DefaultAvatarProps {
 export const DefaultAvatar = ({
   name,
   email = '',
+  title = '',
   className = '',
   bgColor = '#333628',
   textColor = '#D0F05C',
@@ -38,6 +40,7 @@ export const DefaultAvatar = ({
 
  return (
     <svg className={className} viewBox="0 0 100 100">
+      <title>{title}</title>
       <circle cx="50" cy="50" r="50" fill={bgColor} />
       <text
         x="50"

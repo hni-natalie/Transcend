@@ -2,18 +2,20 @@
  handles voice room joining request, leave room request & mute/unmute
 */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLiveKit } from "@features/livekit";
-import { IconMute, IconSpeak } from "@shared/ui/Icons";
+import { IconMic, IconMicDisabled } from "@shared/ui/Icons";
 import { useSocket } from "@/context/SocketContext";
+import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { ButtonLoading } from "@/shared/ui/ButtonLoading";
 import { LivekitMode } from "@/shared/types/livekit.types";
 import { meetingApi } from "@/features/meetings/api/meeting.api";
 
 type ButtonVoiceRoomProps = {
-  joinText?: string;
-  leaveText?: string;
+  joinText?: React.ReactNode;
+  leaveText?: React.ReactNode;
+  loadingText?: string;
   roomName?: string;
   meetingTitle?: string;
   allowLeave?: boolean;
@@ -29,6 +31,7 @@ type ButtonVoiceRoomProps = {
 export function ButtonVoiceRoom({
   joinText = "Join Room",
   leaveText = "Leave Room",
+  loadingText = "Loading",
   roomName = "myroom",
   meetingTitle = "",
   allowLeave = true,
@@ -45,6 +48,7 @@ export function ButtonVoiceRoom({
     disconnect,
     isConnectedRoom,
     currentRoomName,
+    isCurrentLoading,
     isLoading,
     isMuted,
     toggleMute,
@@ -97,6 +101,7 @@ export function ButtonVoiceRoom({
             meetingTitle: selectedMeetingTitle,
             meetId: selectedMeetId,
             isHost: isHost,
+            leaveTo: leaveTo || R.USER_MEETINGS,
           },
         });
     }
@@ -141,10 +146,10 @@ export function ButtonVoiceRoom({
         <button
           onClick={handleJoin}
           className={finalClassName}
-          disabled={!isConnected || isLoading}
+          disabled={!isConnected || isCurrentLoading}
         >
-          {isLoading ? (
-            <ButtonLoading isLoading={isLoading} />
+          {isCurrentLoading ? (
+            <ButtonLoading isLoading={isCurrentLoading} />
           ) : (
             joinText
           )}
@@ -154,11 +159,11 @@ export function ButtonVoiceRoom({
           {allowLeave && (
             <button
               onClick={handleLeave}
-              disabled={ isLoading }
+              disabled={ isCurrentLoading }
               className={`${finalClassName} flex-1`}
             >
-              {isLoading ? (
-                <ButtonLoading isLoading={isLoading} />
+              {isCurrentLoading ? (
+                <ButtonLoading isLoading={isCurrentLoading} text={loadingText} />
               ) : (
                 leaveText
               )}
@@ -168,13 +173,13 @@ export function ButtonVoiceRoom({
           {showMute && (
             <button
               onClick={toggleMute}
-              disabled={ isLoading }
+              disabled={ isCurrentLoading }
               className={`${isMuted ? "btn-outline" : finalClassName} rounded-full transition-colors duration-500 p-1`}
             >
               {isMuted ? (
-                <IconMute className="w-4 h-4 text-border-2" />
+                <IconMicDisabled className="w-4 h-4 text-border-2" />
               ) : (
-                <IconSpeak className="w-4 h-4" />
+                <IconMic className="w-4 h-4" />
               )}
             </button>
           )}

@@ -3,9 +3,11 @@ import { IconInfo, IconMeetingAdd, IconPhone, IconProfile, IconVideo } from '@sh
 import type { Profile } from '../types';
 import { formatClockTime } from '../lib/format';
 import { ChatAvatar } from './ChatAvatar';
+import { ButtonVoiceRoom } from '@/features/livekit';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
 
-export const Tooltip = ({ children, text }: { children: React.ReactNode; text: string }) => (
-  <div className="relative group">
+export const Tooltip = ({ children, text, className }: { children: React.ReactNode; text: string, className?: string }) => (
+  <div className={`relative group ${className}`}>
     {children}
 
     <div className="mt-2.5 absolute top-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 text-base text-white bg-background-2 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -16,11 +18,12 @@ export const Tooltip = ({ children, text }: { children: React.ReactNode; text: s
 
 interface MessageHeaderProps {
   contact: Profile;
+  directKey?: string | null;
   isInfoOpen: boolean;
   onToggleInfo: () => void;
 }
 
-export function MessageHeader({ contact, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
+export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
   const [localTime, setLocalTime] = useState(() => formatClockTime());
 
   useEffect(() => {
@@ -36,6 +39,7 @@ export function MessageHeader({ contact, isInfoOpen, onToggleInfo }: MessageHead
     console.log('Schedule meeting for group:', contact.name);
   };
 
+  // console.log('DEBUGG directKey: ', directKey);
   return (
     <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
       <div className="flex items-center gap-3">
@@ -59,21 +63,37 @@ export function MessageHeader({ contact, isInfoOpen, onToggleInfo }: MessageHead
           <>
             {/* KIV: if too complicated, can take these features out */}
             <Tooltip text="Call">
-              <button
+              <div
                 aria-label="Call"
-                className="flex p-1.5 rounded-lg cursor-pointer hover:text-foreground transition-colors"
+                className="flex p-1.5 rounded-lg cursor-pointer transition-colors"
               >
-                <IconPhone className="stroke-currentColor w-[19px] h-[19px]" />
-              </button>
+                <ButtonVoiceRoom
+                  mode="call"
+                  className='border-0 cursor-pointer hover:text-foreground'
+                  roomName={`${directKey ?? 'room'}:voice`}
+                  joinText={<IconPhone className="stroke-currentColor hover:text-foreground w-[19px] h-[19px]" />}
+                  leaveText={<IconPhone className="stroke-currentColor hover:text-foreground text-danger w-[19px] h-[19px] rotate-135" />}
+                  loadingText=' '
+                />
+              </div>
             </Tooltip>
 
             <Tooltip text="Video Call">
-              <button
+              <div
                 aria-label="Video call"
                 className="flex p-1.5 rounded-lg cursor-pointer hover:text-foreground transition-colors"
               >
-                <IconVideo className="stroke-currentColor w-[22px] h-[22px]" />
-              </button>
+                <ButtonVoiceRoom
+                  mode="video"
+                  joinText={<IconVideo className="cursor-pointer stroke-currentColor w-[22px] h-[22px]" />}
+                  roomName={`${directKey ?? 'room'}:video`}
+                  meetingTitle={`Call with ${contact.name}`}
+                  // meetId={meeting.id}
+                  joinTo={R.USER_VIDEOCALL}
+                  leaveTo={R.USER_MESSAGES}
+                  className="border-0"
+                />
+              </div>
             </Tooltip>
           </>
         )}

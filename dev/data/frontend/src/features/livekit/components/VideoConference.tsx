@@ -6,7 +6,6 @@ import type { MessageFormatter } from '@livekit/components-react';
 import {
   CarouselLayout,
   ConnectionStateToast,
-  FocusLayout,
   FocusLayoutContainer,
   GridLayout,
   LayoutContextProvider,
@@ -14,7 +13,7 @@ import {
 } from '@livekit/components-react';
 import { useCreateLayoutContext } from '@livekit/components-react';
 import { usePinnedTracks, useTracks } from '@livekit/components-react';
-import { Chat, ControlBar, ParticipantTile } from '@/features/livekit';
+import { Chat, ControlBar, ParticipantTile, FocusLayout } from '@/features/livekit';
 import { Rnd } from "react-rnd";
 import { Attendance } from './Attendance';
 
@@ -165,7 +164,7 @@ export function VideoConference({
                 attendance: isHost,
                 settings: !!SettingsComponent 
               }}
-              onAttendanceClick={() => setShowAttendance(true)} 
+              onAttendanceClick={() => setShowAttendance((prev) => !prev)} 
             />
           </div>
           <div
@@ -191,7 +190,7 @@ export function VideoConference({
             >
               <Chat
                 meetId={meetId}
-                className="h-full w-full"
+                className="h-full w-full p-2 pt-0"
                 messageFormatter={chatMessageFormatter}
                 messageEncoder={chatMessageEncoder}
                 messageDecoder={chatMessageDecoder}
