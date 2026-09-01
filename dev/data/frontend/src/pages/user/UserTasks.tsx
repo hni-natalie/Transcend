@@ -1,5 +1,5 @@
 import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, UserChipItem, IconPlus, LoadingState, Modal, IconClose, ModalHeader, DefaultAvatar, AlertBanner } from '@shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
 import { InputTextArea } from '@/shared/ui/InputTextArea';
@@ -680,17 +680,13 @@ export const Tasks = () => {
       )}
 
       <Modal isOpen={!!selectedTask} onClose={() => setSelectedTask(null)}>
-        (<TaskDetailModal
+        <TaskDetailModal
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
           onUpdate={handleUpdateTask}
           loading={updateLoading}
-<<<<<<< HEAD
           error={error}
         />
-=======
-        />)
->>>>>>> be-messages
       </Modal>
 
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)}>
