@@ -38,21 +38,21 @@ export const Avatar = ({ avatarUrl, name }: { avatarUrl?: string | null; name: s
 
 
 // FEATURED MEMBER
-export interface FeaturedMemberRowProps {
+interface FeaturedMemberRowProps {
   member: FeaturedMember;
 }
 
 export const FeaturedMemberRow = ({ member }: FeaturedMemberRowProps) => {
   const status = member.userStatus as UserStatusType;
   const colors = getStatusColors(status);
-  const displayName = getStatusDisplay(status);
+  const displayStatus = getStatusDisplay(status);
 
   return (
     <div className="bg-background-4 rounded-2xl p-4 min-h-[180px] flex flex-col justify-between flex-shrink-0 mt-7">
       <div className="flex p-1 justify-between items-start">
         <Avatar avatarUrl={member.avatarUrl} name={member.userName} />
         <span className={`text-base font-medium px-2 py-0.5 rounded ${colors.text}`}>
-          {displayName}
+          {displayStatus}
         </span>
       </div>
       <div className="p-1 mt-2">
@@ -68,14 +68,14 @@ export const FeaturedMemberRow = ({ member }: FeaturedMemberRowProps) => {
 
 
 // MEMBERS
-export interface MemberRowProps {
+interface MemberRowProps {
   member: FeaturedMember;
 }
 
 export const MemberRow = ({ member }: MemberRowProps) => {
   const status = member.userStatus as UserStatusType;
   const colors = getStatusColors(status);
-  const displayName = getStatusDisplay(status);
+  const displayStatus = getStatusDisplay(status);
 
   return (
     <div className="flex items-center justify-between p-2 rounded-lg hover:bg-background-2/30 transition-colors group">
@@ -95,7 +95,7 @@ export const MemberRow = ({ member }: MemberRowProps) => {
         </div>
       </div>
       <span className={`text-sm font-medium flex-shrink-0 self-start mt-1 px-4 ${colors.text}`}>
-        {displayName}
+        {displayStatus}
       </span>
     </div>
   );
@@ -103,7 +103,7 @@ export const MemberRow = ({ member }: MemberRowProps) => {
 
 
 // CALENDAR GRID
-export interface CalendarGridProps {
+interface CalendarGridProps {
   calendarDays: CalendarDay[];
   monthYear: string;
 }
@@ -157,7 +157,7 @@ export const CalendarGrid = ({ calendarDays, monthYear }: CalendarGridProps) => 
 
 
 // STATUS
-export interface StatusDropdownProps {
+interface StatusDropdownProps {
   show: boolean;
   updatingStatus: boolean;
   onSelect: (status: UserBackendStatus) => void;
