@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { InputText, IconEye, IconEyeOff } from '@shared';
 import { usePasswordValidation } from '@/features/auth';
 
-export interface PasswordFieldProps {
+interface PasswordFieldProps {
     value: string;
     onChange: (value: string) => void;
     title?: string;

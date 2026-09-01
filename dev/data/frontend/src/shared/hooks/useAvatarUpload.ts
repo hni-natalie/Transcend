@@ -11,10 +11,12 @@ interface UseAvatarUploadOptions {
 interface UseAvatarUploadResult {
     isUploading: boolean;
     avatarUrl: string | null;
+	uploadError: string | null;
     setAvatarUrl: (url: string | null) => void;
     handleFileUpload: (file: File) => Promise<void>;
     handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
     uploadPendingForUser: (userId: string) => Promise<string | null>;
+	uploadPendingForSelf: () => Promise<string | null>;
     pendingFile: File | null;
 }
 
@@ -25,6 +27,7 @@ export function useAvatarUpload({
 }: UseAvatarUploadOptions = {}): UseAvatarUploadResult {
     const [isUploading, setIsUploading] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+	const [uploadError, setUploadError] = useState<string | null>(null);
     const [pendingFile, setPendingFile] = useState<File | null>(null);
     const { showToast } = useToast();
 
@@ -32,34 +35,38 @@ export function useAvatarUpload({
         if (!file) return null;
 
         if (!file.type.startsWith('image/')) {
-            showToast('error', 'Please select a valid image file');
+            const msg = 'Please select a valid image file';
+            setUploadError(msg);
+            showToast('error', msg);
             return null;
         }
 
         if (file.size > 10 * 1024 * 1024) {
-            showToast('error', 'File size should be less than 10MB');
+            const msg = 'File size should be less than 10MB';
+            setUploadError(msg);
+            showToast('error', msg);
             return null;
         }
 
         setIsUploading(true);
+        setUploadError(null);
 
         try {
             const formData = new FormData();
             formData.append('avatar', file);
-
             const endpoint = (userId || targetUserId)
-                ? `/uploads/avatar/${userId || targetUserId}`
-                : '/uploads/avatar';
+                ? `/users/avatar/${userId || targetUserId}`
+                : '/users/avatar';
 
             const response = await apiClient.upload<{ avatarUrl: string }>(endpoint, formData);
             const url = response.avatarUrl;
-            
             setAvatarUrl(url);
             onSuccess?.(url);
             showToast('success', 'Avatar updated successfully!');
             return url;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to upload avatar';
+            setUploadError(errorMessage);
             showToast('error', errorMessage);
             return null;
         } finally {
@@ -96,13 +103,20 @@ export function useAvatarUpload({
         return uploadFile(pendingFile, newUserId);
     };
 
+	const uploadPendingForSelf = async (): Promise<string | null> => {
+		if (!pendingFile) return null;
+		return uploadFile(pendingFile);
+	};
+
     return {
         isUploading,
         avatarUrl,
+		uploadError,
         setAvatarUrl,
         handleFileUpload,
         handleAvatarUpload,
         uploadPendingForUser,
+		uploadPendingForSelf,
         pendingFile,
     };
 }

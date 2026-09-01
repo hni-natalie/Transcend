@@ -31,6 +31,39 @@ export function addPosition(pos1, pos2) {
   }
 };
 
+export function getPageNumbers(currentPage: number, totalPages: number): (number | '...')[] {
+  const maxVisible = 7; // total slots including ellipses/first/last
+
+  if (totalPages <= maxVisible) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const pages: (number | '...')[] = [];
+  const showLeftEllipsis = currentPage > 4;
+  const showRightEllipsis = currentPage < totalPages - 3;
+
+  pages.push(1);
+
+  if (showLeftEllipsis) {
+    pages.push('...');
+  }
+
+  const start = showLeftEllipsis ? Math.max(2, currentPage - 1) : 2;
+  const end = showRightEllipsis ? Math.min(totalPages - 1, currentPage + 1) : totalPages - 1;
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+
+  if (showRightEllipsis) {
+    pages.push('...');
+  }
+
+  pages.push(totalPages);
+
+  return pages;
+}
+
 // export const normalizeChoices = (choices: any[]): DropdownChoice[] => 
 //   choices.map(choice => {
 //     if (typeof choice === 'string') {

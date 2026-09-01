@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, ReactNode } from 'react';
-import { LoadingState } from '@shared';
+import { LoadingState, getPageNumbers } from '@shared';
 
-export interface FilterLayoutProps {
+interface FilterLayoutProps {
   title?: string;
   action?: ReactNode;
   searchQuery: string;
@@ -25,6 +25,7 @@ export interface FilterLayoutProps {
   onCustomRangeChange?: (range: { startDate: string; endDate: string }) => void;
   children: ReactNode;
   isLoading?: boolean;
+  isEmpty?: boolean;
   emptyMessage?: string;
   showFilters?: boolean;
   showSearch?: boolean;
@@ -63,6 +64,7 @@ export const FilterLayout = ({
   onCustomRangeChange,
   children,
   isLoading = false,
+  isEmpty = false, 
   emptyMessage = 'No items found',
   showFilters = true,
   showSearch = true,
@@ -314,7 +316,16 @@ export const FilterLayout = ({
         </div>
 
         {/* SCROLLABLE CONTENT */}
-        <div className="flex-1 overflow-auto min-h-0 px-6">
+		<div className="flex-1 overflow-auto min-h-0 px-6">
+		  {isEmpty ? (
+			<div className="flex items-center justify-center h-full">
+			  <p className="text-foreground-3">{emptyMessage}</p>
+			</div>
+		  ) : (
+			children
+		  )}
+		</div>
+        {/* <div className="flex-1 overflow-auto min-h-0 px-6">
           {React.Children.count(children) === 0 ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-foreground-3">{emptyMessage}</p>
@@ -322,7 +333,7 @@ export const FilterLayout = ({
           ) : (
             children
           )}
-        </div>
+        </div> */}
 
         {/* PAGINATION - with custom per-page dropdown */}
         {showPagination && totalItems > 0 && onPageChange && onPerPageChange && (
@@ -388,7 +399,27 @@ export const FilterLayout = ({
                   &lt;
                 </button>
 
-                {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((page) => (
+				{getPageNumbers(currentPage, totalPages).map((page, idx) =>
+				  page === '...' ? (
+					<span key={`ellipsis-${idx}`} className="w-6 h-6 flex items-center justify-center text-foreground-3">
+					  …
+					</span>
+				  ) : (
+					<button
+					  key={page}
+					  onClick={() => onPageChange(page as number)}
+					  className={`w-6 h-6 flex items-center justify-center rounded cursor-pointer ${
+						currentPage === page
+						? 'bg-accent-lime text-black font-bold'
+						: 'hover:bg-accent-lime-bg'
+					  }`}
+					>
+					  {page}
+					</button>
+				  )
+				)}
+
+                {/* {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((page) => (
                   <button
                     key={page}
                     onClick={() => onPageChange(page)}
@@ -400,7 +431,7 @@ export const FilterLayout = ({
                   >
                     {page}
                   </button>
-                ))}
+                ))} */}
 
                 <button
                   onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}

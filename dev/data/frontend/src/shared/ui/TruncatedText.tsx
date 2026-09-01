@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-export interface TruncatedTextProps {
+interface TruncatedTextProps {
   text: string;
   className?: string;
   tooltipClassName?: string;

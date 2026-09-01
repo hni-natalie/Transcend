@@ -12,11 +12,6 @@ const getMenuForPath = ( pathname:string ): MenuConfig => {
   return pathname.startsWith('/admin') ? adminMenuConfig : userMenuConfig;
 };
 
-// const getUserStatus = async () => {
-//   const userData = await authService.getMe();
-//   return userData.userStatus || 'away'
-// }
-
 // hl's
 // const getUserLocation = () => {
 //   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -27,58 +22,64 @@ const getMenuForPath = ( pathname:string ): MenuConfig => {
 
 export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
   const location = useLocation();
+  const navigate = useNavigate();
   const { logout } = useAuth();
   const { user } = useUserStatusSync();
-  const menuItems = conf ?? getMenuForPath(location.pathname);
-  // const userLocation = getUserLocation();
-  const [now, setNow] = useState(() => new Date());
   
+  const [now, setNow] = useState(() => new Date());
   const [isExpanded, setIsExpanded] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
   const { location: userLocation, isLoading: locationLoading, error: locationError } = useUserLocation();
-  
-  const toggleExpand = () => setIsExpanded(prev => !prev);
-  const expandStatus = isExpanded ? 'expanded' : 'collapsed';
-
   const { isConnected } = useSocket();
   const { connect, isConnectedRoom, isLoading } = useLiveKit("Office");
-  const navigate = useNavigate();
-  const handleJoinOffice = async ( href:string ) => {
-    await connect("room");
-    navigate(href);
-  }
 
+  const menuItems = conf ?? getMenuForPath(location.pathname);
+  const expandStatus = isExpanded? 'expanded' : 'collapsed';
+  
   const utcTimeLabel = new Intl.DateTimeFormat([], {
-  hour: '2-digit',
-  minute: '2-digit',
-  timeZone: 'UTC',
-}).format(now);
-
-  useEffect(() => {
-    const interval = window.setInterval(() => setNow(new Date()), 60000);
-    return () => window.clearInterval(interval);
-  }, []);
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  }).format(now);
 
   const timeLabel = new Intl.DateTimeFormat([], {
     hour: '2-digit',
     minute: '2-digit',
   }).format(now);
 
+  // event handlers
+  const toggleExpand = () => {
+    setIsExpanded(prev => !prev);
+  };
+
+  const handleJoinOffice = async (href: string) => {
+    await connect("room");
+    navigate(href);
+  };
+
+  // effects
+  useEffect(() => {
+    const interval = window.setInterval(
+      () => setNow(new Date()),
+      60000
+    );
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  // loading / early return
   if (!user) {
-	return <LoadingState message="" size="medium" />
+    return <LoadingState message="" size="medium" />;
   }
 
-  const userChipData : UserChipItem = user ? {
+  // ui funcs
+  const userChipData: UserChipItem = {
     name: user.userName,
     email: user.userEmail,
     role: user.roleName,
     photo: user.avatarUrl || '/default-avatar.png',
     status: user.userStatus as UserBackendStatus,
-  } : {
-    name: 'Guest',
-    role: 'Unknown',
-    photo: '/default-avatar.png'
   };
 
   const getLocationDisplay = () => {
@@ -87,18 +88,31 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     return userLocation;
   };
 
-  const linkClass = ({ isActive } : { isActive:boolean }) => `
+  const linkClass = ({ isActive }: { isActive: boolean }) => `
     flex items-center h-10 pl-7.5 transition-none group
-    ${isActive ? 'bg-accent-lime/10 text-accent-lime' : 'text-white/50 hover:bg-white/5 hover:text-white'}
+    ${
+      isActive
+        ? 'bg-accent-lime/10 text-accent-lime'
+        : 'text-white/50 hover:bg-white/5 hover:text-white'
+    }
   `;
-  const linkContent = ( item:MenuItem ) => (
+
+  // icon, label and path
+  const linkContent = (item: MenuItem) => (
     <>
-    <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-      {item.icon}
-    </span>
-    {isExpanded && <span className="ml-3 text-base font-medium whitespace-nowrap">{item.title}</span>}
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+        {item.icon}
+      </span>
+
+      {isExpanded && (
+        <span className="ml-3 text-base font-medium whitespace-nowrap">
+          {item.title}
+        </span>
+      )}
     </>
   );
+
+  //jsx
   return (
     <aside className={`flex flex-col h-screen sticky top-0 border-r border-white/10 bg-black py-6 transition-none z-50 ${isExpanded ? 'w-[220px]' : 'w-[60px]'}`}>
       
