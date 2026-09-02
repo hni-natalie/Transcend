@@ -64,6 +64,10 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
       <div className="flex items-center gap-3 text-foreground-3">
         {!contact.isGroup && (
           <>
+            {callStatus === 'ringing' && <LoadingState message='Awaiting' size='none' msgClassName='font-sans'/>}
+            {callStatus === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}
+            {isRinging && callStatus === 'idle' && <LoadingState message='Ringing...' size='none' msgClassName='font-sans'/>}
+
             {/* KIV: if too complicated, can take these features out */}
             <Tooltip text="Call">
               <div
@@ -85,11 +89,10 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                   loadingText=' '
                   onCallStatusChange={setCallStatus}
                 />
-                {callStatus === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}
-                {isRinging && callStatus === 'idle' && <LoadingState message='Ringing...' size='none' msgClassName='font-sans'/>}
               </div>
             </Tooltip>
 
+            {callStatus === 'idle' &&
             <Tooltip text="Video Call">
               <div
                 aria-label="Video call"
@@ -108,6 +111,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                 />
               </div>
             </Tooltip>
+            }
           </>
         )}
 

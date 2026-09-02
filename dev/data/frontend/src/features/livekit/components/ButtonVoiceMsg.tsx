@@ -52,6 +52,7 @@ export function ButtonVoiceMsg({
     connect,
     disconnect,
     isConnectedRoom,
+    hasRemoteParticipant,
     currentRoomName,
     isCurrentLoading,
     isLoading,
@@ -59,7 +60,7 @@ export function ButtonVoiceMsg({
     toggleMute,
   } = useLiveKit(roomName);
 
-  const { enableSocket, isConnected, localPlayerId, socket } = useSocket();
+  const { enableSocket, isConnected, localPlayerId, socket, callStatus } = useSocket();
   const navigate = useNavigate();
   const isClicked = useRef(false);
   const hasNavigated = useRef(false);
@@ -70,8 +71,12 @@ export function ButtonVoiceMsg({
   const isCurrentRoom = isConnectedRoom && currentRoomName === roomName;
 
   useEffect(() => {
-    if (isCurrentRoom) onCallStatusChange?.('connected');
-  }, [isCurrentRoom]);
+    if (isCurrentRoom && hasRemoteParticipant)
+      onCallStatusChange?.('connected');
+    else if (!hasRemoteParticipant && callStatus === 'connected')
+      onCallStatusChange?.('ringing');
+
+  }, [isCurrentRoom, hasRemoteParticipant]);
 
   const handleJoin = async () => {
     console.log("🔥 Start button clicked");
@@ -131,8 +136,8 @@ export function ButtonVoiceMsg({
       console.log("Meeting status changed to scheduled");
     }
   
+    // set onCallStatusChange in disconnect as using diff button in Video roomm
     await disconnect(true);
-    onCallStatusChange?.('idle');
   
     if (leaveTo) navigate(leaveTo);
   };
@@ -161,7 +166,7 @@ export function ButtonVoiceMsg({
           disabled={!isConnected || isCurrentLoading}
         >
           {isCurrentLoading ? (
-            <ButtonLoading isLoading={isCurrentLoading} />
+            <ButtonLoading isLoading={isCurrentLoading} text={loadingText} />
           ) : (
             joinText
           )}

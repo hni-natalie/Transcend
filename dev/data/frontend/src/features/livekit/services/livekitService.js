@@ -15,6 +15,7 @@ import * as THREE from 'three';
 for reference:
   interface LiveKitState {
     isConnectedRoom: boolean;
+    hasRemoteParticipant: boolean;
     activePlane: number;
     isMuted: boolean;
     joinCount: number;
@@ -41,11 +42,13 @@ class LiveKitService {
       isLoading: false,
       loadingRoomName: null,
       readyStreams: new Set(),
+      hasRemoteParticipant: false,
       error: null
     }
   }
 
   get isConnectedRoom() { return this._state.isConnectedRoom; }
+  get hasRemoteParticipant() { return this._state.hasRemoteParticipant; }
   get activePlane() { return this._state.activePlane; }
   get isMuted() { return this._state.isMuted; }
   get joinCount() { return this._state.joinCount; }
@@ -81,6 +84,10 @@ class LiveKitService {
 
   setIsConnectedRoom(status){
     this._setState({ isConnectedRoom:status });
+  }
+
+  setHasRemoteParticipant(status){
+    this._setState({ hasRemoteParticipant:status });
   }
 
   setIsLoading(status, roomName) {
@@ -326,9 +333,19 @@ class LiveKitService {
         // Update UI to show unmuted state
       });
 
+      this._room.on(RoomEvent.ParticipantConnected, (participant) => {
+        console.log(`Participant joined: ${participant.identity}`);
+        this.setHasRemoteParticipant(true);
+      });
+
+      this._room.on(RoomEvent.ParticipantDisconnected, () => {
+        this.setHasRemoteParticipant(this._room.remoteParticipants.size > 0);
+      });
+
       // Run once when room connected Check existing participants
       this._room.once(RoomEvent.Connected, () => {
         console.log('Room connected, participants in room:', this._room.remoteParticipants);
+        this.setHasRemoteParticipant(this._room.remoteParticipants.size > 0);
       });
 
       /* *************************************************************
@@ -407,6 +424,7 @@ class LiveKitService {
 
         this.setActivePlane(null);
         this.setIsConnectedRoom(false);
+        this.setHasRemoteParticipant(false);
         this.setIsLoading(false);
         this.setCurrentRoomName(null);
         this.audioManager.cleanup();
