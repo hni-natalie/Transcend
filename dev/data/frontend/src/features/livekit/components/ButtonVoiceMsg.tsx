@@ -10,6 +10,7 @@ import { useSocket } from "@/context/SocketContext";
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { ButtonLoading } from "@/shared/ui/ButtonLoading";
 import { LivekitMode } from "@/shared/types/livekit.types";
+import { UserCallStatus } from "@/shared";
 import { meetingApi } from "@/features/meetings/api/meeting.api";
 
 type ButtonVoiceRoomProps = {
@@ -27,6 +28,7 @@ type ButtonVoiceRoomProps = {
   isHost?: boolean;
   meetId?: string;
   directKey?: string;
+  onCallStatusChange?: ( status:UserCallStatus ) => void;
 };
 
 export function ButtonVoiceMsg({
@@ -44,6 +46,7 @@ export function ButtonVoiceMsg({
   isHost = false,
   meetId = "",
   directKey = "",
+  onCallStatusChange,
 }: ButtonVoiceRoomProps) {
   const {
     connect,
@@ -65,6 +68,10 @@ export function ButtonVoiceMsg({
   useEffect(() => { enableSocket(); }, []);
 
   const isCurrentRoom = isConnectedRoom && currentRoomName === roomName;
+
+  useEffect(() => {
+    if (isCurrentRoom) onCallStatusChange?.('connected');
+  }, [isCurrentRoom]);
 
   const handleJoin = async () => {
     console.log("🔥 Start button clicked");
@@ -110,6 +117,7 @@ export function ButtonVoiceMsg({
 
     await connect(mode);
     socket.emit('initiate-call', { directKey, selectedRoomName });
+    onCallStatusChange?.('ringing');
 
     console.log("Waiting for LiveKit connection...");
   };
@@ -124,6 +132,7 @@ export function ButtonVoiceMsg({
     }
   
     await disconnect(true);
+    onCallStatusChange?.('idle');
   
     if (leaveTo) navigate(leaveTo);
   };

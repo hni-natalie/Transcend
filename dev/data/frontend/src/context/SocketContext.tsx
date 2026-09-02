@@ -5,7 +5,7 @@
 
 import { io, Socket } from 'socket.io-client';
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import { Player } from '@shared/types/user.types';
+import { Player, UserCallStatus } from '@shared/types/user.types';
 import { useAuth } from '@/features/auth/AuthContext';
 
 // 1. Define the Context interface
@@ -35,6 +35,8 @@ interface SocketContextType {
   subscribeDashboard: () => void;
   unsubscribeDashboard: () => void;
   incomingCalls: Record<string, { caller: string; roomName: string }>;
+  callStatus: string;
+  setCallStatus: React.Dispatch<React.SetStateAction<UserCallStatus>>;
 }
 
 // 2. Pass the interface to createContext
@@ -72,6 +74,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
   
   // status sync across pages
   const [userStatuses, setUserStatuses] = useState<Record<string, string>>({});
+  const [callStatus, setCallStatus] = useState<UserCallStatus>('idle');
   
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
   const [roomPlayers, setRoomPlayers] = useState<Player[]>([]);
@@ -156,6 +159,9 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
           delete next[data.directKey];
           return next;
         });
+      });
+      socketInstance.on('call-failed', (data) => {
+        alert('User currently out of office.');
       });
 
       socketInstance.on('player-joined', (data) => {
@@ -400,6 +406,8 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     activitySeq,
     subscribeDashboard,
     unsubscribeDashboard,
+    callStatus,
+    setCallStatus,
     incomingCalls,
   };
 

@@ -14,7 +14,7 @@ interface ConversationGroupProps {
 }
 
 function ConversationGroup({ label, conversations, activeConversationId, onSelect, onDeleteRequest }: ConversationGroupProps) {
-  const { incomingCalls } = useSocket();
+  const { incomingCalls, callStatus, setCallStatus } = useSocket();
 
   return (
     <div className="mb-6">
@@ -25,7 +25,6 @@ function ConversationGroup({ label, conversations, activeConversationId, onSelec
           const isActive = conversation.conversationId === activeConversationId;
           const hasUnread = (conversation.unreadCount ?? 0) > 0;
           const isRinging = !!conversation.directKey && !!incomingCalls[conversation.directKey];
-
           return (
             <li
               key={conversation.conversationId}
@@ -56,7 +55,9 @@ function ConversationGroup({ label, conversations, activeConversationId, onSelec
                   {getConversationPreview(conversation)}
                 </p>
               </div>
-              {isRinging && <p className="pr-2 text-accent-lime text-base font-medium">Calling</p>}
+              {isRinging && callStatus === 'idle' && 
+                <LoadingState message='Ringing' size='none' msgClassName='font-sans text-accent-lime!'/>
+              }
 
               <div className="relative shrink-0 w-6 h-6 flex items-center justify-center">
                 {hasUnread && (

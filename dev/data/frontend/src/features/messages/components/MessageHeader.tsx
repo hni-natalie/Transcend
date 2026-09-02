@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IconInfo, IconMeetingAdd, IconPhone, IconProfile, IconVideo } from '@shared';
+import { IconInfo, IconMeetingAdd, IconPhone, IconProfile, IconVideo, LoadingState, StateText, UserCallStatus } from '@shared';
 import type { Profile } from '../types';
 import { formatClockTime } from '../lib/format';
 import { ChatAvatar } from './ChatAvatar';
@@ -26,7 +26,7 @@ interface MessageHeaderProps {
 
 export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
   const [localTime, setLocalTime] = useState(() => formatClockTime());
-  const { incomingCalls } = useSocket();
+  const { incomingCalls, callStatus, setCallStatus } = useSocket();
   const isRinging = !!directKey && !!incomingCalls[directKey];
 
   useEffect(() => {
@@ -68,18 +68,25 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
             <Tooltip text="Call">
               <div
                 aria-label="Call"
-                className="flex p-1.5 rounded-lg cursor-pointer transition-colors"
+                className="flex p-1.5 gap-1 rounded-lg cursor-pointer transition-colors"
               >
                 <ButtonVoiceMsg
                   mode="call"
                   className='border-0 cursor-pointer hover:text-foreground'
                   roomName={`${directKey ?? 'room'}:voice`}
                   directKey={directKey ?? undefined}
-                  joinText={<IconPhone className="stroke-currentColor hover:text-foreground w-[19px] h-[19px]" />}
+                  joinText={
+                    <IconPhone
+                      className={`stroke-currentColor hover:text-foreground w-[19px] h-[19px] ${
+                        isRinging && callStatus === 'idle' ? 'animate-bounce' : ''}`}
+                    />
+                  }
                   leaveText={<IconPhone className="stroke-currentColor hover:text-foreground text-danger w-[19px] h-[19px] rotate-135" />}
                   loadingText=' '
+                  onCallStatusChange={setCallStatus}
                 />
-                {isRinging && <p className='pr-1'>Calling...</p>}
+                {callStatus === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}
+                {isRinging && callStatus === 'idle' && <LoadingState message='Ringing...' size='none' msgClassName='font-sans'/>}
               </div>
             </Tooltip>
 
