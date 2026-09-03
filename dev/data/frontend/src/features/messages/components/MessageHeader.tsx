@@ -70,8 +70,8 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
       <div className="flex items-center gap-3 text-foreground-3">
         {!contact.isGroup && (
           <>
-            {callStatus === 'ringing' && <LoadingState message='Awaiting' size='none' msgClassName='font-sans'/>}
-            {isRinging && callStatus === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}
+            {callStatus.status === 'ringing' && callStatus.directKey === directKey && <LoadingState message='Awaiting' size='none' msgClassName='font-sans'/>}
+            {isRinging && callStatus.status === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}
 
             {/* KIV: if too complicated, can take these features out */}
             <Tooltip text="Call">
@@ -87,18 +87,18 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                   joinText={
                     <IconPhone
                       className={`stroke-currentColor hover:text-foreground w-[19px] h-[19px] ${
-                        isRinging && callStatus === 'idle' && callMode === 'call' ? 'animate-bounce' : ''}`
+                        isRinging && callStatus.status === 'idle' && callMode === 'call' ? 'animate-bounce' : ''}`
                       }
                     />
                   }
                   leaveText={<IconPhone className="stroke-currentColor hover:text-foreground text-danger w-[19px] h-[19px] rotate-135" />}
                   loadingText=' '
-                  onCallStatusChange={setCallStatus}
+                  onCallStatusChange={(status, dk) => setCallStatus({ status, directKey: dk ?? null })}
                 />
               </div>
             </Tooltip>
 
-            {callStatus === 'idle' &&
+            {callStatus.status === 'idle' &&
             <Tooltip text="Video Call">
               <div
                 aria-label="Video call"
@@ -109,7 +109,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                   joinText={
                     <IconVideo 
                       className={`cursor-pointer stroke-currentColor w-[22px] h-[22px] ${
-                        isRinging && callStatus === 'idle' && callMode === 'video' ? 'animate-bounce' : ''}`
+                        isRinging && callStatus.status === 'idle' && callMode === 'video' ? 'animate-bounce' : ''}`
                       }
                     />
                   }

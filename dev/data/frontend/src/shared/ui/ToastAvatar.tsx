@@ -54,7 +54,7 @@ export const ToastAvatar = ({
 						leaveText={leaveText}
 						directKey={directKey}
 						roomName={roomName}
-						onCallStatusChange={setCallStatus}
+						onCallStatusChange={(status, dk) => setCallStatus({ status, directKey: dk ?? null })}
 						className='text-accent-lime cursor-pointer hover:brightness-110 hover:saturation-150'
 					/>
 				) : (
@@ -65,7 +65,7 @@ export const ToastAvatar = ({
 						leaveText={leaveText}
 						directKey={directKey}
 						roomName={roomName}
-						onCallStatusChange={setCallStatus}
+						onCallStatusChange={(status, dk) => setCallStatus({ status, directKey: dk ?? null })}
 						className='text-accent-lime cursor-pointer hover:brightness-110 hover:saturation-150'
 						meetingTitle={`Call with ${name}`}
 						joinTo={R.USER_VIDEOCALL}

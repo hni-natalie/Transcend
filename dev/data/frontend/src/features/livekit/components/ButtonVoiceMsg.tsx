@@ -28,7 +28,7 @@ type ButtonVoiceRoomProps = {
   isHost?: boolean;
   meetId?: string;
   directKey?: string;
-  onCallStatusChange?: ( status:UserCallStatus ) => void;
+  onCallStatusChange?: ( status:UserCallStatus, directKey?: string ) => void;
 };
 
 export function ButtonVoiceMsg({
@@ -72,9 +72,9 @@ export function ButtonVoiceMsg({
 
   useEffect(() => {
     if (isCurrentRoom && hasRemoteParticipant)
-      onCallStatusChange?.('connected');
-    else if (!hasRemoteParticipant && callStatus === 'connected')
-      onCallStatusChange?.('ringing');
+      onCallStatusChange?.('connected', directKey);
+    else if (!hasRemoteParticipant && callStatus.status === 'connected')
+      onCallStatusChange?.('ringing', directKey);
 
   }, [isCurrentRoom, hasRemoteParticipant]);
 
@@ -122,7 +122,7 @@ export function ButtonVoiceMsg({
 
     await connect(mode);
     socket.emit('initiate-call', { directKey, selectedRoomName, mode });
-    onCallStatusChange?.('ringing');
+    onCallStatusChange?.('ringing', directKey);
 
     console.log("Waiting for LiveKit connection...");
   };

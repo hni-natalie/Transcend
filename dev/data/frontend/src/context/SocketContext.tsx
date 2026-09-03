@@ -17,6 +17,11 @@ interface IncomingCallData {
   mode:string
 }
 
+interface CallStatusState {
+  status: UserCallStatus;
+  directKey: string | null;
+}
+
 // 1. Define the Context interface
 interface SocketContextType {
   enableSocket: () => void;
@@ -46,8 +51,8 @@ interface SocketContextType {
   incomingCalls: Record<string, { caller:string; callerName:string; callerPhoto:string; roomName:string; mode:string }>;
   dismissIncomingCall: (directKey:string) => void;
   declineCall: (directKey:string, roomName:string) => void;
-  callStatus: string;
-  setCallStatus: React.Dispatch<React.SetStateAction<UserCallStatus>>;
+  callStatus: CallStatusState;
+  setCallStatus: React.Dispatch<React.SetStateAction<CallStatusState>>;
 }
 
 // 2. Pass the interface to createContext
@@ -85,7 +90,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
   
   // status sync across pages
   const [userStatuses, setUserStatuses] = useState<Record<string, string>>({});
-  const [callStatus, setCallStatus] = useState<UserCallStatus>('idle');
+  const [callStatus, setCallStatus] = useState<CallStatusState>({ status: 'idle', directKey: null });
   
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
   const [roomPlayers, setRoomPlayers] = useState<Player[]>([]);
@@ -171,7 +176,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
         setIncomingCalls((prev) => removeIncomingCall(prev, data.directKey));
         leaveRoom(data.roomName); // emit leave-room signal to backend
         livekitService.disconnectFromRoom(); // frontend cleanup, setLoading false 
-        setCallStatus('idle');
+        setCallStatus({ status: 'idle', directKey: null });
         alert('User terminated the call.');
       });
 
@@ -408,7 +413,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
 
   const dismissIncomingCall = useCallback((directKey: string) => {
     setIncomingCalls((prev) => removeIncomingCall(prev, directKey));
-    setCallStatus('idle');
+    setCallStatus({ status: 'idle', directKey: null });
   }, []);
 
   const declineCall = useCallback((directKey:string, roomName:string) => {

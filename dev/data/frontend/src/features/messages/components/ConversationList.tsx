@@ -55,7 +55,7 @@ function ConversationGroup({ label, conversations, activeConversationId, onSelec
                   {getConversationPreview(conversation)}
                 </p>
               </div>
-              {isRinging && callStatus === 'idle' && 
+              {isRinging && callStatus.status === 'idle' &&
                 <LoadingState message='Ringing' size='none' msgClassName='font-sans text-accent-lime!'/>
               }
 
