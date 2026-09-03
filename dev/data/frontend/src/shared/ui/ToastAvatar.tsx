@@ -41,7 +41,7 @@ export const ToastAvatar = ({
 
 				<div className='flex flex-col w-full'>
 					<p className='text-base font-bold'>{name}</p>
-					<p className='animate-pulse'>Incoming {mode === 'video' ? 'video ' : ''}call</p>
+					<p className='animate-pulse'>Connecting {mode === 'video' ? 'video ' : ''}call</p>
 				</div>
 			</div>
 
@@ -72,12 +72,14 @@ export const ToastAvatar = ({
 						leaveTo={R.USER_MESSAGES}
 					/>
 				)}
-				<button
-					className='text-danger cursor-pointer hover:brightness-120'
-					onClick={onDecline}
-				>
-					{leaveText}
-				</button>
+				{callStatus.status === 'idle' &&
+					<button
+						className='text-danger cursor-pointer hover:brightness-120'
+						onClick={onDecline}
+					>
+						{leaveText}
+					</button>
+				}
 			</nav>
 
 		</div>

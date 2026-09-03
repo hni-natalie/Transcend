@@ -89,7 +89,7 @@ export function useLiveKit( roomName:string ) {
       setIsLoading(true, roomName);
     leaveRoom(roomName); // emit leave-room signal to backend
     await livekitService.disconnectFromRoom(); // frontend cleanup, setLoading false 
-    setCallStatus('idle');
+    setCallStatus({status: 'idle', directKey: null});
   };
 
   const toggleMute = () => {

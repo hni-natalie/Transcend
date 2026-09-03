@@ -8,6 +8,8 @@ import { createContext, useContext, useEffect, useState, useCallback, ReactNode 
 import { Player, UserCallStatus } from '@shared/types/user.types';
 import { useAuth } from '@/features/auth/AuthContext';
 import { livekitService } from '@/features/livekit/services/livekitService';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
+import { useNavigate } from "react-router-dom";
 
 interface IncomingCallData {
   caller:string;
@@ -50,7 +52,7 @@ interface SocketContextType {
   unsubscribeDashboard: () => void;
   incomingCalls: Record<string, { caller:string; callerName:string; callerPhoto:string; roomName:string; mode:string }>;
   dismissIncomingCall: (directKey:string) => void;
-  declineCall: (directKey:string, roomName:string) => void;
+  declineCall: (directKey:string, roomName:string, mode:string) => void;
   callStatus: CallStatusState;
   setCallStatus: React.Dispatch<React.SetStateAction<CallStatusState>>;
 }
@@ -81,6 +83,7 @@ const getSessionId = () => {
 
 export function SocketProvider ({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const [shouldConnect, setShouldConnect] = useState(false);
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -172,12 +175,14 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
         setIncomingCalls((prev) => removeIncomingCall(prev, data.directKey));
       });
 
-      socketInstance.on('call-declined', (data: { directKey:string, roomName:string }) => {
+      socketInstance.on('call-declined', (data: { directKey:string, roomName:string, mode:string }) => {
         setIncomingCalls((prev) => removeIncomingCall(prev, data.directKey));
         leaveRoom(data.roomName); // emit leave-room signal to backend
         livekitService.disconnectFromRoom(); // frontend cleanup, setLoading false 
         setCallStatus({ status: 'idle', directKey: null });
         alert('User terminated the call.');
+        if (data.mode === 'video')
+          navigate(R.USER_MESSAGES);
       });
 
       socketInstance.on('call-failed', (data) => {
@@ -416,8 +421,8 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     setCallStatus({ status: 'idle', directKey: null });
   }, []);
 
-  const declineCall = useCallback((directKey:string, roomName:string) => {
-    socket?.emit('decline-call', { directKey, roomName });
+  const declineCall = useCallback((directKey:string, roomName:string, mode:string) => {
+    socket?.emit('decline-call', { directKey, roomName, mode });
     dismissIncomingCall(directKey);
   }, [socket, dismissIncomingCall]);
 

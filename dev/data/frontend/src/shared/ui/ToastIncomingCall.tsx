@@ -19,7 +19,7 @@ export const ToastIncomingCall = () => {
 					directKey={directKey}
 					roomName={call.roomName}
 					onAccept={() => dismissIncomingCall(directKey)}
-					onDecline={() => declineCall(directKey, call.roomName)}
+					onDecline={() => declineCall(directKey, call.roomName, call.mode)}
 				/>
 			))}
 		</div>

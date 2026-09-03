@@ -161,13 +161,13 @@ const socketService = (io) => {
       });
     });
 
-    socket.on('decline-call', ({ directKey, roomName }) => {
+    socket.on('decline-call', ({ directKey, roomName, mode }) => {
       if (!directKey) return;
       const targetUserId = directKey.split(':').find((id) => id !== player.userId);
       const target = Array.from(players.values()).find((p) => p.userId === targetUserId);
       if (!target) return;
 
-      io.to(target.id).emit('call-declined', { directKey, roomName });
+      io.to(target.id).emit('call-declined', { directKey, roomName, mode });
     });
 
     socket.on('room-spawn-pos', async (data) => {
