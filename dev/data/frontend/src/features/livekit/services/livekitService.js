@@ -33,6 +33,7 @@ class LiveKitService {
     this.audioManager = new AudioManager(); // manage own audio mic, mute state
     this.listeners = new Map();             // event listener
     this.isInitialized = false;
+    this.roomMode = null;
     this._state = {
       isConnectedRoom: false,
       currentRoomName: null,
@@ -126,13 +127,15 @@ class LiveKitService {
     room: spatial audio, call: non spatial audio, video: video call
   */
   init( mode ) {
+    this.roomMode = mode; // keep latest mode fresh even if listener already wired
+
     if (this.isInitialized) return ;
 
     // Listen for LiveKit connection events from useSocket
     window.addEventListener('livekit-connect', async (event) => {
       try {
         // emits connected signal to useLiveKit
-        await this.connectToRoom(event.detail, mode);
+        await this.connectToRoom(event.detail, this.roomMode);
         this.isInitialized = true;
         // this.lkToken = event.detail;
         // console.log('livekit-connect: Successfully joined room: ', this.lkToken);
