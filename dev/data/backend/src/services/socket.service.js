@@ -145,7 +145,7 @@ const socketService = (io) => {
       }
     });
 
-    socket.on('initiate-call', ({ directKey, selectedRoomName }) => {
+    socket.on('initiate-call', ({ directKey, selectedRoomName, mode }) => {
       if (!directKey) return;
       const targetUserId = directKey.split(':').find((id) => id !== player.userId);
       const target = Array.from(players.values()).find((p) => p.userId === targetUserId);
@@ -155,6 +155,7 @@ const socketService = (io) => {
         caller: player.userId,
         directKey,
         roomName: selectedRoomName,
+        mode,
       });
     });
 

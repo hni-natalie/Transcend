@@ -121,7 +121,7 @@ export function ButtonVoiceMsg({
     }
 
     await connect(mode);
-    socket.emit('initiate-call', { directKey, selectedRoomName });
+    socket.emit('initiate-call', { directKey, selectedRoomName, mode });
     onCallStatusChange?.('ringing');
 
     console.log("Waiting for LiveKit connection...");

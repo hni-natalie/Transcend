@@ -145,10 +145,10 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
       });
 
       /* Events: Direct calls */
-      socketInstance.on('incoming-call', (data: { caller: string; directKey: string; roomName: string }) => {
+      socketInstance.on('incoming-call', (data: { caller:string; directKey:string; roomName:string, mode:string }) => {
         setIncomingCalls((prev) => ({
           ...prev,
-          [data.directKey]: { caller: data.caller, roomName: data.roomName }
+          [data.directKey]: { caller: data.caller, roomName: data.roomName, mode: data.mode }
         }));
       });
 
