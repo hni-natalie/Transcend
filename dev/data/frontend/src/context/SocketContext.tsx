@@ -7,6 +7,15 @@ import { io, Socket } from 'socket.io-client';
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { Player, UserCallStatus } from '@shared/types/user.types';
 import { useAuth } from '@/features/auth/AuthContext';
+import { livekitService } from '@/features/livekit/services/livekitService';
+
+interface IncomingCallData {
+  caller:string;
+  callerName:string;
+  callerPhoto:string;
+  roomName:string;
+  mode:string
+}
 
 // 1. Define the Context interface
 interface SocketContextType {
@@ -34,7 +43,9 @@ interface SocketContextType {
   activitySeq: number;
   subscribeDashboard: () => void;
   unsubscribeDashboard: () => void;
-  incomingCalls: Record<string, { caller: string; roomName: string }>;
+  incomingCalls: Record<string, { caller:string; callerName:string; callerPhoto:string; roomName:string; mode:string }>;
+  dismissIncomingCall: (directKey:string) => void;
+  declineCall: (directKey:string, roomName:string) => void;
   callStatus: string;
   setCallStatus: React.Dispatch<React.SetStateAction<UserCallStatus>>;
 }
@@ -87,7 +98,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
   const [latestActivity, setLatestActivity] = useState<any>(null);
   const [activitySeq, setActivitySeq] = useState<number>(0);
 
-  const [incomingCalls, setIncomingCalls] = useState<Record<string, { caller:string; roomName:string }>>({});
+  const [incomingCalls, setIncomingCalls] = useState<Record<string, IncomingCallData>>({});
 
   useEffect(() => {
     const token = getToken();
@@ -145,21 +156,25 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
       });
 
       /* Events: Direct calls */
-      socketInstance.on('incoming-call', (data: { caller:string; directKey:string; roomName:string, mode:string }) => {
+      socketInstance.on('incoming-call', (data: { caller: string; callerName: string; directKey: string; roomName: string; mode: string, callerPhoto: string }) => {
         setIncomingCalls((prev) => ({
           ...prev,
-          [data.directKey]: { caller: data.caller, roomName: data.roomName, mode: data.mode }
+          [data.directKey]: { caller: data.caller, callerName: data.callerName, callerPhoto: data.callerPhoto, roomName: data.roomName, mode: data.mode }
         }));
       });
 
-      socketInstance.on('call-ended', (data: { directKey: string }) => {
-        setIncomingCalls((prev) => {
-          if (!(data.directKey in prev)) return prev;
-          const next = { ...prev };
-          delete next[data.directKey];
-          return next;
-        });
+      socketInstance.on('call-ended', (data: { directKey:string, roomName:string }) => {
+        setIncomingCalls((prev) => removeIncomingCall(prev, data.directKey));
       });
+
+      socketInstance.on('call-declined', (data: { directKey:string, roomName:string }) => {
+        setIncomingCalls((prev) => removeIncomingCall(prev, data.directKey));
+        leaveRoom(data.roomName); // emit leave-room signal to backend
+        livekitService.disconnectFromRoom(); // frontend cleanup, setLoading false 
+        setCallStatus('idle');
+        alert('User terminated the call.');
+      });
+
       socketInstance.on('call-failed', (data) => {
         alert('User currently out of office.');
       });
@@ -381,6 +396,26 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     }
   }, [socket, isConnected]);
 
+  const removeIncomingCall = useCallback((
+    prev: Record<string, IncomingCallData>,
+    directKey: string
+  ) => {
+    if (!(directKey in prev)) return prev;
+    const next = { ...prev };
+    delete next[directKey];
+    return next;
+  }, []);
+
+  const dismissIncomingCall = useCallback((directKey: string) => {
+    setIncomingCalls((prev) => removeIncomingCall(prev, directKey));
+    setCallStatus('idle');
+  }, []);
+
+  const declineCall = useCallback((directKey:string, roomName:string) => {
+    socket?.emit('decline-call', { directKey, roomName });
+    dismissIncomingCall(directKey);
+  }, [socket, dismissIncomingCall]);
+
   const value = {
     enableSocket,
     isConnected,
@@ -409,6 +444,8 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     callStatus,
     setCallStatus,
     incomingCalls,
+    dismissIncomingCall,
+    declineCall,
   };
 
   return (

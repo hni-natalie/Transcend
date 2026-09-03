@@ -153,10 +153,21 @@ const socketService = (io) => {
 
       io.to(target.id).emit('incoming-call', {
         caller: player.userId,
+        callerName: player.name,
+        callerPhoto: player.photo,
         directKey,
         roomName: selectedRoomName,
         mode,
       });
+    });
+
+    socket.on('decline-call', ({ directKey, roomName }) => {
+      if (!directKey) return;
+      const targetUserId = directKey.split(':').find((id) => id !== player.userId);
+      const target = Array.from(players.values()).find((p) => p.userId === targetUserId);
+      if (!target) return;
+
+      io.to(target.id).emit('call-declined', { directKey, roomName });
     });
 
     socket.on('room-spawn-pos', async (data) => {

@@ -41,5 +41,6 @@ export { TruncatedText } from './ui/TruncatedText';
 export { PasswordField, usePasswordField } from './ui/PasswordField'
 export { EmptyCard } from './ui/EmptyCard'
 export { ToastAvatar } from './ui/ToastAvatar'
+export { ToastIncomingCall } from './ui/ToastIncomingCall'
 export * from './ui/Icons';
 export * from './ui/State';

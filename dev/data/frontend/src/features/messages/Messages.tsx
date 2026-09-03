@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/features/auth/AuthContext';
-import { ErrorState, Modal, ToastAvatar, useUsers } from '@shared';
+import { ErrorState, Modal, useUsers } from '@shared';
 import type { User } from '@shared';
 import { Sidebar, MessageHeader, MessageList, Composer, MessageProfile } from './components';
 import { FormNewMessage } from './form/FormNewMessage';
@@ -350,7 +350,6 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
 
   return (
     <>
-      <ToastAvatar name='Test User 1' mode='call' />
       <div className="flex h-full w-full bg-background overflow-hidden">
         <Sidebar
           onConversationSelect={handleConversationSelect}

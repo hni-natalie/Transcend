@@ -28,12 +28,18 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
   const [localTime, setLocalTime] = useState(() => formatClockTime());
   const { incomingCalls, callStatus, setCallStatus } = useSocket();
   const isRinging = !!directKey && !!incomingCalls[directKey];
+  const [callMode, setCallMode] = useState('none');
 
   useEffect(() => {
     const interval = setInterval(() => setLocalTime(formatClockTime()), 60000);
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!incomingCalls) return ;
+    setCallMode(incomingCalls[directKey]?.mode);
+  }, [incomingCalls, directKey]);
 
   // KIV : to implement?
   // TO DO: hook this up to a real "create meeting" call
@@ -65,8 +71,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
         {!contact.isGroup && (
           <>
             {callStatus === 'ringing' && <LoadingState message='Awaiting' size='none' msgClassName='font-sans'/>}
-            {callStatus === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}
-            {isRinging && callStatus === 'idle' && <LoadingState message='Ringing...' size='none' msgClassName='font-sans'/>}
+            {isRinging && callStatus === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}
 
             {/* KIV: if too complicated, can take these features out */}
             <Tooltip text="Call">
@@ -82,7 +87,8 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                   joinText={
                     <IconPhone
                       className={`stroke-currentColor hover:text-foreground w-[19px] h-[19px] ${
-                        isRinging && callStatus === 'idle' ? 'animate-bounce' : ''}`}
+                        isRinging && callStatus === 'idle' && callMode === 'call' ? 'animate-bounce' : ''}`
+                      }
                     />
                   }
                   leaveText={<IconPhone className="stroke-currentColor hover:text-foreground text-danger w-[19px] h-[19px] rotate-135" />}
@@ -100,7 +106,13 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
               >
                 <ButtonVoiceMsg
                   mode="video"
-                  joinText={<IconVideo className="cursor-pointer stroke-currentColor w-[22px] h-[22px]" />}
+                  joinText={
+                    <IconVideo 
+                      className={`cursor-pointer stroke-currentColor w-[22px] h-[22px] ${
+                        isRinging && callStatus === 'idle' && callMode === 'video' ? 'animate-bounce' : ''}`
+                      }
+                    />
+                  }
                   roomName={`${directKey ?? 'room'}:video`}
                   directKey={directKey ?? undefined}
                   meetingTitle={`Call with ${contact.name}`}
