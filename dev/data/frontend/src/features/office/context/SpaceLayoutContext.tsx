@@ -8,7 +8,15 @@ import { officeSceneConfig as conf } from '@/config/office.config';
 import { useSocket } from '@/context';
 import * as d3 from 'd3-hierarchy';
 
-const SpaceLayoutContext = createContext(null);
+const SpaceLayoutContext = createContext({
+	positionedPlanes: undefined,
+	positionDataRef: { current: [] },
+	canvasHeight: 0,
+	canvasWidth: 0,
+	setLoading: () => {},
+	loading: false,
+	count: 0,
+});
 export const useOfficeSpaceLayout = () => useContext(SpaceLayoutContext);
 
 
