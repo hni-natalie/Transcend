@@ -26,7 +26,7 @@ interface MessageHeaderProps {
 
 export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
   const [localTime, setLocalTime] = useState(() => formatClockTime());
-  const { incomingCalls, callStatus, setCallStatus } = useSocket();
+  const { incomingCalls, callStatus, setCallStatus, isConnected } = useSocket();
   const isRinging = !!directKey && !!incomingCalls[directKey];
   const [callMode, setCallMode] = useState('none');
 
@@ -74,14 +74,14 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
             {isRinging && callStatus.status === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}
 
             {/* KIV: if too complicated, can take these features out */}
-            <Tooltip text="Call">
+            <Tooltip text={`${isConnected ? 'Call' : 'Refresh to connect'}`}>
               <div
                 aria-label="Call"
-                className="flex p-1.5 gap-1 rounded-lg cursor-pointer transition-colors"
+                className="flex p-1.5 gap-1 rounded-lg transition-colors"
               >
                 <ButtonVoiceMsg
                   mode="call"
-                  className='border-0 cursor-pointer hover:text-foreground'
+                  className={`border-0 hover:text-foreground ${isConnected ? 'cursor-pointer' : 'cursor-not-allowed' }`}
                   roomName={`${directKey ?? 'room'}:voice`}
                   directKey={directKey ?? undefined}
                   joinText={
@@ -99,16 +99,16 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
             </Tooltip>
 
             {callStatus.status === 'idle' &&
-            <Tooltip text="Video Call">
+            <Tooltip text={`${isConnected ? 'Video Call' : 'Refresh to connect'}`}>
               <div
                 aria-label="Video call"
-                className="flex p-1.5 rounded-lg cursor-pointer hover:text-foreground transition-colors"
+                className="flex p-1.5 rounded-lg hover:text-foreground transition-colors"
               >
                 <ButtonVoiceMsg
                   mode="video"
                   joinText={
                     <IconVideo 
-                      className={`cursor-pointer stroke-currentColor w-[22px] h-[22px] ${
+                      className={`stroke-currentColor w-[22px] h-[22px] ${isConnected ? 'cursor-pointer' : 'cursor-not-allowed' } ${
                         isRinging && callStatus.status === 'idle' && callMode === 'video' ? 'animate-bounce' : ''}`
                       }
                     />

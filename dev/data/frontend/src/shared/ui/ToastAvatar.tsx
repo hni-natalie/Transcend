@@ -3,6 +3,7 @@ import { DefaultAvatar } from "./DefaultAvatar"
 import { ButtonVoiceMsg } from "@/features/livekit"
 import { LivekitMode } from "@/shared/types/livekit.types"
 import { ROUTE_PATH as R } from '@config/routes.manifest';
+import { useLiveKit } from "@/features/livekit";
 
 export const ToastAvatar = ({
 	name,
@@ -27,6 +28,7 @@ export const ToastAvatar = ({
 }) => {
 
 	const { setCallStatus, callStatus } = useSocket();
+  const { isCurrentLoading } = useLiveKit(roomName);
 	
 	return (
 		<div
@@ -52,6 +54,7 @@ export const ToastAvatar = ({
 						showMute={false}
 						joinText={joinText}
 						leaveText={leaveText}
+						allowLeave={false}
 						directKey={directKey}
 						roomName={roomName}
 						onCallStatusChange={(status, dk) => setCallStatus({ status, directKey: dk ?? null })}
@@ -72,7 +75,7 @@ export const ToastAvatar = ({
 						leaveTo={R.USER_MESSAGES}
 					/>
 				)}
-				{callStatus.status === 'idle' &&
+				{!isCurrentLoading &&
 					<button
 						className='text-danger cursor-pointer hover:brightness-120'
 						onClick={onDecline}
