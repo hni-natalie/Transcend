@@ -12,7 +12,7 @@ import { LivekitMode } from '@/shared/types/livekit.types';
 import * as THREE from 'three'; //debug
 
 export function useLiveKit( roomName:string ) {
-  const { enableSocket, joinRoom, leaveRoom } = useSocket();
+  const { enableSocket, joinRoom, leaveRoom, setCallStatus } = useSocket();
   const navigate = useNavigate();
 
   useEffect(() => { enableSocket(); }, []);
@@ -89,6 +89,7 @@ export function useLiveKit( roomName:string ) {
       setIsLoading(true, roomName);
     leaveRoom(roomName); // emit leave-room signal to backend
     await livekitService.disconnectFromRoom(); // frontend cleanup, setLoading false 
+    setCallStatus({status: 'idle', directKey: null});
   };
 
   const toggleMute = () => {
@@ -151,6 +152,7 @@ export function useLiveKit( roomName:string ) {
           isMuted: state.isMuted, isLoading: state.isLoading, joinCount: state.joinCount, 
           activePlane: state.activePlane,
           isConnectedRoom: state.isConnectedRoom,
+          hasRemoteParticipant: state.hasRemoteParticipant,
           currentRoomName: state.currentRoomName,
           isCurrentLoading,
           isBrowserSupported: livekitService.checkBrowserSupport(),

@@ -7,6 +7,7 @@ import { SpaceLayoutProvider } from '@/features/office/context/SpaceLayoutContex
 import { AuthProvider } from '@/features/auth/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { ProtectedRoute, GuestRoute } from '@/features/auth/ProtectedRoute';
+import { ToastIncomingCall } from '@shared/ui/ToastIncomingCall';
 
 function AppRoutes() {
   const location = useLocation();
@@ -77,6 +78,7 @@ export function App() {
           <SpaceLayoutProvider roomName='Office'>
             <ToastProvider>
               <AppRoutes />
+              <ToastIncomingCall />
             </ToastProvider>
           </SpaceLayoutProvider>
         </SocketProvider>

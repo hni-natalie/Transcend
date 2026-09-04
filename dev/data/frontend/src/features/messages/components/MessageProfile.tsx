@@ -185,9 +185,8 @@ export function MessageProfile({
           const isUnpin = label === 'Unpin';
 
           return (
-            <Tooltip text={tooltip} className='flex flex-1'>
+            <Tooltip key={label} text={tooltip} className='flex flex-1'>
               <button
-                key={label}
                 onClick={onClick}
                 disabled={disabled}
                 className={`flex-1 flex flex-col items-center gap-1.5 bg-background-2 rounded-xl py-3 px-1.5 text-[11px] transition-colors ${
