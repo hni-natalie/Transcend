@@ -135,7 +135,10 @@ class LiveKitService {
     window.addEventListener('livekit-connect', async (event) => {
       try {
         // emits connected signal to useLiveKit
-        await this.connectToRoom(event.detail, this.roomMode);
+        const result = await this.connectToRoom(event.detail, this.roomMode);
+        if (!result.success) {
+          throw result.error;
+        }
         this.isInitialized = true;
         // this.lkToken = event.detail;
         // console.log('livekit-connect: Successfully joined room: ', this.lkToken);
@@ -350,8 +353,8 @@ class LiveKitService {
 
       // Run once when room connected Check existing participants
       this._room.once(RoomEvent.Connected, () => {
-        console.log('Room connected, participants in room:', this._room.remoteParticipants);
-        this.setHasRemoteParticipant(this._room.remoteParticipants.size > 0);
+        console.log('Room connected, participants in room:', this?._room?.remoteParticipants);
+        this.setHasRemoteParticipant(this?._room?.remoteParticipants.size > 0);
       });
 
       /* *************************************************************
@@ -359,6 +362,7 @@ class LiveKitService {
         * *************************************************************/
       try {
         await this._room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
+        if (!this._room) throw new Error('Room disconnected during connect');
 
         if (mode === "video") {
           await this._room.localParticipant.enableCameraAndMicrophone();

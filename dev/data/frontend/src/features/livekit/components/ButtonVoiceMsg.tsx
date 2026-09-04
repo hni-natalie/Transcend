@@ -60,7 +60,7 @@ export function ButtonVoiceMsg({
     toggleMute,
   } = useLiveKit(roomName);
 
-  const { enableSocket, isConnected, localPlayerId, socket, callStatus } = useSocket();
+  const { enableSocket, isConnected, socket, callStatus } = useSocket();
   const navigate = useNavigate();
   const isClicked = useRef(false);
   const hasNavigated = useRef(false);
@@ -126,6 +126,7 @@ export function ButtonVoiceMsg({
       cleanupConnectListeners();
     };
     const handleConnectError = () => {
+      onCallStatusChange?.('idle', directKey);
       cleanupConnectListeners();
     };
     const cleanupConnectListeners = () => {
