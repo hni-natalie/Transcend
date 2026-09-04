@@ -120,9 +120,22 @@ export function ButtonVoiceMsg({
         });
     }
 
+    const handleConnectSuccess = () => {
+      socket.emit('initiate-call', { directKey, selectedRoomName, mode });
+      onCallStatusChange?.('ringing', directKey);
+      cleanupConnectListeners();
+    };
+    const handleConnectError = () => {
+      cleanupConnectListeners();
+    };
+    const cleanupConnectListeners = () => {
+      window.removeEventListener('livekit-connect-success', handleConnectSuccess);
+      window.removeEventListener('livekit-connect-error', handleConnectError);
+    };
+    window.addEventListener('livekit-connect-success', handleConnectSuccess);
+    window.addEventListener('livekit-connect-error', handleConnectError);
+
     await connect(mode);
-    socket.emit('initiate-call', { directKey, selectedRoomName, mode });
-    onCallStatusChange?.('ringing', directKey);
 
     console.log("Waiting for LiveKit connection...");
   };

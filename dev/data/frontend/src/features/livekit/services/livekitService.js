@@ -139,6 +139,9 @@ class LiveKitService {
         this.isInitialized = true;
         // this.lkToken = event.detail;
         // console.log('livekit-connect: Successfully joined room: ', this.lkToken);
+        window.dispatchEvent(new CustomEvent('livekit-connect-success', {
+          detail: { success: true }
+        }));
 
       } catch (error) {
         console.error('Failed to connect:', error);
