@@ -62,6 +62,7 @@ export interface DashboardUser extends User {
 
 export type UserBackendStatus = 'online' | 'offline' | 'focus' | 'in_meeting' | 'away';
 export type UserStatus = 'Online' | 'Offline' | 'Focus' | 'In Meeting' | 'Away';
+export type UserCallStatus = 'idle' | 'ringing' | 'connected';
 
 /* user chip (for sidebar) */
 export type UserChipItem = {

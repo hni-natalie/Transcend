@@ -3,7 +3,7 @@ import React from 'react';
 // types
 export interface StateContainerProps {
   children: React.ReactNode;
-  size?: 'full' | 'medium' | 'small';
+  size?: 'full' | 'medium' | 'small' | 'none';
   className?: string;
 }
 
@@ -15,8 +15,9 @@ export interface StateTextProps {
 
 export interface LoadingStateProps {
   message?: string;
-  size?: 'full' | 'medium' | 'small';
+  size?: 'full' | 'medium' | 'small' | 'none';
   className?: string;
+  msgClassName?: string;
 }
 
 export interface EmptyStateProps {
@@ -43,6 +44,7 @@ export const StateContainer = ({
     full: 'min-h-[400px]',
     medium: 'min-h-[200px]',
     small: 'min-h-[100px]',
+    none: '',
   };
 
   return (
@@ -73,11 +75,12 @@ export const StateText = ({
 export const LoadingState = ({ 
   message = 'Loading...', 
   size = 'full',
-  className = ''
+  className = '',
+  msgClassName = ''
 }: LoadingStateProps) => {
   return (
     <StateContainer size={size} className={className}>
-      <StateText variant="loading">{message}</StateText>
+      <StateText variant="loading" className={msgClassName}>{message}</StateText>
     </StateContainer>
   );
 };

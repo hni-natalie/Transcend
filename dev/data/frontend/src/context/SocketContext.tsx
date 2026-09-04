@@ -5,8 +5,24 @@
 
 import { io, Socket } from 'socket.io-client';
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import { Player } from '@shared/types/user.types';
+import { Player, UserCallStatus } from '@shared/types/user.types';
 import { useAuth } from '@/features/auth/AuthContext';
+import { livekitService } from '@/features/livekit/services/livekitService';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
+import { useNavigate } from "react-router-dom";
+
+interface IncomingCallData {
+  caller:string;
+  callerName:string;
+  callerPhoto:string;
+  roomName:string;
+  mode:string
+}
+
+interface CallStatusState {
+  status: UserCallStatus;
+  directKey: string | null;
+}
 
 // 1. Define the Context interface
 interface SocketContextType {
@@ -34,6 +50,11 @@ interface SocketContextType {
   activitySeq: number;
   subscribeDashboard: () => void;
   unsubscribeDashboard: () => void;
+  incomingCalls: Record<string, { caller:string; callerName:string; callerPhoto:string; roomName:string; mode:string }>;
+  dismissIncomingCall: (directKey:string) => void;
+  declineCall: (directKey:string, roomName:string, mode:string) => void;
+  callStatus: CallStatusState;
+  setCallStatus: React.Dispatch<React.SetStateAction<CallStatusState>>;
 }
 
 // 2. Pass the interface to createContext
@@ -62,6 +83,7 @@ const getSessionId = () => {
 
 export function SocketProvider ({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const [shouldConnect, setShouldConnect] = useState(false);
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -71,6 +93,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
   
   // status sync across pages
   const [userStatuses, setUserStatuses] = useState<Record<string, string>>({});
+  const [callStatus, setCallStatus] = useState<CallStatusState>({ status: 'idle', directKey: null });
   
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
   const [roomPlayers, setRoomPlayers] = useState<Player[]>([]);
@@ -82,6 +105,8 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
   // for /admin/activity
   const [latestActivity, setLatestActivity] = useState<any>(null);
   const [activitySeq, setActivitySeq] = useState<number>(0);
+
+  const [incomingCalls, setIncomingCalls] = useState<Record<string, IncomingCallData>>({});
 
   useEffect(() => {
     const token = getToken();
@@ -136,6 +161,32 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
 
       socketInstance.on('existing-room-particles', (objects) => {
         setRoomParticles(objects);
+      });
+
+      /* Events: Direct calls */
+      socketInstance.on('incoming-call', (data: { caller: string; callerName: string; directKey: string; roomName: string; mode: string, callerPhoto: string }) => {
+        setIncomingCalls((prev) => ({
+          ...prev,
+          [data.directKey]: { caller: data.caller, callerName: data.callerName, callerPhoto: data.callerPhoto, roomName: data.roomName, mode: data.mode }
+        }));
+      });
+
+      socketInstance.on('call-ended', (data: { directKey:string, roomName:string }) => {
+        setIncomingCalls((prev) => removeIncomingCall(prev, data.directKey));
+      });
+
+      socketInstance.on('call-declined', (data: { directKey:string, roomName:string, mode:string }) => {
+        setIncomingCalls((prev) => removeIncomingCall(prev, data.directKey));
+        leaveRoom(data.roomName); // emit leave-room signal to backend
+        livekitService.disconnectFromRoom(); // frontend cleanup, setLoading false 
+        setCallStatus({ status: 'idle', directKey: null });
+        alert('User terminated the call.');
+        if (data.mode === 'video')
+          navigate(R.USER_MESSAGES);
+      });
+
+      socketInstance.on('call-failed', (data) => {
+        alert('User currently out of office.');
       });
 
       socketInstance.on('player-joined', (data) => {
@@ -355,6 +406,26 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     }
   }, [socket, isConnected]);
 
+  const removeIncomingCall = useCallback((
+    prev: Record<string, IncomingCallData>,
+    directKey: string
+  ) => {
+    if (!(directKey in prev)) return prev;
+    const next = { ...prev };
+    delete next[directKey];
+    return next;
+  }, []);
+
+  const dismissIncomingCall = useCallback((directKey: string) => {
+    setIncomingCalls((prev) => removeIncomingCall(prev, directKey));
+    setCallStatus({ status: 'idle', directKey: null });
+  }, []);
+
+  const declineCall = useCallback((directKey:string, roomName:string, mode:string) => {
+    socket?.emit('decline-call', { directKey, roomName, mode });
+    dismissIncomingCall(directKey);
+  }, [socket, dismissIncomingCall]);
+
   const value = {
     enableSocket,
     isConnected,
@@ -380,6 +451,11 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     activitySeq,
     subscribeDashboard,
     unsubscribeDashboard,
+    callStatus,
+    setCallStatus,
+    incomingCalls,
+    dismissIncomingCall,
+    declineCall,
   };
 
   return (
