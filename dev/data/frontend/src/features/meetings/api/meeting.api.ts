@@ -1,6 +1,6 @@
 import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
-import { RecordingStatusResponse } from '../meeting.types';
+import { MeetingDetails, RecordingStatusResponse } from '../meeting.types';
 
 const base = API_CONFIG.endpoints.meetings;
 const usersBase = API_CONFIG.endpoints.users.base;
@@ -16,7 +16,7 @@ export const meetingApi = {
     },
 
     getMeetingById(meetId: string) {
-    	return apiClient.get(`${base}/${meetId}`);
+    	return apiClient.get<{ success: boolean; data: MeetingDetails }>(`${base}/${meetId}`);
     },
 
     createMeeting(data: {
@@ -26,7 +26,8 @@ export const meetingApi = {
       meetStart: string;
       meetEnd: string;
     }) {
-    	return apiClient.post(`${base}`, data);
+		// return apiClient.post(`${base}`, data);
+    	return apiClient.post<{ success: boolean; data: { meetId: string } }>(`${base}`, data);
     },
 
     updateMeeting(data: {

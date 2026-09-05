@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useMaybeLayoutContext } from '@livekit/components-react';
 import { meetingApi } from '@features/meetings';
-import { IconClose, InputDropdown, attendanceOptions } from '@/shared';
+import { IconClose, InputDropdown, attendanceOptions, getDisplayName } from '@/shared';
 
 export type AttendanceStatus = 'present' | 'absent' | 'pending';
 
@@ -38,15 +38,19 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
         console.log('=== getMeetingById response ===');
         console.log(response);
 
-        const meeting = response.data ?? response;
+        const meeting = response?.data;
 
         console.log('Meeting:', meeting);
-        console.log('API participants:', meeting.participants);
+        console.log('API participants:', meeting?.participants);
+
+        if (!meeting?.participants) {
+          return;
+        }
 
         const formattedParticipants: AttendanceParticipant[] =
-          meeting.participants.map((participant: any) => ({
+          meeting.participants.map((participant) => ({
             userId: participant.userId,
-            name: participant.user.userName,
+            name: getDisplayName(participant.user),
             role: participant.role,
             attendance: participant.attendance,
           }));

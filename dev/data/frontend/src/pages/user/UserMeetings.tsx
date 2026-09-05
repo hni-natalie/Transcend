@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { PageHeader, IconMeetings, IconPlus, Modal, AlertBanner } from '@shared';
+import { PageHeader, IconMeetings, IconPlus, Modal, ConfirmDeleteModal } from '@shared';
 import { meetingApi, MeetingColumn, MeetingDetailsModal, ScheduleMeetingModal, RecordingModal, MeetingChatModal } from '@features/meetings';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useSocket } from "@/context/SocketContext";
+import { useToast } from '@/context/ToastContext';
 import type { MeetingDetails, Meeting, Recording, MeetingChatMessage } from '@features/meetings/meeting.types';
 
 type Participant = {
@@ -72,6 +73,7 @@ const mapMeeting = (m: ApiMeeting): Meeting => ({
 // ======================
 export const Meetings = () => {
 	const { user } = useAuth();
+	const { showToast } = useToast();
 
 	// Meetings the user created OR joined
 	const [joinedMeetings, setJoinedMeetings] = useState<Meeting[]>([]);
@@ -79,7 +81,6 @@ export const Meetings = () => {
 	// Meetings created by the user
 	const [myMeetings, setMyMeetings] = useState<Meeting[]>([]);
 
-	const [message, setMessage] = useState<string | null>(null);
 	const [selectedMeeting, setSelectedMeeting] = useState<MeetingDetails | null>(null);
 	const [showScheduleModal, setShowScheduleModal] = useState(false);
 	const [editingMeeting, setEditingMeeting] = useState<MeetingDetails | null>(null);
@@ -88,6 +89,8 @@ export const Meetings = () => {
 	const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
 	const [showChatModal, setShowChatModal] = useState(false);
 	const [chatMessages, setChatMessages] = useState<MeetingChatMessage[]>([]);
+	const [meetingPendingDeletion, setMeetingPendingDeletion] = useState<Meeting | null>(null);
+	const [isDeletingMeeting, setIsDeletingMeeting] = useState(false);
 
 	// ======================
 	// FETCH
@@ -111,8 +114,9 @@ export const Meetings = () => {
 			setMyMeetings(myRes.data.map(mapMeeting));
 		} catch (err) {
 			console.error("Failed to load meetings:", err);
+			showToast('error', 'Failed to load meetings');
 		}
-	}, [user]);
+	}, [user, showToast]);
 
 	useEffect(() => { loadMeetings(); }, [loadMeetings]);
 
@@ -158,20 +162,30 @@ export const Meetings = () => {
 			);
 		} catch (err) {
 			console.error('Failed to toggle pin:', err);
+			showToast('error', 'Failed to toggle pin status');
 		}
 	};
 
 	// ======================
 	// DELETE MEETING
 	// ======================
-	const handleDeleteMeeting = async (id: string) => {
-		const confirmed = window.confirm(
-			'Delete this meeting? This cannot be undone.'
-		);
+	const handleDeleteMeeting = (id: string) => {
+		const targetMeeting =
+			myMeetings.find(m => m.id === id) ||
+			joinedMeetings.find(m => m.id === id) ||
+			null;
 
-		if (!confirmed) return;
+		if (targetMeeting) {
+			setMeetingPendingDeletion(targetMeeting);
+		}
+	};
+
+	const handleConfirmDeleteMeeting = async () => {
+		if (!meetingPendingDeletion) return;
+		const id = meetingPendingDeletion.id;
 
 		try {
+			setIsDeletingMeeting(true);
 			await meetingApi.deleteMeeting(id);
 
 			setJoinedMeetings(prev =>
@@ -182,11 +196,13 @@ export const Meetings = () => {
 				prev.filter(m => m.id !== id)
 			);
 
-			setMessage('Meeting deleted successfully');
-
-			setTimeout(() => setMessage(null), 2000);
+			setMeetingPendingDeletion(null);
+			showToast('success', 'Meeting deleted successfully!');
 		} catch (err) {
 			console.error('Failed to delete meeting:', err);
+			showToast('error', 'Failed to delete meeting');
+		} finally {
+			setIsDeletingMeeting(false);
 		}
 	};
 
@@ -203,6 +219,7 @@ export const Meetings = () => {
 			setSelectedMeeting(res.data);
 		} catch (err) {
 			console.error('Failed to load meeting details:', err);
+			showToast('error', 'Failed to load meeting details');
 		}
 	};
 
@@ -220,6 +237,7 @@ export const Meetings = () => {
 			setShowScheduleModal(true);
 		} catch (err) {
 			console.error('Failed to load meeting details:', err);
+			showToast('error', 'Failed to load meeting details');
 		}
 	};
 
@@ -239,6 +257,7 @@ export const Meetings = () => {
 
 		} catch (err) {
 			console.error( "Failed to load recordings:", err );
+			showToast('error', 'Failed to load recordings');
 		}
 	};
 
@@ -256,6 +275,7 @@ export const Meetings = () => {
 
 		} catch (err) {
 			console.error("Failed to load chat:", err);
+			showToast('error', 'Failed to load chat history');
 		}
 	};
 
@@ -331,12 +351,6 @@ export const Meetings = () => {
 					</button>
 				}
 			/>
-
-			{message && (
-				<AlertBanner
-					message={message}
-				/>
-			)}
 
 			<div className="flex-1 overflow-y-auto mt-4">
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -443,6 +457,21 @@ export const Meetings = () => {
 					onUpdated={loadMeetings}
 				/>
 			</Modal>
+
+			<ConfirmDeleteModal
+				isOpen={Boolean(meetingPendingDeletion)}
+				onClose={() => setMeetingPendingDeletion(null)}
+				onConfirm={handleConfirmDeleteMeeting}
+				isLoading={isDeletingMeeting}
+				title="Delete this meeting?"
+				description={
+					meetingPendingDeletion ? (
+						<>
+							Are you sure you want to delete <span className="font-semibold text-foreground">{meetingPendingDeletion.title}</span>? This action cannot be undone.
+						</>
+					) : undefined
+				}
+			/>
 		</>
 	);
 };
