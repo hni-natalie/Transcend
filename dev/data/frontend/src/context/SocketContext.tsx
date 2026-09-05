@@ -5,8 +5,8 @@
 
 import { io, Socket } from 'socket.io-client';
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import { Player } from '@shared/types/user.types';
-import { useAuth } from '@/features/auth/AuthContext';
+import { Player, UserBackendStatus } from '@shared';
+import { useAuth } from '@/features/auth';
 
 // 1. Define the Context interface
 interface SocketContextType {
@@ -14,7 +14,7 @@ interface SocketContextType {
   isConnected: boolean;
   socket: Socket | null;
   shouldConnect: boolean;
-  userStatuses: Record<string, string>;
+  userStatuses: Record<string, UserBackendStatus>;
   players: Player[];
   roomPlayers: Player[];
   localPlayerId: string | null;
@@ -70,7 +70,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
   const [localPlayerId, setLocalPlayerId] = useState<string | null>(null);
   
   // status sync across pages
-  const [userStatuses, setUserStatuses] = useState<Record<string, string>>({});
+  const [userStatuses, setUserStatuses] = useState<Record<string, UserBackendStatus>>({});
   
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
   const [roomPlayers, setRoomPlayers] = useState<Player[]>([]);
@@ -226,7 +226,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
         }));
       });
 
-      socketInstance.on('user-status-changed', (data: { userId: string; status: string }) => {
+      socketInstance.on('user-status-changed', (data: { userId: string; status: UserBackendStatus }) => {
         console.log('[SocketContext] received user-status-changed:', data);
         setUserStatuses((prev) => ({ ...prev, [data.userId]: data.status }));
       });

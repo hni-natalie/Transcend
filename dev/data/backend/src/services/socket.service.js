@@ -17,6 +17,7 @@ const spaceOccupancy   = new Map();
 const userCurrentSpace = new Map();
 const roomSize         = 30;
 let ioInstance         = null;
+const disconnectTimers = new Map();
 
 // Track active sessions across devices/windows: Map<userId, Map<sessionId, Set<socketId>>>
 const activeUserSessions = new Map();
@@ -108,11 +109,62 @@ const socketService = (io) => {
       socket.leave('activity-viewers');
     });
 
-    setTimeout(() => {
-      updateSocketId(socket.id, socket.user.userId, 'online');
-      socket.emit('online-status', { userId: socket.user.userId, status: 'online' });
-      io.emit('user-status-changed', { userId: socket.user.userId, status: 'online' });
-    }, 2000);
+	// >> this was defaulting status to online on every socket connection
+	// >> if im logged in > i changed status to focus > i simply refreshed > it changed to online (status was never persistent)
+	// setTimeout(() => {
+    //   updateSocketId(socket.id, socket.user.userId, 'online');
+    //   socket.emit('online-status', { userId: socket.user.userId, status: 'online' });
+    //   io.emit('user-status-changed', { userId: socket.user.userId, status: 'online' });
+    // }, 2000);
+
+
+    (async () => {
+      const currentUser = await prisma.user.findUnique({
+        where: { userId },
+        select: { userStatus: true },
+      });
+
+      if (!currentUser) return;
+
+	  // stores users who are disconnected and timer (user A : 5 sec timer)
+	  // if user still has timer and connects within 5 sec, clear timer and user with timer
+      const pendingDisconnect = disconnectTimers.get(userId);
+      if (pendingDisconnect) {
+        clearTimeout(pendingDisconnect);
+        disconnectTimers.delete(userId);
+      }
+
+      // update socket id after user reconnect
+      await updateSocketId(socket.id, userId);
+
+	  // update the user status to online if the user was offline
+      let nextStatus = currentUser.userStatus;
+      if (currentUser.userStatus === 'offline') {
+        const result = await prisma.user.updateMany({
+          where: { userId, userStatus: 'offline' },
+          data: { userStatus: 'online' },
+        });
+
+		// this is needed to handle race condition in case 2 tabs are connecting at once
+		// if count == 1 > update actually happen, set nextStatus to online and emit
+		// if count == 0 > update didnt happen cz user no more "offline" when we tried to update, get latest status from db
+		// if latest status exist > use it, else use prev db query
+        if (result.count > 0) {
+          nextStatus = 'online';
+          io.emit('user-status-changed', { userId, status: nextStatus });
+        } else {
+          const latestUser = await prisma.user.findUnique({
+            where: { userId },
+            select: { userStatus: true },
+          });
+          nextStatus = latestUser?.userStatus ?? currentUser.userStatus;
+        }
+      }
+
+      socket.emit('online-status', { userId, status: nextStatus });
+    })().catch((error) => {
+      console.error('[socket.service] Failed to sync socket status on connect:', error);
+    });
 
     // Initialize player
     players.set(socket.id, createPlayer({
@@ -357,12 +409,70 @@ const socketService = (io) => {
       clearUserSpacePresence(socket);
       if (player.roomName)
         handleLeaveRoom(socket, player, player.roomName);
+
+	  // 
+      const scheduleOfflineSync = async () => {
+		// check if user exist
+        const currentUser = await prisma.user.findUnique({
+          where: { userId },
+          select: { userStatus: true },
+        });
+
+        if (!currentUser) return;
+
+		// remove socket id 
+        await updateSocketId(null, userId, currentUser.userStatus);
+
+		// create timer and run after 5 sec
+        const offlineTimer = setTimeout(async () => {
+          try {
+			// after 5 sec, check user again
+            const latestUser = await prisma.user.findUnique({
+              where: { userId },
+              select: { userStatus: true },
+            });
+
+			// check to make sure they're not online anymore
+            if (latestUser && !activeUserSessions.has(userId)) {
+			  // mark them offline
+              const result = await prisma.user.updateMany({
+                where: { userId, userStatus: { not: 'offline' } },
+                data: { userStatus: 'offline' },
+              });
+
+			  // if status changed, tell everyone
+              if (result.count > 0) {
+                io.emit('user-status-changed', { userId, status: 'offline' });
+              }
+            }
+          } catch (error) {
+            console.error('[socket.service] Failed to mark user offline after disconnect:', error);
+          } finally {
+			// remove timer from map
+            disconnectTimers.delete(userId);
+          }
+        }, 5000);
+
+		// remmber timer
+        disconnectTimers.set(userId, offlineTimer);
+      };
+
+	  // keep user status while other tab/socket is still connected
+      if (!activeUserSessions.has(userId)) {
+        scheduleOfflineSync().catch((error) => {
+          console.error('[socket.service] Failed to sync socket status on disconnect:', error);
+        });
+      }
       
       players.delete(socket.id);
       socket.broadcast.emit('player-left', { id: socket.id });
-      updateSocketId(socket.id, socket.user.userId, 'offline');
-      socket.emit('online-status', { status: 'offline' });
-      io.emit('user-status-changed', { userId: socket.user.userId, status: 'offline' });
+
+	  // >> this automatically change user status to offline once socket is disconnected
+	  // >> refreshing a page would lose the connection and not persist user status
+	  // updateSocketId(socket.id, socket.user.userId, 'offline');
+	  // socket.emit('online-status', { status: 'offline' });
+	  // io.emit('user-status-changed', { userId: socket.user.userId, status: 'offline' });
+
     });
 
     /* *****************************************************************
@@ -474,8 +584,30 @@ const getIO = () => {
   return ioInstance;
 };
 
+// force disconnects any active socket for the deleted user - reuse force-logout
+function forceLogoutUser(userId) {
+  // get all active sessions for this user
+  const userSessions = activeUserSessions.get(userId);
+  if (!userSessions) return;
+
+  const io = getIO();
+
+  // loop through every session and every socket, force logout
+  for (const [sessionId, socketIds] of userSessions.entries()) {
+    socketIds.forEach((socketId) => {
+      io.to(socketId).emit('force-logout', {
+        message: 'Your account is no longer active, logging out now...',
+        timestamp: new Date().toISOString(),
+      });
+    });
+  }
+
+  activeUserSessions.delete(userId);
+}
+
 module.exports = {
   players,
   socketService,
-  getIO
+  getIO,
+  forceLogoutUser
 };
