@@ -15,12 +15,13 @@ export type Task = {
 		assignedId: string;
 		userId: string;
 		taskPriority: 'low' | 'medium' | 'high';
-		assignedDate: string;
+		// assignedDate: string;
 		user:{
 			userId: string;
 			userName: string;
 			userEmail?: string;
 			avatarUrl?: string;
+			deletedAt?: string | null;
 			role?: {
 				roleId: string;
 				roleName: string;

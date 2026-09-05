@@ -34,6 +34,7 @@ const taskService = {
 								userName: true,
 								userEmail: true,
 								avatarUrl: true,
+								deletedAt: true,
 								role: {
 									select :{
 										roleId: true,
@@ -107,6 +108,7 @@ const taskService = {
 					userId: true,
 					userName: true,
 					userEmail: true,
+					deletedAt: true,
 					},
 				},
 				},
