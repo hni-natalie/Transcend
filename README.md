@@ -1,8 +1,8 @@
-# <Project Name>
+# <Project WorkFrom>
+<p align="center"> <img src="assets/workfrom.png" alt="WorkFrom" width="800"> </p>
+<hr style="height:4px;border:none;color:#333;background-color:#333;">
 
 *This project has been created as part of the 42 curriculum by rraja-az, hsim, yphang, hni-xuan*
-
-<hr style="height:4px;border:none;color:#333;background-color:#333;">
 
 ## Description 
 WorkFrom is a virtual office platform designed to help remote teams collaborate and stay productive in a centralized digital workspace. It provides employees and managers with the tools they need to communicate, coordinate tasks, and monitor progress regardless of their physical location.
@@ -30,13 +30,13 @@ Before running this project, ensure the following is installed:
 - [Raycasting move to mouse click](https://github.com/WaelYasmina/spaceship/blob/main/src/js/scripts.js)
 - [d3 for tree layout](https://d3js.org/d3-hierarchy/tree)
 
-## Team Information
-| Team Member | Role |
-|-------------|-----------|
-| Lyara | |
-| Hoi Ling | |
-| Yee Joo | |
-| Natalie | |
+## Team Information 
+| Team Member | Contributions |
+|-------------|---------------|
+| [Lyara](https://github.com/rplra) | Project Manager, Developer |
+| [Hoi Ling](https://github.com/holickka) | Product Owner, Developer |
+| [Yee Joo](https://github.com/Joophang) | Technical Lead, Developer |
+| [Natalie](https://github.com/hni-natalie) | Technical Lead, Developer | 
 
 ## Project Management 
 
@@ -54,14 +54,6 @@ Before running this project, ensure the following is installed:
 ## Additional Information
 
 ### Project Structure 
-
-## Contributors
-| Team Member | Contributions |
-|-------------|---------------|
-| [Lyara](https://github.com/rplra) | |
-| [Hoi Ling](https://github.com/holickka) | |
-| [Yee Joo](https://github.com/Joophang) | |
-| [Natalie](https://github.com/hni-natalie) | | 
 
 ## Asset credits
 

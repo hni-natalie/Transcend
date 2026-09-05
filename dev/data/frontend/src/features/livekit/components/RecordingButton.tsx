@@ -19,6 +19,7 @@ export function RecordingButton({ meetId, showText, ...props }: RecordingButtonP
       setLoading(true);
 
       if (!isRecording) {
+        console.log(meetId);
         await meetingApi.startRecording(meetId);
         setIsRecording(true);
 
