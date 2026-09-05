@@ -36,6 +36,18 @@ export function UserMeetingRoom() {
   }, [isConnectedRoom, getLivekitRoom]);
 
   useEffect(() => {
+    const handleOffline = () => {
+      sessionStorage.removeItem('activeMeeting');
+    };
+
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!room) return;
 
     console.log('Room exists!');
@@ -65,9 +77,13 @@ export function UserMeetingRoom() {
         const response = await meetingApi.getRecordingStatus(meetId);
         console.log('Recording status response:', response);
 
-        if (response.status?.status === 'active' || response.status?.status === 'starting')
-          setRecordingStatus('🔴 Recording started');
+        const isRecording =
+          response.status?.status === 'active' ||
+          response.status?.status === 'starting';
 
+        setRecordingStatus(
+          isRecording ? '🔴 Recording started' : ''
+        );
       } catch (error) {
         console.error('Failed to get recording status:', error);
       }
@@ -83,6 +99,8 @@ export function UserMeetingRoom() {
       await meetingApi.endMeeting(roomName);
       console.log("Meeting ended");
     }
+
+    sessionStorage.removeItem("activeMeeting");
 
     navigate(leaveTo);
   };
@@ -138,6 +156,11 @@ export function UserMeetingRoom() {
               <VideoConference 
                 meetId={meetId}
                 isHost={isHost} 
+                onRecordingChange={(isRecording) => {
+                setRecordingStatus(
+                  isRecording ? '🔴 Recording started' : ''
+                );
+              }}
               />
             </RoomContext.Provider>
           )}
