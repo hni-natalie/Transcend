@@ -1,13 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/AuthContext';
-
 import type { DayGroup, Message, MessageResponse, Attachment, SendMessageInput } from '../types';
-// import { messagesApi } from '../api/messages.api'; // uncomment for BE implmentation
-
-// imports below to remove once BE is implemented
-// import { dayGroups as mockDirectDayGroups } from '../mocks/messages';
-// import { groupDayGroups as mockGroupDayGroups } from '../mocks/messagesGroup';
 import { messagesApi } from '../api/messages.api';
 import { messagesToDayGroups, mapMessage } from '../lib/mappers'
 
@@ -18,8 +12,6 @@ interface UseMessagesOptions {
   kind?: ConversationKind;
   // isNew?: boolean; // KIV : to remove once BE implemented // to indicate if the conversation is new and has no messages yet
 }
-
-// 
 
 export function useMessages({ conversationId, kind}: UseMessagesOptions) {
   const { user: currentUser } = useAuth();

@@ -61,7 +61,6 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
       <div className="flex items-center gap-3 text-foreground-3">
         {!contact.isGroup && (
           <>
-            {/* KIV: if too complicated, can take these features out */}
             <Tooltip text="Call">
               <div
                 aria-label="Call"
@@ -109,7 +108,6 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
             </button>
           </Tooltip>
         )}
-		{/* KIV  */}
 
         <Tooltip text={contact.isGroup ? 'Group Info' : 'Profile'}>
           <button

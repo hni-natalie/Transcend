@@ -56,24 +56,24 @@ const messageController = {
 		}
 	},
 
-	async getConversationById(req, res) {
-		try {
-			const { id } = req.params;
-			const { userId } = req.user;
+	// async getConversationById(req, res) {
+	// 	try {
+	// 		const { id } = req.params;
+	// 		const { userId } = req.user;
 			
-			if (!id) {
-				return res.status(400).json({ error: "Conversation ID required" });
-			}
-			const conversation = await messageService.getConversationById(id, userId);
-			return res.json(conversation);
-		} catch (error) {
-			if (error.message === 'Conversation not found') {
-				res.status(404).json({ error: error.message });
-			} else {
-				res.status(500).json({ error: error.message });
-			}
-		}
-	},
+	// 		if (!id) {
+	// 			return res.status(400).json({ error: "Conversation ID required" });
+	// 		}
+	// 		const conversation = await messageService.getConversationById(id, userId);
+	// 		return res.json(conversation);
+	// 	} catch (error) {
+	// 		if (error.message === 'Conversation not found') {
+	// 			res.status(404).json({ error: error.message });
+	// 		} else {
+	// 			res.status(500).json({ error: error.message });
+	// 		}
+	// 	}
+	// },
 
 	async createDirectConversation(req, res) {
 		try {

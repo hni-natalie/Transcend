@@ -1,4 +1,5 @@
 import type { User } from '@shared';
+import { getDisplayName, getDisplayAvatar } from '@shared';
 import type { Attachment, Conversation, ConversationResponse, MessageResponse, DayGroup, Link, Message, Profile, InvitableGroup } from '../types';
 import { truncate } from './format';
 import { extractUrlsFromText, getDisplayNameFromUrl } from './links';
@@ -14,7 +15,10 @@ export function toProfile(user?: User): Profile {
     };
   }
 
-  const name = user.userName || user.userEmail || 'Unknown User';
+  
+
+//   const name = user.userName || user.userEmail || 'Unknown User';
+  const name = getDisplayName(user);
   const role = user.role?.roleName || user.roleName || 'No role';
   const department = user.department?.dpName || 'No department';
   const departmentId = user.department?.dpId;
@@ -22,11 +26,13 @@ export function toProfile(user?: User): Profile {
   return {
     id: user.userId,
     name,
-    email: user.userEmail,
+    // email: user.userEmail,
+	email: user.deletedAt ? undefined : user.userEmail,
     role,
     department,
-    avatarUrl: user.avatarUrl || undefined,
-    status: user.userStatus || 'offline',
+    // avatarUrl: user.avatarUrl || undefined,
+	avatarUrl: getDisplayAvatar(user) ?? undefined,
+    status: user.deletedAt ? 'offline' : (user.userStatus || 'offline'),
     departmentId,
     isGroup: false,
   };
@@ -44,87 +50,6 @@ export function toGroupProfile(conversation: Conversation, members: Profile[]): 
     status: 'offline',
   };
 }
-
-// PERSONALIZE MESSAGES
-// TO DO:
-// BE to return aithorId and avatar with each message
-// remove this block after BE implementation
-// export function personalizeMessages(
-//   messages: DayGroup[],
-//   profile: Profile,
-//   currentUserName?: string,
-//   currentUserAvatarUrl?: string,
-// ): DayGroup[] {
-//   return messages.map((day) => ({
-//     ...day,
-//     messages: day.messages.map((message) => ({
-//       ...message,
-//       author: message.isSelf ? currentUserName || 'You' : profile.name,
-//       avatarUrl: message.isSelf ? currentUserAvatarUrl : profile.avatarUrl,
-//     })),
-//   }));
-// }
-
-// PERSONALIZE GROUP MESSAGES
-// TO DO: same as above
-// BE to return aithorId and avatar with each message
-// remove this block after BE implementation
-// export function personalizeGroupMessages(
-//   messages: DayGroup[],
-//   members: Profile[],
-//   currentUserName?: string,
-//   currentUserAvatarUrl?: string,
-// ): DayGroup[] {
-//   const membersById = new Map(members.map((member) => [member.id, member]));
-
-//   const fallbackMemberByAuthor = new Map<string, Profile>();
-//   let nextFallbackIndex = 0;
-
-//   return messages.map((day) => ({
-//     ...day,
-//     messages: day.messages.map((message) => {
-//       if (message.isSelf) {
-//         return { ...message, author: currentUserName || 'You', avatarUrl: currentUserAvatarUrl };
-//       }
-
-//       const matched = message.authorId ? membersById.get(message.authorId) : undefined;
-
-//       let member = matched;
-
-//       if (!member && members.length > 0) {
-//         const authorKey = message.author || 'unknown';
-
-//         if (!fallbackMemberByAuthor.has(authorKey)) {
-//           fallbackMemberByAuthor.set(authorKey, members[nextFallbackIndex % members.length]);
-//           nextFallbackIndex += 1;
-//         }
-
-//         member = fallbackMemberByAuthor.get(authorKey);
-//       }
-
-//       return {
-//         ...message,
-//         author: member?.name || message.author || 'Unknown Member',
-//         avatarUrl: member?.avatarUrl,
-//       };
-//     }),
-//   }));
-// }
-
-// TO DO: remove after BE implementation, currently used for mock only
-// export function getLastMessageForConversation(messages: DayGroup[]): Message | undefined {
-//   if (messages.length === 0) {
-//     return undefined;
-//   }
-
-//   const lastDay = messages[messages.length - 1];
-
-//   if (lastDay.messages.length === 0) {
-//     return undefined;
-//   }
-
-//   return lastDay.messages[lastDay.messages.length - 1];
-// }
 
 // LAST MESSAGE PREVIEW
 // keep for ui, converts Message into the Conversation.lastMessage format
@@ -203,8 +128,10 @@ export function mapUserToProfile(
 ): Profile {
   return {
     id: user.userId,
-    name: user.userName,
-    avatarUrl: user.avatarUrl ?? undefined,
+    // name: user.userName,
+	name: getDisplayName(user),
+    // avatarUrl: user.avatarUrl ?? undefined,
+	avatarUrl: getDisplayAvatar(user) ?? undefined,
     status: user.userStatus ?? 'offline',
     isGroup: false
   };
@@ -252,7 +179,8 @@ export function mapConversation(conversation: ConversationResponse, currentUserI
     name:
       conversation.type === 'group'
         ? conversation.groupName ?? ''
-        : otherParticipant?.user.userName ?? '',
+		: (otherParticipant ? getDisplayName(otherParticipant.user) : ''),
+        // : otherParticipant?.user.userName ?? '',
 
     type: conversation.type,
 
@@ -269,18 +197,21 @@ export function mapConversation(conversation: ConversationResponse, currentUserI
 
     userStatus:
       conversation.type === 'direct'
-        ? otherParticipant?.user.userStatus ?? undefined
+	    ? (otherParticipant?.user.deletedAt ? 'offline' : otherParticipant?.user.userStatus ?? undefined)
+        // ? otherParticipant?.user.userStatus ?? undefined
         : undefined,
 
     avatarUrl:
       conversation.type === 'group'
         ? conversation.avatarUrl ?? undefined
-        : otherParticipant?.user.avatarUrl ?? undefined,
+		: (otherParticipant ? getDisplayAvatar(otherParticipant.user) ?? undefined : undefined),
+        // : otherParticipant?.user.avatarUrl ?? undefined,
 
     lastMessage: latestMessage
       ? {
           text: latestMessage.text ?? '',
-          author: latestMessage.author.userName,
+		  author: getDisplayName(latestMessage.author),
+        //   author: latestMessage.author.userName,
           createdAt: latestMessage.createdAt
         }
       : undefined,
@@ -299,9 +230,11 @@ export function mapMessage(message: MessageResponse, currentUserId: string,): Me
     id: message.messageId,
     conversationId: message.conversationId,
 
-    author: message.author.userName,
+    // author: message.author.userName,
+	author: getDisplayName(message.author),
     authorId: message.author.userId,
-    avatarUrl: message.author.avatarUrl ?? undefined,
+    // avatarUrl: message.author.avatarUrl ?? undefined,
+	avatarUrl: getDisplayAvatar(message.author) ?? undefined,
 
     isSelf: message.author.userId === currentUserId,
 

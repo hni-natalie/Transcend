@@ -9,8 +9,6 @@ interface MessageAttachmentProps {
   attachment: Attachment;
 }
 
-
-
 export function MessageAttachment({ attachment }: MessageAttachmentProps) {
   const handleDownload = async () => {
     try {

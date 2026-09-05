@@ -58,6 +58,7 @@ export interface ConversationResponse {
       userName: string;
       avatarUrl: string | null;
       userStatus: UserBackendStatus | null;
+	  deletedAt?: string | null;
     };
   }[];
 
@@ -70,6 +71,7 @@ export interface ConversationResponse {
       userId: string;
       userName: string;
       avatarUrl: string | null;
+	  deletedAt?: string | null;
     };
   }[];
 
@@ -111,6 +113,7 @@ export interface MessageResponse {
     userId: string;
     userName: string;
     avatarUrl: string | null;
+	deletedAt?: string | null;
   };
 
   attachments?: Attachment[];

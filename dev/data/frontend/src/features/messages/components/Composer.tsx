@@ -12,7 +12,6 @@ const EMOJI_CATEGORIES = [
   { name: 'Work', emojis: ['📅', '📋', '📈', '📊', '🎯', '📌', '🏁', '⚠️', '📂', '🔗'] },
 ] as const;
 
-// TO DO: make sure types match with what messagesApi.uploadAttachment's
 const ACCEPTED_FILE_TYPES = '.pdf,.doc,.docx,.png,.jpg,.jpeg,.gif';
 
 interface PendingAttachment {

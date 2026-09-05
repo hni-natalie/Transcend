@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { EmptyState, IconCamera, IconMessageAdd, IconSearch, LoadingState, User } from '@shared';
+import { EmptyState, IconCamera, IconMessageAdd, IconSearch, LoadingState, User, getDisplayName, getDisplayAvatar } from '@shared';
 import { useToast } from '@/context/ToastContext';
 import { UserRow } from '../components/UserRow';
 
@@ -161,9 +161,11 @@ export function FormNewMessage({
               filteredUsers.map((user) => (
                 <UserRow
                   key={user.userId}
-                  name={user.userName || user.userEmail || 'Unknown User'}
+                //   name={user.userName || user.userEmail || 'Unknown User'}
+				  name={getDisplayName(user)}
                   email={user.userEmail}
-                  avatarUrl={user.avatarUrl ?? undefined}
+                //   avatarUrl={user.avatarUrl ?? undefined}
+				  avatarUrl={getDisplayAvatar(user) ?? undefined}
                   subtitle={`${user.role?.roleName || 'No role'} · ${user.department?.dpName || 'No department'}`}
                   selected={selectedUserIds.includes(user.userId)}
                   onClick={() => handleToggleSelect(user.userId)}
@@ -199,7 +201,8 @@ export function FormNewMessage({
                             key={user.userId}
                             className="inline-flex items-center gap-1 bg-background-1 border border-border rounded-full px-2.5 py-1 text-sm text-foreground"
                           >
-                            {user.userName}
+							{getDisplayName(user)}
+                            {/* {user.userName} */}
                             <button
                               type="button"
                               onClick={(e) => {
