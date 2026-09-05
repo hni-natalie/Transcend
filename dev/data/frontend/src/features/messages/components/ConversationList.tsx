@@ -3,6 +3,7 @@ import { EmptyState, LoadingState } from '@shared';
 import type { Conversation } from '../types';
 import { getConversationPreview } from '../lib/mappers';
 import { ChatAvatar } from './ChatAvatar';
+import { useSocket } from '@/context/SocketContext';
 
 interface ConversationGroupProps {
   label: string;
@@ -13,25 +14,27 @@ interface ConversationGroupProps {
 }
 
 function ConversationGroup({ label, conversations, activeConversationId, onSelect, onDeleteRequest }: ConversationGroupProps) {
+  const { incomingCalls, callStatus, setCallStatus } = useSocket();
+
   return (
     <div className="mb-6">
       <p className="px-1 pb-1.5 text-base font-semibold uppercase tracking-wider text-foreground-4">{label}</p>
 
       <ul className="space-y-0.5">
         {conversations.map((conversation) => {
-          const isActive = conversation.id === activeConversationId;
+          const isActive = conversation.conversationId === activeConversationId;
           const hasUnread = (conversation.unreadCount ?? 0) > 0;
-
+          const isRinging = !!conversation.directKey && !!incomingCalls[conversation.directKey];
           return (
             <li
-              key={conversation.id}
+              key={conversation.conversationId}
               onClick={() => onSelect?.(conversation)}
               className={`group flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors hover:bg-background-1 ${
                 isActive ? 'bg-background-2' : ''
               }`}
             >
               <ChatAvatar
-                status={conversation.type === 'group' ? undefined : conversation.status}
+                status={conversation.type === 'group' ? undefined : conversation.userStatus}
                 name={conversation.name}
                 photo={conversation.avatarUrl}
                 isGroup={conversation.type === 'group'}
@@ -52,6 +55,9 @@ function ConversationGroup({ label, conversations, activeConversationId, onSelec
                   {getConversationPreview(conversation)}
                 </p>
               </div>
+              {isRinging && callStatus.status === 'idle' &&
+                <LoadingState message='Ringing' size='none' msgClassName='font-sans text-accent-lime!'/>
+              }
 
               <div className="relative shrink-0 w-6 h-6 flex items-center justify-center">
                 {hasUnread && (

@@ -1,10 +1,14 @@
 import { useState } from 'react';
+import { useAuth } from '@/features/auth/AuthContext';
+
 import { useToast } from '@/context/ToastContext';
 import type { Conversation } from '../types';
-// import { messagesApi } from '../api/messages.api'; // uncomment for BE implmentation
+import { messagesApi } from '../api/messages.api'; // uncomment for BE implmentation
+import { mapConversation } from '../lib/mappers';
+
 
 export interface CreateConversationInput {
-  userIds: string[];
+  participantIds: string[];
   isGroup: boolean;
   groupName?: string;
 }
@@ -12,13 +16,18 @@ export interface CreateConversationInput {
 export const useCreateConversation = () => {
   const [isCreating, setIsCreating] = useState(false);
   const { showToast } = useToast();
+  const { user: currentUser } = useAuth();
+  const currentUserId = currentUser?.userId;
 
   const createConversation = async (data: CreateConversationInput): Promise<Conversation> => {
+    if (!currentUserId) {
+      throw new Error('User is not logged in');
+    }
     setIsCreating(true);
 
     try {
-      if (data.userIds.length === 0) {
-        throw new Error('At least one user is required');
+      if (data.participantIds.length === 0) {
+        throw new Error('At least one participant is required');
       }
 
       if (data.isGroup && !data.groupName?.trim()) {
@@ -27,26 +36,32 @@ export const useCreateConversation = () => {
 
 	  // TO DO: 
 	  // call API (POST /conversations)
-	  // use messagesApi.createConversation({ isGroup, groupName, userIds, message }).
+    let response;
+    if (data.isGroup)
+      response = await messagesApi.createGroupConversation({ groupName: data.groupName, participantIds: data.participantIds });
+    else
+      response = await messagesApi.createDirectConversation({ participantId: data.participantIds[0] });
+      
+	  // messagesApi.createConversation({ isGroup, groupName, userIds, message }).
 	  // >>>>>>>>>>>>>>> MOCK >>>>>>>>>>>>>>>>>>
-      await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      // await new Promise<void>((resolve) => setTimeout(resolve, 500));
 
-      const id = data.isGroup ? `group-${Date.now()}` : `user-${data.userIds[0]}`;
-      const createdAt = new Date().toISOString();
+      // const id = data.isGroup ? `group-${Date.now()}` : `user-${data.userIds[0]}`;
+      // const createdAt = new Date().toISOString();
 
-      const conversation: Conversation = {
-        id,
-        type: data.isGroup ? 'group' : 'direct',
-        name: data.isGroup ? data.groupName!.trim() : 'New Conversation',
-        createdAt,
-        updatedAt: undefined,
-        pinned: false,
-        lastMessage: undefined,
-        ...(data.isGroup ? {} : { userId: data.userIds[0] }),
-        ...(data.isGroup ? { members: [] } : {}),
-      };
+      // const conversation: Conversation = {
+      //   id,
+      //   type: data.isGroup ? 'group' : 'direct',
+      //   name: data.isGroup ? data.groupName!.trim() : 'New Conversation',
+      //   createdAt,
+      //   updatedAt: undefined,
+      //   pinned: false,
+      //   lastMessage: undefined,
+      //   ...(data.isGroup ? {} : { userId: data.userIds[0] }),
+      //   ...(data.isGroup ? { members: [] } : {}),
+      // };
 
-      return conversation;
+      // return conversation;
 	  // >>>>>>>>>>>>>>> END OF MOCK >>>>>>>>>>>>>>>>>>
 
 
@@ -54,12 +69,12 @@ export const useCreateConversation = () => {
       // const response = await messagesApi.createConversation({
       //   isGroup: data.isGroup,
       //   groupName: data.isGroup ? data.groupName!.trim() : undefined,
-      //   userIds: data.userIds,
+      //   userIds: data.participantIds,
       // });
-      //
-      // const conversation: Conversation = response.data;
-      //
-      // return conversation;
+      // console.log('RAW CREATE RESPONSE:', response);
+      const conversation: Conversation = mapConversation(response, currentUserId);
+      // console.log('MAPPED CONVERSATION:', conversation);
+      return conversation;
       // >>>>>>>>>>>>>>>  END REAL API 
 
     } catch (error) {

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { IconFile, IconImage, IconLink, IconMemberAdd, IconMembers, IconMessagePin, IconOffice } from '@shared';
 import type { IconProps } from '@shared';
-import type { Attachment, Link, Profile } from '../types';
+import type { Attachment, Link, Profile, InvitableGroup } from '../types';
 import { UserRow, SelectToggle, RemoveButton } from './UserRow';
 import { ChatAvatar } from './ChatAvatar';
 import { useLiveKit } from '@/features/livekit';
@@ -10,12 +10,6 @@ import { useSocket } from '@/context';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { Tooltip } from '@features/messages/components/MessageHeader';
 
-interface InvitableGroup {
-  id: string;
-  name: string;
-  memberCount?: number;
-  members?: unknown[];
-}
 
 interface MessageProfileProps {
   contact: Profile;
@@ -73,6 +67,7 @@ export function MessageProfile({
   };
 
 
+  // console.log('debugging group messages: ', groupMessages);
   useEffect(() => {
     setShowMembers(false);
     setShowInvite(false);
@@ -190,9 +185,8 @@ export function MessageProfile({
           const isUnpin = label === 'Unpin';
 
           return (
-            <Tooltip text={tooltip} className='flex flex-1'>
+            <Tooltip key={label} text={tooltip} className='flex flex-1'>
               <button
-                key={label}
                 onClick={onClick}
                 disabled={disabled}
                 className={`flex-1 flex flex-col items-center gap-1.5 bg-background-2 rounded-xl py-3 px-1.5 text-[11px] transition-colors ${

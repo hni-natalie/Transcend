@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { IconInfo, IconMeetingAdd, IconPhone, IconProfile, IconVideo } from '@shared';
+import { IconInfo, IconMeetingAdd, IconPhone, IconProfile, IconVideo, LoadingState, StateText, UserCallStatus } from '@shared';
 import type { Profile } from '../types';
 import { formatClockTime } from '../lib/format';
 import { ChatAvatar } from './ChatAvatar';
+import { ButtonVoiceMsg } from '@/features/livekit';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
+import { useSocket } from '@/context/SocketContext';
 
 export const Tooltip = ({ children, text, className }: { children: React.ReactNode; text: string, className?: string }) => (
   <div className={`relative group ${className}`}>
@@ -16,18 +19,27 @@ export const Tooltip = ({ children, text, className }: { children: React.ReactNo
 
 interface MessageHeaderProps {
   contact: Profile;
+  directKey?: string | null;
   isInfoOpen: boolean;
   onToggleInfo: () => void;
 }
 
-export function MessageHeader({ contact, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
+export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
   const [localTime, setLocalTime] = useState(() => formatClockTime());
+  const { incomingCalls, callStatus, setCallStatus, isConnected } = useSocket();
+  const isRinging = !!directKey && !!incomingCalls[directKey];
+  const [callMode, setCallMode] = useState('none');
 
   useEffect(() => {
     const interval = setInterval(() => setLocalTime(formatClockTime()), 60000);
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!incomingCalls) return ;
+    setCallMode(incomingCalls[directKey]?.mode);
+  }, [incomingCalls, directKey]);
 
   // KIV : to implement?
   // TO DO: hook this up to a real "create meeting" call
@@ -36,6 +48,7 @@ export function MessageHeader({ contact, isInfoOpen, onToggleInfo }: MessageHead
     console.log('Schedule meeting for group:', contact.name);
   };
 
+  // console.log('DEBUGG directKey: ', directKey);
   return (
     <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
       <div className="flex items-center gap-3">
@@ -57,24 +70,60 @@ export function MessageHeader({ contact, isInfoOpen, onToggleInfo }: MessageHead
       <div className="flex items-center gap-3 text-foreground-3">
         {!contact.isGroup && (
           <>
+            {callStatus.status === 'ringing' && callStatus.directKey === directKey && <LoadingState message='Awaiting' size='none' msgClassName='font-sans'/>}
+            {isRinging && callStatus.status === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}
+
             {/* KIV: if too complicated, can take these features out */}
-            <Tooltip text="Call">
-              <button
+            <Tooltip text={`${isConnected ? 'Call' : 'Refresh to connect'}`}>
+              <div
                 aria-label="Call"
-                className="flex p-1.5 rounded-lg cursor-pointer hover:text-foreground transition-colors"
+                className="flex p-1.5 gap-1 rounded-lg transition-colors"
               >
-                <IconPhone className="stroke-currentColor w-[19px] h-[19px]" />
-              </button>
+                <ButtonVoiceMsg
+                  mode="call"
+                  className={`border-0 hover:text-foreground ${isConnected ? 'cursor-pointer' : 'cursor-not-allowed' }`}
+                  roomName={`${directKey ?? 'room'}:voice`}
+                  directKey={directKey ?? undefined}
+                  joinText={
+                    <IconPhone
+                      className={`stroke-currentColor hover:text-foreground w-[19px] h-[19px] ${
+                        isRinging && callStatus.status === 'idle' && callMode === 'call' ? 'animate-bounce' : ''}`
+                      }
+                    />
+                  }
+                  leaveText={<IconPhone className="stroke-currentColor hover:text-foreground text-danger w-[19px] h-[19px] rotate-135" />}
+                  loadingText=' '
+                  onCallStatusChange={(status, dk) => setCallStatus({ status, directKey: dk ?? null })}
+                />
+              </div>
             </Tooltip>
 
-            <Tooltip text="Video Call">
-              <button
+            {callStatus.status === 'idle' &&
+            <Tooltip text={`${isConnected ? 'Video Call' : 'Refresh to connect'}`}>
+              <div
                 aria-label="Video call"
-                className="flex p-1.5 rounded-lg cursor-pointer hover:text-foreground transition-colors"
+                className="flex p-1.5 rounded-lg hover:text-foreground transition-colors"
               >
-                <IconVideo className="stroke-currentColor w-[22px] h-[22px]" />
-              </button>
+                <ButtonVoiceMsg
+                  mode="video"
+                  joinText={
+                    <IconVideo 
+                      className={`stroke-currentColor w-[22px] h-[22px] ${isConnected ? 'cursor-pointer' : 'cursor-not-allowed' } ${
+                        isRinging && callStatus.status === 'idle' && callMode === 'video' ? 'animate-bounce' : ''}`
+                      }
+                    />
+                  }
+                  roomName={`${directKey ?? 'room'}:video`}
+                  directKey={directKey ?? undefined}
+                  meetingTitle={`Call with ${contact.name}`}
+                  // meetId={meeting.id}
+                  joinTo={R.USER_VIDEOCALL}
+                  leaveTo={R.USER_MESSAGES}
+                  className="border-0"
+                />
+              </div>
             </Tooltip>
+            }
           </>
         )}
 

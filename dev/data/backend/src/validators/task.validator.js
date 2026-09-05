@@ -28,11 +28,15 @@ const hasValue = value =>
 
 
 // Validate text fields such as title and description
-function validateText(value, fieldName, maxLength) {
-	if (!hasValue(value)) return;
+function validateText(value, fieldName, maxLength, cannotBeEmpty = false) {
+	if (value === undefined || value === null) return;
 
 	if (typeof value !== 'string') {
 		throw new Error(`${fieldName} must be a string`);
+	}
+
+	if (cannotBeEmpty && !isNonEmptyString(value)) {
+		throw new Error(`${fieldName} cannot be empty`);
 	}
 
 	if (containsSuspiciousMarkup(value)) {
@@ -80,78 +84,79 @@ function validateDate(date) {
 
 
 function validateCreateTask({
-	title,
-	priority,
-	desc,
-	date,
-	userIds
+	taskTitle,
+	taskPriority,
+	taskDesc,
+	dueDate,
+	assignedUserIds
 }) {
-	if (!isNonEmptyString(title)) {
+	if (!isNonEmptyString(taskTitle)) {
 		throw new Error('Task title is required');
 	}
 
-	validateText(title, 'Task title', TITLE_MAX_LENGTH);
+	validateText(taskTitle, 'Task title', TITLE_MAX_LENGTH, true);
 
-	if (!isNonEmptyString(priority)) {
+	if (!isNonEmptyString(taskPriority)) {
 		throw new Error('Task priority is required');
 	}
 
 	validateOption(
-		priority,
+		taskPriority,
 		VALID_TASK_PRIORITY,
 		'task priority'
 	);
 
 	validateText(
-		desc,
+		taskDesc,
 		'Task description',
 		DESC_MAX_LENGTH
 	);
 
-	validateDate(date);
+	validateDate(dueDate);
 
-	validateUserIds(userIds, true);
+	validateUserIds(assignedUserIds, true);
 
 	return {
-		taskTitle: title,
-		taskPriority: priority,
-		taskDesc: desc,
-		dueDate: date,
-		assignedUserIds: userIds,
+		taskTitle: taskTitle,
+		taskPriority: taskPriority,
+		taskDesc: taskDesc,
+		dueDate: dueDate,
+		assignedUserIds: assignedUserIds,
 	};
 }
 
 
 function validateUpdateTask({
-	title,
-	priority,
-	desc,
-	date,
-	status,
+	taskTitle,
+	taskPriority,
+	taskDesc,
+	dueDate,
+	taskStatus,
 	assignedUserIds
 }) {
 	validateText(
-		title,
+		taskTitle,
 		'Task title',
-		TITLE_MAX_LENGTH
+		TITLE_MAX_LENGTH,
+		true
 	);
 
 	validateOption(
-		priority,
+		taskPriority,
 		VALID_TASK_PRIORITY,
 		'task priority'
 	);
 
 	validateText(
-		desc,
+		taskDesc,
 		'Task description',
 		DESC_MAX_LENGTH
 	);
 
-	validateDate(date);
+	validateDate(dueDate);
 
 	validateOption(
-		status,
+		taskStatus,
 		VALID_TASK_STATUS,
 		'task status'
 	);
@@ -159,11 +164,11 @@ function validateUpdateTask({
 	validateUserIds(assignedUserIds);
 
 	return {
-		taskTitle: title,
-		taskPriority: priority,
-		taskDesc: desc,
-		dueDate: date,
-		taskStatus: status,
+		taskTitle: taskTitle,
+		taskPriority: taskPriority,
+		taskDesc: taskDesc,
+		dueDate: dueDate,
+		taskStatus: taskStatus,
 		assignedUserIds,
 	};
 }
@@ -171,5 +176,5 @@ function validateUpdateTask({
 
 module.exports = {
 	validateCreateTask,
-	validateUpdateTask
+	validateUpdateTask,
 };

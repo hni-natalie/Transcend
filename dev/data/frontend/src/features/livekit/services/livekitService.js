@@ -7,7 +7,7 @@
  future need to separate messaging & audio room (prob)
 */
 
-import { Room, RoomEvent, Track } from 'livekit-client';
+import { Room, RoomEvent, Track, isBrowserSupported } from 'livekit-client';
 import { AudioManager } from './audioManager';
 import * as THREE from 'three';
 
@@ -15,6 +15,7 @@ import * as THREE from 'three';
 for reference:
   interface LiveKitState {
     isConnectedRoom: boolean;
+    hasRemoteParticipant: boolean;
     activePlane: number;
     isMuted: boolean;
     joinCount: number;
@@ -32,6 +33,7 @@ class LiveKitService {
     this.audioManager = new AudioManager(); // manage own audio mic, mute state
     this.listeners = new Map();             // event listener
     this.isInitialized = false;
+    this.roomMode = null;
     this._state = {
       isConnectedRoom: false,
       currentRoomName: null,
@@ -39,12 +41,15 @@ class LiveKitService {
       isMuted: false,
       joinCount: 0,
       isLoading: false,
+      loadingRoomName: null,
       readyStreams: new Set(),
+      hasRemoteParticipant: false,
       error: null
     }
   }
 
   get isConnectedRoom() { return this._state.isConnectedRoom; }
+  get hasRemoteParticipant() { return this._state.hasRemoteParticipant; }
   get activePlane() { return this._state.activePlane; }
   get isMuted() { return this._state.isMuted; }
   get joinCount() { return this._state.joinCount; }
@@ -82,8 +87,16 @@ class LiveKitService {
     this._setState({ isConnectedRoom:status });
   }
 
-  setIsLoading(status) {
-      this._setState({ isLoading:status });
+  setHasRemoteParticipant(status){
+    this._setState({ hasRemoteParticipant:status });
+  }
+
+  setIsLoading(status, roomName) {
+    const updates = { isLoading: status };
+    if (roomName) {
+      updates.loadingRoomName = roomName;
+    }
+    this._setState(updates);
   }
 
   setIsMuted(status) {
@@ -106,21 +119,32 @@ class LiveKitService {
     this._setState({ readyStreams:newSet });
   }
 
+  checkBrowserSupport() {
+    return isBrowserSupported();
+  }
   /*
     mode must be either "room" || "call" || "video"
     room: spatial audio, call: non spatial audio, video: video call
   */
   init( mode ) {
+    this.roomMode = mode; // keep latest mode fresh even if listener already wired
+
     if (this.isInitialized) return ;
 
     // Listen for LiveKit connection events from useSocket
     window.addEventListener('livekit-connect', async (event) => {
       try {
         // emits connected signal to useLiveKit
-        await this.connectToRoom(event.detail, mode);
+        const result = await this.connectToRoom(event.detail, this.roomMode);
+        if (!result.success) {
+          throw result.error;
+        }
         this.isInitialized = true;
         // this.lkToken = event.detail;
         // console.log('livekit-connect: Successfully joined room: ', this.lkToken);
+        window.dispatchEvent(new CustomEvent('livekit-connect-success', {
+          detail: { success: true }
+        }));
 
       } catch (error) {
         console.error('Failed to connect:', error);
@@ -318,9 +342,19 @@ class LiveKitService {
         // Update UI to show unmuted state
       });
 
+      this._room.on(RoomEvent.ParticipantConnected, (participant) => {
+        console.log(`Participant joined: ${participant.identity}`);
+        this.setHasRemoteParticipant(true);
+      });
+
+      this._room.on(RoomEvent.ParticipantDisconnected, () => {
+        this.setHasRemoteParticipant(this._room.remoteParticipants.size > 0);
+      });
+
       // Run once when room connected Check existing participants
       this._room.once(RoomEvent.Connected, () => {
-        console.log('Room connected, participants in room:', this._room.remoteParticipants);
+        console.log('Room connected, participants in room:', this?._room?.remoteParticipants);
+        this.setHasRemoteParticipant(this?._room?.remoteParticipants.size > 0);
       });
 
       /* *************************************************************
@@ -328,6 +362,7 @@ class LiveKitService {
         * *************************************************************/
       try {
         await this._room.connect(import.meta.env.VITE_LIVEKIT_URL, token);
+        if (!this._room) throw new Error('Room disconnected during connect');
 
         if (mode === "video") {
           await this._room.localParticipant.enableCameraAndMicrophone();
@@ -344,7 +379,7 @@ class LiveKitService {
         this._room = null;
 
         this.setIsConnectedRoom(false);
-        this.setIsLoading(false); // ###
+        this.setIsLoading(false);
         if (error.name === 'NotFoundError') {
           this.setError('No microphone or camera found. Please connect a device and try again.');
         } else if (error.name === 'NotAllowedError') {
@@ -364,7 +399,7 @@ class LiveKitService {
       console.log('Connected to room:', this._room);
       this.setIsConnectedRoom(true);
       this.setCurrentRoomName(this._room.name);
-      this.setIsLoading(false);
+      this.setIsLoading(false, this._room.name);
       return { success: true, room: this._room };
       
     } catch (error) {
@@ -399,6 +434,7 @@ class LiveKitService {
 
         this.setActivePlane(null);
         this.setIsConnectedRoom(false);
+        this.setHasRemoteParticipant(false);
         this.setIsLoading(false);
         this.setCurrentRoomName(null);
         this.audioManager.cleanup();

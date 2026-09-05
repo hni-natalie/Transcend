@@ -10,6 +10,7 @@ import { useSocket } from "@/context/SocketContext";
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { ButtonLoading } from "@/shared/ui/ButtonLoading";
 import { LivekitMode } from "@/shared/types/livekit.types";
+import { UserCallStatus } from "@/shared";
 import { meetingApi } from "@/features/meetings/api/meeting.api";
 
 type ButtonVoiceRoomProps = {
@@ -26,9 +27,11 @@ type ButtonVoiceRoomProps = {
   showMute?: boolean;
   isHost?: boolean;
   meetId?: string;
+  directKey?: string;
+  onCallStatusChange?: ( status:UserCallStatus, directKey?: string ) => void;
 };
 
-export function ButtonVoiceRoom({
+export function ButtonVoiceMsg({
   joinText = "Join Room",
   leaveText = "Leave Room",
   loadingText = "Loading",
@@ -42,11 +45,14 @@ export function ButtonVoiceRoom({
   leaveTo,
   isHost = false,
   meetId = "",
+  directKey = "",
+  onCallStatusChange,
 }: ButtonVoiceRoomProps) {
   const {
     connect,
     disconnect,
     isConnectedRoom,
+    hasRemoteParticipant,
     currentRoomName,
     isCurrentLoading,
     isLoading,
@@ -54,7 +60,7 @@ export function ButtonVoiceRoom({
     toggleMute,
   } = useLiveKit(roomName);
 
-  const { enableSocket, isConnected, localPlayerId } = useSocket();
+  const { enableSocket, isConnected, socket, callStatus } = useSocket();
   const navigate = useNavigate();
   const isClicked = useRef(false);
   const hasNavigated = useRef(false);
@@ -63,6 +69,14 @@ export function ButtonVoiceRoom({
   useEffect(() => { enableSocket(); }, []);
 
   const isCurrentRoom = isConnectedRoom && currentRoomName === roomName;
+
+  useEffect(() => {
+    if (isCurrentRoom && hasRemoteParticipant)
+      onCallStatusChange?.('connected', directKey);
+    else if (!hasRemoteParticipant && callStatus.status === 'connected')
+      onCallStatusChange?.('ringing', directKey);
+
+  }, [isCurrentRoom, hasRemoteParticipant]);
 
   const handleJoin = async () => {
     console.log("🔥 Start button clicked");
@@ -106,6 +120,22 @@ export function ButtonVoiceRoom({
         });
     }
 
+    const handleConnectSuccess = () => {
+      socket.emit('initiate-call', { directKey, selectedRoomName, mode });
+      onCallStatusChange?.('ringing', directKey);
+      cleanupConnectListeners();
+    };
+    const handleConnectError = () => {
+      onCallStatusChange?.('idle', directKey);
+      cleanupConnectListeners();
+    };
+    const cleanupConnectListeners = () => {
+      window.removeEventListener('livekit-connect-success', handleConnectSuccess);
+      window.removeEventListener('livekit-connect-error', handleConnectError);
+    };
+    window.addEventListener('livekit-connect-success', handleConnectSuccess);
+    window.addEventListener('livekit-connect-error', handleConnectError);
+
     await connect(mode);
 
     console.log("Waiting for LiveKit connection...");
@@ -120,6 +150,7 @@ export function ButtonVoiceRoom({
       console.log("Meeting status changed to scheduled");
     }
   
+    // set onCallStatusChange in disconnect as using diff button in Video roomm
     await disconnect(true);
   
     if (leaveTo) navigate(leaveTo);
@@ -149,7 +180,7 @@ export function ButtonVoiceRoom({
           disabled={!isConnected || isCurrentLoading}
         >
           {isCurrentLoading ? (
-            <ButtonLoading isLoading={isCurrentLoading} />
+            <ButtonLoading isLoading={isCurrentLoading} text={loadingText} />
           ) : (
             joinText
           )}
