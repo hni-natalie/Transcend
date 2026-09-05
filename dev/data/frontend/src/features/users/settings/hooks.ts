@@ -89,10 +89,11 @@ const validateProfileForm = (profile: ProfileData): string | null => {
   return null;
 };
 
-// profile field changes - PUT save
+// profile field changes - PATCH save
 export const useProfileSave = (
   profile: ProfileData,
-  setProfile: React.Dispatch<React.SetStateAction<ProfileData>>
+  setProfile: React.Dispatch<React.SetStateAction<ProfileData>>,
+  uploadPendingForSelf?: () => Promise<string | null>
 ) => {
   const [isSaving, setIsSaving] = useState(false);
   const { showToast } = useToast();
@@ -113,7 +114,11 @@ export const useProfileSave = (
 
     try {
       setIsSaving(true);
-      await apiClient.put('/users/me', {
+
+      // Upload a newly selected avatar only when the profile changes are saved.
+      await uploadPendingForSelf?.();
+
+      await apiClient.patch('/users/me', {
 		userName: `${profile.firstName} ${profile.lastName}`.trim(),
         userEmail: profile.email.trim(),
         city: profile.city,
@@ -258,4 +263,3 @@ export const useAccountDeletion = () => {
 
   return { isConfirmOpen, openConfirm, closeConfirm, isRequesting, deletionRequest, confirmDeletionRequest };
 };
-
