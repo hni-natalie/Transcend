@@ -19,10 +19,10 @@ router.get('/me/data-export', userController.getMyDataExport);
 router.post('/me/deletion-request', userController.requestAccountDeletion);
 
 router.get('/', userController.getAllUsers);
+router.get('/dashboard/metrics', requireAdmin, userController.getDashboardMetrics);
 router.get('/:id', userController.getUserById);
 
 router.post('/', requireAdmin, userController.createUser);
-router.get('/dashboard/metrics', requireAdmin, userController.getDashboardMetrics)
 router.patch('/:id', requireAdmin, userController.updateUser);
 router.delete('/:id', requireAdmin, userController.deleteUser);
 router.post('/avatar/:id', requireAdmin, upload.single('avatar'), userController.uploadAvatarForUser);

@@ -1,7 +1,8 @@
 const { JWT_SECRET } = require('../utils/secrets');
 const jwt = require('jsonwebtoken');
+const prisma = require('../../prisma/client');
 
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
 	const authHeader = req.headers.authorization;
 
 	if (!authHeader) {
@@ -14,12 +15,31 @@ function authMiddleware(req, res, next) {
 		return res.status(401).json({ error: 'Invalid authorization format' });
 	}
 
+	let decoded;
 	try {
-		req.user = jwt.verify(token, JWT_SECRET);
-		return next();
+		decoded = jwt.verify(token, JWT_SECRET);
+		// req.user = jwt.verify(token, JWT_SECRET);
+		// return next();
 	} catch (error) {
 		return res.status(401).json({ error: 'Invalid or expired token' });
 	}
+
+	try {
+		const user = await prisma.user.findUnique({
+			where: { userId: decoded.userId },
+			select: { deletedAt: true },
+		});
+
+		if (!user || user.deletedAt) {
+			return res.status(401).json({ error: 'Invalid or expired token' });
+		}
+	} catch (error) {
+		console.error('[auth.middleware] deletedAt check failed:', error);
+		return res.status(500).json({ error: 'Authentication check failed' });
+	}
+
+	req.user = decoded;
+	return next();
 }
 
 // role checker - no db query, just checks jwt

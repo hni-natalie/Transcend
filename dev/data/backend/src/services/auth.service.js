@@ -52,9 +52,13 @@ function formatUserResponse(user, loginAt) {
 async function finalizeLogin(user) {
   const loginAt = new Date();
 
-  await prisma.user.update({
+  const loggedInUser = await prisma.user.update({
     where: { userId: user.userId },
-    data: { lastLoginAt: loginAt },
+    data: {
+      lastLoginAt: loginAt,
+      userStatus: 'online',
+    },
+    include: USER_INCLUDE,
   });
 
   const token = signToken(user);
@@ -65,7 +69,7 @@ async function finalizeLogin(user) {
     action: 'logged in',
   });
 
-  return { token, user: formatUserResponse(user, loginAt) };
+  return { token, user: formatUserResponse(loggedInUser, loginAt) };
 }
 
 async function loginWithPassword(userEmail, userPassword) {
@@ -196,6 +200,7 @@ async function getCurrentUser(userId) {
       avatarUrl: true,
       authProvider: true,
       createdAt: true,
+	  deletedAt: true,
       country: true,
       city: true,
       timezone: true,
@@ -203,7 +208,8 @@ async function getCurrentUser(userId) {
     },
   });
 
-  if (!user) {
+//   if (!user) {
+  if (!user || user.deletedAt) {
     throw new AuthError(404, 'User not found');
   }
 
