@@ -45,7 +45,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     apiClient.registerSessionExpiredHandler(() => {
       removeToken();
       setUser(null);
-      if (window.location.pathname !== '/login') {
+      const publicPaths = ['/login', '/', '/terms', '/privacy'];
+      if (!publicPaths.includes(window.location.pathname)) {
         window.location.href = '/login';
       }
     });

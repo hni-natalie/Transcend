@@ -32,7 +32,8 @@ class ApiClient {
 	  (error: AxiosError) => {
 		if (error.response?.status === 401) {
 		  const isAuthEndpoint = error.config?.url?.includes('/auth/login') || 
-								error.config?.url?.includes('/auth/google');
+								error.config?.url?.includes('/auth/google') ||
+								error.config?.url?.includes('/auth/me');
 		
 		  if (!isAuthEndpoint) {
 			if (this.onSessionExpiredHandler) {
