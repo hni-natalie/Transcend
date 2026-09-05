@@ -23,6 +23,7 @@ export interface User {
     emailVerified?: boolean;
     createdAt?: string;
     updatedAt?: string;
+	deletedAt?: string | null;
 }
 
 /* user account (for admin users table) */
@@ -147,6 +148,21 @@ export const toUserChipItem = (user: User): UserChipItem => ({
     photo: user.avatarUrl ?? '',
 	status: user.userStatus,
 });
+
+/* safe display name for historical/shared references (task assignees, meeting
+   participants, message authors) where the user may have been GDPR-erased.
+   Prefer this over reading user.userName directly in those contexts. */
+export const getDisplayName = (user: Pick<User, 'userName' | 'deletedAt'> | null | undefined): string => {
+    if (!user || user.deletedAt) return 'Deleted User';
+    return user.userName;
+};
+
+/* avatar counterpart — never render a scrubbed avatar, even if avatarUrl
+   happens to still hold a stale value at read time */
+export const getDisplayAvatar = (user: Pick<User, 'avatarUrl' | 'deletedAt'> | null | undefined): string | null => {
+    if (!user || user.deletedAt) return null;
+    return user.avatarUrl ?? null;
+};
 
 
 // // Helper function to get status display for dashboard

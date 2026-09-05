@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAvatarUpload, LoadingState, Modal } from '@/shared';
-import { SideNav, ProfileIdentityRow, ProfileFormFields, PasswordFormFields, RequestMyDataCard, RequestAccountDeletionCard, ConfirmAccountDeletion, } from './components';
+import { useAvatarUpload, LoadingState, ConfirmDeleteModal } from '@/shared';
+import { SideNav, ProfileIdentityRow, ProfileFormFields, PasswordFormFields, RequestMyDataCard, RequestAccountDeletionCard, } from './components';
 import { useSettingsData, useProfileSave, usePasswordSave, usePrivacyData, useAccountDeletion } from './hooks';
 import { ActiveSection } from './types';
 
@@ -19,7 +19,10 @@ export function Settings() {
     }
   }, [isGoogleUser, activeSection]);
 
-  const { isUploading, handleAvatarUpload, uploadPendingForSelf } = useAvatarUpload({ onSuccess: setAvatarUrl, });
+  const { isUploading, handleAvatarUpload, uploadPendingForSelf } = useAvatarUpload({
+    onSuccess: setAvatarUrl,
+    onPreview: setAvatarUrl,
+  });
   
   const { isSaving: isSavingProfile, handleProfileChange, handleProfileSave } =
     useProfileSave(profile, setProfile, uploadPendingForSelf);
@@ -157,13 +160,14 @@ export function Settings() {
 
     </div>
 
-    <Modal isOpen={isDeletionConfirmOpen} onClose={closeDeletionConfirm}>
-      <ConfirmAccountDeletion
-        isRequesting={isRequestingDeletion}
-        onCancel={closeDeletionConfirm}
-        onConfirm={confirmDeletionRequest}
-      />
-    </Modal>
+    <ConfirmDeleteModal
+      isOpen={isDeletionConfirmOpen}
+      onClose={closeDeletionConfirm}
+      onConfirm={confirmDeletionRequest}
+      isLoading={isRequestingDeletion}
+      title="Delete your account?"
+      description="This will submit a request to permanently delete your account and all associated data. This action cannot be undone. Are you sure?"
+    />
     </>
   );
 }

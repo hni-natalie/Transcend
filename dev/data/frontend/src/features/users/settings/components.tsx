@@ -531,38 +531,3 @@ export const RequestAccountDeletionCard = ({
   </div>
 );
 
-// confirm modal content - mirrors the delete-conversation confirmation pattern
-interface ConfirmAccountDeletionProps {
-  isRequesting: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-}
-
-export const ConfirmAccountDeletion = ({ isRequesting, onCancel, onConfirm }: ConfirmAccountDeletionProps) => (
-  <div className="bg-background-1 rounded-3xl p-6 shadow-2xl w-[340px]">
-    <p className="text-base text-foreground mb-1 font-semibold">Delete your account?</p>
-    <p className="text-sm text-foreground-3 mb-6">
-      This will submit a request to permanently delete your account and all associated data. This action cannot
-      be undone. Are you sure?
-    </p>
-
-    <div className="flex justify-end gap-2.5">
-      <button
-        onClick={onCancel}
-        disabled={isRequesting}
-        className="px-4 py-2 text-base rounded-full text-foreground-3 hover:text-foreground hover:bg-background-2 transition-colors cursor-pointer disabled:opacity-50"
-      >
-        Cancel
-      </button>
-
-      <button
-        onClick={onConfirm}
-        disabled={isRequesting}
-        className="px-4 py-2 text-base rounded-full bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-50"
-      >
-        {isRequesting ? 'Submitting...' : 'Delete'}
-      </button>
-    </div>
-  </div>
-);
-

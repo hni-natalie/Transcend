@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { usePasswordField } from '@shared/ui/PasswordField';
-import { userApi, CreateUserRequest, UpdateUserRequest } from '@features/users'
-import { UserFormFields } from './userFormFields';
-import { useRolesAndDepartments, useAvatarUpload, UserTableRow, IconClose } from '@shared';
 import { useToast } from '@/context/ToastContext';
+import { useRolesAndDepartments, useAvatarUpload, UserTableRow, IconClose, ConfirmDeleteModal } from '@shared';
+import { userApi, CreateUserRequest, UpdateUserRequest } from '@features/users'
+import { usePasswordField } from '@shared/ui/PasswordField';
+import { UserFormFields } from './userFormFields';
 
 interface UserFormProps {
   mode: 'create' | 'edit';
@@ -15,6 +15,8 @@ interface UserFormProps {
 
 export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { validatePassword } = usePasswordField();
   const { showToast } = useToast();
   const { departmentOptions, roleOptions, isLoading: isLoadingData } = useRolesAndDepartments();
@@ -56,7 +58,6 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
   const [formData, setFormData] = useState(getInitialFormData);
 
   const { isUploading, uploadError, setAvatarUrl, handleFileUpload, uploadPendingForUser, pendingFile } = useAvatarUpload({
-    targetUserId: isEdit ? user?.userId : undefined,
     onSuccess: (url) => {
         setFormData(prev => ({ ...prev, photo: url }));
     },
@@ -164,6 +165,10 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
 
       await userApi.updateUser(user.userId, updateData);
 
+      if (pendingFile) {
+        await uploadPendingForUser(user.userId);
+      }
+
       // password update (admin dont need old password - /reset-password in be)
       if (formData.password && formData.password.trim() !== '') {
         try {
@@ -217,15 +222,23 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
   }
 };
 
- const handleDelete = async () => {
-  if (!user) return;
-  
-  if (window.confirm(`Are you sure you want to delete "${user.username}"? This action cannot be undone.`)) {
-    if (onDelete) {
+  const handleDelete = () => {
+    if (!user) return;
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!onDelete) return;
+    try {
+      setIsDeleting(true);
       await onDelete();
+      setShowDeleteConfirm(false);
+    } catch {
+      // Error handled by parent or showToast
+    } finally {
+      setIsDeleting(false);
     }
-  }
-};
+  };
 
   if (isLoadingData && isEdit) {
     return (
@@ -294,6 +307,21 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
 			</div>
         </form>
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        isLoading={isDeleting}
+        title="Delete user account?"
+        description={
+          user ? (
+            <>
+              Are you sure you want to delete <span className="font-semibold text-foreground">{user.username}</span>? This action cannot be undone.
+            </>
+          ) : undefined
+        }
+      />
     </div>
   );
 }
