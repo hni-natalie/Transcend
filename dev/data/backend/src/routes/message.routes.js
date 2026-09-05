@@ -6,10 +6,9 @@ const messageController = require('../controllers/message.controller');
 router.use(authMiddleware);
 const upload = multer({ storage: multer.memoryStorage() });
 
-
 // Conversations
 router.get('/', messageController.getAllConversations);
-router.get('/:id', messageController.getConversationById);
+// router.get('/:id', messageController.getConversationById);
 router.post('/direct', messageController.createDirectConversation);
 router.post('/group', messageController.createGroupConversation);
 router.delete('/:id', messageController.deleteConversation);

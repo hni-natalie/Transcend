@@ -3,7 +3,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 
 import { useToast } from '@/context/ToastContext';
 import type { Conversation } from '../types';
-import { messagesApi } from '../api/messages.api'; // uncomment for BE implmentation
+import { messagesApi } from '../api/messages.api';
 import { mapConversation } from '../lib/mappers';
 
 
@@ -34,36 +34,11 @@ export const useCreateConversation = () => {
         throw new Error('Group name is required');
       }
 
-	  // TO DO: 
-	  // call API (POST /conversations)
     let response;
     if (data.isGroup)
       response = await messagesApi.createGroupConversation({ groupName: data.groupName, participantIds: data.participantIds });
     else
       response = await messagesApi.createDirectConversation({ participantId: data.participantIds[0] });
-      
-	  // messagesApi.createConversation({ isGroup, groupName, userIds, message }).
-	  // >>>>>>>>>>>>>>> MOCK >>>>>>>>>>>>>>>>>>
-      // await new Promise<void>((resolve) => setTimeout(resolve, 500));
-
-      // const id = data.isGroup ? `group-${Date.now()}` : `user-${data.userIds[0]}`;
-      // const createdAt = new Date().toISOString();
-
-      // const conversation: Conversation = {
-      //   id,
-      //   type: data.isGroup ? 'group' : 'direct',
-      //   name: data.isGroup ? data.groupName!.trim() : 'New Conversation',
-      //   createdAt,
-      //   updatedAt: undefined,
-      //   pinned: false,
-      //   lastMessage: undefined,
-      //   ...(data.isGroup ? {} : { userId: data.userIds[0] }),
-      //   ...(data.isGroup ? { members: [] } : {}),
-      // };
-
-      // return conversation;
-	  // >>>>>>>>>>>>>>> END OF MOCK >>>>>>>>>>>>>>>>>>
-
 
 	   // >>>>>>>>>>>>>>>  REAL API (uncomment once BE route is ready)
       // const response = await messagesApi.createConversation({

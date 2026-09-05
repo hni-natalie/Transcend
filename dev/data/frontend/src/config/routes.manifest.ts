@@ -10,7 +10,6 @@ export const ROUTE_PATH = {
 	ADMIN_USERS: '/admin/users',
 	// ADMIN_SPACES: '/admin/spaces',
 	ADMIN_ACTIVITY: '/admin/activity',
-	// ADMIN_SETTINGS: '/admin/settings', // kiv - to remove
 
 	// user
 	USER_DASHBOARD: '/user/dashboard',

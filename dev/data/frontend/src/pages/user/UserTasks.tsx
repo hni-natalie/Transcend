@@ -1,11 +1,10 @@
-import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, UserChipItem, IconPlus, LoadingState, Modal, IconClose, ModalHeader, DefaultAvatar, AlertBanner } from '@shared';
+import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, IconPlus, LoadingState, Modal, ConfirmDeleteModal, IconClose, ModalHeader, DefaultAvatar, AlertBanner } from '@shared';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
-import { InputTextArea } from '@/shared/ui/InputTextArea';
-import { InputDropdownChecklist, EmptyCard } from '@/shared';
+import { InputTextArea, InputDropdownChecklist, EmptyCard, getDisplayName, getDisplayAvatar } from '@/shared';
 import { DropdownChoice } from '@/shared/types/ui.types';
-import { useSocket } from "@/context/SocketContext";
+import { useSocket, useToast } from "@/context";
 
 type TaskMember = {
   userId: string;
@@ -29,9 +28,62 @@ const taskPriorityOptions : DropdownChoice[] = [
 	{ id: 'high', name: 'High Priority' }
 ];
 
+const TASK_TITLE_MAX_LENGTH = 50;
+const TASK_DESC_MAX_LENGTH = 200;
+
+const validateCreateTaskForm = (data: {
+  title: string;
+  description?: string;
+  dueDate?: string;
+  assignedUserIds: string[];
+}): string | null => {
+  const trimmedTitle = data.title.trim();
+  if (!trimmedTitle) {
+    return 'Task title is required.';
+  }
+  if (trimmedTitle.length > TASK_TITLE_MAX_LENGTH) {
+    return `Task title must be under ${TASK_TITLE_MAX_LENGTH} characters.`;
+  }
+  if (data.description && data.description.trim().length > TASK_DESC_MAX_LENGTH) {
+    return `Task description must be under ${TASK_DESC_MAX_LENGTH} characters.`;
+  }
+//   if (!data.dueDate) {
+//     return 'Due date is required.';
+//   }
+  if (data.dueDate && isNaN(Date.parse(data.dueDate))) {
+    return 'Invalid due date format.';
+  }
+//   if (data.assignedUserIds.length === 0) {
+//     return 'Please assign at least one team member.';
+//   }
+  return null;
+};
+
+const validateEditTaskForm = (data: {
+  title: string;
+  description?: string;
+  dueDate?: string;
+}): string | null => {
+  const trimmedTitle = data.title.trim();
+  if (!trimmedTitle) {
+    return 'Task title is required.';
+  }
+  if (trimmedTitle.length > TASK_TITLE_MAX_LENGTH) {
+    return `Task title must be under ${TASK_TITLE_MAX_LENGTH} characters.`;
+  }
+  if (data.description && data.description.trim().length > TASK_DESC_MAX_LENGTH) {
+    return `Task description must be under ${TASK_DESC_MAX_LENGTH} characters.`;
+  }
+  if (data.dueDate && isNaN(Date.parse(data.dueDate))) {
+    return 'Invalid due date format.';
+  }
+  return null;
+};
+
 const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
   task: Task;
-  error: string;
+//   error: string;
+  error?: string | null;
   onClose: () => void;
   onUpdate: (
     taskId: string,
@@ -44,11 +96,34 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
     }) => void;
   loading: boolean;}) => {
 
+  const { showToast } = useToast();
   const [taskTitle, setTaskTitle] = useState(task.taskTitle);
   const [taskDesc, setTaskDesc] = useState(task.taskDesc || '');
   const [taskPriority, setTaskPriority] = useState<'low' | 'medium' | 'high'>( task.assignedTo?.[0]?.taskPriority || 'medium');
   const [taskStatus, setTaskStatus] = useState<'not_started' | 'in_progress' | 'done' >(task.taskStatus);
   const [dueDate, setDueDate] = useState( task.dueDate ? task.dueDate.split('T')[0] : '');
+  const [localError, setLocalError] = useState('');
+
+  const handleSave = () => {
+    const validationError = validateEditTaskForm({
+      title: taskTitle,
+      description: taskDesc,
+      dueDate,
+    });
+    if (validationError) {
+      setLocalError(validationError);
+      return;
+    }
+    setLocalError('');
+    onUpdate(task.taskId, {
+      taskTitle: taskTitle.trim(),
+      taskDesc: taskDesc.trim() || undefined,
+      taskPriority,
+      taskStatus,
+      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+    });
+  };
+
 
   return (
     <div className="form-layout">
@@ -59,6 +134,13 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
           title='Edit Task'
           onClose={onClose}
         />
+
+        {(localError || error) && (
+          <div className="rounded-lg border border-danger bg-red-500/10 px-4 py-2 text-sm text-danger text-center">
+            {localError || error}
+          </div>
+        )}
+
         <InputText
           title='Title'
           type='text'
@@ -104,23 +186,26 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
 
       <div className='flex flex-col justify-center pt-4 gap-2'>
         <button
-          onClick={() =>
-            onUpdate(task.taskId, {
-              taskTitle,
-              taskDesc,
-              taskPriority,
-              taskStatus,
-              dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-            })
-          }
-          disabled={loading || !taskTitle}
+        //   onClick={() =>
+        //     onUpdate(task.taskId, {
+        //       taskTitle,
+        //       taskDesc,
+        //       taskPriority,
+        //       taskStatus,
+        //       dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+        //     })
+        //   }
+        //   disabled={loading || !taskTitle}
+		  onClick={handleSave}
+          disabled={loading || !taskTitle.trim()}
+
           className='btn-lime-outline-solid w-[200px] mx-auto'
         >
           {loading ? 'Saving...' : 'Save Changes'}
         </button>
-        {error &&
+        {/* {error &&
           <p className='text-danger text-center text-sm'>{error}</p>
-        }
+        } */}
       </div>
     </div>
   );
@@ -138,10 +223,12 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
     }) => void;
     loading: boolean;}) => {
 
+    const { showToast } = useToast();
     const [taskTitle, setTaskTitle] = useState('');
     const [taskPriority, setTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
     const [taskDesc, setTaskDesc] = useState('');
     const [dueDate, setDueDate] = useState('');
+	const [errorMessage, setErrorMessage] = useState('');
 
     const [users, setUsers] = useState<TaskMember[]>([]);
     // const [memberOpen, setMemberOpen] = useState(false);
@@ -189,12 +276,13 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
 
     } catch (err) {
       console.error("Failed to fetch users:", err);
+      showToast('error', 'Failed to load task members');
       setUsers([]);
     }
   };
 
   fetchUsers();
-}, []);
+}, [showToast]);
 
   function toggleUser(userId: string) {
     setSelectedUserIds((prevSelected) => {
@@ -210,6 +298,18 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
   }
 
   const handleSubmit = () => {
+	const validationError = validateCreateTaskForm({
+      title: taskTitle,
+      description: taskDesc,
+      dueDate,
+      assignedUserIds: selectedUserIds,
+    });
+    if (validationError) {
+      setErrorMessage(validationError);
+      return;
+    }
+    setErrorMessage('');
+
     onSubmit({
       taskTitle,
       taskPriority,
@@ -227,6 +327,12 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
         title='Create New Task'
         onClose={onClose}
       />
+
+	  {errorMessage && (
+        <div className="rounded-lg border border-danger bg-red-500/10 px-4 py-2 text-sm text-danger text-center">
+          {errorMessage}
+        </div>
+      )}
 
       <InputText
         title='Title'
@@ -258,7 +364,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
         title='Due Date'
         value={dueDate}
         onChange={(e) => setDueDate(e.target.value)}
-        required={true}
+        // required={true}
         type='date'
         className="bg-background"
       />
@@ -275,32 +381,43 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
         <button
           onClick={handleSubmit}
           disabled={loading || !taskTitle}
+		//   disabled={loading || !taskTitle.trim() || !dueDate || selectedUserIds.length === 0}
           className='btn-lime-outline-solid w-[200px] mx-auto'
         >
           {loading ? "Creating..." : "Create Task"}
         </button>
       </div>
     </div>
-);
+  );
 };
 
 const TaskCard = ({ task, onEdit, onDelete,}: {
   task: Task;
   onEdit: () => void;
-  onDelete: (taskId: string) => void;
+  onDelete: (task: Task) => void;
 }) => {
   const priority = task.assignedTo?.[0]?.taskPriority;
   const [showMenu, setShowMenu] = useState(false);
   const displayDate = task.taskStatus === 'done' ? task.completedDate: task.dueDate;  
 
-  const assignedUsersChips: UserChipItem[] = (task.assignedTo ?? [])
+//   const assignedUsersChips = (task.assignedTo ?? [])
+//     .filter((assignment) => assignment.user)
+//     .map((assignment) => ({
+//       name: assignment.user.userName,
+//       email: assignment.user.userEmail,
+//       role: assignment.user.role?.roleName ?? "Unknown",
+//       photo: assignment.user.avatarUrl || null,
+//     }));
+
+  const assignedUsersChips = (task.assignedTo ?? [])
     .filter((assignment) => assignment.user)
     .map((assignment) => ({
-      name: assignment.user.userName,
-      email: assignment.user.userEmail,
+      userId: assignment.user.userId,
+      name: getDisplayName(assignment.user),
+      email: assignment.user.deletedAt ? undefined : assignment.user.userEmail,
       role: assignment.user.role?.roleName ?? "Unknown",
-      photo: assignment.user.avatarUrl || null,
-    }));
+      photo: getDisplayAvatar(assignment.user),
+  }));
     
   return (
     <div
@@ -336,11 +453,7 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
               type="button"
               onClick={(event) => {
                 event.stopPropagation();
-
-                if (window.confirm("Delete this task?")) {
-                  onDelete(task.taskId);
-                }
-
+                onDelete(task);
                 setShowMenu(false);
               }}
               className="mt-2 w-full rounded-xl px-3 py-2 text-red-400 hover:bg-[#333]">
@@ -377,7 +490,8 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
         {assignedUsersChips.map((user, index) => (
           user.photo ? (
             <img
-              key={user.email ?? `${user.name}-${index}`}
+            //   key={user.email ?? `${user.name}-${index}`}
+			  key={user.userId}
               src={user.photo}
               alt={`${user.name}'s avatar`}
               title={user.name}
@@ -390,7 +504,8 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
             />
           ) : (
             <DefaultAvatar
-              key={user.email ?? `${user.name}-${index}`}
+            //   key={user.email ?? `${user.name}-${index}`}
+			  key={user.userId}
               name={user.name}
               title={user.name}
               email={user.email}
@@ -414,7 +529,7 @@ const TaskColumn = ({
   title: string;
   tasks: Task[];
   onTaskClick: (id: string) => void;
-  onDelete: (taskId: string) => void;
+  onDelete: (task: Task) => void;
 }) => {
   return (
     <div>
@@ -447,9 +562,12 @@ const TaskColumn = ({
 };
 
 export const Tasks = () => {
+  const { showToast } = useToast();
   const { socket } = useSocket();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [taskPendingDeletion, setTaskPendingDeletion] = useState<Task | null>(null);
+  const [isDeletingTask, setIsDeletingTask] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
@@ -495,22 +613,15 @@ export const Tasks = () => {
   }, [socket, fetchTasks])
  
 
-  const handleTaskClick = async (id: string) => {
-    try 
-    {
+  const handleTaskClick = async (taskId: string) => {
+    try {
       setDetailLoading(true);
       setError(null);
-
-      const res = await taskApi.getTaskById(id);
-
+      const res = await taskApi.getTaskById(taskId);
       setSelectedTask(res);
-    } 
-    catch (err: any) 
-    {
-      setError(err.message || 'Failed to load task detail');
-    } 
-    finally 
-    {
+    } catch (err: any) {
+      setError(err.message || 'Failed to load task details');
+    } finally {
       setDetailLoading(false);
     }
   };
@@ -519,24 +630,24 @@ export const Tasks = () => {
     taskTitle: string;
     taskPriority: 'low' | 'medium' | 'high';
     taskDesc?: string;
-    dueDate?: string; 
-    assignedUserIds: string[];
-}) => {
-    try 
-    {
+    taskStatus?: 'not_started' | 'in_progress' | 'done';
+    dueDate?: string;
+    assignedUserIds?: string[];
+  }) => {
+    try {
       setCreateLoading(true);
       setError(null);
 
       await taskApi.createTask(data);
       await fetchTasks();
+
       setShowCreateModal(false);
-    } 
-    catch (err: any) 
-    {
-      setError(err.message || 'Failed to create task');
-    } 
-    finally 
-    {
+      showToast('success', 'Task created successfully!');
+    } catch (err: any) {
+      const msg = err.message || 'Failed to create task';
+    //   setError(msg);
+      showToast('error', msg);
+    } finally {
       setCreateLoading(false);
     }
   };
@@ -549,38 +660,45 @@ export const Tasks = () => {
       taskDesc?: string;
       taskStatus?: 'not_started' | 'in_progress' | 'done';
       dueDate?: string;
+      assignedUserIds?: string[];
     }
   ) => {
-    try 
-    {
+    try {
       setUpdateLoading(true);
       setError(null);
 
-
       await taskApi.updateTask(taskId, data);
       await fetchTasks();
+
       setSelectedTask(null);
-    } 
-    catch (err: any) 
-    {
-      setError(err.message || 'Failed to update task');
-    } 
-    finally 
-    {
+      showToast('success', 'Task updated successfully!');
+    } catch (err: any) {
+      const msg = err.message || 'Failed to update task';
+    //   setError(msg);
+      showToast('error', msg);
+    } finally {
       setUpdateLoading(false);
     }
   };
 
-  const handleDeleteTask = async (taskId: string) => {
+  const handleConfirmDeleteTask = async () => {
+    if (!taskPendingDeletion) return;
     try {
+      setIsDeletingTask(true);
       setError(null);
 
-      await taskApi.deleteTask(taskId);
+      await taskApi.deleteTask(taskPendingDeletion.taskId);
       await fetchTasks();
 
+      setTaskPendingDeletion(null);
       setSelectedTask(null);
+      showToast('success', 'Task deleted successfully!');
     } catch (err: any) {
-      setError(err.message || 'Failed to delete task');
+      const msg = err.message || 'Failed to delete task';
+      setError(msg);
+      showToast('error', msg);
+    } finally {
+      setIsDeletingTask(false);
     }
   };
 
@@ -646,27 +764,27 @@ export const Tasks = () => {
             title="Backlog"
             tasks={groupedTasks.backlog}
             onTaskClick={handleTaskClick}
-            onDelete={handleDeleteTask}
+            onDelete={setTaskPendingDeletion}
           />
           <TaskColumn
             title="Upcoming"
             tasks={groupedTasks.upcoming}
             onTaskClick={handleTaskClick}
-            onDelete={handleDeleteTask}
+            onDelete={setTaskPendingDeletion}
           />
 
           <TaskColumn
             title="In Progress"
             tasks={groupedTasks.inProgress}
             onTaskClick={handleTaskClick}
-            onDelete={handleDeleteTask}
+            onDelete={setTaskPendingDeletion}
           />
 
           <TaskColumn
             title="Done"
             tasks={groupedTasks.done}
             onTaskClick={handleTaskClick}
-            onDelete={handleDeleteTask}
+            onDelete={setTaskPendingDeletion}
           />
         </div>
       </div>
@@ -680,13 +798,15 @@ export const Tasks = () => {
       )}
 
       <Modal isOpen={!!selectedTask} onClose={() => setSelectedTask(null)}>
-        <TaskDetailModal
-          task={selectedTask}
-          onClose={() => setSelectedTask(null)}
-          onUpdate={handleUpdateTask}
-          loading={updateLoading}
-          error={error}
-        />
+        {selectedTask && (
+          <TaskDetailModal
+            task={selectedTask}
+            onClose={() => setSelectedTask(null)}
+            onUpdate={handleUpdateTask}
+            loading={updateLoading}
+            error={error}
+          />
+        )}
       </Modal>
 
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)}>
@@ -696,6 +816,21 @@ export const Tasks = () => {
           loading={createLoading}
         />
       </Modal>
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(taskPendingDeletion)}
+        onClose={() => setTaskPendingDeletion(null)}
+        onConfirm={handleConfirmDeleteTask}
+        isLoading={isDeletingTask}
+        title="Delete this task?"
+        description={
+          taskPendingDeletion ? (
+            <>
+              Are you sure you want to delete <span className="font-semibold text-foreground">{taskPendingDeletion.taskTitle}</span>? This action cannot be undone.
+            </>
+          ) : undefined
+        }
+      />
     </>
   );
 };

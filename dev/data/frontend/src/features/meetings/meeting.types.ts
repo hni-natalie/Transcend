@@ -9,11 +9,12 @@ export type MeetingDetails = {
     participants: {
         userId: string;
         role: "organiser" | "participant";
-        attendance: "present" | "absent";
+        attendance: "present" | "absent" | "pending";
 
         user: {
             userName: string;
             userEmail: string;
+			deletedAt?: string | null;
         };
     }[];
 
@@ -26,6 +27,7 @@ export type Participant = {
     userId: string;
     userName: string;
     userEmail: string;
+	deletedAt?: string | null;
     role: "organiser" | "participant";
     attendance: "present" | "absent" | "pending";
 };

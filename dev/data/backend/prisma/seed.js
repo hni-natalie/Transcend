@@ -1,8 +1,14 @@
 const { PrismaClient } = require('@prisma/client');
-const fs = require('fs');
 const bcrypt = require('bcrypt');
+const secrets = require('../src/utils/secrets');
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+    datasources: {
+        db: {
+            url: secrets.DATABASE_URL,
+        },
+    },
+});
 
 // Helper function to generate title based on role and department
 function generateTitle(roleName, departmentName) {
@@ -112,9 +118,9 @@ async function main() {
     }
 
     // 5. PASSWORD ENCRYPTION
-    const adminPassword = fs.readFileSync('/run/secrets/app_root', 'utf8').trim();
+    const adminPassword = secrets.ROOT_PASSWORD;
     const adminHash = await bcrypt.hash(adminPassword, 10);
-    const mockPassword = fs.readFileSync('/run/secrets/app_mock', 'utf8').trim();
+    const mockPassword = secrets.MOCK_PASSWORD;
     const mockUserHash = await bcrypt.hash(mockPassword, 10);
 
     // 6. SYSTEM ADMINISTRATOR

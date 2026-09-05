@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
-export interface ToastMessage {
+interface ToastMessage {
   id: number;
   type: 'success' | 'error';
   message: string;
 }
 
-export interface ToastContextType {
+interface ToastContextType {
   showToast: (type: 'success' | 'error', message: string) => void;
 }
 

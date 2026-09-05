@@ -1,22 +1,20 @@
-// hooks/useUserStatusSync.ts
 import { useEffect, useRef } from 'react';
 import { useAuth } from '@/features/auth';
 import { useSocket } from '@/context/SocketContext';
-import { authService } from '@features/auth/auth.service';
+import { authApi } from '@/features/auth/auth.api';
 
 const getUserStatus = async () => {
-	const userData = await authService.getMe();
+	const userData = await authApi.getMe();
 	return userData.userStatus || 'away'
 }
 
 export function useUserStatusSync() {
   const { user, updateUserStatus } = useAuth();
-  const { enableSocket, isConnected, onlineStatus } = useSocket();
+  const { enableSocket, isConnected } = useSocket();
   const previousStatusRef = useRef<string | null>(user?.userStatus);
 
   // Enable socket on mount
 	useEffect(() => { enableSocket(); }, []);
-	
 
   // Sync user status when connected and user changes
   useEffect(() => {
@@ -27,10 +25,14 @@ export function useUserStatusSync() {
 
     const fetchStatus = async () => {
       try {
+		// get the user status from backend
         const status = await getUserStatus();
         // console.log('[UserStatusSync] current status: ', status, ' ', previousStatusRef.current, ' ', user.userStatus);
+				// compare backend and local state
 				if (status !== previousStatusRef.current) {
-        	updateUserStatus(status);
+					// if different, then update local state
+					// this func updates local and db again (slight redundancy?)
+        			updateUserStatus(status);
 					previousStatusRef.current = status;
 				}
       } catch (error) {
@@ -40,6 +42,5 @@ export function useUserStatusSync() {
     fetchStatus();
   }, [isConnected, user?.userStatus]);
 
-  // Return any useful values if needed
   return { user };
 }

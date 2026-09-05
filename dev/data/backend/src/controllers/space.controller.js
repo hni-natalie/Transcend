@@ -44,8 +44,8 @@ const spaceController = {
                 workspaceId,
                 accessLevel,
                 departmentId,
-                keyPersonId,
-                isPublicBook,
+                // keyPersonId,
+                // isPublicBook,
                 userCapacity
             } = req.body;
 
@@ -56,8 +56,8 @@ const spaceController = {
                 workspaceId,
                 accessLevel,
                 departmentId,
-                keyPersonId: keyPersonId ?? userId,
-                isPublicBook,
+                // keyPersonId: keyPersonId ?? userId,
+                // isPublicBook,
                 userCapacity
             });
 
@@ -73,9 +73,9 @@ const spaceController = {
                 spaceId,
                 spaceName,
                 accessLevel,
-                keyPersonId,
+                // keyPersonId,
                 departmentId,
-                isPublicBook,
+                // isPublicBook,
                 userCapacity
             } = req.body;
 
@@ -84,9 +84,9 @@ const spaceController = {
                 {
                     spaceName,
                     accessLevel,
-                    isPublicBook,
+                    // isPublicBook,
                     userCapacity,
-                    keyPersonId,
+                    // keyPersonId,
                     departmentId
                 }
             );

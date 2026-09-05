@@ -11,8 +11,6 @@ interface UserRowProps {
   trailing?: React.ReactNode;
 }
 
-
-
 export function UserRow({ name, email, avatarUrl, subtitle, selected = false, onClick, trailing }: UserRowProps) {
   return (
     <div

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
 import { useSocket } from '@/context/SocketContext';
-import { fetchAllUsers, deleteUser } from '@features/users';
+import { userApi } from '@features/users';
 import { toUserList, UserTableRow, FilterLayout, ErrorState } from '@shared';
 import { UserTable } from './components/UserTable';
 import { UserModals } from './components/UserModals';
@@ -35,7 +35,7 @@ export const UserManagement = ({
     setIsLoading(true);
     setError(null);
     try {
-      const backendUsers = await fetchAllUsers();
+      const backendUsers = await userApi.fetchAllUsers();
       const mappedUsers = backendUsers.map(toUserList);
       const sortedUsers = [...mappedUsers].sort((a, b) => 
         a.username.localeCompare(b.username)
@@ -66,7 +66,7 @@ export const UserManagement = ({
   // Delete handler
   const handleDeleteUser = async (userId: string, username: string) => {
     try {
-      await deleteUser(userId);
+      await userApi.deleteUser(userId);
       showToast('success', `User "${username}" deleted successfully`);
       await loadUsers();
       setShowEditForm(false);
@@ -150,6 +150,13 @@ export const UserManagement = ({
   const endIndex = startIndex + perPage;
   const displayedUsers = filteredUsers.slice(startIndex, endIndex);
 
+  // Clamp page if it becomes out of range (e.g. after deleting the last user on a page)
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
     setFilterValue('');
@@ -178,6 +185,7 @@ export const UserManagement = ({
         filterOptions={getFilterOptions()}
         getFilterLabel={getFilterLabel}
         isLoading={isLoading}
+		isEmpty={displayedUsers.length === 0}
         emptyMessage="No users found"
         showPagination={true}
         totalItems={totalUsers}

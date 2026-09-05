@@ -53,7 +53,7 @@ const roleRoutes		= require('./routes/role.routes');
 const roomRoutes		= require('./routes/room.routes');
 const userRoutes		= require('./routes/user.routes');
 const departmentRoutes	= require('./routes/department.routes');
-const uploadRoutes		= require('./routes/upload.routes');
+// const uploadRoutes		= require('./routes/upload.routes');	// TO REMOVE
 const spaceRoutes		= require('./routes/space.routes');
 const taskRoutes		= require('./routes/task.routes');
 const meetingRoutes		= require('./routes/meeting.routes');
@@ -71,7 +71,7 @@ app.use('/api/player', roomRoutes)
 app.use('/api/auth', authRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/uploads', uploadRoutes);
+// app.use('/api/uploads', uploadRoutes);		// TO REMOVE
 app.use('/api/departments', departmentRoutes);
 app.use('/api/spaces', spaceRoutes);
 app.use('/api/tasks', taskRoutes);

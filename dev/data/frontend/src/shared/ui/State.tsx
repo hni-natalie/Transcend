@@ -1,32 +1,32 @@
 import React from 'react';
 
 // types
-export interface StateContainerProps {
+interface StateContainerProps {
   children: React.ReactNode;
   size?: 'full' | 'medium' | 'small' | 'none';
   className?: string;
 }
 
-export interface StateTextProps {
+interface StateTextProps {
   children: React.ReactNode;
   variant?: 'loading' | 'empty' | 'error';
   className?: string;
 }
 
-export interface LoadingStateProps {
+interface LoadingStateProps {
   message?: string;
   size?: 'full' | 'medium' | 'small' | 'none';
   className?: string;
   msgClassName?: string;
 }
 
-export interface EmptyStateProps {
+interface EmptyStateProps {
   message?: string;
   size?: 'full' | 'medium' | 'small';
   className?: string;
 }
 
-export interface ErrorStateProps {
+interface ErrorStateProps {
   error: string | null;
   onRetry?: () => void;
   size?: 'full' | 'medium' | 'small';

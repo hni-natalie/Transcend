@@ -4,14 +4,13 @@ import { ActivityEvent, ActivityPagination, GetActivitiesParams } from '../types
 
 const base = API_CONFIG.endpoints.activity;
 
-// response shape for getAllActivities; kept here since it's a network-response wrapper, not a domain type
-export interface ActivityListResponse {
+interface ActivityListResponse {
   success: boolean;
   data: ActivityEvent[];
   pagination: ActivityPagination;
 }
 
-const TAB_TO_TYPE: Record<string, string | undefined> = {
+export const TAB_TO_TYPE: Record<string, string | undefined> = {
   All: undefined,
   Presence: 'presence',
   Spaces: 'space',

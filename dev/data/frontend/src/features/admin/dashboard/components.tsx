@@ -1,22 +1,9 @@
 import React, { useState } from 'react';
-import { IconLogin, IconLogout, IconTaskAdd, IconTaskDone, IconMeetings, IconMeetingAdd, TruncatedText, getStatusPriority, getStatusColors } from '@/shared';
+import { IconLogin, IconLogout, IconTaskAdd, IconTaskDone, IconMeetings, IconMeetingAdd, TruncatedText, getStatusPriority, getStatusColors, DefaultAvatar } from '@/shared';
 import { DbUser, ActivityItem, SpaceRatio, SpaceWithOccupancy } from './types';
 
-
-// empty state
-// export const EmptyState = () => {
-//   return (
-//     <div className="flex items-center justify-center min-h-[400px]">
-//       <div className="text-foreground-3 text-base">
-//         No user data available
-//       </div>
-//     </div>
-//   );
-// };
-
-
 // METRICS RING
-export interface MetricsRingProps {
+interface MetricsRingProps {
   availableCount: number;
   focusCount: number;
   inMeetingCount: number;
@@ -132,20 +119,11 @@ interface StatusAvatarProps {
 }
 
 const StatusAvatar = ({ user, onHover }: StatusAvatarProps) => {
+  const [imageError, setImageError] = useState(false);
   const colors = getStatusColors(user.status);
   const borderClass = colors.border;
-  const bgClass = colors.bg;
-  
-  const textClass = user.status !== 'offline' ? 'text-foreground-2' : 'text-foreground-3';
-  
-  const getInitials = (name: string) => {
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-  const initials = getInitials(user.name);
+
+  const showDefaultAvatar = !user.avatarUrl || imageError;
 
   return (
     <div 
@@ -153,34 +131,73 @@ const StatusAvatar = ({ user, onHover }: StatusAvatarProps) => {
       onMouseEnter={() => onHover(user)}
       onMouseLeave={() => onHover(null)}
     >
-      {user.avatarUrl ? (
+      {showDefaultAvatar ? (
+        <DefaultAvatar
+          name={user.name}
+          className={`w-full h-full rounded-full border-2 ${borderClass}`}
+        />
+      ) : (
         <img 
           src={user.avatarUrl} 
           alt={user.name}
           className={`w-full h-full rounded-full object-cover border-2 ${borderClass}`}
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-            const parent = e.currentTarget.parentElement;
-            if (parent) {
-              const fallbackDiv = parent.querySelector('.fallback-initials');
-              if (fallbackDiv) fallbackDiv.classList.remove('hidden');
-            }
-          }}
+          onError={() => setImageError(true)}
         />
-      ) : null}
-      
-      <div className={`fallback-initials w-full h-full rounded-full flex items-center justify-center border-2 ${borderClass} ${bgClass} ${user.avatarUrl ? 'hidden' : ''}`}>
-        <span className={`text-[8px] font-semibold ${textClass}`}>
-          {initials}
-        </span>
-      </div>
+      )}
     </div>
   );
 };
 
+// const StatusAvatar = ({ user, onHover }: StatusAvatarProps) => {
+//   const colors = getStatusColors(user.status);
+//   const borderClass = colors.border;
+//   const bgClass = colors.bg;
+  
+//   const textClass = user.status !== 'offline' ? 'text-foreground-2' : 'text-foreground-3';
+  
+//   const getInitials = (name: string) => {
+//     const parts = name.trim().split(' ');
+//     if (parts.length >= 2) {
+//       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+//     }
+//     return name.substring(0, 2).toUpperCase();
+//   };
+//   const initials = getInitials(user.name);
+
+//   return (
+//     <div 
+//       className="relative group cursor-pointer w-full max-w-[48px] mx-auto aspect-square"
+//       onMouseEnter={() => onHover(user)}
+//       onMouseLeave={() => onHover(null)}
+//     >
+//       {user.avatarUrl ? (
+//         <img 
+//           src={user.avatarUrl} 
+//           alt={user.name}
+//           className={`w-full h-full rounded-full object-cover border-2 ${borderClass}`}
+//           onError={(e) => {
+//             e.currentTarget.style.display = 'none';
+//             const parent = e.currentTarget.parentElement;
+//             if (parent) {
+//               const fallbackDiv = parent.querySelector('.fallback-initials');
+//               if (fallbackDiv) fallbackDiv.classList.remove('hidden');
+//             }
+//           }}
+//         />
+//       ) : null}
+      
+//       <div className={`fallback-initials w-full h-full rounded-full flex items-center justify-center border-2 ${borderClass} ${bgClass} ${user.avatarUrl ? 'hidden' : ''}`}>
+//         <span className={`text-[8px] font-semibold ${textClass}`}>
+//           {initials}
+//         </span>
+//       </div>
+//     </div>
+//   );
+// };
+
 
 // STATUS GRID
-export interface StatusGridProps {
+interface StatusGridProps {
   users: DbUser[];
   isExcludedUser: (user: DbUser) => boolean;
 }
@@ -227,29 +244,29 @@ export const StatusGrid = ({ users, isExcludedUser }: StatusGridProps) => {
 
 
 // DEPARTMENT STATS
-export interface DepartmentStatsProps {
+interface DepartmentStatsProps {
   getDepartmentRatio: (deptName: string) => { active: number; total: number };
 }
 
 const DEPARTMENTS = [
-  { label: 'Human Resources', code: 'Human Resources' },
-  { label: 'Accounts', code: 'Accounts' },
-  { label: 'Marketing', code: 'Marketing' },
-  { label: 'Operations', code: 'Operations' },
-  { label: 'Engineering', code: 'Engineering' },
-  { label: 'Design', code: 'Design' }
+  'Human Resources',
+  'Accounts',
+  'Marketing',
+  'Operations',
+  'Engineering',
+  'Design',
 ];
 
 export const DepartmentStats = ({ getDepartmentRatio }: DepartmentStatsProps) => {
   return (
     <div className="grid grid-cols-6 gap-3 items-stretch">
       {DEPARTMENTS.map((dept) => {
-        const ratio = getDepartmentRatio(dept.code);
-        const isTwoLineDept = dept.label === 'Human Resources';
+        const ratio = getDepartmentRatio(dept);
+        const isTwoLineDept = dept === 'Human Resources';
         
         return (
           <div 
-            key={dept.label} 
+            key={dept} 
             className="bg-background-2 rounded-3xl p-6 flex flex-col justify-between h-full"
           >
             <div className="text-md font-bold text-foreground">
@@ -259,7 +276,7 @@ export const DepartmentStats = ({ getDepartmentRatio }: DepartmentStatsProps) =>
                   <span>Resources</span>
                 </div>
               ) : (
-                <span className="block whitespace-nowrap">{dept.label}</span>
+                <span className="block whitespace-nowrap">{dept}</span>
               )}
             </div>
             
@@ -276,7 +293,7 @@ export const DepartmentStats = ({ getDepartmentRatio }: DepartmentStatsProps) =>
 };
 
 
-// mock components to replace with socket events
+// OFFICE DIAGRAM STATS
 interface OfficeRoom {
   code: string;
   spaceName: string;

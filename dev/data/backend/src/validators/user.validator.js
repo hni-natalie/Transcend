@@ -82,9 +82,9 @@ function validateUpdateUserByAdmin({ name, email, roleId, dpId, status, password
         }
     }
 
-    if (roleId !== undefined && roleId !== null && roleId !== '' && !isValidId(roleId)) {
-        throw new Error('Invalid role');
-    }
+    if (roleId !== undefined && roleId !== null && (roleId === '' || !isValidId(roleId))) {
+		throw new Error('Invalid role');
+	}
 
     if (dpId !== undefined && dpId !== null && dpId !== '' && !isValidId(dpId)) {
         throw new Error('Invalid department');
@@ -192,6 +192,7 @@ function validateResetPassword({ newPassword }) {
 }
 
 module.exports = {
+	VALID_STATUSES,
     validateCreateUser,
     validateUpdateUserByAdmin,
     validateUpdateProfile,
