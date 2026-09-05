@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSocket } from '@/context';
+import { useSocket, useToast } from '@/context';
 import { FilterLayout } from '@shared';
 import { DefaultAvatar } from '@/shared/ui/DefaultAvatar';
 import { activityApi, TAB_TO_TYPE } from '@/features/admin/activity/api/activity.api';
@@ -24,6 +24,7 @@ const ActivityAvatar = ({ url, name }: { url?: string | null; name: string }) =>
 };
 
 export function ActivityLog() {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'All' | 'Presence' | 'Spaces' | 'Tasks' | 'Meetings'>('All');
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,6 +73,7 @@ export function ActivityLog() {
       })
       .catch((err) => {
         console.error('Failed to fetch activities:', err);
+        showToast('error', 'Failed to load activity logs');
         if (!isStale) {
           setActivities([]);
           setTotalItems(0);
@@ -85,7 +87,7 @@ export function ActivityLog() {
     return () => {
       isStale = true;
     };
-  }, [activeTab, searchQuery, page, perPage, dateRange, customRange, startDate, endDate]);
+  }, [activeTab, searchQuery, page, perPage, dateRange, customRange, startDate, endDate, showToast]);
 
   useEffect(() => {
     const cleanup = fetchActivities();

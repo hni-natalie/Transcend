@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useMaybeLayoutContext } from '@livekit/components-react';
 import { meetingApi } from '@features/meetings';
 import { IconClose, InputDropdown, attendanceOptions, getDisplayName } from '@/shared';
+import { useToast } from '@/context/ToastContext';
 
 export type AttendanceStatus = 'present' | 'absent' | 'pending';
 
@@ -19,6 +20,7 @@ export interface AttendanceProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
   const layoutContext = useMaybeLayoutContext();
+  const { showToast } = useToast();
 
   const [participants, setParticipants] = React.useState<AttendanceParticipant[]>([]);
   const [attendance, setAttendance] = React.useState<Record<string, AttendanceStatus>>({});
@@ -68,6 +70,7 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
         );
       } catch (error) {
         console.error('Failed to fetch meeting participants:', error);
+        showToast('error', 'Failed to load meeting participants');
       } finally {
         setIsLoading(false);
       }
@@ -76,7 +79,7 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
     if (meetId) {
       fetchMeeting();
     }
-  }, [meetId]);
+  }, [meetId, showToast]);
 
   const handleAttendanceChange = (
     userId: string,
@@ -119,9 +122,11 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
 
       setParticipants(updatedParticipants);
       console.log('Attendance saved successfully');
+      showToast('success', 'Attendance saved successfully');
       onClose?.();
     } catch (error) {
       console.error('Failed to save attendance:', error);
+      showToast('error', 'Failed to save attendance');
     } finally {
       setIsSaving(false);
     }

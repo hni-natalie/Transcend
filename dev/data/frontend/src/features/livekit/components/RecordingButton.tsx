@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { IconRecording, IconRecordingStop } from '@/shared';
 import { meetingApi } from '@/features/meetings/api/meeting.api';
 import { useRoomContext } from '@livekit/components-react';
+import { useToast } from '@/context/ToastContext';
 
 interface RecordingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   meetId: string;
@@ -10,6 +11,7 @@ interface RecordingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElem
 
 export function RecordingButton({ meetId, showText, ...props }: RecordingButtonProps) {
   const room = useRoomContext();
+  const { showToast } = useToast();
 
   const [isRecording, setIsRecording] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -48,6 +50,7 @@ export function RecordingButton({ meetId, showText, ...props }: RecordingButtonP
 
     } catch (error) {
       console.error('Recording error:', error);
+      showToast('error', 'Failed to update recording status');
     } finally {
       setLoading(false);
     }

@@ -90,6 +90,7 @@ export const useStatusUpdate = (
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { updateUserStatus } = useAuth();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -115,6 +116,7 @@ export const useStatusUpdate = (
       setShowStatusDropdown(false);
     } catch (err) {
       console.error('Failed to update status:', err);
+      showToast('error', 'Failed to update status');
     } finally {
       setUpdatingStatus(false);
     }

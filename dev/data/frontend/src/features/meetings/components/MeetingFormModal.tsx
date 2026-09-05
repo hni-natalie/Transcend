@@ -160,11 +160,12 @@ export const ScheduleMeetingModal = ({
             });
         } catch (err) {
             console.error(err);
+            showToast('error', 'Failed to load users');
         }
         };
 
         loadUsers();
-    }, [open]);
+    }, [open, showToast]);
 
     const toDateTimeLocal = (date: string) => {
         const d = new Date(date);
