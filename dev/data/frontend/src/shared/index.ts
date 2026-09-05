@@ -35,6 +35,7 @@ export { UploadFile } from './ui/UploadFile';
 export { UploadPhoto } from './ui/UploadPhoto';
 export { Modal } from './ui/Modal';
 export { ModalHeader } from './ui/ModalHeader';
+export { ConfirmDeleteModal, type ConfirmDeleteModalProps } from './ui/ConfirmDeleteModal';
 export { AlertBanner } from './ui/AlertBanner';
 export { BlinkingText } from './ui/BlinkingText';
 export { TruncatedText } from './ui/TruncatedText';

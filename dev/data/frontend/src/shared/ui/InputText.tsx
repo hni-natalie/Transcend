@@ -12,6 +12,7 @@ interface InputTextProps {
   name?: string;
   className?: string;
   min?: any;
+  max?: any;
 }
 
 export function InputText({ 
@@ -27,7 +28,8 @@ export function InputText({
   error = '',
   disabled = false,
   className = '',
-  min = ''
+  min = '',
+  max = ''
 }: InputTextProps) {
   return (
     <div className="flex flex-col gap-y-1">
@@ -45,6 +47,7 @@ export function InputText({
         placeholder={placeholder}
         value={value}
         min={min}
+        max={max}
         onChange={onChange}
 		    onBlur={onBlur}
         onFocus={onFocus} 
