@@ -148,6 +148,7 @@ model User {
   dataExportRequestedAt DateTime?
   dataExportCompletedAt DateTime?
   deletionRequestedAt	DateTime?
+  deletedAt             DateTime?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -236,7 +237,10 @@ model Task {
   updatedAt       DateTime @updatedAt
   deletedAt       DateTime?
 
-  createdBy User      @relation(fields: [createdByUserId], references: [userId], onDelete: Cascade)
+
+  // createdBy User      @relation(fields: [createdByUserId], references: [userId], onDelete: Cascade)
+  // onDelete removed to prevent hard deletion (if user is deleted, task shoudlnt be removed) 
+  createdBy User      @relation(fields: [createdByUserId], references: [userId])
   workspace Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
 
   assignedTo TaskAssignment[]
@@ -472,7 +476,8 @@ model Activity {
   createdAt		DateTime	@default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [userId])
+//   user      User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([workspaceId, createdAt])
   @@index([workspaceId, type])

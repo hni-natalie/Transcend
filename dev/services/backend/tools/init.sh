@@ -16,15 +16,26 @@ fi
 echo "Installing npm dependencies..."
 npm install
 
-# Load DB secrets for Prisma CLI.
-# Prisma schema still uses env("..."), so the CLI needs real env vars.
+
 if [ -f "/run/secrets/database_url" ]; then
     export DATABASE_URL="$(cat /run/secrets/database_url)"
+    echo "export DATABASE_URL='$(cat /run/secrets/database_url)'" >> /etc/profile
 fi
 
 if [ -f "/run/secrets/direct_url" ]; then
     export DIRECT_URL="$(cat /run/secrets/direct_url)"
+    echo "export DIRECT_URL='$(cat /run/secrets/direct_url)'" >> /etc/profile
 fi
+
+# # Load DB secrets for Prisma CLI.
+# # Prisma schema still uses env("..."), so the CLI needs real env vars.
+# if [ -f "/run/secrets/database_url" ]; then
+#     export DATABASE_URL="$(cat /run/secrets/database_url)"
+# fi
+
+# if [ -f "/run/secrets/direct_url" ]; then
+#     export DIRECT_URL="$(cat /run/secrets/direct_url)"
+# fi
 
 # Generate Prisma Client
 echo "Generating Prisma Client..."
