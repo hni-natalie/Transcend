@@ -123,8 +123,9 @@ The application uses PostgreSQL with Prisma ORM. The database schema consists of
 entities supporting users, meetings, tasks, messaging, spaces, recordings, and
 activity tracking.
 
-![alt text](/src/database.svg)
-
+<a href="src/database.svg">
+  <img src="src/database.svg" alt="Database Schema" width="900">
+</a>
 
 
 ## Features List
@@ -144,19 +145,18 @@ activity tracking.
 | **Settings & Profile** | Allow users to view and update their profile information and account settings | Lyara |
 
 ## Modules 
-### Major Modules - 18 points 
+### Major Modules - 16 points 
 *Each module is worth 2 points.*
 | No | Modules | Team | Justification | Implementation |
 | --- | --- | --- | --- | --- |
 | 1. | *Framework for Frontend and Backend - React, Vite, Node.js, Express* | All | Provides a consistent and scalable foundation for developing the client-side interface and server-side API. | React and Vite are used for the frontend application, while Node.js and Express are used to implement the backend REST API. |
 | 2. | *Real-time Features - Socket.IO, LiveKit* | All | Real-time communication is required across the virtual 3D office, meetings, messaging, and dashboard. | *Socket.IO*: Real-time updates for task changes, meeting scheduling, messages, dashboard data, and virtual 3D office. *LiveKit*: Real-time voice and video communication for the virtual office and meetings. |
 | 3. | *User Interaction (Chat, Profile)* | Lyara, Yee Joo | Provides communication and user identity features that allow users to interact and collaborate within the platform. | Chat: Socket.IO provides real-time message delivery, while conversation and message data are persisted in PostgreSQL using Prisma. Profile: User profiles are stored and managed through the backend, supporting personal information. |
-| 4. | Public API | All | Provides a structured interface for the frontend and external clients to interact with the application's backend and database through RESTful HTTP endpoints. | Implemented using Node.js and Express, with RESTful endpoints exposed under `/api`. The API provides endpoints for users, authentication, roles, departments, spaces, tasks, meetings, recordings, messages, and activities. `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` methods are used for CRUD operations. |
-| 5. | *Browser Compatibility* | All | Ensures the application works across major browsers, including Chrome, Safari, and Firefox. | Built using standard React, TypeScript, HTML, and CSS features, then tested across Chrome, Safari, and Firefox to verify consistent functionality and appearance. |
-| 6. | *Standard User Management* | Lyara | Provides secure authentication and allows users to manage their personal profiles and account information. | Implemented user authentication with JWT. Users can update their profile information, upload avatars with a default avatar fallback, and view their profile information. Socket.IO provides real-time online presence. |
-| 7. | *Advanced Permissions* | Lyara | Provides role-based access control with different permissions and views for administrators and regular users. | Implemented role-based access control with admin and user roles. Admins can view organisation-wide activity logs and manage users, while regular users can access features such as creating tasks, scheduling meetings, and using chat. Protected routes enforce access based on the user's assigned role. |
-| 8. | *Advanced 3D feature* | Hoi Ling | Provides an immersive 3D virtual office environment with real-time collaboration and communication features. | Implemented a 3D office scene using Three.js and React Three Fiber, allowing users to navigate the space, interact with objects, and communicate with others in real-time. Socket.IO synchronizes user presence and positions, while LiveKit provides proximity-based voice communication. |
-| 9. | *Advanced Analytic Dashboard* | Lyara | Provides organisation-wide insights into user activity, attendance, and space utilisation through interactive data visualisations and activity analytics. | Implemented an admin analytics dashboard with graphs for user attendance and space usage, as well as activity logs covering user activity, meetings, tasks, and user entry and exit events. Administrators can filter activity logs by time range and export the filtered activity data for further analysis. |
+| 4. | *Public API* | All | Provides a structured interface for the frontend and external clients to interact with the application's backend and database through RESTful HTTP endpoints. | Implemented using Node.js and Express, with RESTful endpoints exposed under `/api`. The API provides endpoints for users, authentication, roles, departments, spaces, tasks, meetings, recordings, messages, and activities. `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` methods are used for CRUD operations. |
+| 5. | *Standard User Management* | Lyara | Provides secure authentication and allows users to manage their personal profiles and account information. | Implemented user authentication with JWT. Users can update their profile information, upload avatars with a default avatar fallback, and view their profile information. Socket.IO provides real-time online presence. |
+| 6. | *Advanced Permissions* | Lyara | Provides role-based access control with different permissions and views for administrators and regular users. | Implemented role-based access control with admin and user roles. Admins can view organisation-wide activity logs and manage users, while regular users can access features such as creating tasks, scheduling meetings, and using chat. Protected routes enforce access based on the user's assigned role. |
+| 7. | *Advanced 3D feature* | Hoi Ling | Provides an immersive 3D virtual office environment with real-time collaboration and communication features. | Implemented a 3D office scene using Three.js and React Three Fiber, allowing users to navigate the space, interact with objects, and communicate with others in real-time. Socket.IO synchronizes user presence and positions, while LiveKit provides proximity-based voice communication. |
+| 8. | *Advanced Analytic Dashboard* | Lyara | Provides organisation-wide insights into user activity, attendance, and space utilisation through interactive data visualisations and activity analytics. | Implemented an admin analytics dashboard with graphs for user attendance and space usage, as well as activity logs covering user activity, meetings, tasks, and user entry and exit events. Administrators can filter activity logs by time range and export the filtered activity data for further analysis. |
 
 ---- 
 
@@ -192,9 +192,13 @@ activity tracking.
 | --- | --- | --- | --- | --- | --- | --- |
 | 1. | *Task Management* | Yee Joo | Provides a structured way for users to assign and manage work within the virtual workplace. | Supports task assignment, priority levels, due dates, status tracking, and validation across the frontend and backend. | Helps teams organise responsibilities, monitor progress, and keep track of deadlines. | It has multiple useful task-management capabilities without needing the same level of technical complexity as your Advanced Meeting System. | 
 
-#### Total Points: 30 points
+#### Total Points: 28 points
 
 ---- 
+
+### Limitations
+
+- Meeting recording can only up to 20 minutes due to the limitations of supabase free tier storage and bandwidth.
 
 ### Project Structure 
 ```
@@ -228,6 +232,7 @@ dev
 | [Hoi Ling](https://github.com/holickka) | 3D office scene (Three.js/React Three Fiber), LiveKit voice/video integration, Socket.IO real-time layer (frontend/backend), shared UI components, meetings UI, calling and video call features, Docker/build tooling, Prisma schema |
 | [Yee Joo](https://github.com/Joophang) | Messaging feature (frontend/backend), message backend, attachment upload and validation, Socket.IO message handling, task feature (frontend/backend), Prisma schema |
 | [Natalie](https://github.com/hni-natalie) | Meetings feature (scheduling, chat modal, recording), LiveKit integration with Faster-Whisper, recording transcription, AI summarisation, meetings feature (frontend/backend), Prisma schema, PWA, README documentation |
+
 
 ## Asset credits
 
