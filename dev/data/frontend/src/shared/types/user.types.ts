@@ -20,7 +20,6 @@ export interface User {
     country?: string;
     timezone?: string;
     authProvider?: string;
-    emailVerified?: boolean;
     createdAt?: string;
     updatedAt?: string;
 	deletedAt?: string | null;

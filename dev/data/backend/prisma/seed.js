@@ -55,7 +55,7 @@ async function main() {
 
     if (!workspace) {
         workspace = await prisma.workspace.create({
-            data: { workspaceName: 'Default Workspace', logoUrl: null },
+            data: { workspaceName: 'Default Workspace'},
         });
     }
     const wsId = workspace.workspaceId;
@@ -141,7 +141,6 @@ async function main() {
             workspaceId: wsId,
             dpId: depts.hr.dpId,
             authProvider: 'email',
-            emailVerified: true,
         },
     });
 
@@ -175,7 +174,6 @@ async function main() {
                 workspaceId: wsId,
                 dpId: depts.hr.dpId,
                 authProvider: 'google',
-                emailVerified: true,
 				city: 'Kuala Lumpur',
 				country: 'Malaysia',
 				timezone: 'Asia/Kuala_Lumpur'
@@ -275,7 +273,6 @@ const operationalStaffMatrix = [
                 workspaceId: wsId,
                 dpId: u.dept,
                 authProvider: 'email',
-                emailVerified: true,
 				city: u.city,
 				country: u.country,
 				timezone: u.timezone 

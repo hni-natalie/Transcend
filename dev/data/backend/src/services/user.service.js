@@ -313,7 +313,6 @@ const userService = {
                 throw new Error(validation.errors.join('. '));
             }
             data.userPassword = await bcrypt.hash(password, 10);
-            data.emailVerified = true;
         }
         
         return await prisma.user.update({
@@ -415,7 +414,6 @@ const userService = {
                 dpId,
 				userTitle,
                 authProvider: 'email',
-                emailVerified: false,
                 userStatus: 'offline'
             },
             select: {
