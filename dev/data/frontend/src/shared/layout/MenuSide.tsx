@@ -105,19 +105,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     }
   };
 
-  const handleMeetingsNavigation = () => {
-    const activeMeeting = sessionStorage.getItem('activeMeeting');
-
-    if (activeMeeting) {
-      navigate(R.USER_VIDEOCALL, {
-        state: JSON.parse(activeMeeting),
-      });
-    } else {
-      navigate(R.USER_MEETINGS);
-    }
-  };
-
-  const linkClass = ({ isActive }: { isActive: boolean }) => `
+  const linkClass = ({ isActive } : { isActive: boolean }) => `
     flex items-center h-10 pl-7.5 transition-none group
     ${
       isActive
