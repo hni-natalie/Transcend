@@ -97,8 +97,14 @@ async function loginWithPassword(userEmail, userPassword) {
 // downloads google's hotlinked profile photo and re-hosts it on supabase,
 // so clients never hit googleusercontent.com directly (was causing 429s)
 async function syncGoogleAvatar(userId, googlePhotoUrl) {
+  // debug
+  console.log('>>> syncGoogleAvatar CALLED');
+  console.log('bucket:', process.env.SUPABASE_ASSET_BUCKET);
+  console.log('googlePhotoUrl:', googlePhotoUrl);
   try {
     const res = await fetch(googlePhotoUrl);
+	console.log('Google avatar status:', res.status);
+	console.log('Google avatar OK:', res.ok);
     if (!res.ok) return null;
 
     const contentType = res.headers.get('content-type') || 'image/jpeg';
@@ -106,7 +112,7 @@ async function syncGoogleAvatar(userId, googlePhotoUrl) {
     const fileExt = contentType.split('/').pop();
     const filePath = `avatars/${userId}/${userId}-${Date.now()}.${fileExt}`;
 
-    return await uploadFile(process.env.SUPABASE_PUBLIC_BUCKET, filePath, buffer, contentType);
+    return await uploadFile(process.env.SUPABASE_ASSET_BUCKET, filePath, buffer, contentType);
   } catch (err) {
     console.error('Google avatar sync failed:', err);
     return null;
