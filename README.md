@@ -1,12 +1,12 @@
-# <Project Name>
+# <Project WorkFrom>
+<p align="center"> <img src="assets/workfrom.png" alt="WorkFrom" width="800"> </p>
+<hr style="height:4px;border:none;color:#333;background-color:#333;">
 
 <p align="center">
   <img src="./src/workfrom.png" alt="Project Logo" width="200">
 </p>
 
 *This project has been created as part of the 42 curriculum by rraja-az, hsim, yphang, hni-xuan*
-
-<hr style="height:4px;border:none;color:#333;background-color:#333;">
 
 ## Description 
 

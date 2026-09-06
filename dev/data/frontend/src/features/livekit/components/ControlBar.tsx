@@ -38,6 +38,7 @@ const trackSourceToProtocol = (source: Track.Source) => {
 export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   onDeviceError?: (error: { source: Track.Source; error: Error }) => void;
   onAttendanceClick?: () => void;
+  onRecordingChange?: (isRecording: boolean) => void;
   variation?: 'minimal' | 'verbose' | 'textOnly';
   controls?: ControlBarControls;
   /**
@@ -73,6 +74,7 @@ export function ControlBar({
   meetId,
   onDeviceError,
   onAttendanceClick,
+  onRecordingChange,
   ...props
 }: ControlBarProps) {
   const [isChatOpen, setIsChatOpen] = React.useState(false);
@@ -209,7 +211,11 @@ export function ControlBar({
         )}
 
         {visibleControls.recording && meetId && (
-          <RecordingButton meetId={meetId} showText={showText}/>
+          <RecordingButton 
+            meetId={meetId} 
+            onRecordingChange={onRecordingChange}
+            showText={showText}
+          />
         )}
 
         {visibleControls.attendance && meetId && (

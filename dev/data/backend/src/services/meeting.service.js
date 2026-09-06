@@ -2,6 +2,7 @@ const prisma = require('../../prisma/client');
 const { MeetingRole, AttendanceStatus } = require('@prisma/client');
 const { validateMeetingTime, validateParticipantConflicts, validateRequiredStrings } = require('../validators/meeting.validator');
 const { logMeetingActivity } = require('../utils/activity');
+const { containsSuspiciousMarkup } = require('../validators/common.validator');
 
 const normalizeDateTime = (date) => {
     if (!date) return date;
@@ -175,6 +176,10 @@ const meetingService = {
             meetTitle
         });
 
+        if (containsSuspiciousMarkup(meetTitle) || containsSuspiciousMarkup(meetDesc)) {
+            throw new Error('Input contains suspicious markup');
+        }
+
         const normalizedStart = normalizeDateTime(meetStart);
         const normalizedEnd = normalizeDateTime(meetEnd);
 
@@ -244,6 +249,10 @@ const meetingService = {
         } = data;
 
         validateRequiredStrings({ meetTitle });
+
+        if (containsSuspiciousMarkup(meetTitle) || containsSuspiciousMarkup(meetDesc)) {
+            throw new Error('Input contains suspicious markup');
+        }
 
         const normalizedStart = normalizeDateTime(meetStart);
         const normalizedEnd = normalizeDateTime(meetEnd);

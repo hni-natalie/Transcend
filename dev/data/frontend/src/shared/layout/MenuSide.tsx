@@ -8,6 +8,7 @@ import { useLiveKit } from '@features/livekit'
 import { useUserStatusSync } from '@shared';
 import { useSocket } from '@/context/SocketContext';
 import { useOfficeSpaceLayout } from '@/features/office/context/SpaceLayoutContext';
+import { ROUTE_PATH as R } from '@config/routes.manifest';
 
 const getMenuForPath = ( pathname:string ): MenuConfig => {
   return pathname.startsWith('/admin') ? adminMenuConfig : userMenuConfig;
@@ -44,12 +45,14 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
   const expandStatus = isExpanded ? 'expanded' : 'collapsed';
 
   const { isConnected } = useSocket();
-  const { connect, isConnectedRoom, isLoading } = useLiveKit("Office");
+  const { connect, isConnectedRoom, isLoading, currentRoomName } = useLiveKit("Office");
   const navigate = useNavigate();
   const handleJoinOffice = async ( href:string ) => {
     await connect("room");
     navigate(href);
   }
+
+  const isCurrentRoom = isConnectedRoom && currentRoomName === "Office";
 
   const utcTimeLabel = new Intl.DateTimeFormat([], {
   hour: '2-digit',
@@ -87,6 +90,18 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     if (locationLoading) return 'Detecting location...';
     if (locationError) return 'Location Unavailable';
     return userLocation;
+  };
+
+  const handleMeetingsNavigation = () => {
+    const activeMeeting = sessionStorage.getItem('activeMeeting');
+
+    if (activeMeeting) {
+      navigate(R.USER_VIDEOCALL, {
+        state: JSON.parse(activeMeeting),
+      });
+    } else {
+      navigate(R.USER_MEETINGS);
+    }
   };
 
   const linkClass = ({ isActive } : { isActive:boolean }) => `
@@ -169,20 +184,31 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
               {item.title === 'Office' ? (
                 <button
                   onClick={() => handleJoinOffice(item.href)}
-                  className={`${linkClass({ isActive:location.pathname === item.href })} w-full 
-                              ${isConnectedRoom || !isConnected || layoutLoading ? 'cursor-not-allowed' : 'cursor-pointer'} `}
-                  disabled={isConnectedRoom || isLoading || layoutLoading || !isConnected}
-                  title={`${isConnectedRoom || isLoading || layoutLoading || !isConnected ? 'Refresh to connect Office' : '' }`}
+                  className={`${linkClass({ isActive: location.pathname === item.href })} w-full 
+                              ${isCurrentRoom || !isConnected || layoutLoading ? 'cursor-not-allowed' : 'cursor-pointer'} `}
+                  disabled={isCurrentRoom || isLoading || layoutLoading || !isConnected}
+                  title={`${isCurrentRoom || isLoading || layoutLoading || !isConnected ? 'Refresh to connect Office' : ''}`}
+                >
+                  {linkContent(item)}
+                </button>
+              ) : item.title === 'Meetings' ? (
+                <button
+                  onClick={handleMeetingsNavigation}
+                  className={`${linkClass({
+                    isActive:
+                      location.pathname === R.USER_MEETINGS ||
+                      location.pathname === R.USER_VIDEOCALL,
+                  })} w-full cursor-pointer`}
                 >
                   {linkContent(item)}
                 </button>
               ) : (
-              <NavLink
-                to={item.href}
-                className={linkClass}
-              >
-                {linkContent(item)}
-              </NavLink>
+                <NavLink
+                  to={item.href}
+                  className={linkClass}
+                >
+                  {linkContent(item)}
+                </NavLink>
               )}
             </li>
           ))}
