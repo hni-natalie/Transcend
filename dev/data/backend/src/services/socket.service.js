@@ -217,9 +217,12 @@ const socketService = (io) => {
       if (!directKey) return;
       const targetUserId = directKey.split(':').find((id) => id !== player.userId);
       const target = Array.from(players.values()).find((p) => p.userId === targetUserId);
-      if (!target) return;
+      let roomData = rooms.get(roomName);
+      if (!target || !roomData) return;
 
-      io.to(target.id).emit('call-declined', { directKey, roomName, mode });
+      const existingUserIdx = roomData?.users.findIndex(u => u.userId === target.userId);
+      if (existingUserIdx !== -1)
+        io.to(target.id).emit('call-declined', { directKey, roomName, mode });
     });
 
     socket.on('room-spawn-pos', async (data) => {

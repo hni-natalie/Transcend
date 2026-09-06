@@ -60,7 +60,7 @@ export function ButtonVoiceMsg({
     toggleMute,
   } = useLiveKit(roomName);
 
-  const { enableSocket, isConnected, socket, callStatus } = useSocket();
+  const { enableSocket, isConnected, socket, callStatus, declineCall } = useSocket();
   const navigate = useNavigate();
   const isClicked = useRef(false);
   const hasNavigated = useRef(false);
@@ -152,6 +152,7 @@ export function ButtonVoiceMsg({
   
     // set onCallStatusChange in disconnect as using diff button in Video roomm
     await disconnect(true);
+    declineCall(directKey, roomName, mode);
   
     if (leaveTo) navigate(leaveTo);
   };
