@@ -303,7 +303,7 @@ export const Meetings = () => {
 					const start = new Date(m.meetStart);
 					const end = new Date(m.meetEnd);
 
-					return isToday(start) && end > now;
+					return start <= now && end > now;
 				})
 				.sort(sortAscending),
 

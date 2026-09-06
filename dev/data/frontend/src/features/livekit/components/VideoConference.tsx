@@ -23,6 +23,7 @@ import { Attendance } from './Attendance';
 export interface VideoConferenceProps extends React.HTMLAttributes<HTMLDivElement> {
   meetId: string;
   isHost: boolean;
+  onRecordingChange?: (isRecording: boolean) => void;
   chatMessageFormatter?: MessageFormatter;
   chatMessageEncoder?: MessageEncoder;
   chatMessageDecoder?: MessageDecoder;
@@ -51,6 +52,7 @@ export interface VideoConferenceProps extends React.HTMLAttributes<HTMLDivElemen
 export function VideoConference({
   meetId,
   isHost,
+  onRecordingChange,
   chatMessageFormatter,
   chatMessageDecoder,
   chatMessageEncoder,
@@ -158,9 +160,10 @@ export function VideoConference({
             )}
             <ControlBar 
               meetId={meetId} 
+              onRecordingChange={onRecordingChange}
               controls={{ 
                 chat: true, 
-                recording: true, 
+                recording: isHost, 
                 attendance: isHost,
                 settings: !!SettingsComponent 
               }}

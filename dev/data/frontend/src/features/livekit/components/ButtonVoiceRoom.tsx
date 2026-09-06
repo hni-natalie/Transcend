@@ -75,6 +75,17 @@ export function ButtonVoiceRoom({
       meetingTitle,
     };
 
+    sessionStorage.setItem(
+      "activeMeeting",
+      JSON.stringify({
+        roomName,
+        meetingTitle,
+        meetId,
+        isHost,
+        leaveTo: leaveTo || R.USER_MEETINGS,
+      }),
+    );
+
     if (isHost) {
       await meetingApi.startMeeting(roomName);
       console.log("Meeting status changed to started");
@@ -121,6 +132,8 @@ export function ButtonVoiceRoom({
     }
   
     await disconnect(true);
+
+    sessionStorage.removeItem("activeMeeting");
   
     if (leaveTo) navigate(leaveTo);
   };
