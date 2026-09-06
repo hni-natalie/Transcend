@@ -12,10 +12,9 @@ export function toProfile(user?: User): Profile {
       name: 'Unknown User',
       status: 'offline',
       isGroup: false,
+	  deletedAt: null,
     };
   }
-
-  
 
 //   const name = user.userName || user.userEmail || 'Unknown User';
   const name = getDisplayName(user);
@@ -35,6 +34,7 @@ export function toProfile(user?: User): Profile {
     status: user.deletedAt ? 'offline' : (user.userStatus || 'offline'),
     departmentId,
     isGroup: false,
+	deletedAt: user.deletedAt ?? null,
   };
 }
 
@@ -132,8 +132,12 @@ export function mapUserToProfile(
 	name: getDisplayName(user),
     // avatarUrl: user.avatarUrl ?? undefined,
 	avatarUrl: getDisplayAvatar(user) ?? undefined,
+    role: user.role?.roleName ?? 'No role',
+    department: user.department?.dpName ?? 'No department',
+    departmentId: user.department?.dpId,
     status: user.userStatus ?? 'offline',
-    isGroup: false
+    isGroup: false,
+	deletedAt: user.deletedAt ?? null,
   };
 }
 

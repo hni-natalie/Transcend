@@ -1,8 +1,6 @@
 import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
 import { Conversation, ConversationResponse, Message, MessageResponse, UploadedAttachment, type Attachment } from '../types';
-// import { mapConversation } from '../lib/mappers'
-// import { useAuth } from '@/features/auth/AuthContext';
 
 const base = API_CONFIG.endpoints.messages;
 

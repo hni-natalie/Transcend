@@ -37,13 +37,11 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
   }, []);
 
   useEffect(() => {
-    if (!incomingCalls) return ;
+    // if (!incomingCalls || !directKey) return;
+	if (!incomingCalls) return ;
     setCallMode(incomingCalls[directKey]?.mode);
   }, [incomingCalls, directKey]);
 
-  // KIV : to implement?
-  // TO DO: hook this up to a real "create meeting" call
-  // (e.g. POST /meetings { conversationId }) once calendar/meeting integration exists
   const handleScheduleMeeting = () => {
     console.log('Schedule meeting for group:', contact.name);
   };
@@ -68,7 +66,8 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
       </div>
 
       <div className="flex items-center gap-3 text-foreground-3">
-        {!contact.isGroup && (
+        {/* {!contact.isGroup && ( */}
+		{!contact.isGroup && !contact.deletedAt && (
           <>
             {callStatus.status === 'ringing' && callStatus.directKey === directKey && <LoadingState message='Awaiting' size='none' msgClassName='font-sans'/>}
             {isRinging && callStatus.status === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}

@@ -49,6 +49,17 @@ function conversationResponseSelect(userId) {
             userName: true,
             avatarUrl: true,
             userStatus: true,
+            role: {
+              select: {
+                roleName: true
+              }
+            },
+            department: {
+              select: {
+                dpId: true,
+                dpName: true
+              }
+            },
 			deletedAt: true
           }
         }
@@ -119,17 +130,28 @@ const messageService = {
 				userId: true,
 				lastReadAt: true,
 
-				user: {
-					select: {
-					userId: true,
-					userName: true,
-					avatarUrl: true,
-					userStatus: true,
-					deletedAt: true
-					}
-				}
-				}
-			},
+        user: {
+          select: {
+            userId: true,
+            userName: true,
+            avatarUrl: true,
+            userStatus: true,
+            role: {
+              select: {
+                roleName: true
+              }
+            },
+            department: {
+              select: {
+                dpId: true,
+                dpName: true
+              }
+            },
+			deletedAt: true
+          }
+        }
+      }
+    },
 
 			messages: {
 				orderBy: {
