@@ -45,12 +45,14 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
   const expandStatus = isExpanded ? 'expanded' : 'collapsed';
 
   const { isConnected } = useSocket();
-  const { connect, isConnectedRoom, isLoading } = useLiveKit("Office");
+  const { connect, isConnectedRoom, isLoading, currentRoomName } = useLiveKit("Office");
   const navigate = useNavigate();
   const handleJoinOffice = async ( href:string ) => {
     await connect("room");
     navigate(href);
   }
+
+  const isCurrentRoom = isConnectedRoom && currentRoomName === "Office";
 
   const utcTimeLabel = new Intl.DateTimeFormat([], {
   hour: '2-digit',
@@ -183,9 +185,9 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
                 <button
                   onClick={() => handleJoinOffice(item.href)}
                   className={`${linkClass({ isActive: location.pathname === item.href })} w-full 
-                              ${isConnectedRoom || !isConnected || layoutLoading ? 'cursor-not-allowed' : 'cursor-pointer'} `}
-                  disabled={isConnectedRoom || isLoading || layoutLoading || !isConnected}
-                  title={`${isConnectedRoom || isLoading || layoutLoading || !isConnected ? 'Refresh to connect Office' : ''}`}
+                              ${isCurrentRoom || !isConnected || layoutLoading ? 'cursor-not-allowed' : 'cursor-pointer'} `}
+                  disabled={isCurrentRoom || isLoading || layoutLoading || !isConnected}
+                  title={`${isCurrentRoom || isLoading || layoutLoading || !isConnected ? 'Refresh to connect Office' : ''}`}
                 >
                   {linkContent(item)}
                 </button>

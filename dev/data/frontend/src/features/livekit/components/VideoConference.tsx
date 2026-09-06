@@ -163,7 +163,7 @@ export function VideoConference({
               onRecordingChange={onRecordingChange}
               controls={{ 
                 chat: true, 
-                recording: true, 
+                recording: isHost, 
                 attendance: isHost,
                 settings: !!SettingsComponent 
               }}
