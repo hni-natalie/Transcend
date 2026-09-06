@@ -38,7 +38,7 @@ async function sendEmail({ to, subject, html, text, authProvider }) {
 
   const isMockUser = authProvider && authProvider !== 'google';
   const recipient = isMockUser ? SUPPORT_EMAIL : to;
-  const emailSubject = isMockUser ? `[MOCK → ${to}] ${subject}` : subject;
+  const emailSubject = isMockUser ? `[${to}] ${subject}` : subject;
 
   if (!client) {
     // console.log(`[mailer] (not sent - SMTP not configured) to=${to} subject="${subject}"`);
@@ -120,7 +120,7 @@ async function sendAccountDeletionCompletedEmail({ to, userName, completedAt, au
     to,
     subject: 'Your WorkFrom account has been deleted',
     html: `
-      <p>Hi there,</p>
+      <p>Hi ${userName || 'there'},</p>
       <p>This confirms your WorkFrom account was permanently deleted on <strong>${formatTimestamp(completedAt)}</strong>, in line with your GDPR erasure request.</p>
       <p>If you did not request this, please contact us immediately at support@workfrom.com.</p>
     `,
