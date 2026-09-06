@@ -55,7 +55,8 @@ const meetingService = {
                         user: {
                             select: {
                                 userName: true,
-                                userEmail: true
+                                userEmail: true,
+								deletedAt: true
                             }
                         }
                     }

@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useMaybeLayoutContext } from '@livekit/components-react';
 import { meetingApi } from '@features/meetings';
-import { IconClose, InputDropdown, attendanceOptions } from '@/shared';
+import { IconClose, InputDropdown, attendanceOptions, getDisplayName } from '@/shared';
+import { useToast } from '@/context/ToastContext';
 
 export type AttendanceStatus = 'present' | 'absent' | 'pending';
 
@@ -19,6 +20,7 @@ export interface AttendanceProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
   const layoutContext = useMaybeLayoutContext();
+  const { showToast } = useToast();
 
   const [participants, setParticipants] = React.useState<AttendanceParticipant[]>([]);
   const [attendance, setAttendance] = React.useState<Record<string, AttendanceStatus>>({});
@@ -38,15 +40,19 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
         console.log('=== getMeetingById response ===');
         console.log(response);
 
-        const meeting = response.data ?? response;
+        const meeting = response?.data;
 
         console.log('Meeting:', meeting);
-        console.log('API participants:', meeting.participants);
+        console.log('API participants:', meeting?.participants);
+
+        if (!meeting?.participants) {
+          return;
+        }
 
         const formattedParticipants: AttendanceParticipant[] =
-          meeting.participants.map((participant: any) => ({
+          meeting.participants.map((participant) => ({
             userId: participant.userId,
-            name: participant.user.userName,
+            name: getDisplayName(participant.user),
             role: participant.role,
             attendance: participant.attendance,
           }));
@@ -64,6 +70,7 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
         );
       } catch (error) {
         console.error('Failed to fetch meeting participants:', error);
+        showToast('error', 'Failed to load meeting participants');
       } finally {
         setIsLoading(false);
       }
@@ -72,7 +79,7 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
     if (meetId) {
       fetchMeeting();
     }
-  }, [meetId]);
+  }, [meetId, showToast]);
 
   const handleAttendanceChange = (
     userId: string,
@@ -115,9 +122,11 @@ export function Attendance({ meetId, onClose, ...props }: AttendanceProps) {
 
       setParticipants(updatedParticipants);
       console.log('Attendance saved successfully');
+      showToast('success', 'Attendance saved successfully');
       onClose?.();
     } catch (error) {
       console.error('Failed to save attendance:', error);
+      showToast('error', 'Failed to save attendance');
     } finally {
       setIsSaving(false);
     }

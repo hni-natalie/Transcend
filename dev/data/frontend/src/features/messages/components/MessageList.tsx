@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { IconDownload, IconFile, IconImage, IconPhone } from '@shared';
+import { useToast } from '@/context/ToastContext';
 import type { Attachment, DayGroup, Message } from '../types';
 import { ChatAvatar } from './ChatAvatar';
 import { formatClockTime } from '../lib/format';
@@ -9,9 +10,9 @@ interface MessageAttachmentProps {
   attachment: Attachment;
 }
 
-
-
 export function MessageAttachment({ attachment }: MessageAttachmentProps) {
+  const { showToast } = useToast();
+
   const handleDownload = async () => {
     try {
       const response = await fetch(attachment.url);
@@ -31,6 +32,7 @@ export function MessageAttachment({ attachment }: MessageAttachmentProps) {
     } 
     catch (error) {
       console.error('Failed to download attachment:', error);
+      showToast('error', 'Failed to download attachment');
     }
   };
 
@@ -90,8 +92,7 @@ function MessageBlock({ message }: { message: Message }) {
 
         {message.linkUrl && (
           <a
-            // href={message.link.url} // remove after BE
-			      href={message.linkUrl} // uncomment for BE
+			href={message.linkUrl}
             target="_blank"
             rel="noreferrer"
             className="inline-block text-[1.1em] text-accent-lime hover:underline mb-2"

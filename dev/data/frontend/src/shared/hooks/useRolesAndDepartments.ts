@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Role, Department } from '@shared'
-import { fetchRoles, fetchDepartments } from '@features/users';
+import { userApi} from '@features/users';
 import { useToast } from '@/context/ToastContext';
 
 interface UseRolesAndDepartmentsResult {
@@ -22,8 +22,8 @@ export const useRolesAndDepartments = (): UseRolesAndDepartmentsResult => {
     setIsLoading(true);
     try {
       const [rolesData, departmentsData] = await Promise.all([
-        fetchRoles(),
-        fetchDepartments()
+        userApi.fetchRoles(),
+        userApi.fetchDepartments()
       ]);
       setRoles(Array.isArray(rolesData) ? rolesData : []);
       setDepartments(Array.isArray(departmentsData) ? departmentsData : []);

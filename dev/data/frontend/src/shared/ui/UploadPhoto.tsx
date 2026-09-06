@@ -1,5 +1,7 @@
 import React, { useRef, ChangeEvent } from 'react';
 import { IconCamera } from '@shared/ui/Icons';
+import { DefaultAvatar } from '@shared/ui/DefaultAvatar';
+
 
 interface UploadPhotoProps {
     onFileSelect: (file: File) => void;
@@ -107,9 +109,14 @@ export function UploadPhoto({
                                 className="w-full h-full object-cover"
                                 alt="Profile"
                             />
+						) : fallbackName ? (
+                            <DefaultAvatar name={fallbackName} className="w-full h-full" />
                         ) : (
-                            <div className="flex items-center justify-center w-full h-full text-2xl font-medium text-white bg-background-3">
-                                {getInitials() || <IconCamera className="w-9 h-9 text-accent-lime" />}
+                            <div className="flex items-center justify-center w-full h-full bg-background-3">
+                                <IconCamera className="w-9 h-9 text-accent-lime" />
+                        {/* // ) : (
+                            // <div className="flex items-center justify-center w-full h-full text-2xl font-medium text-white bg-background-3">
+                            //     {getInitials() || <IconCamera className="w-9 h-9 text-accent-lime" />} */}
                             </div>
                         )}
                     </div>

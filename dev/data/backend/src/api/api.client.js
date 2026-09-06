@@ -1,5 +1,4 @@
-// backend/api/api.client.js
-const axios      = require('axios'); // or import axios from 'axios'
+const axios      = require('axios');
 const dotenv     = require('dotenv');
 const path       = require('path');
 dotenv.config({ path: path.join(__dirname, '../../../../.env') });
@@ -35,8 +34,6 @@ class ApiClient {
       (response) => response.data,
       (error) => {
         if (error.response?.status === 401) {
-          // In backend, we just throw the error
-          // The calling service should handle it
           throw new Error('SESSION_EXPIRED');
         }
         const errorData = error.response?.data;
@@ -73,20 +70,21 @@ class ApiClient {
     return this.client.delete(endpoint, config);
   }
 
+  // TO REMOVE, uploads use supabase sdk and multer
   // File uploads (if needed in backend)
-  upload(endpoint, formData, onProgress = null) {
-    return this.client.post(endpoint, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      onUploadProgress: onProgress ? (progressEvent) => {
-        if (progressEvent.total) {
-          const percent = (progressEvent.loaded / progressEvent.total) * 100;
-          onProgress(percent);
-        }
-      } : undefined,
-    });
-  }
+//   upload(endpoint, formData, onProgress = null) {
+//     return this.client.post(endpoint, formData, {
+//       headers: {
+//         'Content-Type': 'multipart/form-data',
+//       },
+//       onUploadProgress: onProgress ? (progressEvent) => {
+//         if (progressEvent.total) {
+//           const percent = (progressEvent.loaded / progressEvent.total) * 100;
+//           onProgress(percent);
+//         }
+//       } : undefined,
+//     });
+//   }
 }
 
 // singleton instance

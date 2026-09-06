@@ -10,8 +10,8 @@ function validateLogin({ userEmail, userPassword }) {
         throw new Error('Invalid email format');
     }
 
-    if (userPassword.length > 200) {
-        throw new Error('Password is too long');
+    if (userPassword.length < 8 || userPassword.length > 128) {
+        throw new Error('Password must be between 8 to 128 characters');
     }
 
     // only trim, no lowercase since prisma finds EXACT match

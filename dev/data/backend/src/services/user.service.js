@@ -1,18 +1,41 @@
 const prisma = require('../../prisma/client');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const { getIO } = require('./socket.service');
+const { getIO, forceLogoutUser } = require('./socket.service');
+const { uploadFile, deleteFile } = require('./supabase.service');
 const { validatePassword } = require('../utils/password');
-const { sendDataExportEmail, sendAccountDeletionRequestEmail, notifySupportOfDeletionRequest } = require('../utils/mailer');
+const { VALID_STATUSES } = require('../validators/user.validator');
+const { sendDataExportEmail, sendAccountDeletionRequestEmail, notifySupportOfDeletionRequest, sendAccountDeletionCompletedEmail } = require('../utils/mailer');
 
 // only google users receive email, mock users with fake email dont (for demo only)
 const canReceiveRealEmail = (user) => user.authProvider === 'google';
+
+function buildAvatarPath(userId, originalName) {
+    const fileExt = originalName.split('.').pop();
+    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    return `avatars/${userId}/${fileName}`;
+}
+
+// avatarUrl only stores the public URL, not the storage path — parse it back out.
+// Returns null if the URL isn't Supabase-hosted (e.g. an un-synced raw Google photo URL).
+function extractSupabaseStoragePath(publicUrl) {
+    if (!publicUrl) return null;
+
+    const marker = '/storage/v1/object/public/';
+    const idx = publicUrl.indexOf(marker);
+    if (idx === -1) return null;
+
+    const [bucket, ...pathParts] = publicUrl.slice(idx + marker.length).split('/');
+    const filePath = pathParts.join('/');
+    return bucket && filePath ? { bucket, filePath } : null;
+}
 
 const userService = {
     async getDashboardMetrics() {
         try {
             // pull the entire active user base with related department names
             const users = await prisma.user.findMany({
+				where: { deletedAt: null },
                 select: {
                     userId: true,
                     userName: true,
@@ -67,6 +90,7 @@ const userService = {
 			
 			// Get all users (for team presence)
 			const allUsers = await prisma.user.findMany({
+				where: { deletedAt: null },
 				select: {
 					userId: true,
 					userName: true,
@@ -142,7 +166,7 @@ const userService = {
     async getAllUsers(filters = {}) {
         const { search, roleId, workspaceId, status } = filters;
         
-        const where = {};
+        const where = { deletedAt: null };
         if (search) {
             where.OR = [
                 { userName: { contains: search, mode: 'insensitive' } },
@@ -182,6 +206,7 @@ const userService = {
                 userName: true,
                 userStatus: true,
                 createdAt: true,
+				deletedAt: true,
                 updatedAt: true,
                 avatarUrl: true,
 				city: true,
@@ -193,15 +218,13 @@ const userService = {
             }
         });
         
-        if (!user) throw new Error('User not found');
+        if (!user || user.deletedAt) throw new Error('User not found');
         return user;
     },
     
     async getUsersByStatus(userStatus) {
-        const user = await prisma.user.findMany({
-            where: {
-                userStatus
-            },
+        const users = await prisma.user.findMany({
+            where: { userStatus, deletedAt: null },
             select: {
                 userId: true,
                 userEmail: true,
@@ -217,8 +240,7 @@ const userService = {
                 department: { select: { dpId: true, dpName: true } }
             }
         });
-        if (!user) throw new Error('User not found');
-        return user;
+        return users;
     },
 
     async updateUserProfile(userId, profileData) {
@@ -232,11 +254,20 @@ const userService = {
         });
         
         if (Object.keys(updateData).length === 0) {
-            throw new Error('No valid fields to update. Allowed: avatarUrl, city, country, timezone');
+            throw new Error('No valid fields to update. Allowed: name, email, avatar, city, country, timezone');
         }
         
         const user = await prisma.user.findUnique({ where: { userId } });
         if (!user) throw new Error('User not found');
+
+		if (updateData.userEmail) {
+            const existingUser = await prisma.user.findUnique({
+                where: { userEmail: updateData.userEmail }
+            });
+            if (existingUser && existingUser.userId !== userId) {
+                throw new Error('Email already in use by another account');
+            }
+        }
         
         return await prisma.user.update({
             where: { userId },
@@ -282,7 +313,6 @@ const userService = {
                 throw new Error(validation.errors.join('. '));
             }
             data.userPassword = await bcrypt.hash(password, 10);
-            data.emailVerified = true;
         }
         
         return await prisma.user.update({
@@ -301,6 +331,27 @@ const userService = {
                 department: { select: { dpId: true, dpName: true } }
             }
         });
+    },
+
+    async uploadAvatar(userId, file, bucket) {
+        if (!file) {
+            throw new Error('No file uploaded');
+        }
+
+        const filePath = buildAvatarPath(userId, file.originalname);
+        const publicUrl = await uploadFile(bucket, filePath, file.buffer, file.mimetype);
+
+        const user = await prisma.user.update({
+            where: { userId },
+            data: { avatarUrl: publicUrl },
+            select: {
+                userId: true,
+                userName: true,
+                avatarUrl: true,
+            }
+        });
+
+        return { avatarUrl: publicUrl, user };
     },
     
     async createUser(userData) {
@@ -363,7 +414,6 @@ const userService = {
                 dpId,
 				userTitle,
                 authProvider: 'email',
-                emailVerified: false,
                 userStatus: 'offline'
             },
             select: {
@@ -383,91 +433,125 @@ const userService = {
     },
     
     async changePassword(userId, oldPassword, newPassword) {
-        // get user with password
-        const user = await prisma.user.findUnique({
-            where: { userId }
-        });
-        
-        if (!user) throw new Error('User not found');
-        if (!user.userPassword) throw new Error('No password set for this account');
-        
-        // verify old password
-        const isPasswordValid = await bcrypt.compare(oldPassword, user.userPassword);
-        if (!isPasswordValid) throw new Error('Current password is incorrect');
-        
-        // validate new password
-        const validation = validatePassword(newPassword);
+    	const user = await prisma.user.findUnique({
+       		where: { userId }
+    	});
+
+		if (!user) throw new Error('User not found');
+		if (!user.userPassword) throw new Error('No password set for this account');
+
+		const isPasswordValid = await bcrypt.compare(oldPassword, user.userPassword);
+		if (!isPasswordValid) throw new Error('Current password is incorrect');
+
+		const validation = validatePassword(newPassword);
 		if (!validation.isValid) {
 			throw new Error(validation.errors.join('. '));
 		}
-        
-        // hash new password
-        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-        
-        // update user
-        return await prisma.user.update({
-            where: { userId },
-            data: {
-                userPassword: hashedNewPassword,
-                emailVerified: true // mark email as verified after password change
-            },
-            select: {
-                userId: true,
-                userEmail: true,
-                userName: true,
-                userStatus: true
-            }
-        });
-    },
+
+		const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+		await prisma.user.update({
+			where: { userId },
+			data: {
+				userPassword: hashedNewPassword,
+			},
+			select: { userId: true }
+		});
+	},
 
 	async resetUserPassword(userId, newPassword) {
 		const user = await prisma.user.findUnique({
 			where: { userId }
 		});
-		
+
 		if (!user) throw new Error('User not found');
-		
-		// Validate new password
+
 		const validation = validatePassword(newPassword);
 		if (!validation.isValid) {
 			throw new Error(validation.errors.join('. '));
 		}
-		
-		// Hash new password
+
 		const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-		
-		// Update user
-		return await prisma.user.update({
+
+		await prisma.user.update({
 			where: { userId },
 			data: {
 				userPassword: hashedNewPassword,
-				emailVerified: true
 			},
-			select: {
-				userId: true,
-				userEmail: true,
-				userName: true,
-				userStatus: true
-			}
+			select: { userId: true }
 		});
 	},
-    
-    async deleteUser(userId) {
-        const user = await prisma.user.findUnique({ where: { userId } });
-        if (!user) throw new Error('User not found');
-        
-        return await prisma.user.delete({ where: { userId } });
-    },
-    
-    async getUserByEmail(email) {
-        return await prisma.user.findUnique({
-            where: { userEmail: email }
-        });
-    },
 
+	async deleteUser(userId) {
+		const user = await prisma.user.findUnique({ where: { userId } });
+		if (!user) throw new Error('User not found');
+
+		if (user.deletedAt) {
+			return { alreadyErased: true, erasedAt: user.deletedAt };
+		}
+
+		// capture pre-scrub values first - they're gone from the row after the update below
+		const { userEmail: originalEmail, userName: originalName, authProvider } = user;
+
+		const placeholderEmail = `deleted-${userId}@erased.local`;
+
+		const erasedUser = await prisma.user.update({
+			where: { userId },
+			data: {
+				deletedAt: new Date(),
+				userEmail: placeholderEmail,
+				userName: 'Deleted User',
+				userPassword: null,
+				googleId: null,
+				avatarUrl: null,
+				avatarSyncedAt: null,
+				userStatus: 'offline',
+				city: null,
+				country: null,
+				timezone: null,
+				socketId: null,
+			},
+			select: { userId: true, deletedAt: true },
+		});
+
+		// Side effects are best-effort
+		// a storage or socket hiccup shouldn't block the erasure itself, since the DB scrub already succeeded.
+		const avatarLocation = extractSupabaseStoragePath(user.avatarUrl);
+		if (avatarLocation) {
+			deleteFile(avatarLocation.bucket, avatarLocation.filePath).catch((err) =>
+				console.error('[user.service] Failed to delete avatar file during erasure:', err)
+			);
+		}
+
+		try {
+			forceLogoutUser(userId);
+		} catch (err) {
+			console.error('[user.service] Failed to force-disconnect erased user:', err);
+		}
+
+		try {
+			await sendAccountDeletionCompletedEmail({
+				to: originalEmail,
+				userName: originalName,
+				completedAt: erasedUser.deletedAt,
+				authProvider,
+			});
+		} catch (err) {
+			console.error('[user.service] Failed to send deletion-completed email:', err);
+		}
+
+		return { alreadyErased: false, erasedAt: erasedUser.deletedAt };
+	},
+    
+    // async deleteUser(userId) {
+    //     const user = await prisma.user.findUnique({ where: { userId } });
+    //     if (!user) throw new Error('User not found');
+        
+    //     return await prisma.user.delete({ where: { userId } });
+    // },
+    
 	async updateUserStatus(userId, status) {
-		const validStatuses = ['online', 'focus', 'in_meeting', 'away', 'offline'];
-		if (!validStatuses.includes(status)) {
+		if (!VALID_STATUSES.includes(status)) {
 			throw new Error('Invalid status');
 		}
 

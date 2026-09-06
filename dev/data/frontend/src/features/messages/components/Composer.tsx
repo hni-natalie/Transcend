@@ -12,7 +12,6 @@ const EMOJI_CATEGORIES = [
   { name: 'Work', emojis: ['📅', '📋', '📈', '📊', '🎯', '📌', '🏁', '⚠️', '📂', '🔗'] },
 ] as const;
 
-// TO DO: make sure types match with what messagesApi.uploadAttachment's
 const ACCEPTED_FILE_TYPES = '.pdf,.doc,.docx,.png,.jpg,.jpeg,.gif';
 
 interface PendingAttachment {
@@ -28,13 +27,15 @@ interface ComposerProps {
   contactName: string;
   conversationId?: string;
   onSend?: (text: string, attachments?: UploadedAttachment[]) => void;
+  disabled?: boolean;
 }
 
 function pendingAttachmentIcon(file: File) {
   return file.type.startsWith('image/') ? IconImage : IconFile;
 }
 
-export function Composer({ contactName, conversationId, onSend }: ComposerProps) {
+// export function Composer({ contactName, conversationId, onSend }: ComposerProps) {
+  export function Composer({ contactName, conversationId, onSend, disabled = false }: ComposerProps) {
   const [value, setValue] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
@@ -45,7 +46,8 @@ export function Composer({ contactName, conversationId, onSend }: ComposerProps)
 
   const isUploading = pendingAttachments.some((item) => item.status === 'uploading');
   const completedAttachments = pendingAttachments.filter((item) => item.status === 'done' && item.attachment);
-  const canSend = !isUploading && (value.trim().length > 0 || completedAttachments.length > 0);
+//   const canSend = !isUploading && (value.trim().length > 0 || completedAttachments.length > 0);
+  const canSend = !disabled && !isUploading && (value.trim().length > 0 || completedAttachments.length > 0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -210,27 +212,34 @@ export function Composer({ contactName, conversationId, onSend }: ComposerProps)
         <button
           aria-label="Add attachment"
           onClick={handleAttachClick}
-          className="flex p-1 text-foreground-3 hover:text-foreground cursor-pointer transition-colors shrink-0"
+		  disabled={disabled}
+		  //   className="flex p-1 text-foreground-3 hover:text-foreground cursor-pointer transition-colors shrink-0"
+          className="flex p-1 text-foreground-3 hover:text-foreground cursor-pointer transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <IconPlus className="w-5 h-5" />
         </button>
 
         <textarea
           ref={textareaRef}
-          placeholder={`Message ${contactName}`}
+        //   placeholder={`Message ${contactName}`}
+		  placeholder={disabled ? 'You can no longer send messages to Deleted User.' : `Message ${contactName}`}
           value={value}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
           rows={1}
-          className="flex-1 bg-transparent outline-none text-base text-foreground placeholder:text-foreground-3 resize-none overflow-y-auto max-h-[120px] min-h-[36px] py-1.5 leading-6"
-          style={{ height: '36px', lineHeight: '24px' }}
+        //   className="flex-1 bg-transparent outline-none text-base text-foreground placeholder:text-foreground-3 resize-none overflow-y-auto max-h-[120px] min-h-[36px] py-1.5 leading-6"
+          disabled={disabled}
+          className="flex-1 bg-transparent outline-none text-base text-foreground placeholder:text-foreground-3 resize-none overflow-y-auto max-h-[120px] min-h-[36px] py-1.5 leading-6 disabled:cursor-not-allowed"
+		  style={{ height: '36px', lineHeight: '24px' }}
         />
 
         <button
           ref={emojiButtonRef}
           aria-label="Emoji"
           onClick={() => setShowEmojiPicker((previous) => !previous)}
-          className={`flex p-2 cursor-pointer shrink-0 transition-all ${
+		  disabled={disabled}
+        //   className={`flex p-2 cursor-pointer shrink-0 transition-all ${
+          className={`flex p-2 cursor-pointer shrink-0 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
             showEmojiPicker
               ? 'text-accent-lime bg-accent-lime/10 rounded-full'
               : 'text-accent-lime hover:text-accent-lime/80 hover:bg-accent-lime/5 rounded-full'

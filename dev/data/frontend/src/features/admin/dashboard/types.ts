@@ -13,10 +13,11 @@ export interface DashboardMetricsResponse {
   users: DbUser[];
 }
 
-export interface DepartmentRatio {
-  active: number;
-  total: number;
-}
+// TO REMOVE
+// interface DepartmentRatio {
+//   active: number;
+//   total: number;
+// }
 
 export interface SpaceWithOccupancy extends Space {
   currentOccupancy: number;

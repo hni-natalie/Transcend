@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/features/auth/AuthContext';
-import { ErrorState, Modal, useUsers } from '@shared';
-import type { User } from '@shared';
+import { useToast } from '@/context/ToastContext';
+import { ErrorState, Modal, ConfirmDeleteModal, useUsers } from '@shared';
 import { Sidebar, MessageHeader, MessageList, Composer, MessageProfile } from './components';
 import { FormNewMessage } from './form/FormNewMessage';
 import { useProfile, useCreateConversation, useConversations, useMessages } from './hooks';
@@ -16,6 +16,7 @@ interface MessagingProps {
 }
 
 export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProps) {
+  const { showToast } = useToast();
   const { isOpen: isInfoOpen, toggle: toggleInfo } = useProfile(true);
   const { user: currentUser } = useAuth();
   const { users, isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useUsers({
@@ -141,10 +142,13 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       };
     }
 
+    const participant = selected.participants?.find((p) => p.id === selected.userId);
     const selectedUser = selected.userId ? usersById.get(selected.userId) : undefined;
-    const profile = toProfile(selectedUser);
+    const profile = selectedUser
+      ? { ...toProfile(selectedUser), status: participant?.status ?? toProfile(selectedUser).status }
+      : participant;
 
-    if (!selectedUser) {
+    if (!profile) {
       return null;
     }
 
@@ -155,7 +159,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       attachments: isSelectedNew ? [] : currentAttachments,
       links: isSelectedNew ? [] : currentLinks,
     };
-  }, [allConversations, selectedConversation.id, usersById, conversationMessages, currentUser?.userName, currentAttachments, currentLinks, isSelectedNew]);
+  }, [allConversations, selectedConversation.id, usersById, conversationMessages, currentAttachments, currentLinks, isSelectedNew]);
 
   // if the user is not in the group, show invite, else dont show
   const invitableGroups = useMemo(() => {
@@ -250,6 +254,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       onCloseAddForm();
     } catch (error) {
       console.error('Failed to create conversation:', error);
+      showToast('error', 'Failed to create conversation');
     }
   };
 
@@ -293,6 +298,11 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       return;
     }
     removeConversation(conversationPendingDeletion.conversationId);
+    // const deletedId = conversationPendingDeletion.conversationId;
+    // removeConversation(deletedId);
+    // if (selectedConversation.id === deletedId) {
+    //   setSelectedConversation({ id: '', type: 'direct' });
+    // }
     setConversationPendingDeletion(null);
   };
 
@@ -371,6 +381,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
                 contactName={currentChat.profile.isGroup ? 'group' : currentChat.profile.name}
                 conversationId={selectedConversation.id}
                 onSend={handleSendMessage}
+				disabled={!currentChat.profile.isGroup && !!currentChat.profile.deletedAt}
               />
             </>
           ) : (
@@ -409,30 +420,17 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
         />
       </Modal>
 
-      <Modal isOpen={Boolean(conversationPendingDeletion)} onClose={() => setConversationPendingDeletion(null)}>
-        <div className="bg-background-1 rounded-3xl p-6 shadow-2xl w-[340px]">
-          <p className="text-base text-foreground mb-1">
+      <ConfirmDeleteModal
+        isOpen={Boolean(conversationPendingDeletion)}
+        onClose={() => setConversationPendingDeletion(null)}
+        onConfirm={handleConfirmDeleteConversation}
+        title={
+          <>
             Delete conversation with <span className="font-semibold">{conversationPendingDeletion?.name}</span>?
-          </p>
-          <p className="text-sm text-foreground-3 mb-6">This conversation will be deleted. Are you sure?</p>
-
-          <div className="flex justify-end gap-2.5">
-            <button
-              onClick={() => setConversationPendingDeletion(null)}
-              className="px-4 py-2 text-base rounded-full text-foreground-3 hover:text-foreground hover:bg-background-2 transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-
-            <button
-              onClick={handleConfirmDeleteConversation}
-              className="px-4 py-2 text-base rounded-full bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </Modal>
+          </>
+        }
+        description="This conversation will be deleted. Are you sure?"
+      />
     </>
   );
 }

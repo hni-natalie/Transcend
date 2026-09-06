@@ -2,7 +2,7 @@ import React from 'react';
 import { UserList } from '@features/users';
 import type { UserTableRow } from '@shared/types/user.types';
 
-export interface UserTableProps {
+interface UserTableProps {
   users: UserTableRow[];
   onEdit: (user: UserTableRow) => void;
 }
@@ -31,7 +31,7 @@ export const UserTable = ({
       </thead>
       <tbody className="divide-y divide-background-2">
         {users.map((user) => (
-          <UserList key={user.email} user={user} onEdit={onEdit} />
+          <UserList key={user.userId} user={user} onEdit={onEdit} />
         ))}
       </tbody>
     </table>

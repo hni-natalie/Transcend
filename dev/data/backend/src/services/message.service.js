@@ -1,5 +1,5 @@
 const prisma = require('../../prisma/client');
-const { uploadFile } = require('../services/supabase-storage.service');
+const { uploadFile } = require('../services/supabase.service');
 
 
 function createDirectKey(userId1, userId2) {
@@ -48,7 +48,19 @@ function conversationResponseSelect(userId) {
             userId: true,
             userName: true,
             avatarUrl: true,
-            userStatus: true
+            userStatus: true,
+            role: {
+              select: {
+                roleName: true
+              }
+            },
+            department: {
+              select: {
+                dpId: true,
+                dpName: true
+              }
+            },
+			deletedAt: true
           }
         }
       }
@@ -70,7 +82,8 @@ function conversationResponseSelect(userId) {
           select: {
             userId: true,
             userName: true,
-            avatarUrl: true
+            avatarUrl: true,
+			deletedAt: true
           }
         }
       }
@@ -117,16 +130,28 @@ const messageService = {
 				userId: true,
 				lastReadAt: true,
 
-				user: {
-					select: {
-					userId: true,
-					userName: true,
-					avatarUrl: true,
-					userStatus: true
-					}
-				}
-				}
-			},
+        user: {
+          select: {
+            userId: true,
+            userName: true,
+            avatarUrl: true,
+            userStatus: true,
+            role: {
+              select: {
+                roleName: true
+              }
+            },
+            department: {
+              select: {
+                dpId: true,
+                dpName: true
+              }
+            },
+			deletedAt: true
+          }
+        }
+      }
+    },
 
 			messages: {
 				orderBy: {
@@ -144,7 +169,8 @@ const messageService = {
 					select: {
 					userId: true,
 					userName: true,
-					avatarUrl: true
+					avatarUrl: true,
+					deletedAt: true
 					}
 				}
 				}
@@ -368,7 +394,8 @@ const messageService = {
 					select: {
 						userId: true,
 						userName:  true,
-						avatarUrl:  true
+						avatarUrl:  true,
+						deletedAt: true
 					}
 				},
 				attachments: {
@@ -436,7 +463,8 @@ const messageService = {
 					select: {
 						userId: true,
 						userName:  true,
-						avatarUrl:  true
+						avatarUrl:  true,
+						deletedAt: true
 					}
 				},
 				attachments: {
@@ -495,16 +523,34 @@ const messageService = {
 		if (conversation.createdByUserId != userId)
 			throw new Error ('Only the group creater and create conversation');
 
-		// get the existing group member
-		const existingParticipantIds = new Set(
-			conversation.participants.map(
-				(participant) => participant.userId
-			)
-		);
+		// // get the existing group member
+		// const existingParticipantIds = new Set(
+		// 	conversation.participants.map(
+		// 		(participant) => participant.userId
+		// 	)
+		// );
+		// // remove duplicate participant
+		// const participantIdsToAdd = [...new Set(participantIds)].filter(
+		// 	(participantUserId) => !existingParticipantIds.has(participantUserId)
+		// 	);
+
 		// remove duplicate participant
-		const participantIdsToAdd = [...new Set(participantIds)].filter(
+		const deduplicatedIds = [...new Set(participantIds)].filter(
 			(participantUserId) => !existingParticipantIds.has(participantUserId)
 			);
+
+		// exclude erased users, e.g. from a stale client-side selection
+		const liveUsers = await prisma.user.findMany({
+			where: {
+				userId: { in: deduplicatedIds },
+				deletedAt: null
+			},
+			select: { userId: true }
+		});
+		const participantIdsToAdd = liveUsers.map((user) => user.userId);
+
+		if (!participantIdsToAdd || participantIdsToAdd.length === 0)
+			throw new Error ('All selected users are already participants');
 		
 		if (!participantIdsToAdd || participantIdsToAdd.length === 0)
 			throw new Error ('All selected users are already participants');
@@ -528,6 +574,7 @@ const messageService = {
 						userId: true,
 						userName: true,
 						avatarUrl: true,
+						deletedAt: true
 						},
 					},
 					},

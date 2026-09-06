@@ -12,6 +12,7 @@ export interface Profile {
   isGroup?: boolean;
   members?: Profile[];
   memberCount?: number;
+  deletedAt?: string | null;
 }
 
 export interface Conversation {
@@ -58,6 +59,14 @@ export interface ConversationResponse {
       userName: string;
       avatarUrl: string | null;
       userStatus: UserBackendStatus | null;
+      role?: {
+        roleName: string;
+      } | null;
+      department?: {
+        dpId?: string;
+        dpName: string;
+      } | null;
+	  deletedAt?: string | null;
     };
   }[];
 
@@ -70,6 +79,7 @@ export interface ConversationResponse {
       userId: string;
       userName: string;
       avatarUrl: string | null;
+	  deletedAt?: string | null;
     };
   }[];
 
@@ -111,6 +121,7 @@ export interface MessageResponse {
     userId: string;
     userName: string;
     avatarUrl: string | null;
+	deletedAt?: string | null;
   };
 
   attachments?: Attachment[];

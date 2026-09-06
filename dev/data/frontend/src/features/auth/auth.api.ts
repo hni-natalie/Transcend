@@ -1,13 +1,9 @@
 import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
 import type { User } from '@shared';
+import type { LoginResponse } from './auth.types';
 
-interface LoginResponse {
-  token: string;
-  user: User;
-}
-
-export const authService = {
+export const authApi = {
   // Email login
   login: async (email: string, password: string): Promise<LoginResponse> => {
     const data = await apiClient.post<LoginResponse>(

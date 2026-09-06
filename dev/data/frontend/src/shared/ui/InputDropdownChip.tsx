@@ -9,6 +9,7 @@ import { IconClose, IconDown } from './Icons';
 import type { MeetingDetails, Participant } from "@features/meetings/meeting.types";
 import { DropdownChoice, OptionProps } from "@/shared/types/ui.types";
 import { InputDropdown } from './InputDropdown';
+import { getDisplayName, getDisplayAvatar } from '@/shared/types/user.types';
 
 interface User {
   userId: string;
@@ -90,7 +91,8 @@ export function InputDropdownChip({
       return users.filter(user => selectedUserIds.includes(user.userId));
   }, [users, selectedUserIds]);
 
-  const selectedText = selectedUsers.length > 0 ? selectedUsers.map((user) => user.userName).join(', ') : placeholder;
+//   const selectedText = selectedUsers.length > 0 ? selectedUsers.map((user) => user.userName).join(', ') : placeholder;
+  const selectedText = selectedUsers.length > 0 ? selectedUsers.map((user) => getDisplayName(user)).join(', ') : placeholder;
 
   const handleUserToggle = (userId: string) => {
     if (onUserToggle) {
@@ -173,8 +175,12 @@ export function InputDropdownChip({
                       className="h-5 w-5 accent-lime-300"
                     />
                     <div className='flex flex-col'>
-                      <p>{user.userName}</p>
-                      <p className="text-sm text-foreground-3/90">{user.userEmail}</p>
+					  <p>{getDisplayName(user)}</p>
+                      {!user.deletedAt && (
+                        <p className="text-sm text-foreground-3/90">{user.userEmail}</p>
+                      )}
+                      {/* <p>{user.userName}</p>
+                      <p className="text-sm text-foreground-3/90">{user.userEmail}</p> */}
                     </div>
                   </label>
                 ))
@@ -192,7 +198,8 @@ export function InputDropdownChip({
         >
           <div className="flex justify-between">
             <div>
-              <span className="text-sm">{user.userName}</span>
+			  <span className="text-sm">{getDisplayName(user)}</span>
+              {/* <span className="text-sm">{user.userName}</span> */}
               <div className="mt-2 flex gap-3 text-sm">
                   <InputDropdown
                       choices={roleOptions}

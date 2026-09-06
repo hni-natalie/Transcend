@@ -66,12 +66,6 @@ enum SummaryStatus {
   failed
 }
 
-// TO REMOVE
-enum DocumentType {
-  faq
-  meeting_summary
-}
-
 enum ConversationType {
   direct
   group
@@ -81,8 +75,6 @@ enum AttachmentKind {
   pdf
   image
   document
-  video // TO REMOVE
-  audio	// TO REMOVE
 }
 
 enum ActivityType {
@@ -143,7 +135,6 @@ model User {
 
   socketId      String?
   lastLoginAt   DateTime?
-  emailVerified Boolean? @default(false) // TO REMOVE
 
   dataExportRequestedAt DateTime?
   dataExportCompletedAt DateTime?
@@ -157,8 +148,6 @@ model User {
   workspace       Workspace?  @relation(fields: [workspaceId], references: [workspaceId])
   department      Department? @relation("UserDepartment", fields: [dpId], references: [dpId])
   leadDepartment  Department? @relation("DepartmentLead")
-
-  keyPersonSpaces Space[] @relation("SpaceKeyPerson")  // TO REMOVE
   
   createdMeetings 			Meeting[] @relation("MeetingCreatedBy")
   meetingParticipations 	MeetingParticipant[]
@@ -179,7 +168,6 @@ model User {
 model Workspace {
   workspaceId   String   @id @default(uuid())
   workspaceName String
-  logoUrl       String?  // TO REMOVE
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -189,30 +177,23 @@ model Workspace {
   spaces     	Space[]
   tasks      	Task[]
   meetings   	Meeting[]
-  documents   	Document[]	 // TO REMOVE
   activityLogs 	Activity[]
   conversations Conversation[]
 }
 
 // SPACES
-// for permission; add in be (canUserAccessSpace(user, space))
-// @@unique([workspaceId, spaceName]) - spacename is now unique, diff workspace can hv same name
 model Space {
   spaceId       String       @id @default(uuid())
   spaceName     String
   workspaceId   String
   accessLevel   AccessLevel  @default(shared)
   departmentId  String?
-  keyPersonId   String?      @unique			// TO REMOVE
-  isPublicBook  Boolean?     @default(true)		// TO REMOVE
   userCapacity  Int?         @default(0)
-  isOccupied    Boolean      @default(false)	// TO REMOVE
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
   workspace  Workspace  @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
   department Department? @relation(fields: [departmentId], references: [dpId])
-  keyPerson  User?       @relation("SpaceKeyPerson", fields: [keyPersonId], references: [userId], onDelete: SetNull)  // TO REMOVE
 
   meetings      Meeting[]
 
@@ -220,8 +201,6 @@ model Space {
 }
 
 // TASKS
-// @@ is fetch task by workspace/id
-// add be contraint: if taskstatus == done, add completed date
 model Task {
   taskId          String     @id @default(uuid())
   taskTitle       String
@@ -237,9 +216,6 @@ model Task {
   updatedAt       DateTime @updatedAt
   deletedAt       DateTime?
 
-
-  // createdBy User      @relation(fields: [createdByUserId], references: [userId], onDelete: Cascade)
-  // onDelete removed to prevent hard deletion (if user is deleted, task shoudlnt be removed) 
   createdBy User      @relation(fields: [createdByUserId], references: [userId])
   workspace Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
 
@@ -338,37 +314,6 @@ model MeetingPin {
   @@index([meetId])
 }
 
-// DOCUMENT  // TO REMOVE
-model Document {
-  id          String   @id @default(uuid())
-  title       String
-  fileURL     String?
-  content     String?
-  type        DocumentType
-  workspaceId String
-  createdAt   DateTime @default(now())
-
-  workspace Workspace @relation(fields: [workspaceId], references: [workspaceId])
-  chunks    DocumentChunk[]
-
-  @@index([workspaceId])
-}
-
-// DOCUMENT CHUNK  // TO REMOVE
-model DocumentChunk {
-  id          String @id @default(uuid())
-  content     String
-  embedding   Unsupported("vector(1536)")?
-  chunkIndex  Int
-  documentId  String
-  createdAt   DateTime @default(now())
-
-  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  @@index([documentId])
-  @@unique([documentId, chunkIndex])
-}
-
 // CONVERSATION
 model Conversation {
   conversationId  String           @id @default(uuid())
@@ -418,7 +363,7 @@ model Message {
   conversationId String
   authorId       String
   text           String?
-  callNote       String?	// TO REMOVE
+  callNote       String?
   linkUrl        String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -469,15 +414,14 @@ model Activity {
   activityId		String		@id @default(uuid())
   workspaceId		String
   userId			String
-  type			ActivityType
+  type				ActivityType
   action			String
-  contextTitle	String? 
+  contextTitle		String? 
   contextDetails	String?
-  createdAt		DateTime	@default(now())
+  createdAt			DateTime	@default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [workspaceId], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [userId])
-//   user      User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([workspaceId, createdAt])
   @@index([workspaceId, type])

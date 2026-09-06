@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { IconRecording, IconRecordingStop } from '@/shared';
 import { meetingApi } from '@/features/meetings/api/meeting.api';
 import { useRoomContext } from '@livekit/components-react';
+import { useToast } from '@/context/ToastContext';
 import { RoomEvent } from 'livekit-client';
 
 interface RecordingButtonProps
@@ -18,6 +19,7 @@ export function RecordingButton({
   ...props
 }: RecordingButtonProps) {
   const room = useRoomContext();
+  const { showToast } = useToast();
 
   const [isRecording, setIsRecording] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -105,6 +107,7 @@ export function RecordingButton({
 
     } catch (error) {
       console.error('Recording error:', error);
+      showToast('error', 'Failed to update recording status');
     } finally {
       setLoading(false);
     }

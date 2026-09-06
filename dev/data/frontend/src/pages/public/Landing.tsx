@@ -198,8 +198,10 @@ export const Landing = () => {
         </span>
 
         <div className="w-full md:w-[380px] lg:w-[440px] flex items-center gap-10 font-main text-foreground-3 md:translate-x-24 lg:translate-x-26">
-        <a href="https://localhost/terms"
-            className="no-underline transition-colors group"
+          <button
+            type="button"
+            onClick={() => navigate(R.TERMS)}
+            className="bg-transparent border-none p-0 cursor-pointer no-underline transition-colors group"
           >
             <span className="link-text">
               <span className="top">
@@ -211,11 +213,12 @@ export const Landing = () => {
                 <IconArrowUpRight className="w-3.5 h-3.5 text-accent-lime" />
               </span>
             </span>
-          </a>
+          </button>
 
-          
-           <a href="https://localhost/privacy"
-            className="no-underline transition-colors group"
+          <button
+            type="button"
+            onClick={() => navigate(R.PRIVACY)}
+            className="bg-transparent border-none p-0 cursor-pointer no-underline transition-colors group"
           >
             <span className="link-text">
               <span className="top">
@@ -227,7 +230,7 @@ export const Landing = () => {
                 <IconArrowUpRight className="w-3.5 h-3.5 text-accent-lime" />
               </span>
             </span>
-          </a>
+          </button>
         </div>
       </footer>
     </div>

@@ -5,8 +5,8 @@
 
 import { io, Socket } from 'socket.io-client';
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import { Player, UserCallStatus } from '@shared/types/user.types';
-import { useAuth } from '@/features/auth/AuthContext';
+import { Player, UserCallStatus, UserBackendStatus } from '@shared';
+import { useAuth } from '@/features/auth';
 import { livekitService } from '@/features/livekit/services/livekitService';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useNavigate } from "react-router-dom";
@@ -30,7 +30,7 @@ interface SocketContextType {
   isConnected: boolean;
   socket: Socket | null;
   shouldConnect: boolean;
-  userStatuses: Record<string, string>;
+  userStatuses: Record<string, UserBackendStatus>;
   players: Player[];
   roomPlayers: Player[];
   localPlayerId: string | null;
@@ -48,8 +48,8 @@ interface SocketContextType {
   roomOccupancy: Record<string, number>;
   latestActivity: any;
   activitySeq: number;
-  subscribeDashboard: () => void;
-  unsubscribeDashboard: () => void;
+  subscribeActivity: () => void;
+  unsubscribeActivity: () => void;
   incomingCalls: Record<string, { caller:string; callerName:string; callerPhoto:string; roomName:string; mode:string }>;
   dismissIncomingCall: (directKey:string) => void;
   declineCall: (directKey:string, roomName:string, mode:string) => void;
@@ -92,7 +92,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
   const [localPlayerId, setLocalPlayerId] = useState<string | null>(null);
   
   // status sync across pages
-  const [userStatuses, setUserStatuses] = useState<Record<string, string>>({});
+  const [userStatuses, setUserStatuses] = useState<Record<string, UserBackendStatus>>({});
   const [callStatus, setCallStatus] = useState<CallStatusState>({ status: 'idle', directKey: null });
   
   const [currentRoom, setCurrentRoom] = useState<string | null>(null);
@@ -277,7 +277,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
         }));
       });
 
-      socketInstance.on('user-status-changed', (data: { userId: string; status: string }) => {
+      socketInstance.on('user-status-changed', (data: { userId: string; status: UserBackendStatus }) => {
         console.log('[SocketContext] received user-status-changed:', data);
         setUserStatuses((prev) => ({ ...prev, [data.userId]: data.status }));
       });
@@ -394,15 +394,15 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     socket?.emit('request-room-players', { roomName });
   };
 
-  const subscribeDashboard = useCallback(() => {
+  const subscribeActivity = useCallback(() => {
     if (socket && isConnected) {
-      socket.emit('subscribe-dashboard');
+      socket.emit('subscribe-activity');
     }
   }, [socket, isConnected]);
 
-  const unsubscribeDashboard = useCallback(() => {
+  const unsubscribeActivity = useCallback(() => {
     if (socket && isConnected) {
-      socket.emit('unsubscribe-dashboard');
+      socket.emit('unsubscribe-activity');
     }
   }, [socket, isConnected]);
 
@@ -449,8 +449,8 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     roomOccupancy,
     latestActivity,
     activitySeq,
-    subscribeDashboard,
-    unsubscribeDashboard,
+    subscribeActivity,
+    unsubscribeActivity,
     callStatus,
     setCallStatus,
     incomingCalls,

@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
+import { useSocket, useToast } from '@/context';
+import { useAuth } from '@/features/auth';
 import { DashboardData } from './types';
 import { UserBackendStatus } from '@/shared';
-import { useAuth } from '@/features/auth';
-import { useSocket } from '@/context/SocketContext';
 
 
 export const useDashboard = () => {
@@ -12,12 +12,17 @@ export const useDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isConnected, userStatuses } = useSocket();
+  const { showToast } = useToast();
 
 
   useEffect(() => {
+    if (!isConnected) {
+      setIsLoading(true);
+      return;
+    }
+
     const fetchDashboard = async () => {
       try {
-        if (!isConnected) return;
         setIsLoading(true);
         const response = await apiClient.get<DashboardData>(
           API_CONFIG.endpoints.users.userDashboard
@@ -26,25 +31,26 @@ export const useDashboard = () => {
         setError(null);
       } catch (err) {
         console.error('Failed to fetch dashboard:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+        showToast('error', 'Failed to load dashboard');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchDashboard();
-    if (!isConnected)
-      setIsLoading(true);
   }, [isConnected]);
 
   const dataWithLiveStatus: DashboardData | null = data
   ? {
       ...data,
-      currentUser: data.currentUser, 
       allUsers: data.allUsers.map(u => ({
         ...u,
         userStatus: userStatuses[u.userId] ?? u.userStatus,
       })),
+      currentUser: {
+        ...data.currentUser,
+        userStatus: userStatuses[data.currentUser.userId] ?? data.currentUser.userStatus,
+      },
     }
   : null;
 
@@ -84,6 +90,7 @@ export const useStatusUpdate = (
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { updateUserStatus } = useAuth();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -98,7 +105,7 @@ export const useStatusUpdate = (
   const updateStatus = async (newStatus: UserBackendStatus) => {
     try {
       setUpdatingStatus(true);
-      updateUserStatus(newStatus);
+      await updateUserStatus(newStatus);
 
       setData(prev =>
         prev
@@ -109,6 +116,7 @@ export const useStatusUpdate = (
       setShowStatusDropdown(false);
     } catch (err) {
       console.error('Failed to update status:', err);
+      showToast('error', 'Failed to update status');
     } finally {
       setUpdatingStatus(false);
     }

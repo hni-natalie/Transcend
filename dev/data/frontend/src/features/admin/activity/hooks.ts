@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { activityApi } from './api/activity.api';
+import { useToast } from '@/context/ToastContext';
 
 export const useExportActivities = () => {
   const [isExporting, setIsExporting] = useState(false);
+  const { showToast } = useToast();
 
   const exportActivities = async (type?: string, search?: string) => {
     try {
@@ -20,6 +22,7 @@ export const useExportActivities = () => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Failed to export activities:', err);
+      showToast('error', 'Failed to export activities');
     } finally {
       setIsExporting(false);
     }

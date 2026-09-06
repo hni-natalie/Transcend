@@ -26,7 +26,7 @@ function emitActivityCreated(workspaceId, activity) {
     try {
         const { getIO } = require('./socket.service'); // lazy require
         const io = getIO();
-        io.to('dashboard-viewers').emit('activity-created', {
+        io.to('activity-viewers').emit('activity-created', {
             workspaceId,
             activity: formatActivity(activity),
         });
@@ -52,7 +52,6 @@ function formatActivity(activity) {
     };
 }
 
-// for user's dashboard
 async function getPaginatedActivities({ filters, page = 1, limit = 50, sortBy = 'createdAt', sortOrder = 'desc' }) {
     const skip = (page - 1) * limit;
 

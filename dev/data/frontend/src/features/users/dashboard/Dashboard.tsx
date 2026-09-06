@@ -33,8 +33,7 @@ const featureMember = (m: TeamMember, currentUserId: string): FeaturedMember => 
 
 export const Dashboard = () => {
   const { data, setData, isLoading, error } = useDashboard();
-  const { showStatusDropdown, setShowStatusDropdown, updatingStatus, dropdownRef, updateStatus } =
-    useStatusUpdate(setData);
+  const { showStatusDropdown, setShowStatusDropdown, updatingStatus, dropdownRef, updateStatus } = useStatusUpdate(setData);
   const { sessionTime } = useSessionTimer(data?.currentUser?.lastLoginAt);
 
   const formatSessionTimeShort = () => {

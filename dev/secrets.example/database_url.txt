@@ -1,0 +1,1 @@
+<get-from-supabase.com/dashboard/project/<project-id>?showConnect=true&connectTab=orm-then-paste-your-database_url>
