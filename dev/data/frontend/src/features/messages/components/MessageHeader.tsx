@@ -37,8 +37,8 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
   }, []);
 
   useEffect(() => {
-    // if (!incomingCalls || !directKey) return;
-	if (!incomingCalls) return ;
+	  // if (!incomingCalls) return ;
+    if (!incomingCalls || !directKey) return;
     setCallMode(incomingCalls[directKey]?.mode);
   }, [incomingCalls, directKey]);
 

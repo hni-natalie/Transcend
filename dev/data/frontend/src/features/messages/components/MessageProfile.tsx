@@ -55,8 +55,9 @@ export function MessageProfile({
   const { roomPlayers } = useSocket();
 
   const getDeptSpawnPos = (dpId?: string) => {
-    if (!dpId || spaceLayoutLoading || !positionedPlanes) return undefined;
-    const plane = positionedPlanes.find((p) => p.departmentId === dpId);
+    const planes = positionedPlanes as { departmentId?: string; x: number; z: number }[] | undefined;
+    if (!dpId || spaceLayoutLoading || !planes) return undefined;
+    const plane = planes.find((p) => p.departmentId === dpId);
     return plane ? { x: plane.x, y: 0, z: plane.z } : undefined;
   };
 
@@ -144,20 +145,41 @@ export function MessageProfile({
 
   const targetPos = getTargetPos(contact);
 
+//   const actionButtons: ActionButton[] = [
+//     { icon: IconMessagePin, label: isPinned ? 'Unpin' : 'Pin', onClick: onTogglePin, isActive: isPinned },
+//     { icon: IconMemberAdd, label: 'Invite', onClick: toggleInvite, isActive: showInvite },
+//     contact.isGroup
+//       ? { icon: IconMembers, label: 'Members', onClick: toggleMembers, isActive: showMembers }
+//       : {
+//           icon: IconOffice,
+//           label: 'Locate',
+//           onClick: locateOfficeUser(R.USER_OFFICE, targetPos),
+//           isActive: false,
+//           disabled: spaceLayoutLoading || !targetPos,
+//           tooltip: `${spaceLayoutLoading || !targetPos ? "Out of office" : "Go to user"}`,
+//         },
+//   ];
+
   const actionButtons: ActionButton[] = [
     { icon: IconMessagePin, label: isPinned ? 'Unpin' : 'Pin', onClick: onTogglePin, isActive: isPinned },
-    { icon: IconMemberAdd, label: 'Invite', onClick: toggleInvite, isActive: showInvite },
-    contact.isGroup
-      ? { icon: IconMembers, label: 'Members', onClick: toggleMembers, isActive: showMembers }
-      : {
-          icon: IconOffice,
-          label: 'Locate',
-          onClick: locateOfficeUser(R.USER_OFFICE, targetPos),
-          isActive: false,
-          disabled: spaceLayoutLoading || !targetPos,
-          tooltip: `${spaceLayoutLoading || !targetPos ? "Out of office" : "Go to user"}`,
-        },
+    ...(contact.isGroup || !contact.deletedAt
+      ? [{ icon: IconMemberAdd, label: 'Invite', onClick: toggleInvite, isActive: showInvite }]
+      : []),
+    ...(contact.isGroup
+      ? [{ icon: IconMembers, label: 'Members', onClick: toggleMembers, isActive: showMembers }]
+      : contact.deletedAt
+        ? []
+        : [{
+            icon: IconOffice,
+            label: 'Locate',
+            onClick: locateOfficeUser(R.USER_OFFICE, targetPos ?? undefined),
+            isActive: false,
+            disabled: spaceLayoutLoading || !targetPos,
+            tooltip: `${spaceLayoutLoading || !targetPos ? "Out of office" : "Go to user"}`,
+          }]),
   ];
+
+
 
   const memberCount = contact.memberCount ?? contact.members?.length ?? 0;
 
@@ -172,12 +194,13 @@ export function MessageProfile({
 
         {contact.isGroup ? (
           <p className="text-base text-foreground-2">{memberCount} members</p>
-        ) : (
+		) : !contact.deletedAt ? (
+        // ) : (
           <>
             <p className="text-[13.5px] text-foreground-2">{contact.role || 'No role'}</p>
             <p className="text-base text-foreground-3">{contact.department || 'No department'}</p>
           </>
-        )}
+        ): null}
       </div>
 
       <div className="flex gap-2.5 mt-8 mb-10">
@@ -185,7 +208,7 @@ export function MessageProfile({
           const isUnpin = label === 'Unpin';
 
           return (
-            <Tooltip key={label} text={tooltip} className='flex flex-1'>
+            <Tooltip key={label} text={tooltip ?? label} className='flex flex-1'>
               <button
                 onClick={onClick}
                 disabled={disabled}

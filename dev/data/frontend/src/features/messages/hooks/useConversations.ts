@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import type { Conversation, ConversationResponse, LastMessage, Profile } from '../types';
 import { messagesApi } from '../api/messages.api';
 import { useSocket } from '@/context/SocketContext';
@@ -38,7 +39,8 @@ export interface AddConversationInput {
 }
 
 export const useConversations = () => {
-  const { socket } = useSocket();
+  const { showToast } = useToast();
+  const { socket, userStatuses } = useSocket();
   const { user: currentUser } = useAuth();
   const currentUserId = currentUser?.userId;
   
@@ -82,9 +84,36 @@ export const useConversations = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  const conversationsWithLiveStatus = useMemo(() => {
+    return conversations.map((conversation) => {
+      if (conversation.type === 'group') {
+        return {
+          ...conversation,
+          participants: conversation.participants?.map((participant) => ({
+            ...participant,
+            status: participant.status ? userStatuses[participant.id] ?? participant.status : participant.status,
+          })),
+        };
+      }
+
+      const liveUserStatus = conversation.userId
+        ? userStatuses[conversation.userId] ?? conversation.userStatus
+        : conversation.userStatus;
+
+      return {
+        ...conversation,
+        userStatus: liveUserStatus,
+        participants: conversation.participants?.map((participant) => ({
+          ...participant,
+          status: userStatuses[participant.id] ?? participant.status,
+        })),
+      };
+    });
+  }, [conversations, userStatuses]);
+
   const groupMessages = useMemo(
-    () => conversations.filter((conversation) => conversation.type === 'group'),
-    [conversations],
+    () => conversationsWithLiveStatus.filter((conversation) => conversation.type === 'group'),
+    [conversationsWithLiveStatus],
   );
 
   useEffect(() => {
@@ -148,12 +177,18 @@ export const useConversations = () => {
   
     messagesApi
       .addMembers({ conversationId, participantIds: newMembers.map((member) => member.id) })
+      .then(() => {
+        showToast('success', newMembers.length > 1 ? 'Members added to conversation' : 'Member added to conversation');
+      })
       .catch((error) => {
         console.error('Failed to add members:', error);
         // revert the optimistic setConversations update above on error.
         // refetch();
+        showToast('error', 'Failed to add members to conversation');
+        refetch();
       });
-  }, [refetch]);
+  // }, [refetch]);
+  }, [refetch, showToast]);
 
   const removeMemberFromConversation = useCallback((conversationId: string, userId: string) => {
     setConversations((previous) =>
@@ -166,12 +201,21 @@ export const useConversations = () => {
       }),
     );
   
-    messagesApi.removeMember(conversationId, userId).catch((error) => {
-      console.error('Failed to remove member:', error);
+    // messagesApi.removeMember(conversationId, userId).catch((error) => {
+	messagesApi
+      .removeMember(conversationId, userId)
+      .then(() => {
+        showToast('success', 'Member removed from conversation');
+      })
+	  .catch((error) => {
+        console.error('Failed to remove member:', error);
       // revert the optimistic setConversations update above on error.
       // refetch();
-    });
-  }, [refetch]);
+        showToast('error', 'Failed to remove member from conversation');
+        refetch();
+      });
+  // }, [refetch]);
+  }, [refetch, showToast]);
 
   const removeConversation = useCallback((conversationId: string) => {
     setConversations((previous) => previous.filter((conversation) => conversation.conversationId !== conversationId));
@@ -187,13 +231,23 @@ export const useConversations = () => {
     //   return next;
     // });
   
-    messagesApi.deleteConversation(conversationId).catch((error) => {
-      console.error('Failed to delete conversation:', error);
+    // messagesApi.deleteConversation(conversationId).catch((error) => {
+    messagesApi
+      .deleteConversation(conversationId)
+      .then(() => {
+        showToast('success', 'Conversation deleted successfully');
+      })
+      .catch((error) => {
+        console.error('Failed to delete conversation:', error);
       // revert the optimistic removal above on error (e.g.
       // refetch, or re-insert the conversation into state).
       // refetch();
-    });
-  }, [refetch]);
+        showToast('error', 'Failed to delete conversation');
+        refetch();
+      });
+  }, [refetch, showToast]);
+  //   });
+  // }, [refetch]);
 
   // >>>>>>>>>>>>>>> REAL API 
   // Keep the local `setPinnedIds` update for instant UI feedback, drop
@@ -253,6 +307,7 @@ export const useConversations = () => {
         }
       } catch (error) {
         console.error('Failed to update pin:', error);
+        showToast('error', 'Failed to update pin status');
 
         // Revert FE if backend request fails
         setConversations((previous) =>
@@ -264,7 +319,7 @@ export const useConversations = () => {
         );
       }
     },
-    [conversations]
+    [conversations, showToast]
   );
 
   const markConversationRead = useCallback(async (conversationId: string) => {
@@ -298,8 +353,8 @@ export const useConversations = () => {
   // );
 
   const sortedConversations = useMemo(
-    () => [...conversations].sort((a, b) => getConversationSortTime(b) - getConversationSortTime(a)),
-    [conversations],
+    () => [...conversationsWithLiveStatus].sort((a, b) => getConversationSortTime(b) - getConversationSortTime(a)),
+    [conversationsWithLiveStatus],
   );
 
   const groupedConversations = useMemo(() => {

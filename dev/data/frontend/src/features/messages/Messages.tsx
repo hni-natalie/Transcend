@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { ErrorState, Modal, ConfirmDeleteModal, useUsers } from '@shared';
-// import type { User } from '@shared';
 import { Sidebar, MessageHeader, MessageList, Composer, MessageProfile } from './components';
 import { FormNewMessage } from './form/FormNewMessage';
 import { useProfile, useCreateConversation, useConversations, useMessages } from './hooks';
@@ -16,6 +16,7 @@ interface MessagingProps {
 }
 
 export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProps) {
+  const { showToast } = useToast();
   const { isOpen: isInfoOpen, toggle: toggleInfo } = useProfile(true);
   const { user: currentUser } = useAuth();
   const { users, isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useUsers({
@@ -141,11 +142,13 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       };
     }
 
-    // const selectedUser = selected.userId ? usersById.get(selected.userId) : undefined;
-    // const profile = toProfile(selectedUser);
-	const profile = selected.participants?.find((participant) => participant.id === selected.userId);
+    const participant = selected.participants?.find((p) => p.id === selected.userId);
+    const selectedUser = selected.userId ? usersById.get(selected.userId) : undefined;
+    const profile = selectedUser
+      ? { ...toProfile(selectedUser), status: participant?.status ?? toProfile(selectedUser).status }
+      : participant;
 
-	if (!profile) {
+    if (!profile) {
       return null;
     }
 
@@ -156,8 +159,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       attachments: isSelectedNew ? [] : currentAttachments,
       links: isSelectedNew ? [] : currentLinks,
     };
-//   }, [allConversations, selectedConversation.id, usersById, conversationMessages, currentUser?.userName, currentAttachments, currentLinks, isSelectedNew]);
-  }, [allConversations, selectedConversation.id, conversationMessages, currentUser?.userName, currentAttachments, currentLinks, isSelectedNew]);
+  }, [allConversations, selectedConversation.id, usersById, conversationMessages, currentAttachments, currentLinks, isSelectedNew]);
 
   // if the user is not in the group, show invite, else dont show
   const invitableGroups = useMemo(() => {
@@ -252,6 +254,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       onCloseAddForm();
     } catch (error) {
       console.error('Failed to create conversation:', error);
+      showToast('error', 'Failed to create conversation');
     }
   };
 
@@ -295,6 +298,11 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       return;
     }
     removeConversation(conversationPendingDeletion.conversationId);
+    // const deletedId = conversationPendingDeletion.conversationId;
+    // removeConversation(deletedId);
+    // if (selectedConversation.id === deletedId) {
+    //   setSelectedConversation({ id: '', type: 'direct' });
+    // }
     setConversationPendingDeletion(null);
   };
 
@@ -373,6 +381,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
                 contactName={currentChat.profile.isGroup ? 'group' : currentChat.profile.name}
                 conversationId={selectedConversation.id}
                 onSend={handleSendMessage}
+				disabled={!currentChat.profile.isGroup && !!currentChat.profile.deletedAt}
               />
             </>
           ) : (
