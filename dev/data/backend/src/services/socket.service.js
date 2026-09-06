@@ -8,6 +8,7 @@ const { randomHslColor }                   = require('../utils/color.js');
 const { apiClient }                        = require('../api/api.client.js');
 const { updateSocketId }                   = require('../utils/socketStatus.js');
 const prisma                               = require('../../prisma/client');
+const messageService                       = require('./message.service');
 const { logSpaceActivity, logMeetingActivity } = require('../utils/activity');
 const { initRoomData, createPlayer, initRoomSpawnPos, getSpawnPosFromDpId, initRoomComponents } = require('../utils/socket');
 
@@ -197,11 +198,17 @@ const socketService = (io) => {
       }
     });
 
-    socket.on('initiate-call', ({ directKey, selectedRoomName, mode }) => {
+    socket.on('initiate-call', async ({ directKey, selectedRoomName, mode }) => {
       if (!directKey) return;
       const targetUserId = directKey.split(':').find((id) => id !== player.userId);
       const target = Array.from(players.values()).find((p) => p.userId === targetUserId);
       if (!target) return; // callee offline
+
+      try {
+        await messageService.logCallStart(directKey, player.userId, mode);
+      } catch (err) {
+        console.error('[initiate-call] failed to log call start:', err);
+      }
 
       io.to(target.id).emit('incoming-call', {
         caller: player.userId,

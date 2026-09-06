@@ -244,6 +244,7 @@ export function mapMessage(message: MessageResponse, currentUserId: string,): Me
 
     createdAt: message.createdAt,
     text: message.text ?? undefined,
+    callNote: message.callNote ?? undefined,
 
     attachments: message.attachments ?? undefined,
   };
