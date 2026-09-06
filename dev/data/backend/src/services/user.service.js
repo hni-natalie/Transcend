@@ -5,7 +5,7 @@ const { getIO, forceLogoutUser } = require('./socket.service');
 const { uploadFile, deleteFile } = require('./supabase.service');
 const { validatePassword } = require('../utils/password');
 const { VALID_STATUSES } = require('../validators/user.validator');
-const { sendDataExportEmail, sendAccountDeletionRequestEmail, notifySupportOfDeletionRequest } = require('../utils/mailer');
+const { sendDataExportEmail, sendAccountDeletionRequestEmail, notifySupportOfDeletionRequest, sendAccountDeletionCompletedEmail } = require('../utils/mailer');
 
 // only google users receive email, mock users with fake email dont (for demo only)
 const canReceiveRealEmail = (user) => user.authProvider === 'google';
@@ -492,6 +492,9 @@ const userService = {
 			return { alreadyErased: true, erasedAt: user.deletedAt };
 		}
 
+		// capture pre-scrub values first - they're gone from the row after the update below
+		const { userEmail: originalEmail, userName: originalName, authProvider } = user;
+
 		const placeholderEmail = `deleted-${userId}@erased.local`;
 
 		const erasedUser = await prisma.user.update({
@@ -526,6 +529,17 @@ const userService = {
 			forceLogoutUser(userId);
 		} catch (err) {
 			console.error('[user.service] Failed to force-disconnect erased user:', err);
+		}
+
+		try {
+			await sendAccountDeletionCompletedEmail({
+				to: originalEmail,
+				userName: originalName,
+				completedAt: erasedUser.deletedAt,
+				authProvider,
+			});
+		} catch (err) {
+			console.error('[user.service] Failed to send deletion-completed email:', err);
 		}
 
 		return { alreadyErased: false, erasedAt: erasedUser.deletedAt };
