@@ -718,7 +718,7 @@ export const Tasks = () => {
     const now = Date.now();
     return {
       backlog: tasks.filter((task) => (!task.dueDate || new Date(task.dueDate).getTime() < now) && (task.taskStatus === 'not_started' || task.taskStatus === 'in_progress')),
-      upcoming: tasks.filter((task) => task.taskStatus === 'not_started'),
+      notStarted: tasks.filter((task) => task.taskStatus === 'not_started'),
       inProgress: tasks.filter((task) => task.taskStatus === 'in_progress'),
       done: tasks.filter((task) => task.taskStatus === 'done'),
     };
@@ -767,8 +767,8 @@ export const Tasks = () => {
             onDelete={setTaskPendingDeletion}
           />
           <TaskColumn
-            title="Upcoming"
-            tasks={groupedTasks.upcoming}
+            title="Not Started"
+            tasks={groupedTasks.notStarted}
             onTaskClick={handleTaskClick}
             onDelete={setTaskPendingDeletion}
           />
