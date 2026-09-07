@@ -114,8 +114,9 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                   roomName={`${directKey ?? 'room'}:video`}
                   directKey={directKey ?? undefined}
                   meetingTitle={`Call with ${contact.name}`}
+                  loadingText=' '
                   // meetId={meeting.id}
-                  joinTo={R.USER_VIDEOCALL}
+                  joinTo={R.USER_VIDEOCALL_MSG}
                   leaveTo={R.USER_MESSAGES}
                   className="border-0"
                 />
