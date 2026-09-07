@@ -127,7 +127,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                   isInitiator={!isRinging}
                   meetingTitle={`Call with ${contact.name}`}
                   // meetId={meeting.id}
-                  joinTo={R.USER_VIDEOCALL}
+                  joinTo={R.USER_VIDEOCALL_MSG}
                   leaveTo={R.USER_MESSAGES}
                   className="border-0"
                 />

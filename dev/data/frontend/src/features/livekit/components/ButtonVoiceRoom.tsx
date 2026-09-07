@@ -75,6 +75,7 @@ export function ButtonVoiceRoom({
       meetingTitle,
     };
 
+    sessionStorage.removeItem('activeMsgMeeting');
     sessionStorage.setItem(
       "activeMeeting",
       JSON.stringify({
