@@ -92,6 +92,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                   className={`border-0 hover:text-foreground ${isConnected ? 'cursor-pointer' : 'cursor-not-allowed' }`}
                   roomName={`${directKey ?? 'room'}:voice`}
                   directKey={directKey ?? undefined}
+                  isInitiator={!isRinging}
                   joinText={
                     <IconPhone
                       className={`stroke-currentColor hover:text-foreground w-[19px] h-[19px] ${
@@ -115,7 +116,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                 <ButtonVoiceMsg
                   mode="video"
                   joinText={
-                    <IconVideo 
+                    <IconVideo
                       className={`stroke-currentColor w-[22px] h-[22px] ${isConnected ? 'cursor-pointer' : 'cursor-not-allowed' } ${
                         isRinging && callStatus.status === 'idle' && callMode === 'video' ? 'animate-bounce' : ''}`
                       }
@@ -123,6 +124,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                   }
                   roomName={`${directKey ?? 'room'}:video`}
                   directKey={directKey ?? undefined}
+                  isInitiator={!isRinging}
                   meetingTitle={`Call with ${contact.name}`}
                   // meetId={meeting.id}
                   joinTo={R.USER_VIDEOCALL}

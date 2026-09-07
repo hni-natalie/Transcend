@@ -28,6 +28,7 @@ type ButtonVoiceRoomProps = {
   isHost?: boolean;
   meetId?: string;
   directKey?: string;
+  isInitiator?: boolean;
   onCallStatusChange?: ( status:UserCallStatus, directKey?: string ) => void;
 };
 
@@ -46,6 +47,7 @@ export function ButtonVoiceMsg({
   isHost = false,
   meetId = "",
   directKey = "",
+  isInitiator = true,
   onCallStatusChange,
 }: ButtonVoiceRoomProps) {
   const {
@@ -121,7 +123,7 @@ export function ButtonVoiceMsg({
     }
 
     const handleConnectSuccess = () => {
-      socket.emit('initiate-call', { directKey, selectedRoomName, mode });
+      socket.emit('initiate-call', { directKey, selectedRoomName, mode, isInitiator });
       onCallStatusChange?.('ringing', directKey);
       cleanupConnectListeners();
     };

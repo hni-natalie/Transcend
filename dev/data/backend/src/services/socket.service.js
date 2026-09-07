@@ -198,14 +198,15 @@ const socketService = (io) => {
       }
     });
 
-    socket.on('initiate-call', async ({ directKey, selectedRoomName, mode }) => {
+    socket.on('initiate-call', async ({ directKey, selectedRoomName, mode, isInitiator }) => {
       if (!directKey) return;
       const targetUserId = directKey.split(':').find((id) => id !== player.userId);
       const target = Array.from(players.values()).find((p) => p.userId === targetUserId);
       if (!target) return; // callee offline
 
       try {
-        await messageService.logCallStart(directKey, player.userId, mode);
+        if (isInitiator)
+          await messageService.logCallStart(directKey, player.userId, mode);
       } catch (err) {
         console.error('[initiate-call] failed to log call start:', err);
       }
