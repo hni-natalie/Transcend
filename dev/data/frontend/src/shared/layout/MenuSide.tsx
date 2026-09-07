@@ -105,6 +105,18 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     }
   };
 
+  const handleMsgMeetingsNavigation = () => {
+    const activeMeeting = sessionStorage.getItem('activeMsgMeeting');
+
+    if (activeMeeting) {
+      navigate(R.USER_VIDEOCALL_MSG, {
+        state: JSON.parse(activeMeeting),
+      });
+    } else {
+      navigate(R.USER_MESSAGES);
+    }
+  };
+
   const linkClass = ({ isActive } : { isActive: boolean }) => `
     flex items-center h-10 pl-7.5 transition-none group
     ${
@@ -212,6 +224,17 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
                     isActive:
                       location.pathname === R.USER_MEETINGS ||
                       location.pathname === R.USER_VIDEOCALL,
+                  })} w-full cursor-pointer`}
+                >
+                  {linkContent(item)}
+                </button>
+              ) : item.title === 'Messages' ? (
+                <button
+                  onClick={handleMsgMeetingsNavigation}
+                  className={`${linkClass({
+                    isActive:
+                      location.pathname === R.USER_MESSAGES ||
+                      location.pathname === R.USER_VIDEOCALL_MSG,
                   })} w-full cursor-pointer`}
                 >
                   {linkContent(item)}

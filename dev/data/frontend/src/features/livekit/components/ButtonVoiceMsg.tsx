@@ -89,6 +89,18 @@ export function ButtonVoiceMsg({
       meetingTitle,
     };
 
+    sessionStorage.removeItem('activeMeeting');
+    sessionStorage.setItem(
+      "activeMsgMeeting",
+      JSON.stringify({
+        roomName,
+        meetingTitle,
+        meetId,
+        isHost,
+        leaveTo: leaveTo || R.USER_MEETINGS,
+      }),
+    );
+
     if (isHost) {
       await meetingApi.startMeeting(roomName);
       console.log("Meeting status changed to started");
