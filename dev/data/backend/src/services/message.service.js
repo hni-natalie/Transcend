@@ -389,7 +389,6 @@ const messageService = {
 				messageId: true,
 				conversationId: true,
 				text: true,
-				callNote: true,
 				createdAt: true,
 				author: {
 					select: {
@@ -755,23 +754,6 @@ const messageService = {
 				id: attachmentId
 			}
 		})
-	},
-
-	async logCallStart(directKey, authorId, mode) {
-		const conversation = await prisma.conversation.findUnique({
-			where: { directKey },
-			select: { conversationId: true }
-		});
-		if (!conversation) return null;
-		if (mode === 'call') mode = 'voice';
-
-		return prisma.message.create({
-			data: {
-				conversationId: conversation.conversationId,
-				authorId,
-				callNote: `Started a ${mode} call`
-			}
-		});
 	},
 
 	async markConversationRead(conversationId, userId) {

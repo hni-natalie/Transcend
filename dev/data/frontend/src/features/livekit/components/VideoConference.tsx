@@ -144,12 +144,7 @@ export function VideoConference({
           <div className="lk-video-conference-inner flex flex-1 min-w-0 min-h-0">
             {!focusTrack ? (
               <div className="lk-grid-layout-wrapper flex-1 min-w-0 min-h-0">
-                <GridLayout
-                  key={tracks
-                    .map((tr) => `${tr.participant.identity}_${tr.source}_${isTrackReference(tr)}`)
-                    .join()}
-                  tracks={tracks}
-                >
+                <GridLayout tracks={tracks}>
                   <ParticipantTile />
                 </GridLayout>
               </div>
