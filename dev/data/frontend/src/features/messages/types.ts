@@ -115,6 +115,7 @@ export interface MessageResponse {
   messageId: string;
   conversationId: string;
   text: string | null;
+  callNote?: string | null;
   createdAt: string;
 
   author: {

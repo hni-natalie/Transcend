@@ -21,6 +21,8 @@ type Props = {
     onClose: () => void;
     onCreated?: () => void;
     onUpdated?: () => void;
+
+    initialParticipantIds?: string[];
 };
 
 const roleOptions : DropdownChoice[] = [
@@ -91,6 +93,7 @@ export const ScheduleMeetingModal = ({
     onUpdated,
     mode,
     meeting,
+    initialParticipantIds = [],
 }: Props) => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -213,8 +216,9 @@ export const ScheduleMeetingModal = ({
             setSelectedUserIds(meeting.participants.map(p => p.userId));
         } else {
             resetForm();
+            setSelectedUserIds(initialParticipantIds);
         }
-    }, [open, mode, meeting, resetForm]);
+    }, [open, mode, meeting, resetForm, initialParticipantIds,]);
 
     const selectedUsers = useMemo(() => {
         return users.filter(user => selectedUserIds.includes(user.userId));

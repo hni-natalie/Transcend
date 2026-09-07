@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { IconInfo, IconMeetingAdd, IconPhone, IconProfile, IconVideo, LoadingState, StateText, UserCallStatus } from '@shared';
 import type { Profile } from '../types';
 import { formatClockTime } from '../lib/format';
@@ -6,6 +6,7 @@ import { ChatAvatar } from './ChatAvatar';
 import { ButtonVoiceMsg } from '@/features/livekit';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useSocket } from '@/context/SocketContext';
+import { ScheduleMeetingModal } from '@/features/meetings';
 
 export const Tooltip = ({ children, text, className }: { children: React.ReactNode; text: string, className?: string }) => (
   <div className={`relative group ${className}`}>
@@ -25,6 +26,7 @@ interface MessageHeaderProps {
 }
 
 export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [localTime, setLocalTime] = useState(() => formatClockTime());
   const { incomingCalls, callStatus, setCallStatus, isConnected } = useSocket();
   const isRinging = !!directKey && !!incomingCalls[directKey];
@@ -43,11 +45,19 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
   }, [incomingCalls, directKey]);
 
   const handleScheduleMeeting = () => {
-    console.log('Schedule meeting for group:', contact.name);
+  setShowScheduleModal(true);
   };
+  const groupMemberIds = useMemo(
+    () =>
+      contact.isGroup
+        ? contact.members?.map(member => member.id) ?? []
+        : [],
+    [contact.isGroup, contact.members]
+  );
 
   // console.log('DEBUGG directKey: ', directKey);
   return (
+    <>
     <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
       <div className="flex items-center gap-3">
         <ChatAvatar
@@ -82,6 +92,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                   className={`border-0 hover:text-foreground ${isConnected ? 'cursor-pointer' : 'cursor-not-allowed' }`}
                   roomName={`${directKey ?? 'room'}:voice`}
                   directKey={directKey ?? undefined}
+                  isInitiator={!isRinging}
                   joinText={
                     <IconPhone
                       className={`stroke-currentColor hover:text-foreground w-[19px] h-[19px] ${
@@ -105,7 +116,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                 <ButtonVoiceMsg
                   mode="video"
                   joinText={
-                    <IconVideo 
+                    <IconVideo
                       className={`stroke-currentColor w-[22px] h-[22px] ${isConnected ? 'cursor-pointer' : 'cursor-not-allowed' } ${
                         isRinging && callStatus.status === 'idle' && callMode === 'video' ? 'animate-bounce' : ''}`
                       }
@@ -113,6 +124,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
                   }
                   roomName={`${directKey ?? 'room'}:video`}
                   directKey={directKey ?? undefined}
+                  isInitiator={!isRinging}
                   meetingTitle={`Call with ${contact.name}`}
                   // meetId={meeting.id}
                   joinTo={R.USER_VIDEOCALL}
@@ -154,5 +166,22 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
         </Tooltip>
       </div>
     </div>
+    {showScheduleModal && (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      onClick={() => setShowScheduleModal(false)}
+    >
+      <div onClick={(e) => e.stopPropagation()}>
+        <ScheduleMeetingModal
+          open={showScheduleModal}
+          mode="create"
+          initialParticipantIds={groupMemberIds}
+          onClose={() => setShowScheduleModal(false)}
+          onCreated={() => setShowScheduleModal(false)}
+        />
+      </div>
+    </div>
+  )}
+    </>
   );
 }
