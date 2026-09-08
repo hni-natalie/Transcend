@@ -1,21 +1,23 @@
 const axios      = require('axios');
+const https      = require('https');
 const dotenv     = require('dotenv');
 const path       = require('path');
 dotenv.config({ path: path.join(__dirname, '../../../../.env') });
 
 class ApiClient {
   constructor( token=null ) {
-    const path = process.env.VITE_DOMAIN_URL || "http://localhost";
+    const path = process.env.VITE_DOMAIN_URL || "https://localhost";
     const port = process.env.BACKEND_PORT || 3000;
-    const httpPath = path.replace('https://', 'http://');
-    
+
     this.tokenProvider = token;
     this.client = axios.create({
-      baseURL: `${httpPath}:${port}/api`,
+      baseURL: `${path}:${port}/api`,
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
       },
+      // self-signed internal cert, no public CA to verify against
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
     });
 
     // Request Interceptor

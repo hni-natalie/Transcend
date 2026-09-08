@@ -1,6 +1,7 @@
 const express    = require('express');
 const prisma     = require('../prisma/client');
-const http       = require('http');
+const https      = require('https');
+const fs         = require('fs');
 const { Server } = require('socket.io');
 const dotenv     = require('dotenv');
 const path       = require('path');
@@ -8,9 +9,14 @@ const path       = require('path');
 dotenv.config({ path: path.join(__dirname, '../../../.env') });	// root env
 // dotenv.config({ path: path.join(__dirname, '../.env') });		// be env 
 
-const app    = express();
-const port   = process.env.BACKEND_PORT || 3000;
-const server = http.createServer(app);
+const app        = express();
+const port       = process.env.BACKEND_PORT || 3000;
+const domainName = process.env.DOMAIN_NAME || 'localhost';
+const certDir    = '/etc/ssl/certs/app';
+const server     = https.createServer({
+  cert: fs.readFileSync(path.join(certDir, `${domainName}.crt`)),
+  key: fs.readFileSync(path.join(certDir, `${domainName}.key`)),
+}, app);
 const io     = new Server(server, {
   cors: {
     origin: process.env.VITE_DOMAIN_URL || "https://localhost"
