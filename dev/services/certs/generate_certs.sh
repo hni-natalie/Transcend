@@ -1,5 +1,6 @@
 #!/bin/sh
 
+set -e
 echo "> creating SSL certificates ..."
 
 # req			: req cert creation
@@ -20,3 +21,7 @@ if [ ! -f "/etc/certs/${DOMAIN_NAME}.crt" ]; then
 else
 	echo "> SSL certificate exists! Skipping ..."
 fi
+
+# Set proper ownership for appuser
+chown -R 1001:1001 /etc/certs
+chmod 644 /etc/certs/*

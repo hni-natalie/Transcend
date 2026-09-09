@@ -9,7 +9,4 @@ RUN chown appuser:appuser /etc/certs
 COPY ./generate_certs.sh /generate_certs.sh
 RUN chmod +x /generate_certs.sh
 
-# Run as non-root user
-USER appuser
-
 ENTRYPOINT ["/generate_certs.sh"]

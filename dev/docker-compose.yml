@@ -4,10 +4,19 @@ services:
     container_name: t_certs
     env_file:
       - .env
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN   # for chown
+      - FOWNER  # for chmod
     volumes:
-      - ssl_certs:/etc/certs
+      - ssl_certs:/etc/certs:nocopy
+    security_opt:
+      - no-new-privileges:true
     networks:
       - app-network
+    read_only: true # make root fs read-only
+    restart: "no"
 
   nginx:
     build: ./${SERV_DIR}/nginx
@@ -27,6 +36,7 @@ services:
     depends_on:
       frontend:
         condition: service_healthy
+    restart: "always"
     networks:
       - app-network
 
@@ -52,6 +62,7 @@ services:
     volumes:
       - frontend_app:/app:nocopy
       - ssl_certs:/etc/ssl/certs/app:ro
+    restart: "always"
     networks:
       - app-network
 
@@ -93,6 +104,7 @@ services:
     volumes:
       - backend_app:/app:nocopy
       - ssl_certs:/etc/ssl/certs/app:ro
+    restart: "always"
     networks:
       - app-network
 
@@ -114,6 +126,7 @@ services:
         condition: service_completed_successfully
     volumes:
       - ssl_certs:/etc/ssl/certs/app:ro
+    restart: "always"
     networks:
       - app-network
 
