@@ -23,10 +23,10 @@ const MetricItem = ({
   color?: string 
 }) => (
   <div>
-    <div className="text-3xl font-semibold font-main text-foreground">{value}</div>
-    <div className="flex items-center justify-center gap-2 mt-2">
-      {color && <span className={`w-2 h-2 rounded-full ${color}`}></span>}
-      <span className="text-sm text-foreground-3">{label}</span>
+    <div className="text-2xl md:text-3xl font-semibold font-main text-foreground">{value}</div>
+    <div className="flex items-center justify-center gap-2 mt-1 md:mt-2">
+      {color && <span className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${color}`}></span>}
+      <span className="text-xs md:text-sm text-foreground-3">{label}</span>
     </div>
   </div>
 );
@@ -44,8 +44,8 @@ export const MetricsRing = ({
 
   return (
     <>
-      <div className="flex justify-center mb-8 mt-0">
-        <div className="relative w-115 h-115">
+      <div className="flex justify-center mb-6 md:mb-8 mt-0">
+        <div className="relative w-80 h-80 md:w-115 md:h-115">
           {/* Outer Ring - available */}
           <svg className="absolute w-full h-full -rotate-90" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="42" stroke="#2E2E2E" strokeWidth="9" fill="transparent" />
@@ -90,13 +90,13 @@ export const MetricsRing = ({
 
           {/* Center Text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-mono text-foreground">{attendancePercentage}%</span>
-            <span className="text-sm text-foreground-2 tracking-wider">attendance</span>
+            <span className="text-xl md:text-2xl font-mono text-foreground">{attendancePercentage}%</span>
+            <span className="text-xs md:text-sm text-foreground-2 tracking-wider">attendance</span>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-between text-center mb-8">
+      <div className="flex justify-between text-center mb-6 md:mb-8">
         <MetricItem value={availableCount} label="Available" color="bg-accent-lime" />
         <MetricItem value={focusCount} label="Focus" color="bg-accent-teal" />
         <MetricItem value={inMeetingCount} label="In meeting" color="bg-accent-gold" />
@@ -125,11 +125,18 @@ const StatusAvatar = ({ user, onHover }: StatusAvatarProps) => {
 
   const showDefaultAvatar = !user.avatarUrl || imageError;
 
+  // Touch support for mobile
+  const handleTouch = () => {
+    onHover(user);
+    setTimeout(() => onHover(null), 2000); // Auto-hide after 2s
+  };
+
   return (
     <div 
-      className="relative group cursor-pointer w-full max-w-[48px] mx-auto aspect-square"
+      className="relative group cursor-pointer w-full max-w-[32px] md:max-w-[48px] mx-auto aspect-square"
       onMouseEnter={() => onHover(user)}
       onMouseLeave={() => onHover(null)}
+      onTouchStart={handleTouch}
     >
       {showDefaultAvatar ? (
         <DefaultAvatar
@@ -147,53 +154,6 @@ const StatusAvatar = ({ user, onHover }: StatusAvatarProps) => {
     </div>
   );
 };
-
-// const StatusAvatar = ({ user, onHover }: StatusAvatarProps) => {
-//   const colors = getStatusColors(user.status);
-//   const borderClass = colors.border;
-//   const bgClass = colors.bg;
-  
-//   const textClass = user.status !== 'offline' ? 'text-foreground-2' : 'text-foreground-3';
-  
-//   const getInitials = (name: string) => {
-//     const parts = name.trim().split(' ');
-//     if (parts.length >= 2) {
-//       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-//     }
-//     return name.substring(0, 2).toUpperCase();
-//   };
-//   const initials = getInitials(user.name);
-
-//   return (
-//     <div 
-//       className="relative group cursor-pointer w-full max-w-[48px] mx-auto aspect-square"
-//       onMouseEnter={() => onHover(user)}
-//       onMouseLeave={() => onHover(null)}
-//     >
-//       {user.avatarUrl ? (
-//         <img 
-//           src={user.avatarUrl} 
-//           alt={user.name}
-//           className={`w-full h-full rounded-full object-cover border-2 ${borderClass}`}
-//           onError={(e) => {
-//             e.currentTarget.style.display = 'none';
-//             const parent = e.currentTarget.parentElement;
-//             if (parent) {
-//               const fallbackDiv = parent.querySelector('.fallback-initials');
-//               if (fallbackDiv) fallbackDiv.classList.remove('hidden');
-//             }
-//           }}
-//         />
-//       ) : null}
-      
-//       <div className={`fallback-initials w-full h-full rounded-full flex items-center justify-center border-2 ${borderClass} ${bgClass} ${user.avatarUrl ? 'hidden' : ''}`}>
-//         <span className={`text-[8px] font-semibold ${textClass}`}>
-//           {initials}
-//         </span>
-//       </div>
-//     </div>
-//   );
-// };
 
 
 // STATUS GRID
@@ -218,15 +178,15 @@ export const StatusGrid = ({ users, isExcludedUser }: StatusGridProps) => {
 
   return (
     <div className="relative">
-      <div className="h-8 mb-2 flex items-center justify-center">
+      <div className="h-6 md:h-8 mb-2 flex items-center justify-center">
         {hoveredUser && (
-          <div className="px-3 py-1 bg-background-3 text-foreground text-sm rounded whitespace-nowrap transition-opacity duration-200 shadow-lg border border-background-4">
+          <div className="px-3 py-1 bg-background-3 text-foreground text-xs md:text-sm rounded whitespace-nowrap transition-opacity duration-200 shadow-lg border border-background-4">
             {hoveredUser.name} • {hoveredUser.department}
           </div>
         )}
       </div>
       
-      <div className="grid grid-cols-8 gap-2 justify-items-center">
+      <div className="grid grid-cols-7 md:grid-cols-8 gap-1.5 md:gap-2 justify-items-center">
         {sortedUsers.map((user) => (
           <StatusAvatar key={user.id} user={user} onHover={setHoveredUser} />
         ))}
@@ -234,7 +194,7 @@ export const StatusGrid = ({ users, isExcludedUser }: StatusGridProps) => {
         {users.length < 30 && Array.from({ length: 30 - users.length }).map((_, idx) => (
           <div 
             key={`empty-${idx}`} 
-            className="w-full max-w-[48px] mx-auto aspect-square rounded-full bg-background-3 border border-foreground-4/20"
+            className="w-full max-w-[32px] md:max-w-[48px] mx-auto aspect-square rounded-full bg-background-3 border border-foreground-4/20"
           />
         ))}
       </div>
@@ -259,7 +219,7 @@ const DEPARTMENTS = [
 
 export const DepartmentStats = ({ getDepartmentRatio }: DepartmentStatsProps) => {
   return (
-    <div className="grid grid-cols-6 gap-3 items-stretch">
+    <div className="grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-3 items-stretch">
       {DEPARTMENTS.map((dept) => {
         const ratio = getDepartmentRatio(dept);
         const isTwoLineDept = dept === 'Human Resources';
@@ -267,9 +227,9 @@ export const DepartmentStats = ({ getDepartmentRatio }: DepartmentStatsProps) =>
         return (
           <div 
             key={dept} 
-            className="bg-background-2 rounded-3xl p-6 flex flex-col justify-between h-full"
+            className="bg-background-2 rounded-2xl md:rounded-3xl p-4 md:p-6 flex flex-col justify-between h-full"
           >
-            <div className="text-md font-bold text-foreground">
+            <div className="text-sm md:text-md font-bold text-foreground">
               {isTwoLineDept ? (
                 <div className="flex flex-col leading-tight">
                   <span>Human</span>
@@ -280,10 +240,10 @@ export const DepartmentStats = ({ getDepartmentRatio }: DepartmentStatsProps) =>
               )}
             </div>
             
-            <div className="mt-6">
-              <span className="text-2xl font-semibold font-main text-foreground">{ratio.active}</span>
-              <span className="text-2xl font-normal text-foreground-4 mx-1">/</span>
-              <span className="text-2xl font-normal text-foreground-4">{ratio.total}</span>
+            <div className="mt-3 md:mt-6">
+              <span className="text-xl md:text-2xl font-semibold font-main text-foreground">{ratio.active}</span>
+              <span className="text-xl md:text-2xl font-normal text-foreground-4 mx-1">/</span>
+              <span className="text-xl md:text-2xl font-normal text-foreground-4">{ratio.total}</span>
             </div>
           </div>
         );
@@ -293,7 +253,7 @@ export const DepartmentStats = ({ getDepartmentRatio }: DepartmentStatsProps) =>
 };
 
 
-// OFFICE DIAGRAM STATS
+// OFFICE MAP
 interface OfficeRoom {
   code: string;
   spaceName: string;
@@ -333,7 +293,10 @@ export const OfficeMap = ({ spaces }: { spaces: SpaceWithOccupancy[] }) => {
 
   return (
     <div className="col-span-8 bg-background-2 rounded-3xl p-6 flex flex-col">
-      <div className="text-mc text-foreground font-semibold font-main mb-6">Office</div>
+      <div className="text-mc text-foreground font-semibold font-main mb-6">
+        Office
+      </div>
+
       <div className="my-3 flex-1 grid grid-cols-8 grid-rows-4 gap-1.5">
         {OFFICE_ROOMS.map((room) => {
           const space = spacesByName.get(room.spaceName);
@@ -342,9 +305,11 @@ export const OfficeMap = ({ spaces }: { spaces: SpaceWithOccupancy[] }) => {
           return (
             <div
               key={room.code}
-              className={`${room.colSpanClass} ${room.rowSpanClass} ${style.bgClass} rounded-lg p-3 flex items-start justify-start transition-colors duration-300`}
+              className={`${room.colSpanClass} ${room.rowSpanClass} ${style.bgClass} rounded-lg p-2 flex items-start justify-start transition-colors duration-300`}
             >
-              <span className={`text-sm font-bold ${style.textClass}`}>
+              <span
+                className={`text-[clamp(6px,1vw,10px)] font-bold ${style.textClass} leading-none`}
+              >
                 {room.code}
               </span>
             </div>
@@ -355,15 +320,16 @@ export const OfficeMap = ({ spaces }: { spaces: SpaceWithOccupancy[] }) => {
   );
 };
 
-// SPACES
+
+// SPACES PROGRESS
 const SpaceRatioBar = ({ space }: { space: SpaceRatio }) => {
   const percent = space.max > 0 ? (space.count / space.max) * 100 : 0;
 
   return (
-    <div className="flex items-center gap-4">
-      <span className="text-foreground-2 text-base w-36 shrink-0">{space.name}</span>
-      <span className="text-foreground-3 text-sm w-10 shrink-0 text-right">{space.count}/{space.max}</span>
-      <div className="flex-1 h-2.5 bg-background-3 rounded-full overflow-hidden">
+    <div className="flex items-center gap-2 md:gap-4">
+      <span className="text-xs md:text-base text-foreground-2 w-24 md:w-36 shrink-0 truncate">{space.name}</span>
+      <span className="text-xs md:text-sm text-foreground-3 w-8 md:w-10 shrink-0 text-right">{space.count}/{space.max}</span>
+      <div className="flex-1 h-2 md:h-2.5 bg-background-3 rounded-full overflow-hidden">
         <div
           className="h-full bg-accent-lime rounded-full transition-all"
           style={{ width: `${percent}%` }}
@@ -385,15 +351,15 @@ export const SpacesProgress = ({ spaces }: { spaces: SpaceWithOccupancy[] }) => 
   const departmentSpaces = spaces.filter(s => s.accessLevel === 'department').map(toSpaceRatio);
 
   return (
-    <div className="col-span-8 bg-background-2 rounded-3xl p-6 pb-8 flex flex-col">
-      <div className="text-md text-foreground font-semibold font-main mb-6">Spaces</div>
-      <div className="flex-1 flex flex-col gap-4">
-        <div className="space-y-2">
+    <div className="col-span-8 bg-background-2 rounded-3xl p-4 md:p-6 pb-6 md:pb-8 flex flex-col">
+      <div className="text-md text-foreground font-semibold font-main mb-4 md:mb-6">Spaces</div>
+      <div className="flex-1 flex flex-col gap-3 md:gap-4">
+        <div className="space-y-2 md:space-y-2">
           {sharedSpaces.map((space) => (
             <SpaceRatioBar key={space.name} space={space} />
           ))}
         </div>
-        <div className="space-y-2 pt-5">
+        <div className="space-y-2 md:space-y-2 pt-3 md:pt-5">
           {departmentSpaces.map((space) => (
             <SpaceRatioBar key={space.name} space={space} />
           ))}
@@ -403,7 +369,8 @@ export const SpacesProgress = ({ spaces }: { spaces: SpaceWithOccupancy[] }) => 
   );
 };
 
-// ACTIVITY
+
+// ACTIVITY ITEM ROW
 interface ActivityItemRowProps {
   item: ActivityItem;
   iconColor: string;
@@ -421,22 +388,22 @@ const ActivityItemRow = ({
 }: ActivityItemRowProps) => {
   return (
     <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4 flex-1 min-w-0">
-        <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${iconBg}`}>
-          <IconComponent className={iconClassName || `w-5 h-5 ${iconColor === 'bg-accent-lime' ? 'text-background-2 -translate-x-0.5' : 'text-background-2'}`} />
+      <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+        <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shrink-0 ${iconBg}`}>
+          <IconComponent className={iconClassName || `w-4 h-4 md:w-5 md:h-5 ${iconColor === 'bg-accent-lime' ? 'text-background-2 -translate-x-0.5' : 'text-background-2'}`} />
         </div>
         
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-semibold font-main text-foreground truncate">{item.name}</div>
-          <div className="text-[11px] text-foreground-2 mt-0.5 font-main">
+          <div className="text-[10px] md:text-[11px] font-semibold font-main text-foreground truncate">{item.name}</div>
+          <div className="text-[10px] md:text-[11px] text-foreground-2 mt-0.5 font-main">
             <TruncatedText 
               text={`${item.action} · ${item.context}`}
-              className="text-[11px] text-foreground-2"
+              className="text-[10px] md:text-[11px] text-foreground-2"
             />
           </div>
         </div>
       </div>
-      <div className="text-[11px] font-semibold text-foreground font-main ml-4 shrink-0">
+      <div className="text-[10px] md:text-[11px] font-semibold text-foreground font-main ml-3 md:ml-4 shrink-0">
         {item.time}
       </div>
     </div>
@@ -447,9 +414,9 @@ const ActivityItemRow = ({
 // PRESENCE STREAM
 export const PresenceStream = ({ items }: { items: ActivityItem[] }) => {
   return (
-    <div className="bg-background-2 rounded-3xl pt-6 px-6 pb-10">
-      <div className="text-md font-semibold font-main tracking-wider text-foreground mb-8">Presence</div>
-      <div className="space-y-6">
+    <div className="bg-background-2 rounded-3xl pt-4 md:pt-6 px-4 md:px-6 pb-6 md:pb-10">
+      <div className="text-md font-semibold font-main tracking-wider text-foreground mb-6 md:mb-8">Presence</div>
+      <div className="space-y-4 md:space-y-6">
         {items.map((item) => {
           const isLogin = item.action.toLowerCase().includes('logged in') || 
                          item.action.toLowerCase().includes('signed in');
@@ -460,7 +427,7 @@ export const PresenceStream = ({ items }: { items: ActivityItem[] }) => {
               iconColor="bg-accent-lime"
               iconBg={isLogin ? 'bg-accent-lime' : 'bg-accent-lime-bg'}
               IconComponent={isLogin ? IconLogin : IconLogout}
-              iconClassName={isLogin ? 'w-5 h-5 text-background-2 -translate-x-0.5' : 'w-5 h-5 text-accent-lime translate-x-0.5'}
+              iconClassName={isLogin ? 'w-4 h-4 md:w-5 md:h-5 text-background-2 -translate-x-0.5' : 'w-4 h-4 md:w-5 md:h-5 text-accent-lime translate-x-0.5'}
             />
           );
         })}
@@ -473,9 +440,9 @@ export const PresenceStream = ({ items }: { items: ActivityItem[] }) => {
 // TASKS STREAM
 export const TasksStream = ({ items }: { items: ActivityItem[] }) => {
   return (
-    <div className="bg-background-2 rounded-3xl p-6">
-      <div className="text-md font-semibold font-main tracking-wider text-foreground mb-8">Tasks</div>
-      <div className="space-y-6">
+    <div className="bg-background-2 rounded-3xl p-4 md:p-6">
+      <div className="text-md font-semibold font-main tracking-wider text-foreground mb-6 md:mb-8">Tasks</div>
+      <div className="space-y-4 md:space-y-6">
         {items.map((item) => {
           const isDone = item.action.toLowerCase().includes('completed') || 
                         item.action.toLowerCase().includes('done');
@@ -486,7 +453,7 @@ export const TasksStream = ({ items }: { items: ActivityItem[] }) => {
               iconColor="bg-accent-teal"
               iconBg={isDone ? 'bg-accent-teal' : 'bg-accent-teal-bg'}
               IconComponent={isDone ? IconTaskDone : IconTaskAdd}
-              iconClassName={isDone ? 'w-6 h-6 text-background-2 translate-x-0.5 translate-y-0.5' : 'w-6 h-6 text-accent-teal translate-x-0.5 translate-y-0.5'}
+              iconClassName={isDone ? 'w-5 h-5 md:w-6 md:h-6 text-background-2 translate-x-0.5 translate-y-0.5' : 'w-5 h-5 md:w-6 md:h-6 text-accent-teal translate-x-0.5 translate-y-0.5'}
             />
           );
         })}
@@ -499,9 +466,9 @@ export const TasksStream = ({ items }: { items: ActivityItem[] }) => {
 // MEETINGS STREAM
 export const MeetingsStream = ({ items }: { items: ActivityItem[] }) => {
   return (
-    <div className="bg-background-2 rounded-3xl p-6">
-      <div className="text-md font-semibold font-main tracking-wider text-foreground mb-10">Meetings</div>
-      <div className="space-y-6">
+    <div className="bg-background-2 rounded-3xl p-4 md:p-6">
+      <div className="text-md font-semibold font-main tracking-wider text-foreground mb-6 md:mb-10">Meetings</div>
+      <div className="space-y-4 md:space-y-6">
         {items.map((item) => {
           const isScheduled = item.action.toLowerCase().includes('scheduled');
           return (
@@ -511,7 +478,7 @@ export const MeetingsStream = ({ items }: { items: ActivityItem[] }) => {
               iconColor="bg-accent-gold"
               iconBg={isScheduled ? 'bg-accent-gold-bg' : 'bg-accent-gold'}
               IconComponent={isScheduled ? IconMeetingAdd : IconMeetings}
-              iconClassName={isScheduled ? 'w-6 h-6 text-accent-gold' : 'w-6 h-6 text-background-2'}
+              iconClassName={isScheduled ? 'w-5 h-5 md:w-6 md:h-6 text-accent-gold' : 'w-5 h-5 md:w-6 md:h-6 text-background-2'}
             />
           );
         })}
@@ -521,14 +488,14 @@ export const MeetingsStream = ({ items }: { items: ActivityItem[] }) => {
 };
 
 
-// ACTIVITY STREAM
+// ACTIVITY STREAMS (wrapper)
 export const ActivityStreams = ({ presenceItems, tasksItems, meetingsItems, }: {
   presenceItems: ActivityItem[];
   tasksItems: ActivityItem[];
   meetingsItems: ActivityItem[];
 }) => {
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
       <PresenceStream items={presenceItems} />
       <TasksStream items={tasksItems} />
       <MeetingsStream items={meetingsItems} />
