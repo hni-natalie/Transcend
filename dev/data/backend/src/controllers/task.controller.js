@@ -32,7 +32,8 @@ const taskController = {
 			if (error.message === 'Task not found') {
 				res.status(404).json({ error: error.message });
 			} else {
-				res.status(500).json({ error: error.message });
+				console.error('Error fetching task:', error);
+        		res.status(500).json({ error: 'Failed to fetch task' });
 			}
 		}
 	},
@@ -74,12 +75,14 @@ const taskController = {
 			res.status(500).json({ error: 'Failed to create task' });
 		}
 	},
-	
+
 	async updateTask(req, res) {
 		try {
 			const { id } = req.params;
-			const userId = req.user.userId;
-			
+			// added check id
+			if (!id)
+				return res.status(400).json({ error: 'Task ID is required' });
+
 			let validated;
 			try {
 				validated = validateUpdateTask(req.body);
@@ -87,24 +90,63 @@ const taskController = {
 				return res.status(400).json({ success: false, message: validationErr.message });
 			}
 
-			// const updatedTask = await taskService.updateTask(id, userId, req.body);
+			// added empty check
+			if (Object.keys(validated).length === 0) {
+				return res.status(400).json({
+					success: false,
+					message: 'No valid fields to update'
+				});
+			}
+
+			const userId = req.user.userId;
 			const updatedTask = await taskService.updateTaskWithLogging(id, userId, validated);
+
 			getIO().emit("taskUpdated");
 			return res.json(updatedTask);
 
 		} catch (error) {
 			if (error.message === 'Task not found') {
-				res.status(404).json({ error: error.message });
-			} else {
-				console.error('Error updating task:', error);
-				res.status(500).json({ error: 'Failed to update task' });
+				return res.status(404).json({ error: error.message });
 			}
+			console.error('Error updating task:', error);
+			return res.status(500).json({ error: 'Failed to update task' });
 		}
 	},
+	
+	// async updateTask(req, res) {
+	// 	try {
+	// 		const { id } = req.params;
+	// 		const userId = req.user.userId;
+			
+	// 		let validated;
+	// 		try {
+	// 			validated = validateUpdateTask(req.body);
+	// 		} catch (validationErr) {
+	// 			return res.status(400).json({ success: false, message: validationErr.message });
+	// 		}
+
+	// 		// const updatedTask = await taskService.updateTask(id, userId, req.body);
+	// 		const updatedTask = await taskService.updateTaskWithLogging(id, userId, validated);
+	// 		getIO().emit("taskUpdated");
+	// 		return res.json(updatedTask);
+
+	// 	} catch (error) {
+	// 		if (error.message === 'Task not found') {
+	// 			res.status(404).json({ error: error.message });
+	// 		} else {
+	// 			console.error('Error updating task:', error);
+	// 			res.status(500).json({ error: 'Failed to update task' });
+	// 		}
+	// 	}
+	// },
 
 	async deleteTask(req, res) {
 		try {
 			const { id } = req.params;
+			// added check id
+			if (!id)
+				return res.status(400).json({ error: 'Task ID is required' });
+			
 			const userId = req.user.userId;
 			
 			await taskService.deleteTask(id, userId);
