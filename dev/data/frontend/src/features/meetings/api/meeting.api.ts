@@ -25,6 +25,7 @@ export const meetingApi = {
       meetDesc?: string;
       meetStart: string;
       meetEnd: string;
+	    participantIds: string[];
     }) {
 		// return apiClient.post(`${base}`, data);
     	return apiClient.post<{ success: boolean; data: { meetId: string } }>(`${base}`, data);
