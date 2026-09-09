@@ -1,10 +1,17 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Request
 from faster_whisper import WhisperModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import tempfile
 import shutil
 import os
 
 app = FastAPI()
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 model = WhisperModel(
     "base",
@@ -19,7 +26,8 @@ def health():
 
 
 @app.post("/transcribe")
-async def transcribe(file: UploadFile = File(...)):
+@limiter.limit("5/minute")
+async def transcribe(request: Request, file: UploadFile = File(...)):
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
 
     try:

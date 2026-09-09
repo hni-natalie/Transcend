@@ -1,4 +1,5 @@
 const express    = require('express');
+const { limiterMiddleware } = require('./middleware/limiter.middleware');
 const prisma     = require('../prisma/client');
 const https      = require('https');
 const fs         = require('fs');
@@ -10,6 +11,8 @@ dotenv.config({ path: path.join(__dirname, '../../../.env') });	// root env
 // dotenv.config({ path: path.join(__dirname, '../.env') });		// be env 
 
 const app        = express();
+app.set('trust proxy', 1);
+
 const port       = process.env.BACKEND_PORT || 3000;
 const domainName = process.env.DOMAIN_NAME || 'localhost';
 const certDir    = '/etc/ssl/certs/app';
@@ -71,6 +74,9 @@ const messageRoutes		= require('./routes/message.routes');
 * all used routes
 * *************************************************/
 app.use(express.json());  // For parsing JSON
+
+const limiter = limiterMiddleware(60 * 1000, 100, { error: '[api] Too many api requests, try again later.' });
+app.use('/api', limiter);
 app.use('/api', routesInit)
 app.use('/api/lk', routesLivekit)
 app.use('/api/player', roomRoutes)
