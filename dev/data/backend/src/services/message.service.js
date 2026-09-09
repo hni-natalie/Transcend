@@ -87,6 +87,7 @@ function conversationResponseSelect(userId) {
         messageId: true,
         text: true,
         linkUrl: true,
+        callNote: true,
         createdAt: true,
 
         author: {
@@ -177,6 +178,7 @@ const messageService = {
 				messageId: true,
 				text: true,
 				linkUrl: true,
+				callNote: true,
 				createdAt: true,
 
 				author: {
