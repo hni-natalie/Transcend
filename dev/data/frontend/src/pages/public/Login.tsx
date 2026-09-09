@@ -156,98 +156,99 @@ export const Login = () => {
     };
 
     return (
-        <div className="h-screen w-screen bg-background flex justify-center items-center m-0">
-            <div className="w-full max-w-[500px] flex flex-col items-center">
-                <h1
-                    className="brand-logo-lean text-[48px] font-bold mb-9"
-                    onClick={onBack}
-                >
-                    WorkFrom,
-                </h1>
+		<div className="min-h-dvh w-screen bg-background flex justify-center items-center m-0 px-6 py-10 sm:px-8">
+			<div className="w-full max-w-[500px] flex flex-col items-center">
+				<h1
+					className="brand-logo-lean text-5xl sm:text-6xl md:text-[48px] font-bold mb-16 sm:mb-12 cursor-pointer"
+					onClick={onBack}
+				>
+					WorkFrom,
+				</h1>
 
-                <div className="w-[60%]">
-                    {/* Google Login */}
-                    <button
-                        className="w-full py-3 border border-background-4 bg-background-1 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-6 rounded-lg cursor-pointer hover:bg-accent-lime-bg hover:text-accent-lime transition-colors"
-                        onClick={handleGoogleLogin}
-                        disabled={!isGoogleSDKLoaded || googleLoading}
-                    >
-                        <IconGoogle className="w-5 h-5" />
-                        {googleLoading ? 'Logging in...' : 'Continue with Google'}
-                    </button>
+				{/* <div className="w-full sm:w-[80%] md:w-[60%]"> */}
+				<div className="w-full max-w-[300px] mx-auto">
+					{/* Google Login */}
+					<button
+						className="w-full py-3 border border-background-4 bg-background-1 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-3 sm:gap-6 rounded-lg cursor-pointer hover:bg-accent-lime-bg hover:text-accent-lime transition-colors"
+						onClick={handleGoogleLogin}
+						disabled={!isGoogleSDKLoaded || googleLoading}
+					>
+						<IconGoogle className="w-5 h-5" />
+						{googleLoading ? 'Logging in...' : 'Continue with Google'}
+					</button>
 
-                    {/* Email Login */}
-                    <div className="my-6 text-foreground-4 text-sm w-full text-center">or</div>
-                    <form className="w-full flex flex-col gap-6" onSubmit={handleEmailLogin}>
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            className={loginInputClass}
-                            value={userEmail}
-                            onChange={(e) => setUserEmail(e.target.value)}
-                        />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            className={loginInputClass}
-                            value={userPassword}
-                            onChange={(e) => setUserPassword(e.target.value)}
-                        />
+					{/* Email Login */}
+					<div className="my-6 text-foreground-4 text-sm w-full text-center">or</div>
+					<form className="w-full flex flex-col gap-6" onSubmit={handleEmailLogin}>
+						<input
+							type="email"
+							placeholder="Email"
+							className={loginInputClass}
+							value={userEmail}
+							onChange={(e) => setUserEmail(e.target.value)}
+						/>
+						<input
+							type="password"
+							placeholder="Password"
+							className={loginInputClass}
+							value={userPassword}
+							onChange={(e) => setUserPassword(e.target.value)}
+						/>
 
-                        <button
-                            type="submit"
-                            className="btn-lime w-full mt-3 py-3 text-base lg:text-lg font-bold group flex items-center justify-center gap-2"
-                            disabled={loading}
-                        >
-                            <span>{loading ? 'Logging in...' : 'Log In'}</span>
-                            {!loading && (
-                                <span className="inline-block opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                    </svg>
-                                </span>
-                            )}
-                        </button>
+						<button
+							type="submit"
+							className="btn-lime w-full mt-3 py-3 text-base lg:text-lg font-bold group flex items-center justify-center gap-2"
+							disabled={loading}
+						>
+							<span>{loading ? 'Logging in...' : 'Log In'}</span>
+							{!loading && (
+								<span className="inline-block opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300">
+									<svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+									</svg>
+								</span>
+							)}
+						</button>
 
-                        {/* Error */}
-                        <div className="h-4">
-                            {error && <p className="error-message text-center text-sm lg:text-base">{error}</p>}
-                        </div>
-                    </form>
-                </div>
+						{/* Error */}
+						<div className="h-4">
+							{error && <p className="error-message text-center text-sm lg:text-base">{error}</p>}
+						</div>
+					</form>
+				</div>
 
-                <div className="mt-10 flex flex-col items-center gap-8 text-center">
-                    {/* No account */}
-                    <p className="text-sm text-foreground-2">
-                        No account?{' '}
-                        <a
-                            href="mailto:support@workfrom.com"
-                            className="font-semibold text-foreground-2 underline decoration-foreground-2/30 underline-offset-4 cursor-pointer hover:text-white hover:decoration-white transition-colors"
-                        >
-                            Contact us
-                        </a>.
-                    </p>
+				<div className="mt-8 sm:mt-10 flex flex-col items-center gap-6 sm:gap-8 text-center">
+					{/* No account */}
+					<p className="text-sm text-foreground-2">
+						No account?{' '}
+						<a 
+							href="mailto:support@workfrom.com"
+							className="font-semibold text-foreground-2 underline decoration-foreground-2/30 underline-offset-4 cursor-pointer hover:text-white hover:decoration-white transition-colors"
+						>
+							Contact us
+						</a>.
+					</p>
 
-                    {/* Legal */}
-                    <p className="mt-15 text-[12px] md:text-sm text-foreground-2 leading-relaxed max-w-[320px] md:max-w-none opacity-80">
-                        By continuing, you acknowledge that you understand <br className="hidden md:block" />
-                        and agree to the{' '}
-                        <span
-                            className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
-                            onClick={() => navigate(R.TERMS)}
-                        >
-                            Terms & Conditions
-                        </span>
-                        {' '}and{' '}
-                        <span
-                            className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
-                            onClick={() => navigate(R.PRIVACY)}
-                        >
-                            Privacy Policy
-                        </span>.
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
+					{/* Legal */}
+					<p className="mt-8 md:mt-15 text-[12px] md:text-sm text-foreground-2 leading-relaxed max-w-[320px] md:max-w-none opacity-80">
+						By continuing, you acknowledge that you understand <br className="hidden md:block" />
+						and agree to the{' '}
+						<span
+							className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
+							onClick={() => navigate(R.TERMS)}
+						>
+							Terms & Conditions
+						</span>
+						{' '}and{' '}
+						<span
+							className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
+							onClick={() => navigate(R.PRIVACY)}
+						>
+							Privacy Policy
+						</span>.
+					</p>
+				</div>
+			</div>
+		</div>
+	);
 };
