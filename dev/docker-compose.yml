@@ -63,7 +63,6 @@ services:
       - "${BACKEND_PORT}"
     ports:
       - "3000:3000"           # RMB TO REMOVE before production
-      - "5555:5555"           # uncomment for dev
     env_file:
       - .env
       - ./data/backend/.env

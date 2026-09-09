@@ -2,13 +2,17 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-
 RUN apt-get update && \
-    apt-get install -y ffmpeg wget && \
-    pip install --no-cache-dir -r requirements.txt
+    apt-get install -y --no-install-recommends ffmpeg wget && \
+    rm -rf /var/lib/apt/lists/* && \
+    adduser --disabled-password --gecos "" --uid 1001 appuser
 
-COPY . .
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY --chown=appuser:appuser . .
+
+USER appuser
 
 EXPOSE 8000
 
