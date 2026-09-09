@@ -11,6 +11,7 @@ export interface CreateConversationInput {
   participantIds: string[];
   isGroup: boolean;
   groupName?: string;
+  avatarFile?: File;
 }
 
 export const useCreateConversation = () => {
@@ -34,11 +35,27 @@ export const useCreateConversation = () => {
         throw new Error('Group name is required');
       }
 
-    let response;
-    if (data.isGroup)
-      response = await messagesApi.createGroupConversation({ groupName: data.groupName, participantIds: data.participantIds });
-    else
-      response = await messagesApi.createDirectConversation({ participantId: data.participantIds[0] });
+      let response;
+      if (data.isGroup) {
+        response = await messagesApi.createGroupConversation({
+          groupName: data.groupName,
+          participantIds: data.participantIds,
+        });
+
+        if (data.avatarFile && response.conversationId) {
+          try {
+            const avatarRes = await messagesApi.uploadGroupAvatar(response.conversationId, data.avatarFile);
+            if (avatarRes.avatarUrl) {
+              response.avatarUrl = avatarRes.avatarUrl;
+            }
+          } catch (avatarError) {
+            console.error('Failed to upload group avatar:', avatarError);
+            showToast('error', 'Group created, but avatar upload failed.');
+          }
+        }
+      } else {
+        response = await messagesApi.createDirectConversation({ participantId: data.participantIds[0] });
+      }
 
 	   // >>>>>>>>>>>>>>>  REAL API (uncomment once BE route is ready)
       // const response = await messagesApi.createConversation({

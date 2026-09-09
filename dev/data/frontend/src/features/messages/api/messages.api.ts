@@ -12,10 +12,20 @@ export const messagesApi = {
   createGroupConversation(data: {
     groupName?: string;
     participantIds: string[];
+    avatarUrl?: string;
   }) {
     return apiClient.post<ConversationResponse>(
       `${base}/group`,
       data
+    );
+  },
+
+  uploadGroupAvatar(conversationId: string, file: File) {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    return apiClient.upload<{ success: boolean; avatarUrl: string; conversation?: ConversationResponse }>(
+      `${base}/${conversationId}/avatar`,
+      formData
     );
   },
 

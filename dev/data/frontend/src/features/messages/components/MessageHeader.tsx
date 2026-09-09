@@ -8,11 +8,25 @@ import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useSocket } from '@/context/SocketContext';
 import { ScheduleMeetingModal } from '@/features/meetings';
 
-export const Tooltip = ({ children, text, className }: { children: React.ReactNode; text: string, className?: string }) => (
+export const Tooltip = ({
+  children,
+  text,
+  className,
+  align = 'center',
+}: {
+  children: React.ReactNode;
+  text: string;
+  className?: string;
+  align?: 'left' | 'center' | 'right';
+}) => (
   <div className={`relative group ${className}`}>
     {children}
 
-    <div className="mt-2.5 absolute top-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 text-base text-white bg-background-2 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+    <div
+      className={`mt-2.5 absolute top-full ${
+        align === 'left' ? 'left-0' : align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2'
+      } mb-2 px-3 py-1 text-base text-white bg-background-2 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}
+    >
       {text}
     </div>
   </div>
@@ -23,13 +37,18 @@ interface MessageHeaderProps {
   directKey?: string | null;
   isInfoOpen: boolean;
   onToggleInfo: () => void;
+  onBack?: () => void;
 }
 
-export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: MessageHeaderProps) {
+export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, onBack }: MessageHeaderProps) {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [localTime, setLocalTime] = useState(() => formatClockTime());
   const { incomingCalls, callStatus, setCallStatus, isConnected } = useSocket();
   const isRinging = !!directKey && !!incomingCalls[directKey];
+  // Only allow calling when the contact is actively online — offline, away,
+  // in-meeting, or any other/unknown status all disable the call buttons.
+  const isContactOnline = contact.status === 'online';
+  const canCall = isConnected && isContactOnline;
   const [callMode, setCallMode] = useState('none');
 
   useEffect(() => {
@@ -59,7 +78,19 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
   return (
     <>
     <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
+        {onBack && (
+          <button
+            aria-label="Back to conversations"
+            onClick={onBack}
+            className="md:hidden flex p-1 -ml-1 shrink-0 text-foreground-3 hover:text-foreground transition-colors cursor-pointer"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+
         <ChatAvatar
           size="ml"
           status={contact.isGroup ? undefined : contact.status}
@@ -82,14 +113,20 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
             {callStatus.status === 'ringing' && callStatus.directKey === directKey && <LoadingState message='Awaiting' size='none' msgClassName='font-sans'/>}
             {isRinging && callStatus.status === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}
 
-            <Tooltip text={`${isConnected ? 'Call' : 'Refresh to connect'}`}>
+            <Tooltip text={`${!isConnected ? 'Refresh to connect' : !isContactOnline ? `${contact.name} is unavailable` : 'Call'}`}>
               <div
                 aria-label="Call"
-                className="flex p-1.5 gap-1 rounded-lg transition-colors"
+                className={`flex p-1.5 gap-1 rounded-lg transition-colors ${!canCall ? 'opacity-40' : ''}`}
+                onClickCapture={(event) => {
+                  if (!canCall) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }
+                }}
               >
                 <ButtonVoiceMsg
                   mode="call"
-                  className={`border-0 hover:text-foreground ${isConnected ? 'cursor-pointer' : 'cursor-not-allowed' }`}
+                  className={`border-0 hover:text-foreground ${canCall ? 'cursor-pointer' : 'cursor-not-allowed' }`}
                   roomName={`${directKey ?? 'room'}:voice`}
                   directKey={directKey ?? undefined}
                   joinText={
@@ -107,16 +144,22 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo }: 
             </Tooltip>
 
             {callStatus.status === 'idle' &&
-            <Tooltip text={`${isConnected ? 'Video Call' : 'Refresh to connect'}`}>
+            <Tooltip text={`${!isConnected ? 'Refresh to connect' : !isContactOnline ? `${contact.name} is unavailable` : 'Video Call'}`}>
               <div
                 aria-label="Video call"
-                className="flex p-1.5 rounded-lg hover:text-foreground transition-colors"
+                className={`flex p-1.5 rounded-lg hover:text-foreground transition-colors ${!canCall ? 'opacity-40' : ''}`}
+                onClickCapture={(event) => {
+                  if (!canCall) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }
+                }}
               >
                 <ButtonVoiceMsg
                   mode="video"
                   joinText={
                     <IconVideo 
-                      className={`stroke-currentColor w-[22px] h-[22px] ${isConnected ? 'cursor-pointer' : 'cursor-not-allowed' } ${
+                      className={`stroke-currentColor w-[22px] h-[22px] ${canCall ? 'cursor-pointer' : 'cursor-not-allowed' } ${
                         isRinging && callStatus.status === 'idle' && callMode === 'video' ? 'animate-bounce' : ''}`
                       }
                     />
