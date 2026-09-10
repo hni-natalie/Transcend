@@ -4,6 +4,7 @@ import { Landing, Login, Terms, Privacy,
 		AdminDashboard, AdminUserManagement, SpaceManagement, AdminActivity,
 		UserDashboard, Office, OfficeRoom, Tasks, Meetings, Messages, UserSettings, UserMeetingRoom 
 		} from '@pages';
+import { IconMessages } from '@/shared';
 
 interface RouteConfig {
   path: string;
@@ -122,6 +123,12 @@ export const routes: RouteConfig[] = [
 	{
 		path: R.USER_VIDEOCALL,
 		element: <UserMeetingRoom />,
+		title: 'Video Call · User · WorkFrom,',
+		requiresAuth: true,
+	},
+	{
+		path: R.USER_VIDEOCALL_MSG,
+		element: <UserMeetingRoom headerIcon={<IconMessages className='w-7 h-7'/>} />,
 		title: 'Video Call · User · WorkFrom,',
 		requiresAuth: true,
 	},

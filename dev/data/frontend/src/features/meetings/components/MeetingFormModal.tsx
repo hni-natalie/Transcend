@@ -21,8 +21,6 @@ type Props = {
     onClose: () => void;
     onCreated?: () => void;
     onUpdated?: () => void;
-
-    initialParticipantIds?: string[];
 };
 
 const roleOptions : DropdownChoice[] = [
@@ -220,7 +218,6 @@ export const ScheduleMeetingModal = ({
             setSelectedUserIds(meeting.participants.map(p => p.userId));
         } else {
             resetForm();
-            setSelectedUserIds(initialParticipantIds);
         }
     }, [open, mode, meeting, resetForm, participantIdsKey]);
 

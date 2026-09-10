@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IconInfo, IconMeetingAdd, IconPhone, IconProfile, IconVideo, LoadingState, StateText, UserCallStatus } from '@shared';
 import type { Profile } from '../types';
 import { formatClockTime } from '../lib/format';
@@ -6,7 +6,6 @@ import { ChatAvatar } from './ChatAvatar';
 import { ButtonVoiceMsg } from '@/features/livekit';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useSocket } from '@/context/SocketContext';
-import { ScheduleMeetingModal } from '@/features/meetings';
 
 export const Tooltip = ({
   children,
@@ -41,7 +40,6 @@ interface MessageHeaderProps {
 }
 
 export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, onBack }: MessageHeaderProps) {
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [localTime, setLocalTime] = useState(() => formatClockTime());
   const { incomingCalls, callStatus, setCallStatus, isConnected } = useSocket();
   const isRinging = !!directKey && !!incomingCalls[directKey];
@@ -64,19 +62,11 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, on
   }, [incomingCalls, directKey]);
 
   const handleScheduleMeeting = () => {
-  setShowScheduleModal(true);
+    console.log('Schedule meeting for group:', contact.name);
   };
-  const groupMemberIds = useMemo(
-    () =>
-      contact.isGroup
-        ? contact.members?.map(member => member.id) ?? []
-        : [],
-    [contact.isGroup, contact.members]
-  );
 
   // console.log('DEBUGG directKey: ', directKey);
   return (
-    <>
     <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
       <div className="flex items-center gap-3 min-w-0">
         {onBack && (
@@ -167,8 +157,9 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, on
                   roomName={`${directKey ?? 'room'}:video`}
                   directKey={directKey ?? undefined}
                   meetingTitle={`Call with ${contact.name}`}
+                  loadingText=' '
                   // meetId={meeting.id}
-                  joinTo={R.USER_VIDEOCALL}
+                  joinTo={R.USER_VIDEOCALL_MSG}
                   leaveTo={R.USER_MESSAGES}
                   className="border-0"
                 />
@@ -207,22 +198,5 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, on
         </Tooltip>
       </div>
     </div>
-    {showScheduleModal && (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      onClick={() => setShowScheduleModal(false)}
-    >
-      <div onClick={(e) => e.stopPropagation()}>
-        <ScheduleMeetingModal
-          open={showScheduleModal}
-          mode="create"
-          initialParticipantIds={groupMemberIds}
-          onClose={() => setShowScheduleModal(false)}
-          onCreated={() => setShowScheduleModal(false)}
-        />
-      </div>
-    </div>
-  )}
-    </>
   );
 }
