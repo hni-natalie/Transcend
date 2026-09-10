@@ -237,6 +237,22 @@ const meetingService = {
                 }
             });
 
+            // get participants id and remove dups(by new Set), remove creator
+            const inviteeIds = [...new Set(participantIds || [])]
+                .filter((participantId) => participantId !== userId);
+
+			// if more than creator, add to meeting, set attendance as pending
+            if (inviteeIds.length > 0) {
+                await tx.meetingParticipant.createMany({
+                    data: inviteeIds.map((participantId) => ({
+                        meetId: newMeeting.meetId,
+                        userId: participantId,
+                        role: MeetingRole.participant,
+                        attendance: AttendanceStatus.pending
+                    }))
+                });
+            }
+
             return newMeeting;
         });
 
