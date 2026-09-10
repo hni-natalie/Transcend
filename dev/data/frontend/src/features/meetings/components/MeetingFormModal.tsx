@@ -86,6 +86,8 @@ const validateMeetingForm = (data: {
     return null;
 };
 
+const EMPTY_PARTICIPANT_IDS: string[] = [];
+
 export const ScheduleMeetingModal = ({
     open,
     onClose,
@@ -93,7 +95,7 @@ export const ScheduleMeetingModal = ({
     onUpdated,
     mode,
     meeting,
-    initialParticipantIds = [],
+    initialParticipantIds = EMPTY_PARTICIPANT_IDS,
 }: Props) => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
