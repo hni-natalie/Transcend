@@ -19,6 +19,14 @@ function getAttachmentKind(mimeType) {
 	return 'document';
 }
 
+const URL_PATTERN = /(https?:\/\/[^\s]+)/;
+
+function extractFirstUrl(text) {
+	if (!text) return null;
+	const match = text.match(URL_PATTERN);
+	return match ? match[0] : null;
+}
+
 
 function conversationResponseSelect(userId) {
   return {
@@ -26,6 +34,7 @@ function conversationResponseSelect(userId) {
     type: true,
     groupName: true,
     avatarUrl: true,
+    createdByUserId: true,
     createdAt: true,
     updatedAt: true,
 
@@ -42,6 +51,7 @@ function conversationResponseSelect(userId) {
       select: {
         userId: true,
         lastReadAt: true,
+        removedAt: true,
 
         user: {
           select: {
@@ -76,6 +86,7 @@ function conversationResponseSelect(userId) {
       select: {
         messageId: true,
         text: true,
+        linkUrl: true,
         createdAt: true,
 
         author: {
@@ -111,6 +122,7 @@ const messageService = {
 				type: true,
 				groupName: true,
 				avatarUrl: true,
+				createdByUserId: true,
 				createdAt: true,
 				updatedAt: true,
 				directKey: true,
@@ -129,6 +141,7 @@ const messageService = {
 				select: {
 				userId: true,
 				lastReadAt: true,
+				removedAt: true,
 
         user: {
           select: {
@@ -163,6 +176,7 @@ const messageService = {
 				select: {
 				messageId: true,
 				text: true,
+				linkUrl: true,
 				createdAt: true,
 
 				author: {
@@ -183,7 +197,18 @@ const messageService = {
 		});
 
 		return Promise.all(
-			conversations.map(async (conversation) => {
+			conversations
+				.filter((conversation) => {
+					const currentParticipant = conversation.participants.find(
+						participant => participant.userId === userId
+					);
+
+					if (!currentParticipant?.removedAt) return true;
+
+					const latestMessage = conversation.messages[0];
+					return !!latestMessage && new Date(latestMessage.createdAt) > new Date(currentParticipant.removedAt);
+				})
+				.map(async (conversation) => {
 			const currentParticipant = conversation.participants.find(
 				participant => participant.userId === userId
 			);
@@ -309,20 +334,21 @@ const messageService = {
 		};
 	},
 
-	async createGroupConversation( userId, participantIds, groupName, workspaceId) {
+	async createGroupConversation(userId, participantIds, groupName, workspaceId, avatarUrl = null) {
 		const allParticipantIds = [...new Set([userId, ...participantIds])];
 		const conversation = await prisma.conversation.create({
 			data: {
-			type: 'group',
-			groupName,
-			createdByUserId: userId,
-			workspaceId,
+				type: 'group',
+				groupName,
+				avatarUrl: avatarUrl || null,
+				createdByUserId: userId,
+				workspaceId,
 
-			participants: {
-				create: allParticipantIds.map((participantUserId) => ({
-				userId: participantUserId
-				}))
-			}
+				participants: {
+					create: allParticipantIds.map((participantUserId) => ({
+						userId: participantUserId
+					}))
+				}
 			},
 
 			select: conversationResponseSelect(userId)
@@ -331,27 +357,69 @@ const messageService = {
 		return {
 			...conversation,
 			unreadCount: 0
-			};
+		};
+	},
+
+	async uploadGroupAvatar(conversationId, userId, file, bucket) {
+		if (!file) {
+			throw new Error('No file uploaded');
+		}
+
+		const conversation = await prisma.conversation.findFirst({
+			where: {
+				conversationId,
+				type: 'group',
+				deletedAt: null,
+				participants: {
+					some: { userId }
+				}
+			}
+		});
+
+		if (!conversation) {
+			throw new Error('Conversation not found or user cannot access this group');
+		}
+
+		const fileExt = file.originalname.split('.').pop();
+		const fileName = `${conversationId}-${Date.now()}.${fileExt}`;
+		const filePath = `avatars/groups/${conversationId}/${fileName}`;
+
+		const publicUrl = await uploadFile(bucket, filePath, file.buffer, file.mimetype);
+
+		const updated = await prisma.conversation.update({
+			where: { conversationId },
+			data: { avatarUrl: publicUrl },
+			select: conversationResponseSelect(userId)
+		});
+
+		return { avatarUrl: publicUrl, conversation: updated };
 	},
 
 	async deleteConversation(conversationId, userId) {
 		return prisma.$transaction(async (tx) => {
-			// check if the conversation exists and if the user is the creator
-			const conversation = await tx.conversation.findFirst({
-				where: { 
-					conversationId: conversationId ,
-					createdByUserId: userId
-				},
-				select: {
-					conversationId: true,
-					createdByUserId: true
+			const participant = await tx.conversationParticipant.findUnique({
+				where: {
+					conversationId_userId: {
+						conversationId,
+						userId
+					}
 				}
 			});
-		if (!conversation) {
-			throw new Error('Conversation not found or user is not the creator');
-		}
-		return tx.conversation.delete({
-			where: { conversationId: conversationId }
+
+			if (!participant) {
+				throw new Error('Conversation not found');
+			}
+
+			return tx.conversationParticipant.update({
+				where: {
+					conversationId_userId: {
+						conversationId,
+						userId
+					}
+				},
+				data: {
+					removedAt: new Date()
+				}
 			});
 		});
 	},
@@ -389,6 +457,7 @@ const messageService = {
 				messageId: true,
 				conversationId: true,
 				text: true,
+				linkUrl: true,
 				createdAt: true,
 				author: {
 					select: {
@@ -437,12 +506,16 @@ const messageService = {
 		if (!conversation) {
 			throw new Error('Conversation not found or user is not the creator');
 			}
-		
+
+		const detectedLink = extractFirstUrl(cleanText);
+		const isPureLink = !!detectedLink && cleanText === detectedLink;
+
 		const message = await tx.message.create({
 			data: {
 				conversationId,
 				authorId: userId,
-				text: cleanText,
+				text: isPureLink ? null : cleanText,
+				linkUrl: detectedLink,
 				attachments: {
 					create: attachments.map((attachment) => ({
 						name: attachment.name,
@@ -458,6 +531,7 @@ const messageService = {
 				messageId: true,
 				conversationId: true,
 				text: true,
+				linkUrl: true,
 				createdAt: true,
 				author: {
 					select: {
@@ -523,12 +597,12 @@ const messageService = {
 		if (conversation.createdByUserId != userId)
 			throw new Error ('Only the group creater and create conversation');
 
-		// // get the existing group member
-		// const existingParticipantIds = new Set(
-		// 	conversation.participants.map(
-		// 		(participant) => participant.userId
-		// 	)
-		// );
+		// get the existing group member
+		const existingParticipantIds = new Set(
+			conversation.participants.map(
+				(participant) => participant.userId
+			)
+		);
 		// // remove duplicate participant
 		// const participantIdsToAdd = [...new Set(participantIds)].filter(
 		// 	(participantUserId) => !existingParticipantIds.has(participantUserId)

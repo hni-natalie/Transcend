@@ -141,10 +141,16 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     </>
   );
 
-  //jsx
   return (
-    <aside className={`flex flex-col h-screen sticky top-0 border-r border-white/10 bg-black py-6 transition-none z-50 ${isExpanded ? 'w-[220px]' : 'w-[60px]'}`}>
-      
+    <>
+      {isExpanded && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 sm:hidden"
+          onClick={toggleExpand}
+        />
+      )}
+
+      <aside className={`flex flex-col h-screen top-0 left-0 border-r border-white/10 bg-black py-6 transition-all duration-300 ease-in-out z-50 ${isExpanded ? 'fixed sm:sticky w-[220px]' : 'sticky w-[60px]'}`}>  
       {/* Header */}
 		<div 
 		className="relative flex flex-col pl-7 -mb-1" 
@@ -271,5 +277,6 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
         </div>
       </div>
     </aside>
+	</>
   );
 }

@@ -21,27 +21,33 @@ export const UserList = ({ user, onEdit }: UserListProps) => {
   return (
     <tr className="hover:bg-white/[0.02] transition-colors group">
       <td className="py-3 px-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           {showDefaultAvatar ? (
             <DefaultAvatar
               name={user.username}
               email={user.email}
-              className="w-12 h-12 rounded-full"
+              className="w-12 h-12 rounded-full shrink-0"
             />
           ) : (
             <img
               src={avatarSrc}
               alt={user.username}
-              className="w-12 h-12 rounded-full object-cover"
+              className="w-12 h-12 rounded-full object-cover shrink-0"
               onError={() => setImageError(true)}
             />
           )}
 
-          <div className="flex flex-col">
-            <span className="text-white font-medium text-base">
+          <div className="flex flex-col min-w-0">
+            <span
+              className="text-white font-medium text-base truncate"
+              title={user.username}
+            >
               {user.username}
             </span>
-            <span className="text-foreground-3 text-sm">
+            <span
+              className="text-foreground-3 text-sm line-clamp-2 break-all"
+              title={user.email}
+            >
               {user.email}
             </span>
           </div>
@@ -50,7 +56,7 @@ export const UserList = ({ user, onEdit }: UserListProps) => {
 
       <td className="py-6.5 px-4 text-base text-foreground-3">{user.department}</td>
       <td className="py-6.5 px-4 text-base text-foreground-3">{user.role}</td>
-	  <td className="py-6.5 px-4 text-base text-foreground-3">{user.userTitle || '-'}</td>
+      <td className="py-6.5 px-4 text-base text-foreground-3">{user.userTitle || '-'}</td>
       <td className="py-6.5 px-4 text-base text-foreground-3">{user.location}</td>
       <td className="py-6.5 px-4">
         <UserStatusBadge status={user.status} />

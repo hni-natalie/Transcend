@@ -1,18 +1,17 @@
 const messageService = require('../services/message.service');
 const { getIO } = require("../services/socket.service");
-
 const path = require('path');
+const {
+    validateCreateDirectConversation,
+    validateCreateGroupConversation,
+    validateSendMessage,
+    validateAddParticipant,
+    validateRemoveParticipant,
+    validateConversationId,
+    validateAttachmentId,
+} = require('../validators/message.validator');
 
-const ACCEPTED_FILE_EXTENSIONS = [
-	'.pdf',
-	'.doc',
-	'.docx',
-	'.png',
-	'.jpg',
-	'.jpeg',
-	'.gif'
-];
-
+const ACCEPTED_FILE_EXTENSIONS = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg', '.gif'];
 const ACCEPTED_MIME_TYPES = [
 	'application/pdf',
 	'application/msword',
@@ -22,25 +21,21 @@ const ACCEPTED_MIME_TYPES = [
 	'image/gif'
 ];
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 
 function validateAttachment(file) {
-	if (!file) {
+	if (!file)
 		throw new Error('File is required');
-	}
 
-	if (!ACCEPTED_FILE_EXTENSIONS.includes(path.extname(file.originalname).toLowerCase())) {
+	if (!ACCEPTED_FILE_EXTENSIONS.includes(path.extname(file.originalname).toLowerCase()))
 		throw new Error('Invalid file type');
-	}
 
-	if (!ACCEPTED_MIME_TYPES.includes(file.mimetype)) {
+	if (!ACCEPTED_MIME_TYPES.includes(file.mimetype))
 		throw new Error('Invalid file type');
-	}
 
-	if (file.size > MAX_FILE_SIZE) {
+	if (file.size > MAX_FILE_SIZE) 
 		throw new Error('File size exceeds the limit');
-	}
 }
 
 
@@ -56,39 +51,39 @@ const messageController = {
 		}
 	},
 
-	// async getConversationById(req, res) {
-	// 	try {
-	// 		const { id } = req.params;
-	// 		const { userId } = req.user;
-			
-	// 		if (!id) {
-	// 			return res.status(400).json({ error: "Conversation ID required" });
-	// 		}
-	// 		const conversation = await messageService.getConversationById(id, userId);
-	// 		return res.json(conversation);
-	// 	} catch (error) {
-	// 		if (error.message === 'Conversation not found') {
-	// 			res.status(404).json({ error: error.message });
-	// 		} else {
-	// 			res.status(500).json({ error: error.message });
-	// 		}
-	// 	}
-	// },
-
 	async createDirectConversation(req, res) {
 		try {
-			const { userId } = req.user;
-			const { participantId } = req.body;
-			const workspaceId = req.user.workspaceId;
-			if (userId === participantId) {
-				return res.status(400).json({ error: 'Cannot create a conversation with yourself' });
-			}
+			// const { userId } = req.user;
+			// const { participantId } = req.body;
+			// const workspaceId = req.user.workspaceId;
+			// if (userId === participantId) {
+			// 	return res.status(400).json({ error: 'Cannot create a conversation with yourself' });
+			// }
 
-			if (!participantId) {
-				return res.status(400).json({ error: 'participantId is required' });
-			}
+			// if (!participantId) {
+			// 	return res.status(400).json({ error: 'participantId is required' });
+			// }
 			
-			const conversation = await messageService.createDirectConversation(userId, participantId, workspaceId);
+			let validated;
+            try {
+                validated = validateCreateDirectConversation(req.body);
+            } catch (validationErr) {
+                return res.status(400).json({ error: validationErr.message });
+            }
+
+            const { userId } = req.user;
+            if (userId === validated.participantId) {
+                return res.status(400).json({ error: 'Cannot create a conversation with yourself' });
+            }
+
+            const workspaceId = req.user.workspaceId;
+            const conversation = await messageService.createDirectConversation(
+                userId,
+                validated.participantId,
+                workspaceId
+            );
+			
+			// const conversation = await messageService.createDirectConversation(userId, participantId, workspaceId);
 			console.log("conversation.created");
 			getIO().emit("messageUpdated");
 			return res.status(201).json(conversation);
@@ -100,26 +95,80 @@ const messageController = {
 
 	async createGroupConversation(req, res) {
 		try {
-			const { userId } = req.user;
-			const { participantIds, groupName } = req.body;
-			const workspaceId = req.user.workspaceId;
+			// const { userId } = req.user;
+			// const { participantIds, groupName, avatarUrl } = req.body;
+			// const workspaceId = req.user.workspaceId;
 
-			console.log("Logged-in user ID:", userId);
-			if (!participantIds || !Array.isArray(participantIds) || participantIds.length === 0) {
-				return res.status(400).json({ error: 'participantIds must be a non-empty array' });
-			}
+			// console.log("Logged-in user ID:", userId);
+			// if (!participantIds || !Array.isArray(participantIds) || participantIds.length === 0) {
+			// 	return res.status(400).json({ error: 'participantIds must be a non-empty array' });
+			// }
 
-			if (!groupName) {
-				return res.status(400).json({ error: 'groupName is required' });
-			}
+			// if (!groupName) {
+			// 	return res.status(400).json({ error: 'groupName is required' });
+			// }
 
-			const conversation = await messageService.createGroupConversation(userId, participantIds, groupName, workspaceId);
+			let validated;
+            try {
+                validated = validateCreateGroupConversation(req.body);
+            } catch (validationErr) {
+                return res.status(400).json({ error: validationErr.message });
+            }
+
+            const { userId } = req.user;
+            const workspaceId = req.user.workspaceId;
+
+            console.log("Logged-in user ID:", userId);
+            const conversation = await messageService.createGroupConversation(
+                userId,
+                validated.participantIds,
+                validated.groupName,
+                workspaceId,
+                validated.avatarUrl
+            );
+
+			// const conversation = await messageService.createGroupConversation(userId, participantIds, groupName, workspaceId, avatarUrl);
 			console.log("conversation.created");
 			getIO().emit("messageUpdated");
 			return res.status(201).json(conversation);
 		} catch (error) {
 			console.error('Error creating group conversation:', error);
 			res.status(500).json({ error: 'Failed to create group conversation' });
+		}
+	},
+
+	async uploadGroupAvatar(req, res) {
+		try {
+			const conversationId = req.params.id;
+			const { userId } = req.user;
+
+			if (!conversationId) {
+				return res.status(400).json({ error: 'Conversation ID required' });
+			}
+
+			if (!req.file) {
+				return res.status(400).json({ error: 'No file uploaded' });
+			}
+
+			const result = await messageService.uploadGroupAvatar(
+				conversationId,
+				userId,
+				req.file,
+				process.env.SUPABASE_ASSET_BUCKET
+			);
+
+			console.log('group.avatar.uploaded:', conversationId);
+			getIO().emit('messageUpdated');
+			return res.json({ success: true, ...result });
+		} catch (error) {
+			if (error.message === 'No file uploaded') {
+				return res.status(400).json({ error: error.message });
+			}
+			if (error.message.includes('Conversation not found') || error.message.includes('cannot access')) {
+				return res.status(404).json({ error: error.message });
+			}
+			console.error('Group avatar upload error:', error);
+			return res.status(500).json({ error: error.message });
 		}
 	},
 
@@ -138,7 +187,8 @@ const messageController = {
 			if (error.message === 'Conversation not found') {
 				res.status(404).json({ error: error.message });
 			} else {
-				res.status(500).json({ error: error.message });
+				console.error('Error deleting conversation:', error);
+            	return res.status(500).json({ error: 'Failed to delete conversation' });
 			}
 		}
 	},
@@ -157,30 +207,54 @@ const messageController = {
 			if (error.message === 'Conversation not found') {
 				res.status(404).json({ error: error.message });
 			} else {
-				res.status(500).json({ error: error.message });
+				console.error('Error fetching messages:', error);
+				res.status(500).json({ error: 'Failed to fetch messages' });
 			}
 		}
 	},
 
 	async sendMessage(req, res) {
 		try {
-			const { id } = req.params; // conversationId
-			const { userId } = req.user;
-			const { text, attachments = [] } = req.body;
+		// 	const { id } = req.params; // conversationId
+		// 	const { userId } = req.user;
+		// 	const { text, attachments = [] } = req.body;
 
-			if (!id) {
-				return res.status(400).json({
-					error: "Conversation ID required"
-				});
-			}
-			const hasText = typeof text === "string" && text.trim().length > 0;
-			const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
+		// 	if (!id) {
+		// 		return res.status(400).json({
+		// 			error: "Conversation ID required"
+		// 		});
+		// 	}
+		// 	const hasText = typeof text === "string" && text.trim().length > 0;
+		// 	const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
 
-			if (!hasText && !hasAttachments) {
-				return res.status(400).json({ error: "Message text or attachment is required"});
-			}
+		// 	if (!hasText && !hasAttachments) {
+		// 		return res.status(400).json({ error: "Message text or attachment is required"});
+		// 	}
 
-			const message = await messageService.sendMessage(id, userId, text, attachments);
+		// 	const message = await messageService.sendMessage(id, userId, text, attachments);
+
+            let conversationValidated;
+            try {
+                conversationValidated = validateConversationId(req.params.id);
+            } catch (validationErr) {
+                return res.status(400).json({ error: validationErr.message });
+            }
+
+            let validated;
+            try {
+                validated = validateSendMessage(req.body);
+            } catch (validationErr) {
+                return res.status(400).json({ error: validationErr.message });
+            }
+
+            const { userId } = req.user;
+            const message = await messageService.sendMessage(
+                conversationValidated.conversationId,
+                userId,
+                validated.text,
+                req.body.attachments || []
+            );
+			
 			console.log("message.created");
 			getIO().emit("messageUpdated");
 			return res.status(201).json(message);
@@ -189,7 +263,8 @@ const messageController = {
 			if (error.message === "Conversation not found or user is not a participant") {
 				return res.status(404).json({error: error.message});
 			}
-			return res.status(500).json({error: error.message});
+			console.error('Error sending message:', error);
+			return res.status(500).json({ error: 'Failed to send message' });
 		}
 	},
 
@@ -219,7 +294,7 @@ const messageController = {
 			return res.status(201).json(conversation);
 		} catch (error) {
 			console.error('Error adding participants:', error);
-			res.status(500).json({ error: error.message})
+            return res.status(500).json({ error: 'Failed to add participants' });
 		}
 	},
 
@@ -249,7 +324,7 @@ const messageController = {
 			return res.status(201).json(conversation);
 		} catch (error) {
 			console.error('Error removing participant:', error);
-			res.status(500).json({ error: error.message})
+			return res.status(500).json({ error: 'Failed to remove participant' });
 		}
 	},
 
@@ -271,7 +346,7 @@ const messageController = {
 			return res.status(201).json(conversationPin);
 		} catch (error) {
 			console.error('Error pinning conversations:', error);
-			res.status(500).json({ error: error.message})
+			return res.status(500).json({ error: 'Failed to pin conversation' });
 		}
 	},
 
@@ -291,7 +366,7 @@ const messageController = {
 			return res.status(201).json(conversationPin);
 		} catch (error) {
 			console.error('Error unpinning conversations:', error);
-			res.status(500).json({ error: error.message})
+			return res.status(500).json({ error: 'Failed to unpin conversation' });
 		}
 	},
 
@@ -319,10 +394,7 @@ const messageController = {
 			return res.status(201).json(attachment);
 		} catch (error) {
 			console.error("Error uploading attachment:", error);
-
-			return res.status(500).json({
-			error: error.message
-			});
+			return res.status(500).json({ error: 'Failed to upload attachment' });
 		}
 	},
 
@@ -337,7 +409,7 @@ const messageController = {
 			return res.json({ message: 'Attachment deleted successfully' });
 		} catch (error) {
 			console.error('Error deleting attachment:', error);
-			res.status(500).json({ error: error.message})
+			return res.status(500).json({ error: 'Failed to delete attachment' });
 		}
 	},
 
@@ -355,7 +427,7 @@ const messageController = {
 			return res.json({ message: 'Conversation marked as read' });
 		} catch (error) {
 			console.error('error marking conversation as read:', error);
-			res.status(500).json({ error: error.message})
+			return res.status(500).json({ error: 'Failed to mark conversation as read' });
 		}
 	},
 }

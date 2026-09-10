@@ -21,6 +21,8 @@ type Props = {
     onClose: () => void;
     onCreated?: () => void;
     onUpdated?: () => void;
+
+    initialParticipantIds?: string[];
 };
 
 const roleOptions : DropdownChoice[] = [
@@ -33,7 +35,7 @@ const attendanceOptions : DropdownChoice[] = [
     { id: 'absent', name: 'Absent' },
 ];
 
-const MEETING_TITLE_MAX_LENGTH = 100;
+const MEETING_TITLE_MAX_LENGTH = 60;
 const MEETING_DESC_MAX_LENGTH = 500;
 const MIN_DURATION_MS = 5 * 60 * 1000;  // 5 minutes
 const MAX_DURATION_MS = 20 * 60 * 1000; // 20 minutes
@@ -187,6 +189,8 @@ export const ScheduleMeetingModal = ({
         });
     }
 
+    const participantIdsKey = initialParticipantIds.join(',');
+
     useEffect(() => {
         if (!open) return;
 
@@ -216,8 +220,9 @@ export const ScheduleMeetingModal = ({
             setSelectedUserIds(meeting.participants.map(p => p.userId));
         } else {
             resetForm();
+			setSelectedUserIds(initialParticipantIds);
         }
-    }, [open, mode, meeting, resetForm]);
+    }, [open, mode, meeting, resetForm, participantIdsKey]);
 
     const selectedUsers = useMemo(() => {
         return users.filter(user => selectedUserIds.includes(user.userId));
@@ -326,17 +331,18 @@ export const ScheduleMeetingModal = ({
                     meetTitle: title,
                     meetDesc: description,
                     meetStart: new Date(start).toISOString(),
-                    meetEnd: new Date(end).toISOString()
+                    meetEnd: new Date(end).toISOString(),
+					participantIds: selectedUserIds,
                 });
 
-                await meetingApi.syncParticipants({
-                    meetId: res.data.meetId,
-                    participants: selectedUsers.map(user => ({
-                        userId: user.userId,
-                        role: user.role,
-                        attendance: user.attendance,
-                    }))
-                });
+                // await meetingApi.syncParticipants({
+                //     meetId: res.data.meetId,
+                //     participants: selectedUsers.map(user => ({
+                //         userId: user.userId,
+                //         role: user.role,
+                //         attendance: user.attendance,
+                //     }))
+                // });
 
 				showToast('success', 'Meeting scheduled successfully!');
                 onCreated?.();

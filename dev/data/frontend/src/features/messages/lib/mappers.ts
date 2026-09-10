@@ -2,7 +2,7 @@ import type { User } from '@shared';
 import { getDisplayName, getDisplayAvatar } from '@shared';
 import type { Attachment, Conversation, ConversationResponse, MessageResponse, DayGroup, Link, Message, Profile, InvitableGroup } from '../types';
 import { truncate } from './format';
-import { extractUrlsFromText, getDisplayNameFromUrl } from './links';
+import { getDisplayNameFromUrl } from './links';
 
 // USER PROFILE
 export function toProfile(user?: User): Profile {
@@ -48,6 +48,7 @@ export function toGroupProfile(conversation: Conversation, members: Profile[]): 
     memberCount: members.length,
     avatarUrl: conversation.avatarUrl,
     status: 'offline',
+    creatorId: conversation.createdByUserId,
   };
 }
 
@@ -62,7 +63,7 @@ export function buildLastMessagePreview(
   }
 
   return {
-    text: lastMsg.text || lastMsg.callNote || '',
+    text: lastMsg.text || lastMsg.callNote || lastMsg.linkUrl || '',
     author: lastMsg.isSelf ? 'You' : fallbackAuthor,
     createdAt: lastMsg.createdAt,
   };
@@ -80,49 +81,30 @@ export function getConversationPreview(conversation: Conversation): string {
   return truncate(`${prefix}${conversation.lastMessage.text}`);
 }
 
-// ATTACHMENTS / LINKS
+// ATTACHMENTS
 // TO DO: remove after BE implementation, use API instead
 export function extractAttachmentsFromDayGroups(dayGroups: DayGroup[]): Attachment[] {
   return dayGroups.flatMap((day) => day.messages.flatMap((message) => message.attachments ?? []));
 }
 
 // LINKS
-// FE detects URLs inside message.text when sending the message and sends the detected URL to the BE to save in Message.linkUrl
+// Reads the link the backend already extracted and persisted on the message
+// (Message.linkUrl), rather than re-detecting URLs from message.text on the client.
 export function extractLinksFromDayGroups(dayGroups: DayGroup[]): Link[] {
   return dayGroups.flatMap((day) =>
-    day.messages.flatMap((message) => {
-      const explicitLink: Link[] = message.linkUrl
-        ? [{ id: `${message.id}-link`, name: getDisplayNameFromUrl(message.linkUrl), url: message.linkUrl }]
-        : [];
-
-      const detectedLinks = extractUrlsFromText(message.text).map((url, index) => ({
-        id: `${message.id}-text-link-${index}`,
-        name: getDisplayNameFromUrl(url),
-        url,
-      }));
-
-      return [...explicitLink, ...detectedLinks];
-    }),
+    day.messages.flatMap((message) =>
+      message.linkUrl
+        ? [
+            {
+              id: `${message.id}-link`,
+              name: getDisplayNameFromUrl(message.linkUrl),
+              url: message.linkUrl,
+            },
+          ]
+        : [],
+    ),
   );
 }
-
-// LINKS
-// uncomment once BE is implemented, remove above
-// export function extractLinksFromDayGroups(dayGroups: DayGroup[]): Link[] {
-//   return dayGroups.flatMap((day) =>
-//     day.messages.flatMap((message) =>
-//       message.linkUrl
-//         ? [
-//             {
-//               id: `${message.id}-link`,
-//               name: getDisplayNameFromUrl(message.linkUrl),
-//               url: message.linkUrl,
-//             },
-//           ]
-//         : [],
-//     ),
-//   );
-// }
 export function mapUserToProfile(
   user: ConversationResponse['participants'][number]['user']
 ): Profile {
@@ -213,7 +195,7 @@ export function mapConversation(conversation: ConversationResponse, currentUserI
 
     lastMessage: latestMessage
       ? {
-          text: latestMessage.text ?? '',
+          text: latestMessage.text ?? latestMessage.linkUrl ?? '',
 		  author: getDisplayName(latestMessage.author),
         //   author: latestMessage.author.userName,
           createdAt: latestMessage.createdAt
@@ -221,6 +203,8 @@ export function mapConversation(conversation: ConversationResponse, currentUserI
       : undefined,
 
     unreadCount: conversation.unreadCount,
+
+    createdByUserId: conversation.createdByUserId,
 
     createdAt: conversation.createdAt,
 
@@ -244,6 +228,7 @@ export function mapMessage(message: MessageResponse, currentUserId: string,): Me
 
     createdAt: message.createdAt,
     text: message.text ?? undefined,
+    linkUrl: message.linkUrl ?? undefined,
 
     attachments: message.attachments ?? undefined,
   };
@@ -257,5 +242,6 @@ export function mapConversationsToInvitableGroups(conversations: Conversation[])
       name: conversation.name,
       memberCount: conversation.participants?.length ?? 0,
       members: conversation.participants ?? [],
+      creatorId: conversation.createdByUserId,
     }));
 }

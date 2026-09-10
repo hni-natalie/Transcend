@@ -40,6 +40,9 @@
 #   USER_TOKEN:
 #       JWT for a normal/non-admin user.
 #       Required only for authorization tests.
+
+#	TEST_CONVERSATION_ID
+# 	TEST_GROUP_CONVERSATION_ID
 #
 # run below in terminal;
 # curl -X POST http://localhost:3000/api/auth/login \
@@ -74,10 +77,18 @@ CHANGE_PASSWORD_ROUTE="/api/users/change-password"
 UPDATE_USER_ROUTE_TEMPLATE="/api/users/{ID}"
 RESET_PASSWORD_ROUTE_TEMPLATE="/api/users/{ID}/reset-password"
 
+ME_ROUTE="/api/users/me"
+
+MEETINGS_ROUTE="/api/meetings"
+SYNC_PARTICIPANTS_ROUTE="/api/meetings/participants"
+
 CREATE_TASK_ROUTE="/api/tasks"
 UPDATE_TASK_ROUTE_TEMPLATE="/api/tasks/{ID}"
- 
-ME_ROUTE="/api/users/me"
+
+MESSAGES_ROUTE="/api/messages"
+MESSAGES_CONVERSATIONS_ROUTE="/api/messages"
+CREATE_DIRECT_ROUTE="/api/messages/direct"
+CREATE_GROUP_ROUTE="/api/messages/group"
  
 # ---------------------------------------------------------------------------
 # TEST COUNTERS
@@ -130,9 +141,7 @@ urlencode() {
 # ---------------------------------------------------------------------------
 # TEST RUNNER
 # ---------------------------------------------------------------------------
- 
-# run_test <description> <expected_status> <curl args...>
- 
+
 run_test() {
     local description="$1"
     local expected="$2"
@@ -253,9 +262,6 @@ run_test "wrong types (numbers instead of strings)" 400 \
     -H "Content-Type: application/json" \
     -d '{"userEmail":12345,"userPassword":67890}'
  
-# Invalid credentials should fail authentication, not validation.
-# NOTE: replace with an account you know is fake/test-only — never a guessed
-# real account.
 run_test "wrong password for valid-format email" 401 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
@@ -366,7 +372,7 @@ echo "=================================================="
 echo "USER — updateCurrentUser / profile"
 echo "=================================================="
  
-if [ -z "$ADMIN_TOKEN" ]; then
+if [ -z "$USER_TOKEN" ]; then
  
     skip_test "updateProfile: no fields"
     skip_test "updateProfile: malformed email"
@@ -375,28 +381,28 @@ if [ -z "$ADMIN_TOKEN" ]; then
  
 else
  
-    AUTH_HEADER="$(admin_auth_header)"
+    AUTH_HEADER="$(user_auth_header)"
  
     run_test "updateProfile: no fields sent" 400 \
-        -X PUT "$BASE_URL$UPDATE_PROFILE_ROUTE" \
+        -X PATCH "$BASE_URL$UPDATE_PROFILE_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{}'
  
     run_test "updateProfile: malformed email" 400 \
-        -X PUT "$BASE_URL$UPDATE_PROFILE_ROUTE" \
+        -X PATCH "$BASE_URL$UPDATE_PROFILE_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"userEmail":"not-an-email"}'
  
     run_test "updateProfile: XSS in city" 400 \
-        -X PUT "$BASE_URL$UPDATE_PROFILE_ROUTE" \
+        -X PATCH "$BASE_URL$UPDATE_PROFILE_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"city":"<script>document.cookie</script>"}'
  
     run_test "updateProfile: city wrong type" 400 \
-        -X PUT "$BASE_URL$UPDATE_PROFILE_ROUTE" \
+        -X PATCH "$BASE_URL$UPDATE_PROFILE_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"city":12345}'
@@ -412,7 +418,7 @@ echo "=================================================="
 echo "USER — status update"
 echo "=================================================="
  
-if [ -z "$ADMIN_TOKEN" ]; then
+if [ -z "$USER_TOKEN" ]; then
  
     skip_test "updateStatus: empty"
     skip_test "updateStatus: invalid value"
@@ -420,7 +426,7 @@ if [ -z "$ADMIN_TOKEN" ]; then
  
 else
  
-    AUTH_HEADER="$(admin_auth_header)"
+    AUTH_HEADER="$(user_auth_header)"
  
     run_test "updateStatus: empty body" 400 \
         -X PATCH "$BASE_URL$UPDATE_STATUS_ROUTE" \
@@ -451,7 +457,7 @@ echo "=================================================="
 echo "USER — change-password"
 echo "=================================================="
  
-if [ -z "$ADMIN_TOKEN" ]; then
+if [ -z "$USER_TOKEN" ]; then
  
     skip_test "changePassword: missing oldPassword"
     skip_test "changePassword: weak newPassword"
@@ -459,7 +465,7 @@ if [ -z "$ADMIN_TOKEN" ]; then
  
 else
  
-    AUTH_HEADER="$(admin_auth_header)"
+    AUTH_HEADER="$(user_auth_header)"
  
     run_test "changePassword: missing oldPassword" 400 \
         -X POST "$BASE_URL$CHANGE_PASSWORD_ROUTE" \
@@ -522,8 +528,6 @@ echo "=================================================="
  
 if [ -z "$USER_TOKEN" ]; then
  
-    # Intentionally skipped unless a real normal-user token is supplied.
-    # Do NOT use ADMIN_TOKEN here — that would defeat the purpose of the test.
  
     skip_test "normal user cannot createUser"
     skip_test "normal user cannot update another user"
@@ -533,8 +537,6 @@ else
  
     USER_AUTH_HEADER="$(user_auth_header)"
  
-    # NOTE: if your middleware returns 401 instead of 403 for role failures,
-    # that's a design choice, not necessarily a bug — check the response body.
     run_test "normal user cannot createUser (expect 403)" 403 \
         -X POST "$BASE_URL$CREATE_USER_ROUTE" \
         -H "$USER_AUTH_HEADER" \
@@ -545,11 +547,8 @@ else
     AUTHZ_BAD_ID_RAW="00000000-0000-0000-0000-000000000000"
     AUTHZ_BAD_ID="$(urlencode "$AUTHZ_BAD_ID_RAW")"
  
-    # NOTE: if this comes back 404 instead of 403, it likely means the route
-    # checks resource existence before checking the caller's role — worth
-    # fixing so unauthorized callers can't distinguish real IDs from fake ones.
     run_test "normal user cannot update another user (expect 403)" 403 \
-        -X PUT "$BASE_URL${UPDATE_USER_ROUTE_TEMPLATE/\{ID\}/$AUTHZ_BAD_ID}" \
+        -X PATCH "$BASE_URL${UPDATE_USER_ROUTE_TEMPLATE/\{ID\}/$AUTHZ_BAD_ID}" \
         -H "$USER_AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"name":"Unauthorized Change"}'
@@ -583,10 +582,6 @@ else
     BAD_ID_RAW="'; DROP TABLE users;--"
     BAD_ID="$(urlencode "$BAD_ID_RAW")"
  
-    # A 404 is expected here — Prisma should treat this as a literal value
-    # rather than executable SQL. This tests injection resistance, not
-    # validation.
- 
     run_test \
         "updateUser: SQL-injection-shaped :id (expect 404 — safely treated as literal)" \
         404 \
@@ -603,6 +598,342 @@ else
         -H "Content-Type: application/json" \
         -d '{"newPassword":"SomethingStrong1!"}'
  
+fi
+
+
+# ===========================================================================
+# MEETINGS — createMeeting validation
+# ===========================================================================
+
+echo ""
+echo "=================================================="
+echo "MEETINGS — createMeeting"
+echo "=================================================="
+
+if [ -z "$USER_TOKEN" ]; then
+
+    skip_test "createMeeting: empty body (missing spaceId)"
+    skip_test "createMeeting: missing meetTitle"
+    skip_test "createMeeting: oversized meetTitle (61 chars)"
+    skip_test "createMeeting: XSS in meetTitle"
+    skip_test "createMeeting: XSS in meetDesc"
+    skip_test "createMeeting: SQL-injection-shaped spaceId"
+    skip_test "createMeeting: malformed date"
+    skip_test "createMeeting: end time before start time"
+
+else
+
+    USER_AUTH_HEADER="$(user_auth_header)"
+
+    run_test "createMeeting: empty body (missing spaceId)" 400 \
+        -X POST "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{}'
+
+    run_test "createMeeting: missing meetTitle" 400 \
+        -X POST "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "spaceId":"11111111-1111-4111-8111-111111111111",
+            "meetStart":"2026-01-01T10:00:00Z",
+            "meetEnd":"2026-01-01T11:00:00Z"
+        }'
+
+    run_test "createMeeting: oversized meetTitle (61 chars)" 400 \
+        -X POST "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"spaceId\":\"11111111-1111-4111-8111-111111111111\",
+            \"meetTitle\":\"$(printf 'a%.0s' {1..61})\",
+            \"meetStart\":\"2026-01-01T10:00:00Z\",
+            \"meetEnd\":\"2026-01-01T11:00:00Z\"
+        }"
+
+    run_test "createMeeting: XSS in meetTitle" 400 \
+        -X POST "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "spaceId":"11111111-1111-4111-8111-111111111111",
+            "meetTitle":"<script>alert(1)</script>",
+            "meetStart":"2026-01-01T10:00:00Z",
+            "meetEnd":"2026-01-01T11:00:00Z"
+        }'
+
+    run_test "createMeeting: XSS in meetDesc" 400 \
+        -X POST "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "spaceId":"11111111-1111-4111-8111-111111111111",
+            "meetTitle":"Standup",
+            "meetDesc":"<img src=x onerror=alert(1)>",
+            "meetStart":"2026-01-01T10:00:00Z",
+            "meetEnd":"2026-01-01T11:00:00Z"
+        }'
+
+    run_test "createMeeting: SQL-injection-shaped spaceId (expect 400)" 400 \
+        -X POST "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"spaceId\":\"'; DROP TABLE meetings;--\",
+            \"meetTitle\":\"Standup\",
+            \"meetStart\":\"2026-01-01T10:00:00Z\",
+            \"meetEnd\":\"2026-01-01T11:00:00Z\"
+        }"
+
+    run_test "createMeeting: malformed date" 400 \
+        -X POST "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "spaceId":"11111111-1111-4111-8111-111111111111",
+            "meetTitle":"Standup",
+            "meetStart":"not-a-date",
+            "meetEnd":"also-not-a-date"
+        }'
+
+    run_test "createMeeting: end time before start time" 400 \
+        -X POST "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "spaceId":"11111111-1111-4111-8111-111111111111",
+            "meetTitle":"Standup",
+            "meetStart":"2026-01-01T11:00:00Z",
+            "meetEnd":"2026-01-01T10:00:00Z"
+        }'
+
+fi
+
+# ===========================================================================
+# MEETINGS — updateMeeting validation
+# ===========================================================================
+
+echo ""
+echo "=================================================="
+echo "MEETINGS — updateMeeting"
+echo "=================================================="
+
+if [ -z "$USER_TOKEN" ]; then
+
+    skip_test "updateMeeting: oversized meetTitle"
+    skip_test "updateMeeting: XSS in meetTitle"
+    skip_test "updateMeeting: XSS in meetDesc"
+    skip_test "updateMeeting: malformed date"
+
+else
+
+    USER_AUTH_HEADER="$(user_auth_header)"
+
+    run_test "updateMeeting: oversized meetTitle (61 chars)" 400 \
+        -X PATCH "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"meetId\":\"11111111-1111-4111-8111-111111111111\",
+            \"meetTitle\":\"$(printf 'a%.0s' {1..61})\"
+        }"
+
+    run_test "updateMeeting: XSS in meetTitle" 400 \
+        -X PATCH "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "meetId":"11111111-1111-4111-8111-111111111111",
+            "meetTitle":"<script>alert(1)</script>"
+        }'
+
+    run_test "updateMeeting: XSS in meetDesc" 400 \
+        -X PATCH "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "meetId":"11111111-1111-4111-8111-111111111111",
+            "meetTitle":"Standup",
+            "meetDesc":"<img src=x onerror=alert(1)>"
+        }'
+
+    run_test "updateMeeting: malformed date" 400 \
+        -X PATCH "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "meetId":"11111111-1111-4111-8111-111111111111",
+            "meetTitle":"Standup",
+            "meetStart":"not-a-date",
+            "meetEnd":"also-not-a-date"
+        }'
+
+fi
+
+# ===========================================================================
+# MEETINGS — syncParticipants validation
+# ===========================================================================
+
+echo ""
+echo "=================================================="
+echo "MEETINGS — syncParticipants"
+echo "=================================================="
+
+if [ -z "$USER_TOKEN" ]; then
+
+    skip_test "syncParticipants: missing meetId"
+    skip_test "syncParticipants: participants not an array"
+    skip_test "syncParticipants: participant with SQL-injection-shaped userId"
+    skip_test "syncParticipants: invalid role enum value"
+
+else
+
+    USER_AUTH_HEADER="$(user_auth_header)"
+
+    run_test "syncParticipants: missing meetId" 400 \
+        -X PATCH "$BASE_URL$SYNC_PARTICIPANTS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "participants":[{"userId":"11111111-1111-4111-8111-111111111111"}]
+        }'
+
+    run_test "syncParticipants: participants not an array" 400 \
+        -X PATCH "$BASE_URL$SYNC_PARTICIPANTS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "meetId":"11111111-1111-4111-8111-111111111111",
+            "participants":"not-an-array"
+        }'
+
+    run_test "syncParticipants: SQL-injection-shaped participant userId" 400 \
+        -X PATCH "$BASE_URL$SYNC_PARTICIPANTS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"meetId\":\"11111111-1111-4111-8111-111111111111\",
+            \"participants\":[{\"userId\":\"'; DROP TABLE users;--\"}]
+        }"
+
+    run_test "syncParticipants: invalid role enum value" 400 \
+        -X PATCH "$BASE_URL$SYNC_PARTICIPANTS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "meetId":"11111111-1111-4111-8111-111111111111",
+            "participants":[{"userId":"11111111-1111-4111-8111-111111111111","role":"hacker"}]
+        }'
+
+    run_test "syncParticipants: invalid attendance enum value" 400 \
+        -X PATCH "$BASE_URL$SYNC_PARTICIPANTS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "meetId":"11111111-1111-4111-8111-111111111111",
+            "participants":[{"userId":"11111111-1111-4111-8111-111111111111","attendance":"maybe"}]
+        }'
+
+fi
+
+# ===========================================================================
+# MEETINGS — SQL injection route parameters
+# ===========================================================================
+
+echo ""
+echo "=================================================="
+echo "MEETINGS — SQL-injection-shaped route param IDs"
+echo "=================================================="
+
+if [ -z "$USER_TOKEN" ]; then
+
+    skip_test "getMeetingById: SQL-injection-shaped :meetingId"
+    skip_test "deleteMeeting: SQL-injection-shaped :meetingId"
+    skip_test "toggleMeetingPin: SQL-injection-shaped :meetingId"
+    skip_test "startMeeting: SQL-injection-shaped :meetingId"
+    skip_test "endMeeting: SQL-injection-shaped :meetingId"
+
+else
+
+    USER_AUTH_HEADER="$(user_auth_header)"
+    BAD_ID_RAW="'; DROP TABLE meetings;--"
+    BAD_ID="$(urlencode "$BAD_ID_RAW")"
+
+    run_test \
+        "getMeetingById: SQL-injection-shaped :meetingId (expect 404 — safely treated as literal)" \
+        404 \
+        -X GET "$BASE_URL$MEETINGS_ROUTE/$BAD_ID" \
+        -H "$USER_AUTH_HEADER"
+
+    run_test \
+        "deleteMeeting: SQL-injection-shaped :meetingId (expect 404 — safely treated as literal)" \
+        404 \
+        -X DELETE "$BASE_URL$MEETINGS_ROUTE/$BAD_ID" \
+        -H "$USER_AUTH_HEADER"
+
+    run_test \
+        "toggleMeetingPin: SQL-injection-shaped :meetingId (expect 404 — safely treated as literal)" \
+        404 \
+        -X PATCH "$BASE_URL$MEETINGS_ROUTE/$BAD_ID/pin" \
+        -H "$USER_AUTH_HEADER"
+
+    run_test \
+        "startMeeting: SQL-injection-shaped :meetingId (expect 404 — safely treated as literal)" \
+        404 \
+        -X PATCH "$BASE_URL$MEETINGS_ROUTE/$BAD_ID/start" \
+        -H "$USER_AUTH_HEADER"
+
+    run_test \
+        "endMeeting: SQL-injection-shaped :meetingId (expect 404 — safely treated as literal)" \
+        404 \
+        -X PATCH "$BASE_URL$MEETINGS_ROUTE/$BAD_ID/end" \
+        -H "$USER_AUTH_HEADER"
+
+fi
+
+# ===========================================================================
+# MEETINGS — authorization tests
+# ===========================================================================
+
+echo ""
+echo "=================================================="
+echo "MEETINGS — authorization tests"
+echo "=================================================="
+
+if [ -z "$USER_TOKEN" ]; then
+
+    skip_test "meeting: unauthorized user cannot update meeting"
+    skip_test "meeting: unauthorized user cannot delete meeting"
+    skip_test "meeting: unauthorized user cannot start meeting"
+    skip_test "meeting: unauthorized user cannot end meeting"
+
+else
+
+    USER_AUTH_HEADER="$(user_auth_header)"
+    FAKE_MEET_ID="11111111-1111-4111-8111-111111111111"
+
+    run_test "meeting: unauthorized user cannot update meeting" 404 \
+        -X PATCH "$BASE_URL$MEETINGS_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"meetId\":\"$FAKE_MEET_ID\",
+            \"meetTitle\":\"Unauthorized Update\"
+        }"
+
+    run_test "meeting: unauthorized user cannot delete meeting" 404 \
+        -X DELETE "$BASE_URL$MEETINGS_ROUTE/$FAKE_MEET_ID" \
+        -H "$USER_AUTH_HEADER"
+
+    run_test "meeting: unauthorized user cannot start meeting" 404 \
+        -X PATCH "$BASE_URL$MEETINGS_ROUTE/$FAKE_MEET_ID/start" \
+        -H "$USER_AUTH_HEADER"
+
+    run_test "meeting: unauthorized user cannot end meeting" 404 \
+        -X PATCH "$BASE_URL$MEETINGS_ROUTE/$FAKE_MEET_ID/end" \
+        -H "$USER_AUTH_HEADER"
+
 fi
 
 # ===========================================================================
@@ -643,7 +974,7 @@ else
         -H "$USER_AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{
-            "title":"<script>alert(1)</script>",
+            "taskTitle":"<script>alert(1)</script>",
             "priority":"high",
             "userIds":[]
         }'
@@ -653,7 +984,7 @@ else
         -H "$USER_AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{
-            "title":"Test task",
+            "taskTitle":"Test task",
             "userIds":[]
         }'
 
@@ -662,7 +993,7 @@ else
         -H "$USER_AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{
-            "title":"Test task",
+            "taskTitle":"Test task",
             "priority":"urgent",
             "userIds":[]
         }'
@@ -672,7 +1003,7 @@ else
         -H "$USER_AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{
-            "title":"Test task",
+            "taskTitle":"Test task",
             "priority":"high",
             "desc":"<img src=x onerror=alert(1)>",
             "userIds":[]
@@ -683,31 +1014,31 @@ else
         -H "$USER_AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{
-            "title":"Test task",
+            "taskTitle":"Test task",
             "priority":"high",
             "date":"not-a-date",
             "userIds":[]
         }'
 
-    run_test "createTask: userIds wrong type" 400 \
-        -X POST "$BASE_URL$CREATE_TASK_ROUTE" \
-        -H "$USER_AUTH_HEADER" \
-        -H "Content-Type: application/json" \
-        -d '{
-            "title":"Test task",
-            "priority":"high",
-            "userIds":"abc"
-        }'
+	run_test "createTask: userIds wrong type" 400 \
+		-X POST "$BASE_URL$CREATE_TASK_ROUTE" \
+		-H "$USER_AUTH_HEADER" \
+		-H "Content-Type: application/json" \
+		-d '{
+			"taskTitle":"Test task",
+			"taskPriority":"high",
+			"assignedUserIds":"abc"
+		}'
 
-    run_test "createTask: invalid userId" 400 \
-        -X POST "$BASE_URL$CREATE_TASK_ROUTE" \
-        -H "$USER_AUTH_HEADER" \
-        -H "Content-Type: application/json" \
-        -d '{
-            "title":"Test task",
-            "priority":"high",
-            "userIds":["not-a-valid-id"]
-        }'
+	run_test "createTask: invalid userId" 400 \
+		-X POST "$BASE_URL$CREATE_TASK_ROUTE" \
+		-H "$USER_AUTH_HEADER" \
+		-H "Content-Type: application/json" \
+		-d '{
+			"taskTitle":"Test task",
+			"taskPriority":"high",
+			"assignedUserIds":["not-a-valid-id"]
+		}'
 
 fi
 
@@ -739,45 +1070,37 @@ else
     USER_AUTH_HEADER="$(user_auth_header)"
     TASK_ROUTE="${UPDATE_TASK_ROUTE_TEMPLATE/\{ID\}/$TEST_TASK_ID}"
 
-    run_test "updateTask: suspicious title" 400 \
-        -X PUT "$BASE_URL$TASK_ROUTE" \
-        -H "$USER_AUTH_HEADER" \
-        -H "Content-Type: application/json" \
-        -d '{
-            "title":"<script>alert(1)</script>"
-        }'
+	run_test "updateTask: invalid priority" 400 \
+		-X PUT "$BASE_URL$TASK_ROUTE" \
+		-H "$USER_AUTH_HEADER" \
+		-H "Content-Type: application/json" \
+		-d '{
+			"taskPriority":"urgent"
+		}'
 
-    run_test "updateTask: invalid priority" 400 \
-        -X PUT "$BASE_URL$TASK_ROUTE" \
-        -H "$USER_AUTH_HEADER" \
-        -H "Content-Type: application/json" \
-        -d '{
-            "priority":"urgent"
-        }'
+	run_test "updateTask: suspicious description" 400 \
+		-X PUT "$BASE_URL$TASK_ROUTE" \
+		-H "$USER_AUTH_HEADER" \
+		-H "Content-Type: application/json" \
+		-d '{
+			"taskDesc":"<script>alert(1)</script>"
+		}'
 
-    run_test "updateTask: suspicious description" 400 \
-        -X PUT "$BASE_URL$TASK_ROUTE" \
-        -H "$USER_AUTH_HEADER" \
-        -H "Content-Type: application/json" \
-        -d '{
-            "desc":"<script>alert(1)</script>"
-        }'
+	run_test "updateTask: invalid date" 400 \
+		-X PUT "$BASE_URL$TASK_ROUTE" \
+		-H "$USER_AUTH_HEADER" \
+		-H "Content-Type: application/json" \
+		-d '{
+			"dueDate":"not-a-date"
+		}'
 
-    run_test "updateTask: invalid date" 400 \
-        -X PUT "$BASE_URL$TASK_ROUTE" \
-        -H "$USER_AUTH_HEADER" \
-        -H "Content-Type: application/json" \
-        -d '{
-            "date":"not-a-date"
-        }'
-
-    run_test "updateTask: invalid status" 400 \
-        -X PUT "$BASE_URL$TASK_ROUTE" \
-        -H "$USER_AUTH_HEADER" \
-        -H "Content-Type: application/json" \
-        -d '{
-            "status":"random"
-        }'
+	run_test "updateTask: invalid status" 400 \
+		-X PUT "$BASE_URL$TASK_ROUTE" \
+		-H "$USER_AUTH_HEADER" \
+		-H "Content-Type: application/json" \
+		-d '{
+			"taskStatus":"random"
+		}'
 
     run_test "updateTask: assignedUserIds wrong type" 400 \
         -X PUT "$BASE_URL$TASK_ROUTE" \
@@ -794,6 +1117,156 @@ else
         -d '{
             "assignedUserIds":["not-a-valid-id"]
         }'
+
+fi
+
+# ===========================================================================
+# MESSAGES — createDirectConversation validation
+# ===========================================================================
+
+echo ""
+echo "=================================================="
+echo "MESSAGES — createDirectConversation"
+echo "=================================================="
+
+if [ -z "$USER_TOKEN" ]; then
+
+    skip_test "createDirectConversation: missing participantId"
+    skip_test "createDirectConversation: invalid participantId"
+    skip_test "createDirectConversation: self-conversation"
+
+else
+
+    USER_AUTH_HEADER="$(user_auth_header)"
+
+    run_test "createDirectConversation: missing participantId" 400 \
+        -X POST "$BASE_URL$CREATE_DIRECT_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{}'
+
+    run_test "createDirectConversation: invalid participantId" 400 \
+        -X POST "$BASE_URL$CREATE_DIRECT_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "participantId":"not-a-valid-uuid"
+        }'
+
+fi
+
+# ===========================================================================
+# MESSAGES — createGroupConversation validation
+# ===========================================================================
+
+echo ""
+echo "=================================================="
+echo "MESSAGES — createGroupConversation"
+echo "=================================================="
+
+if [ -z "$USER_TOKEN" ]; then
+
+    skip_test "createGroupConversation: missing participantIds"
+    skip_test "createGroupConversation: empty participantIds"
+    skip_test "createGroupConversation: invalid participantId in array"
+    skip_test "createGroupConversation: missing groupName"
+    skip_test "createGroupConversation: XSS in groupName"
+
+else
+
+    USER_AUTH_HEADER="$(user_auth_header)"
+
+    run_test "createGroupConversation: missing participantIds" 400 \
+        -X POST "$BASE_URL$CREATE_GROUP_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "groupName":"Test Group"
+        }'
+
+    run_test "createGroupConversation: empty participantIds" 400 \
+        -X POST "$BASE_URL$CREATE_GROUP_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "participantIds":[],
+            "groupName":"Test Group"
+        }'
+
+    run_test "createGroupConversation: invalid participantId in array" 400 \
+        -X POST "$BASE_URL$CREATE_GROUP_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "participantIds":["not-a-valid-uuid"],
+            "groupName":"Test Group"
+        }'
+
+    run_test "createGroupConversation: missing groupName" 400 \
+        -X POST "$BASE_URL$CREATE_GROUP_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "participantIds":["11111111-1111-4111-8111-111111111111"]
+        }'
+
+    run_test "createGroupConversation: XSS in groupName" 400 \
+        -X POST "$BASE_URL$CREATE_GROUP_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "participantIds":["11111111-1111-4111-8111-111111111111"],
+            "groupName":"<script>alert(1)</script>"
+        }'
+
+fi
+
+# ===========================================================================
+# MESSAGES — sendMessage validation
+# ===========================================================================
+
+echo ""
+echo "=================================================="
+echo "MESSAGES — sendMessage"
+echo "=================================================="
+
+if [ -z "$USER_TOKEN" ]; then
+
+    skip_test "sendMessage: missing conversation ID"
+    skip_test "sendMessage: missing text"
+    skip_test "sendMessage: XSS in text"
+    skip_test "sendMessage: oversized text"
+
+elif [ -z "$TEST_CONVERSATION_ID" ]; then
+
+    skip_test "sendMessage tests: TEST_CONVERSATION_ID not provided"
+
+else
+
+    USER_AUTH_HEADER="$(user_auth_header)"
+    CONVERSATION_ROUTE="/api/messages/$TEST_CONVERSATION_ID/messages"
+
+    run_test "sendMessage: missing text" 400 \
+        -X POST "$BASE_URL$CONVERSATION_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{}'
+
+    run_test "sendMessage: XSS in text" 400 \
+        -X POST "$BASE_URL$CONVERSATION_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{
+            "text":"<script>alert(1)</script>"
+        }'
+
+    run_test "sendMessage: oversized text (5001 chars)" 400 \
+        -X POST "$BASE_URL$CONVERSATION_ROUTE" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"text\":\"$(printf 'a%.0s' {1..5001})\"
+        }"
 
 fi
  

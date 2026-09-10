@@ -4,7 +4,7 @@ import { useToast } from '@/context/ToastContext';
 import type { Attachment, DayGroup, Message } from '../types';
 import { ChatAvatar } from './ChatAvatar';
 import { formatClockTime } from '../lib/format';
-import { splitTextWithLinks, getDisplayNameFromUrl  } from '../lib/links';
+import { splitTextWithLinks } from '../lib/links';
 
 interface MessageAttachmentProps {
   attachment: Attachment;
@@ -90,24 +90,11 @@ function MessageBlock({ message }: { message: Message }) {
           </div>
         )}
 
-        {message.linkUrl && (
-          <a
-			href={message.linkUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-block text-[1.1em] text-accent-lime hover:underline mb-2"
-          >
-            {getDisplayNameFromUrl(message.linkUrl)}
-			{/* remove above after BE, uncomment below for BE */}
-			{/* {getDisplayNameFromUrl(message.linkUrl)} */} 
-          </a>
-        )}
-
         {message.attachments?.map((attachment) => (
           <MessageAttachment key={attachment.id} attachment={attachment} />
         ))}
 
-        {message.text && (
+        {message.text ? (
           <p className="text-[1.1em] leading-relaxed text-foreground-2">
             {message.text.split('\n').map((line, lineIndex) => (
               <React.Fragment key={lineIndex}>
@@ -130,7 +117,13 @@ function MessageBlock({ message }: { message: Message }) {
               </React.Fragment>
             ))}
           </p>
-        )}
+        ) : message.linkUrl ? (
+          <p className="text-[1.1em] leading-relaxed text-foreground-2">
+            <a href={message.linkUrl} target="_blank" rel="noreferrer" className="text-accent-lime hover:underline">
+              {message.linkUrl}
+            </a>
+          </p>
+        ) : null}
       </div>
     </div>
   );

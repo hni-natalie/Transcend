@@ -99,6 +99,7 @@ interface SidebarProps {
   recentConversations?: Conversation[];
   isLoading?: boolean;
   onDeleteRequest?: (conversation: Conversation) => void;
+  className?: string;
 }
 
 export function Sidebar({
@@ -108,19 +109,20 @@ export function Sidebar({
   recentConversations = [],
   isLoading = false,
   onDeleteRequest,
+  className = '',
 }: SidebarProps) {
   const hasAny = pinnedConversations.length > 0 || recentConversations.length > 0;
 
   if (isLoading) {
     return (
-      <aside className="w-[254px] shrink-0 bg-background flex flex-col mt-4 mb-2 mr-4 min-h-0">
+      <aside className={`w-full md:w-[254px] shrink-0 bg-background flex-col mt-4 mb-2 md:mr-4 min-h-0 ${className}`}>
         <LoadingState message="Loading conversations..." size="small" className="flex-1" />
       </aside>
     );
   }
 
   return (
-    <aside className="w-[254px] shrink-0 bg-background flex flex-col mt-4 mb-2 mr-4 min-h-0">
+    <aside className={`w-full md:w-[254px] shrink-0 bg-background flex-col mt-4 mb-2 md:mr-4 min-h-0 ${className}`}>
       <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar pb-4">
         {!hasAny ? (
           <EmptyState message="No conversations yet" size="small" />
