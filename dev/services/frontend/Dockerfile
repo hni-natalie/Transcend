@@ -29,7 +29,7 @@ COPY --from=builder --chown=frontend:frontend /build/package-lock.json /app_buil
 ENV CHOKIDAR_USEPOLLING=true
 ENV WATCHPACK_POLLING=true
 
-USER frontend
+# USER frontend
 
 WORKDIR /app
 
