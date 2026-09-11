@@ -1,4 +1,22 @@
 services:
+  certs:
+    build: ./${SERV_DIR}/certs
+    container_name: t_certs
+    env_file:
+      - .env
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN   # for chown
+      - FOWNER  # for chmod
+    volumes:
+      - ssl_certs:/etc/certs:nocopy
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app-network
+    read_only: true # make root fs read-only
+    restart: "no"
 
   nginx:
     build: ./${SERV_DIR}/nginx
@@ -7,6 +25,8 @@ services:
       - "443:443"
     env_file:
       - .env
+    volumes:
+      - ssl_certs:/etc/nginx/ssl
     healthcheck:
       test: ["CMD", "wget", "--no-check-certificate", "-q", "--spider", "https://localhost/"]
       interval: 5s
@@ -16,6 +36,7 @@ services:
     depends_on:
       frontend:
         condition: service_healthy
+    restart: "always"
     networks:
       - app-network
 
@@ -36,8 +57,12 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+      certs:
+        condition: service_completed_successfully
     volumes:
       - frontend_app:/app:nocopy
+      - ssl_certs:/etc/ssl/certs/app:ro
+    restart: "always"
     networks:
       - app-network
 
@@ -49,7 +74,6 @@ services:
       - "${BACKEND_PORT}"
     ports:
       - "3000:3000"           # RMB TO REMOVE before production
-      - "5555:5555"           # uncomment for dev
     env_file:
       - .env
       - ./data/backend/.env
@@ -59,6 +83,9 @@ services:
       timeout: 10s
       retries: 5
       start_period: 240s
+    depends_on:
+      certs:
+        condition: service_completed_successfully
     secrets:
       - jwt_secret
       - app_root
@@ -76,20 +103,30 @@ services:
       - smtp_password
     volumes:
       - backend_app:/app:nocopy
+      - ssl_certs:/etc/ssl/certs/app:ro
+    restart: "always"
     networks:
       - app-network
 
   whisper:
     build: ./${SERV_DIR}/whisper
     container_name: t_whisper
+    env_file:
+      - .env
     expose:
       - "8000"
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8000/"]
+      test: ["CMD", "wget", "--no-check-certificate", "-q", "-O", "-", "https://localhost:8000/"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
+    depends_on:
+      certs:
+        condition: service_completed_successfully
+    volumes:
+      - ssl_certs:/etc/ssl/certs/app:ro
+    restart: "always"
     networks:
       - app-network
 
@@ -107,6 +144,9 @@ volumes:
       type: none
       device: ${PWD}/dev/data/backend
       o: bind
+
+  ssl_certs:
+    driver: local
 
 networks:
   app-network:

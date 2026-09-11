@@ -84,6 +84,8 @@ make up-build
 - [ThreeJS Positional Audio Documentation](https://threejs.org/docs/#PositionalAudio)
 - [Raycasting move to mouse click](https://github.com/WaelYasmina/spaceship/blob/main/src/js/scripts.js)
 - [d3 for tree layout](https://d3js.org/d3-hierarchy/tree)
+- [express rate limiter](https://express-rate-limit.mintlify.app/reference/configuration#standardheaders)
+- [nginx limit request directive](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req)
 
 ## Team Information
 | Team Member | Role                                | Module Tech Lead                        |

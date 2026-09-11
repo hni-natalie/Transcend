@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import path from 'path'
+import fs from 'fs'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -8,7 +9,13 @@ export default defineConfig(({ mode }) => {
   const envDir = path.resolve(__dirname, '../..')
 
   console.log(`Loading ${mode} environment variables`)
-  
+
+  const domainName = process.env.DOMAIN_NAME
+  const certDir = '/etc/ssl/certs/app'
+  const keyPath = domainName && path.join(certDir, `${domainName}.key`)
+  const certPath = domainName && path.join(certDir, `${domainName}.crt`)
+  const hasCerts = keyPath && certPath && fs.existsSync(keyPath) && fs.existsSync(certPath)
+
   return {
     plugins: [
       react(),
@@ -18,6 +25,14 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     envDir: envDir,
+    server: hasCerts
+      ? {
+          https: {
+            key: fs.readFileSync(keyPath),
+            cert: fs.readFileSync(certPath),
+          },
+        }
+      : undefined,
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
