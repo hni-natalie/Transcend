@@ -63,11 +63,14 @@ export function SpaceLayoutProvider({ children, padding=1, roomName } : SpaceLay
 	const [officeSpace, setOfficeSpace] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [count, setCount] = useState(0);
-	const { socket, isConnected } = useSocket();
+	const { socket, isConnected, getToken } = useSocket();
 	const positionDataRef = useRef([]);
 	const planeRefs = useRef(new Map());
 
 	useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+
 		setLoading(true);
 		const fetchData = async () => {
 			const { departmentCount, officeSpaces } = await getOfficeDept();

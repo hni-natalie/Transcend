@@ -55,6 +55,7 @@ interface SocketContextType {
   declineCall: (directKey:string, roomName:string, mode:string) => void;
   callStatus: CallStatusState;
   setCallStatus: React.Dispatch<React.SetStateAction<CallStatusState>>;
+  getToken: () => string | null;
 }
 
 // 2. Pass the interface to createContext
@@ -458,6 +459,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     incomingCalls,
     dismissIncomingCall,
     declineCall,
+    getToken,
   };
 
   return (
