@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { InputTextArea, IconMeetingAdd, InputDropdownChip, InputText, ModalHeader } from "@shared";
+import {
+    InputTextArea,
+    IconMeetingAdd,
+    InputDropdownChip,
+    InputText,
+    ModalHeader,
+    MEETING_TITLE_MAX_LENGTH,
+    MEETING_DESC_MAX_LENGTH,
+    MIN_MEETING_DURATION_MS,
+    MAX_MEETING_DURATION_MS,
+} from "@shared";
 import { useToast } from '@/context/ToastContext';
 import { meetingApi } from "@features/meetings";
 import type { MeetingDetails, Participant } from "@features/meetings/meeting.types";
@@ -34,11 +44,6 @@ const attendanceOptions : DropdownChoice[] = [
     { id: 'present', name: 'Present' },
     { id: 'absent', name: 'Absent' },
 ];
-
-const MEETING_TITLE_MAX_LENGTH = 60;
-const MEETING_DESC_MAX_LENGTH = 500;
-const MIN_DURATION_MS = 5 * 60 * 1000;  // 5 minutes
-const MAX_DURATION_MS = 20 * 60 * 1000; // 20 minutes
 
 const validateMeetingForm = (data: {
     title: string;
@@ -76,10 +81,10 @@ const validateMeetingForm = (data: {
     }
 
     const duration = endDate.getTime() - startDate.getTime();
-    if (duration < MIN_DURATION_MS) {
+    if (duration < MIN_MEETING_DURATION_MS) {
         return "Meeting duration too short and must be at least 5 minutes.";
     }
-    if (duration > MAX_DURATION_MS) {
+    if (duration > MAX_MEETING_DURATION_MS) {
         return "Meeting duration cannot exceed 20 minutes.";
     }
 

@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
-import { useRolesAndDepartments, useAvatarUpload, UserTableRow, IconClose, ConfirmDeleteModal } from '@shared';
+import {
+  useRolesAndDepartments,
+  useAvatarUpload,
+  UserTableRow,
+  IconClose,
+  ConfirmDeleteModal,
+  EMAIL_REGEX,
+  USER_NAME_MAX_LENGTH,
+} from '@shared';
 import { userApi, CreateUserRequest, UpdateUserRequest } from '@features/users'
 import { usePasswordField } from '@shared/ui/PasswordField';
 import { UserFormFields } from './userFormFields';
@@ -156,14 +164,12 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
     }
   };
 
-  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
   const validateForm = (): string | null => {
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       return 'First and last name are required.';
     }
-    if (formData.firstName.trim().length > 100 || formData.lastName.trim().length > 100) {
-      return 'Names must be under 100 characters.';
+    if (formData.firstName.trim().length > USER_NAME_MAX_LENGTH || formData.lastName.trim().length > USER_NAME_MAX_LENGTH) {
+      return `Names must be under ${USER_NAME_MAX_LENGTH} characters.`;
     }
     if (!formData.email.trim()) {
       return 'Email is required.';
