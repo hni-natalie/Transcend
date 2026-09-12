@@ -2,7 +2,7 @@
  handles voice room joining request, leave room request & mute/unmute
 */
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLiveKit } from "@features/livekit";
 import { IconMic, IconMicDisabled } from "@shared/ui/Icons";
@@ -28,6 +28,7 @@ type ButtonVoiceRoomProps = {
   isHost?: boolean;
   meetId?: string;
   directKey?: string;
+  isInitiator?: boolean;
   onCallStatusChange?: ( status:UserCallStatus, directKey?: string ) => void;
 };
 
@@ -46,6 +47,7 @@ export function ButtonVoiceMsg({
   isHost = false,
   meetId = "",
   directKey = "",
+  isInitiator = true,
   onCallStatusChange,
 }: ButtonVoiceRoomProps) {
   const {
@@ -60,7 +62,7 @@ export function ButtonVoiceMsg({
     toggleMute,
   } = useLiveKit(roomName);
 
-  const { enableSocket, isConnected, socket, callStatus } = useSocket();
+  const { enableSocket, isConnected, socket, callStatus, declineCall } = useSocket();
   const navigate = useNavigate();
   const isClicked = useRef(false);
   const hasNavigated = useRef(false);
@@ -133,7 +135,7 @@ export function ButtonVoiceMsg({
     }
 
     const handleConnectSuccess = () => {
-      socket.emit('initiate-call', { directKey, selectedRoomName, mode });
+      socket.emit('initiate-call', { directKey, selectedRoomName, mode, isInitiator });
       onCallStatusChange?.('ringing', directKey);
       cleanupConnectListeners();
     };
@@ -164,6 +166,7 @@ export function ButtonVoiceMsg({
   
     // set onCallStatusChange in disconnect as using diff button in Video roomm
     await disconnect(true);
+    declineCall(directKey, roomName, mode);
   
     if (leaveTo) navigate(leaveTo);
   };
