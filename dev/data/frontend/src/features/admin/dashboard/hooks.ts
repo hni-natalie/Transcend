@@ -40,7 +40,8 @@ const toActivityItem = (e: any): ActivityItem => ({
   name: e.user,
   action: e.action,
   context: e.contextTitle || e.contextDetails || '',
-  time: e.time,
+//   time: e.time,
+  timestamp: e.timestamp,
 });
 
 export const useDashboardData = () => {

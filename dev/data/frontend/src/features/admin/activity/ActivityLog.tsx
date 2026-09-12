@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSocket, useToast } from '@/context';
-import { FilterLayout } from '@shared';
+import { FilterLayout, formatLocalTime, formatRelativeTime } from '@shared';
 import { DefaultAvatar } from '@/shared/ui/DefaultAvatar';
 import { activityApi, TAB_TO_TYPE } from '@/features/admin/activity/api/activity.api';
 import type { ActivityEvent, DateRangeFilter, CustomDateRange } from '@/features/admin/activity/types';
@@ -189,7 +189,7 @@ export function ActivityLog() {
                 <div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-12">
                   <div className={`w-4 h-4 rounded-full ring-4 ring-background z-10 flex-shrink-0 ${styles.dotColor}`} />
                   <span className="text-base font-medium text-foreground-1 w-20 text-left select-none">
-                    {item.time}
+                    {formatLocalTime(item.timestamp)}
                   </span>
                 </div>
 
@@ -225,7 +225,7 @@ export function ActivityLog() {
                   )}
 
                   <div className="text-right flex-shrink-0 w-36 text-base text-foreground-3 group-hover:text-foreground-3 transition-colors">
-                    {item.relativeTime}
+                    {formatRelativeTime(item.timestamp)}
                   </div>
                 </div>
               </div>

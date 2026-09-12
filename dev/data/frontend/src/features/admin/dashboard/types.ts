@@ -29,5 +29,6 @@ export interface ActivityItem {
   name: string;
   action: string;
   context: string;
-  time: string;
+//   time: string;
+  timestamp: string;
 }

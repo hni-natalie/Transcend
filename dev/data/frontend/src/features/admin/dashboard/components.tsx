@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IconLogin, IconLogout, IconTaskAdd, IconTaskDone, IconMeetings, IconMeetingAdd, TruncatedText, getStatusPriority, getStatusColors, DefaultAvatar } from '@/shared';
+import { IconLogin, IconLogout, IconTaskAdd, IconTaskDone, IconMeetings, IconMeetingAdd, TruncatedText, getStatusPriority, getStatusColors, DefaultAvatar, formatLocalTime } from '@/shared';
 import { DbUser, ActivityItem, SpaceRatio, SpaceWithOccupancy } from './types';
 
 // METRICS RING
@@ -404,7 +404,7 @@ const ActivityItemRow = ({
         </div>
       </div>
       <div className="text-[10px] md:text-[11px] font-semibold text-foreground font-main ml-3 md:ml-4 shrink-0">
-        {item.time}
+        {formatLocalTime(item.timestamp)}
       </div>
     </div>
   );
