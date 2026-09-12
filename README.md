@@ -73,6 +73,8 @@ make up-build
 | make be-re | Rebuild backend dependencies | 
 | make build-re | Rebuild all dependencies without cache | 
 
+- [express rate limiter](https://express-rate-limit.mintlify.app/reference/configuration#standardheaders)
+- [nginx limit request directive](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req)
 
 ## Team Information
 | Team Member | Role                                | Module Tech Lead                        |

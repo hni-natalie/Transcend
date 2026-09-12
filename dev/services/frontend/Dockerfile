@@ -19,8 +19,8 @@ FROM node:20-alpine
 
 WORKDIR /app_build
 
-RUN addgroup -g 501 -S frontend && \
-    adduser -S frontend -u 501 -G frontend -s /bin/sh
+RUN addgroup -g 1001 -S frontend && \
+    adduser -S frontend -u 1001 -G frontend -s /bin/sh
 
 COPY --from=builder --chown=frontend:frontend /build/package.json /app_build/package.json
 COPY --from=builder --chown=frontend:frontend /build/package-lock.json /app_build/package-lock.json
