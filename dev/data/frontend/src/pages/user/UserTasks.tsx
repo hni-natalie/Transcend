@@ -72,8 +72,8 @@ const validateCreateTaskForm = (data: {
     return 'Invalid due date format.';
   }
   if (data.dueDate && data.dueDate < getTodayDate()) {
-  return 'Due date cannot be in the past.';
-}
+	return 'Due date cannot be in the past.';
+  }
 //   if (data.assignedUserIds.length === 0) {
 //     return 'Please assign at least one team member.';
 //   }
@@ -84,6 +84,7 @@ const validateEditTaskForm = (data: {
   title: string;
   description?: string;
   dueDate?: string;
+  originalDueDate?: string;
 }): string | null => {
   const trimmedTitle = data.title.trim();
   if (!trimmedTitle) {
@@ -98,9 +99,13 @@ const validateEditTaskForm = (data: {
   if (data.dueDate && isNaN(Date.parse(data.dueDate))) {
     return 'Invalid due date format.';
   }
-  if (data.dueDate && data.dueDate < getTodayDate()) {
+  const dueDateChanged = data.dueDate !== (data.originalDueDate || undefined);
+  if (data.dueDate && dueDateChanged && data.dueDate < getTodayDate()) {
 	return 'Due date cannot be in the past.';
   }
+//   if (data.dueDate && data.dueDate < getTodayDate()) {
+// 	return 'Due date cannot be in the past.';
+//   }
   return null;
 };
 
@@ -125,6 +130,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
   const [taskDesc, setTaskDesc] = useState(task.taskDesc || '');
   const [taskPriority, setTaskPriority] = useState<'low' | 'medium' | 'high'>( task.assignedTo?.[0]?.taskPriority || 'medium');
   const [taskStatus, setTaskStatus] = useState<'not_started' | 'in_progress' | 'done' >(task.taskStatus);
+  const originalDueDate = task.dueDate ? task.dueDate.split('T')[0] : '';
   const [dueDate, setDueDate] = useState( task.dueDate ? task.dueDate.split('T')[0] : '');
   const [localError, setLocalError] = useState('');
 
@@ -133,6 +139,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
       title: taskTitle,
       description: taskDesc,
       dueDate,
+	  originalDueDate,
     });
     if (validationError) {
       setLocalError(validationError);
@@ -153,7 +160,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
     <div className="form-layout">
 
         <ModalHeader 
-          icon={IconTasks}
+          icon={IconTaskAdd}
           iconClassName='text-white w-6 h-6'
           title='Edit Task'
           onClose={onClose}
@@ -347,7 +354,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
     return (
     <div className='form-layout'>
       <ModalHeader 
-        icon={IconTasks}
+        icon={IconTaskAdd}
         iconClassName='text-white w-6 h-6'
         title='Create New Task'
         onClose={onClose}

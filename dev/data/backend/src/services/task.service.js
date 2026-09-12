@@ -149,7 +149,7 @@ const taskService = {
 
 		// update task priority in task assignment table
 		await prisma.taskAssignment.updateMany({
-			where: { taskId, userId },
+			where: { taskId },
 			data: { taskPriority }
 		});
 
