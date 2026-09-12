@@ -138,7 +138,7 @@ export const userApi = {
         newPassword: string
     ): Promise<{ success: boolean; message: string }> => {
         return apiClient.post<{ success: boolean; message: string }>(
-            `${API_CONFIG.endpoints.users.resetPassword}/${userId}`,
+            `${API_CONFIG.endpoints.users.base}/${userId}/reset-password`,
             { newPassword }
         );
     },
