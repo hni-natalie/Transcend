@@ -1,4 +1,20 @@
-import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, IconPlus, LoadingState, Modal, ConfirmDeleteModal, IconClose, ModalHeader, DefaultAvatar, AlertBanner } from '@shared';
+import {
+  PageHeader,
+  IconTasks,
+  InputDropdown,
+  InputText,
+  IconTaskAdd,
+  IconPlus,
+  LoadingState,
+  Modal,
+  ConfirmDeleteModal,
+  IconClose,
+  ModalHeader,
+  DefaultAvatar,
+  AlertBanner,
+  TASK_TITLE_MAX_LENGTH,
+  TASK_DESC_MAX_LENGTH,
+} from '@shared';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
@@ -27,9 +43,6 @@ const taskPriorityOptions : DropdownChoice[] = [
 	{ id: 'medium', name: 'Medium Priority' },
 	{ id: 'high', name: 'High Priority' }
 ];
-
-const TASK_TITLE_MAX_LENGTH = 50;
-const TASK_DESC_MAX_LENGTH = 200;
 
 const getTodayDate = () => {
   const today = new Date();
