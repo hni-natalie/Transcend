@@ -17,6 +17,7 @@ export { countryOptions } from './lib/constants/countries'
 export { timezoneOptions } from './lib/constants/timezones'
 export { attendanceOptions } from './lib/constants/attendance'
 export * from './lib/constants/userStatus';
+export * from './lib/constants/validation';
 
 // types
 export * from './types/user.types';
