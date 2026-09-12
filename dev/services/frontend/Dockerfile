@@ -2,7 +2,7 @@
 # Stage 1: Initialize React app
 # -----------------------------------------
 
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # set working directory
 WORKDIR /build
@@ -15,7 +15,7 @@ RUN /build.sh
 # -----------------------------------------
 # Stage 2: Copy over files & start
 # -----------------------------------------
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app_build
 
@@ -29,7 +29,7 @@ COPY --from=builder --chown=frontend:frontend /build/package-lock.json /app_buil
 ENV CHOKIDAR_USEPOLLING=true
 ENV WATCHPACK_POLLING=true
 
-USER frontend
+# USER frontend
 
 WORKDIR /app
 
