@@ -62,6 +62,9 @@ nginx:
 fe:
 	@$(COMPOSE) up frontend
 
+fe-down:
+	@$(COMPOSE) down frontend -v
+
 fe-re:
 	@$(COMPOSE) build --no-cache frontend && $(COMPOSE) up frontend
 
@@ -76,5 +79,9 @@ vm-start:
 
 vm-stop:
 	@colima stop --profile transcendence
+
+clean:
+	docker exec t_frontend rm -rf node_modules package-lock.json
+
 
 .PHONY: init help up down stop start restart log ps nginx fe fe-re be be-re vm-start vm-stop
