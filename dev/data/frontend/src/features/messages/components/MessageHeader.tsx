@@ -45,8 +45,6 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, on
   const [localTime, setLocalTime] = useState(() => formatClockTime());
   const { incomingCalls, callStatus, setCallStatus, isConnected } = useSocket();
   const isRinging = !!directKey && !!incomingCalls[directKey];
-  // Only allow calling when the contact is actively online — offline, away,
-  // in-meeting, or any other/unknown status all disable the call buttons.
   const isContactOnline = contact.status === 'online';
   const canCall = isConnected && isContactOnline;
   const [callMode, setCallMode] = useState('none');
@@ -108,9 +106,9 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, on
         </div>
       </div>
 
-      <div className="flex items-center gap-3 text-foreground-3">
+      <div className="flex items-center gap-3 text-foregroaund-3">
         {/* {!contact.isGroup && ( */}
-		{!contact.isGroup && !contact.deletedAt && (
+		    {!contact.isGroup && !contact.deletedAt && (
           <>
             {callStatus.status === 'ringing' && callStatus.directKey === directKey && <LoadingState message='Awaiting' size='none' msgClassName='font-sans'/>}
             {isRinging && callStatus.status === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}
