@@ -26,12 +26,14 @@ export function UserMeetingRoom({
     meetingTitle,
     isHost,
     leaveTo,
+    comeFrom,
   } = location.state || {
     roomName: '',
     meetId: '',
     meetingTitle: 'Meeting',
     isHost: false,
     leaveTo: R.USER_MEETINGS,
+    comeFrom: R.USER_MEETINGS,
   };
 
   const {
@@ -42,6 +44,9 @@ export function UserMeetingRoom({
     error,
   } = useLiveKit(roomName);
 
+  useEffect(() => {
+    window.history.replaceState({}, '', comeFrom);
+  }, []);
   /*
    * Set room when LiveKit connects
    */

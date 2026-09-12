@@ -313,6 +313,8 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     }
 
     return () => {
+      sessionStorage.removeItem('activeMeeting');
+      sessionStorage.removeItem('activeMsgMeeting');
       if (socket) {
         socket.off('existing-players');
         socket.off('player-joined');
