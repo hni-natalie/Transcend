@@ -6,7 +6,7 @@ const {
     validateId,
 } = require('./common.validator');
 
-const MAX_GROUP_NAME_LENGTH = 50;
+const MAX_GROUP_NAME_LENGTH = 25;
 const MAX_MESSAGE_LENGTH = 2000;
 
 function validateCreateDirectConversation({ participantId }) {

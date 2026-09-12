@@ -1,9 +1,55 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { IconEmoji, IconFile, IconImage, IconPlus } from '@shared';
+import {
+  IconEmoji,
+  IconFile,
+  IconImage,
+  IconPlus,
+  MAX_MESSAGE_LENGTH,
+  MAX_FILE_SIZE,
+  ACCEPTED_FILE_EXTENSIONS,
+  ACCEPTED_FILE_TYPES,
+  ACCEPTED_MIME_TYPES,
+  SUSPICIOUS_MARKUP_REGEX,
+} from '@shared';
+import { useToast } from '@/context/ToastContext';
 import { messagesApi } from "../api/messages.api";
 import type { Attachment, UploadedAttachment } from '../types';
 import { formatFileSize } from '../lib/format';
 import { RemoveButton } from './UserRow';
+
+const validateSendMessageForm = (data: {
+  text: string;
+  hasAttachments: boolean;
+}): string | null => {
+  const trimmed = data.text.trim();
+  if (!trimmed && !data.hasAttachments) {
+    return 'Message text or attachment is required.';
+  }
+  if (trimmed.length > MAX_MESSAGE_LENGTH) {
+    return `Message must be under ${MAX_MESSAGE_LENGTH} characters.`;
+  }
+  if (SUSPICIOUS_MARKUP_REGEX.test(trimmed)) {
+    return 'Message contains characters that are not allowed.';
+  }
+  return null;
+};
+
+const validateAttachmentFile = (file: File): string | null => {
+  if (!file) {
+    return 'File is required.';
+  }
+  const ext = '.' + (file.name.split('.').pop()?.toLowerCase() || '');
+  const isValidExt = ACCEPTED_FILE_EXTENSIONS.includes(ext);
+  const isValidMime = ACCEPTED_MIME_TYPES.includes(file.type);
+
+  if (!isValidExt && !isValidMime) {
+    return 'Invalid file type. Only PDF, DOC, DOCX, and images (PNG, JPG, GIF) are allowed.';
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    return 'File size exceeds the 10MB limit.';
+  }
+  return null;
+};
 
 const EMOJI_CATEGORIES = [
   { name: 'Smileys', emojis: ['😊', '😅', '😎', '🤩', '😍', '🤗', '🤔', '😭', '😌', '😏'] },
@@ -11,8 +57,6 @@ const EMOJI_CATEGORIES = [
   { name: 'Symbols', emojis: ['✅', '🔥', '💯', '✨', '💡', '🎉', '🚨', '🔍', '🌟', '🚀'] },
   { name: 'Work', emojis: ['📅', '📋', '📈', '📊', '🎯', '📌', '🏁', '⚠️', '📂', '🔗'] },
 ] as const;
-
-const ACCEPTED_FILE_TYPES = '.pdf,.doc,.docx,.png,.jpg,.jpeg,.gif';
 
 interface PendingAttachment {
   localId: string;
@@ -33,20 +77,33 @@ function pendingAttachmentIcon(file: File) {
   return file.type.startsWith('image/') ? IconImage : IconFile;
 }
 
-// export function Composer({ contactName, conversationId, onSend }: ComposerProps) {
 export function Composer({ contactName, conversationId, onSend, disabled = false }: ComposerProps) {
   const [value, setValue] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+  const [composerError, setComposerError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isUploading = pendingAttachments.some((item) => item.status === 'uploading');
   const completedAttachments = pendingAttachments.filter((item) => item.status === 'done' && item.attachment);
-  //   const canSend = !isUploading && (value.trim().length > 0 || completedAttachments.length > 0);
   const canSend = !disabled && !isUploading && (value.trim().length > 0 || completedAttachments.length > 0);
+
+  const showComposerError = (message: string) => {
+    setComposerError(message);
+    if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+    errorTimeoutRef.current = setTimeout(() => setComposerError(null), 5000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+    };
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -56,8 +113,18 @@ export function Composer({ contactName, conversationId, onSend, disabled = false
   };
 
   const handleSend = () => {
-    if (!canSend) {
+    const error = validateSendMessageForm({
+      text: value,
+      hasAttachments: completedAttachments.length > 0,
+    });
+
+    if (error) {
+      showComposerError(error);
       return;
+    }
+
+    if (!canSend) {
+      return; // still uploading, or disabled prop — nothing to say here
     }
 
     const attachments = completedAttachments.map((item) => item.attachment!);
@@ -66,6 +133,8 @@ export function Composer({ contactName, conversationId, onSend, disabled = false
     setValue('');
     setPendingAttachments([]);
     setShowEmojiPicker(false);
+    setComposerError(null);
+    if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
 
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -131,7 +200,14 @@ export function Composer({ contactName, conversationId, onSend, disabled = false
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
 
-    files.forEach(uploadFile);
+    for (const file of files) {
+      const error = validateAttachmentFile(file);
+      if (error) {
+        showToast('error', error);
+        continue;
+      }
+      uploadFile(file);
+    }
 
 	// clear the input so can select same file again to upload when onChange triggered
     e.target.value = '';
@@ -198,7 +274,17 @@ export function Composer({ contactName, conversationId, onSend, disabled = false
         </div>
       )}
 
-      <div className="flex items-center gap-2 md:gap-3 bg-background-1 border border-border rounded-2xl pl-2 md:pl-4 pr-1.5 md:pr-2 py-1.5 md:py-2 relative">
+      {composerError && (
+        <div className="bg-red-500 text-white text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-t-xl">
+          <span className="font-semibold">Error:</span> {composerError}
+        </div>
+      )}
+
+      <div
+        className={`flex items-center gap-2 md:gap-3 bg-background-1 border border-border pl-2 md:pl-4 pr-1.5 md:pr-2 py-1.5 md:py-2 relative ${
+          composerError ? 'rounded-b-2xl' : 'rounded-2xl'
+        }`}
+      >
         <input
           ref={fileInputRef}
           type="file"
