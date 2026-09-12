@@ -27,6 +27,7 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { user } = useUserStatusSync();
+  const { userStatuses } = useSocket();
   
   const [now, setNow] = useState(() => new Date());
   const [isExpanded, setIsExpanded] = useState(false);
@@ -78,13 +79,15 @@ export function MenuSide({ conf }: { conf?: MenuConfig }): ReactElement {
     return <LoadingState message="" size="medium" />;
   }
 
+  const status = userStatuses[user.userId] ?? user.userStatus;
+
   // ui funcs
   const userChipData: UserChipItem = {
     name: user.userName,
     email: user.userEmail,
     role: user.roleName,
     photo: user.avatarUrl || null,
-    status: user.userStatus as UserBackendStatus,
+    status: status as UserBackendStatus,
   };
 
   const getLocationDisplay = () => {

@@ -306,6 +306,26 @@ const socketService = (io) => {
         return;
       }
 
+	  // check if player is in room and not the same room to join
+	  // check if prev room is meeting, true > update status
+	  if (player.roomName && player.roomName !== roomName) {
+		const previousRoom = player.roomName;
+
+		console.log(`[socket.service] Leaving previous room: ${previousRoom}`);
+		handleLeaveRoom(socket, player, previousRoom);
+
+		const previousMeeting = await prisma.meeting.findUnique({
+			where: { meetId: previousRoom },
+			select: { meetId: true}
+		});
+
+		if (previousMeeting) {
+			const userService = require('./user.service');
+			await userService.updateUserStatus(socket.user.userId, 'online');
+			console.log(`[socket.service] ${player.name} left meeting. Status update to online`);
+		}
+	  }
+
       player.roomName = roomName;
       player.position = getSpawnPosFromDpId(roomData, player.dpId);
 
