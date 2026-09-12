@@ -24,6 +24,7 @@ type ButtonVoiceRoomProps = {
   className?: string;
   joinTo?: string;
   leaveTo?: string;
+  comeFrom?: string;
   showMute?: boolean;
   isHost?: boolean;
   meetId?: string;
@@ -44,6 +45,7 @@ export function ButtonVoiceMsg({
   showMute = true,
   joinTo,
   leaveTo,
+  comeFrom,
   isHost = false,
   meetId = "",
   directKey = "",
@@ -99,7 +101,8 @@ export function ButtonVoiceMsg({
         meetingTitle,
         meetId,
         isHost,
-        leaveTo: leaveTo || R.USER_MEETINGS,
+        leaveTo: leaveTo || R.USER_MESSAGES,
+        comeFrom: comeFrom || R.USER_MESSAGES,
       }),
     );
 
