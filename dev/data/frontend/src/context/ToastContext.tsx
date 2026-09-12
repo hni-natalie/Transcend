@@ -59,11 +59,13 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     <ToastContext.Provider value={{ showToast }}>
       {children}
       {createPortal(
-        <div className="fixed top-6 right-8 z-9999 flex flex-col gap-2 items-end">
+        // <div className="fixed top-6 right-8 z-9999 flex flex-col gap-2 items-end">
+		<div className="fixed top-4 right-4 sm:top-6 sm:right-8 z-9999 flex flex-col gap-2 items-end w-[calc(100vw-2rem)] sm:w-auto">
           {toasts.map(toast => (
             <div
               key={toast.id}
-              className={`rounded-xl p-4 flex items-center gap-3 shadow-xl min-w-[320px] max-w-[500px] animate-in fade-in slide-in-from-right-2 duration-200 ${styles[toast.type]}`}
+            //   className={`rounded-xl p-4 flex items-center gap-3 shadow-xl min-w-[320px] max-w-[500px] animate-in fade-in slide-in-from-right-2 duration-200 ${styles[toast.type]}`}
+			  className={`rounded-xl p-4 flex items-center gap-3 shadow-xl w-full sm:min-w-[320px] sm:max-w-[500px] animate-in fade-in slide-in-from-right-2 duration-200 ${styles[toast.type]}`}
             >
               {icons[toast.type]}
               <span className="flex-1 text-base">{toast.message}</span>
