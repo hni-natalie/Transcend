@@ -131,6 +131,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, on
                   className={`border-0 hover:text-foreground ${canCall ? 'cursor-pointer' : 'cursor-not-allowed' }`}
                   roomName={`${directKey ?? 'room'}:voice`}
                   directKey={directKey ?? undefined}
+                  isInitiator={!isRinging}
                   joinText={
                     <IconPhone
                       className={`stroke-currentColor hover:text-foreground w-[19px] h-[19px] ${
@@ -168,6 +169,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, on
                   }
                   roomName={`${directKey ?? 'room'}:video`}
                   directKey={directKey ?? undefined}
+                  isInitiator={!isRinging}
                   meetingTitle={`Call with ${contact.name}`}
                   loadingText=' '
                   // meetId={meeting.id}
@@ -210,7 +212,7 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, on
         </Tooltip>
       </div>
     </div>
-	    {showScheduleModal && (
+    {showScheduleModal && (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
       onClick={() => setShowScheduleModal(false)}

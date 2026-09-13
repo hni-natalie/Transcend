@@ -121,6 +121,7 @@ export interface MessageResponse {
   conversationId: string;
   text: string | null;
   linkUrl?: string | null;
+  callNote?: string | null;
   createdAt: string;
 
   author: {
