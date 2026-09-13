@@ -275,8 +275,8 @@ export function Composer({ contactName, conversationId, onSend, disabled = false
       )}
 
       {composerError && (
-        <div className="bg-red-500 text-white text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-t-xl">
-          <span className="font-semibold">Error:</span> {composerError}
+        <div className="bg-[#993939] text-foreground-1 font-semibold text-sm md:text-base px-3 md:px-4 py-1.5 md:py-2 rounded-t-xl">
+          <span className="font-bold">Error:</span> {composerError}
         </div>
       )}
 

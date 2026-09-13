@@ -141,73 +141,71 @@ export function Chat({
   }, [chatMessages, layoutContext?.widget]);
 
   return (
-    <div className="lk-chat-overlay">
-      <div {...props} className={`lk-chat-panel ${props.className ?? ''}`}>
-        {/* ── Top: title + exit ───────────────────────────── */}
-        <div className="lk-chat-header">
-          <span className="lk-chat-title">Messages</span>
-          {layoutContext && (
-            <ChatToggle className="lk-chat-close ml-auto">
-              <IconClose className="w-8 h-8 lk-attendance-close" />
-            </ChatToggle>
-          )}
-        </div>
-        
-        {/* ── Middle: scrollable message list ────────────────── */}
-        <div className="lk-chat-body">
-          <ul ref={ulRef} className="lk-chat-messages">
-            {chatMessages.map((msg, idx, all) => {
-              const hideName = idx >= 1 && all[idx - 1].from === msg.from;
-              const hideTimestamp =
-                idx >= 1 && all[idx - 1].from === msg.from && msg.timestamp - all[idx - 1].timestamp < 60_000;
- 
-              return (
-                <li key={msg.id ?? idx} className="lk-chat-entry">
-                  <div className={`flex gap-1 ${!hideName && !hideTimestamp && idx >= 1 ? 'mt-7!' : ''}`}>
-
-                  <div className='flex flex-col'>
-                    {!hideName && (
-                      <span className="lk-chat-entry-name">{msg.from?.name ?? 'Unknown'}</span>
-                    )}
-                    <p className="lk-chat-entry-message">
-                      {messageFormatter ? messageFormatter(msg.message) : msg.message}
-                    </p>
-                  </div>
-
-                  {!hideTimestamp && (
-                    <time className="lk-chat-entry-time">
-                      {new Date(msg.timestamp).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </time>
-                  )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
- 
-        {/* ── Bottom: message input ──────────────────────────── */}
-        <form className="lk-chat-form" onSubmit={handleSubmit}>
-          <InputTextArea
-              ref={inputRef}
-              className="bg-background-1 border-background-3 focus:border-background-4"
-              rows={1}
-              disabled={isSending}
-              placeholder="Enter a message..."
-              onInput={handleInputResize}
-              onKeyDown={handleKeyDown}
-              onKeyUp={(ev) => ev.stopPropagation()}
-          />
-          <div>
-            <button type="submit" className="btn-header rounded-full" disabled={isSending}>
-              Send
-            </button>
-          </div>
-        </form>
+    <div {...props} className={`lk-chat-panel ${props.className ?? ''}`}>
+      {/* ── Top: title + exit ───────────────────────────── */}
+      <div className="lk-chat-header cursor-move">
+        <span className="lk-chat-title select-none">Messages</span>
+        {layoutContext && (
+          <ChatToggle className="lk-chat-close ml-auto">
+            <IconClose className="w-8 h-8 lk-attendance-close" />
+          </ChatToggle>
+        )}
       </div>
+      
+      {/* ── Middle: scrollable message list ────────────────── */}
+      <div className="lk-chat-body">
+        <ul ref={ulRef} className="lk-chat-messages">
+          {chatMessages.map((msg, idx, all) => {
+            const hideName = idx >= 1 && all[idx - 1].from === msg.from;
+            const hideTimestamp =
+              idx >= 1 && all[idx - 1].from === msg.from && msg.timestamp - all[idx - 1].timestamp < 60_000;
+
+            return (
+              <li key={msg.id ?? idx} className="lk-chat-entry">
+                <div className={`flex gap-1 ${!hideName && !hideTimestamp && idx >= 1 ? 'mt-7!' : ''}`}>
+
+                <div className='flex flex-col'>
+                  {!hideName && (
+                    <span className="lk-chat-entry-name">{msg.from?.name ?? 'Unknown'}</span>
+                  )}
+                  <p className="lk-chat-entry-message">
+                    {messageFormatter ? messageFormatter(msg.message) : msg.message}
+                  </p>
+                </div>
+
+                {!hideTimestamp && (
+                  <time className="lk-chat-entry-time">
+                    {new Date(msg.timestamp).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </time>
+                )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      {/* ── Bottom: message input ──────────────────────────── */}
+      <form className="lk-chat-form" onSubmit={handleSubmit}>
+        <InputTextArea
+            ref={inputRef}
+            className="bg-background-1 border-background-3 focus:border-background-4"
+            rows={1}
+            disabled={isSending}
+            placeholder="Enter a message..."
+            onInput={handleInputResize}
+            onKeyDown={handleKeyDown}
+            onKeyUp={(ev) => ev.stopPropagation()}
+        />
+        <div className="shrink-0 flex items-end">
+          <button type="submit" className="btn-header rounded-full" disabled={isSending}>
+            Send
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
