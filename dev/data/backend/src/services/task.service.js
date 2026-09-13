@@ -149,7 +149,7 @@ const taskService = {
 
 		// update task priority in task assignment table
 		await prisma.taskAssignment.updateMany({
-			where: { taskId, userId },
+			where: { taskId },
 			data: { taskPriority }
 		});
 
@@ -178,7 +178,7 @@ const taskService = {
 	async deleteTask(taskId, userId) {
 		const task = await prisma.task.findUnique({ where: { taskId } });
 		if (!task) throw new Error('Task not found');
-		if (task.createdByUserId !== userId) throw new Error('Unauthorized to delete this task');
+		if (task.createdByUserId !== userId) throw new Error('No permission to delete this task');
 
 		await prisma.task.delete({ where: { taskId } });
 

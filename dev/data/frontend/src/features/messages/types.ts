@@ -13,6 +13,8 @@ export interface Profile {
   members?: Profile[];
   memberCount?: number;
   deletedAt?: string | null;
+  creatorId?: string;
+  timezone?: string | null;
 }
 
 export interface Conversation {
@@ -33,6 +35,7 @@ export interface Conversation {
   updatedAt?: string;
 
   directKey?: string;
+  createdByUserId?: string;
 }
 
 export interface ConversationResponse {
@@ -45,6 +48,8 @@ export interface ConversationResponse {
   groupName: string | null;
 
   avatarUrl: string | null;
+
+  createdByUserId: string;
 
   pins: {
     userId: string;
@@ -67,12 +72,14 @@ export interface ConversationResponse {
         dpName: string;
       } | null;
 	  deletedAt?: string | null;
+	  timezone?: string | null;
     };
   }[];
 
   messages: {
     messageId: string;
     text: string | null;
+    linkUrl?: string | null;
     createdAt: string;
 
     author: {
@@ -115,6 +122,8 @@ export interface MessageResponse {
   messageId: string;
   conversationId: string;
   text: string | null;
+  linkUrl?: string | null;
+  callNote?: string | null;
   createdAt: string;
 
   author: {
@@ -172,4 +181,5 @@ export interface InvitableGroup {
   name: string;
   memberCount?: number;
   members?: unknown[];
+  creatorId?: string;
 }

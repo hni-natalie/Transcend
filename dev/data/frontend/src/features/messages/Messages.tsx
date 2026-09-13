@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { useSocket } from '@/context/SocketContext';
 import { ErrorState, Modal, ConfirmDeleteModal, useUsers } from '@shared';
 import { Sidebar, MessageHeader, MessageList, Composer, MessageProfile } from './components';
 import { FormNewMessage } from './form/FormNewMessage';
@@ -17,6 +18,7 @@ interface MessagingProps {
 
 export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProps) {
   const { showToast } = useToast();
+  const { userStatuses } = useSocket();
   const { isOpen: isInfoOpen, toggle: toggleInfo } = useProfile(true);
   const { user: currentUser } = useAuth();
   const { users, isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useUsers({
@@ -48,6 +50,8 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
     id: '',
     type: 'direct',
   });
+  // Drives which single pane is shown on mobile (< md). Ignored at md+ where all panes can show at once.
+  const [mobileView, setMobileView] = useState<'list' | 'chat' | 'info'>('list');
   const [conversationPendingDeletion, setConversationPendingDeletion] = useState<Conversation | null>(null);
 
   const selectedConversationData = useMemo(
@@ -144,13 +148,17 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
 
     const participant = selected.participants?.find((p) => p.id === selected.userId);
     const selectedUser = selected.userId ? usersById.get(selected.userId) : undefined;
-    const profile = selectedUser
+    const baseProfile = selectedUser
       ? { ...toProfile(selectedUser), status: participant?.status ?? toProfile(selectedUser).status }
       : participant;
 
-    if (!profile) {
+    if (!baseProfile) {
       return null;
     }
+
+    // Prefer live presence from the socket over whatever was true at fetch time.
+    const liveStatus = selected.userId ? userStatuses[selected.userId] : undefined;
+    const profile = liveStatus ? { ...baseProfile, status: liveStatus } : baseProfile;
 
     return {
       profile,
@@ -159,7 +167,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
       attachments: isSelectedNew ? [] : currentAttachments,
       links: isSelectedNew ? [] : currentLinks,
     };
-  }, [allConversations, selectedConversation.id, usersById, conversationMessages, currentAttachments, currentLinks, isSelectedNew]);
+  }, [allConversations, selectedConversation.id, usersById, conversationMessages, currentAttachments, currentLinks, isSelectedNew, userStatuses]);
 
   // if the user is not in the group, show invite, else dont show
   const invitableGroups = useMemo(() => {
@@ -240,6 +248,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
         id: created.conversationId,
         type: created.type,
       });
+      setMobileView('chat');
 
       if (data.message) {
         const now = new Date().toISOString();
@@ -261,6 +270,12 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
   const handleConversationSelect = (conversation: Conversation) => {
     setSelectedConversation({ id: conversation.conversationId, type: conversation.type });
 	markConversationRead(conversation.conversationId);
+    setMobileView('chat');
+  };
+
+  const handleToggleInfo = () => {
+    toggleInfo();
+    setMobileView((current) => (current === 'info' ? 'chat' : 'info'));
   };
 
   const handleInviteUsersToGroup = (participantIds: string[]) => {
@@ -368,12 +383,21 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
           recentConversations={recentConversations}
           isLoading={isLoading}
           onDeleteRequest={handleRequestDeleteConversation}
+          className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex`}
         />
 
-        <main className="flex flex-col flex-1 min-w-0 bg-background-1 rounded-3xl my-4 shadow-lg overflow-visible">
+        <main
+          className={`${mobileView === 'chat' ? 'flex' : 'hidden'} md:flex flex-col flex-1 min-w-0 w-full bg-background-1 rounded-3xl my-4 shadow-lg overflow-visible`}
+        >
           {currentChat ? (
             <>
-              <MessageHeader contact={currentChat.profile} directKey={selectedConversationData?.directKey} isInfoOpen={isInfoOpen} onToggleInfo={toggleInfo} />
+              <MessageHeader
+                contact={currentChat.profile}
+                directKey={selectedConversationData?.directKey}
+                isInfoOpen={isInfoOpen}
+                onToggleInfo={handleToggleInfo}
+                onBack={() => setMobileView('list')}
+              />
 
               <MessageList dayGroups={currentChat.messages} />
 
@@ -391,8 +415,10 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
           )}
         </main>
 
-        {isInfoOpen && currentChat && (
-          <div className="bg-background-1 rounded-3xl my-4 shadow-lg ml-4 overflow-hidden self-stretch min-h-0">
+        {(isInfoOpen || mobileView === 'info') && currentChat && (
+          <div
+            className={`${mobileView === 'info' ? 'flex' : 'hidden'} ${isInfoOpen ? 'md:flex' : 'md:hidden'} w-full md:w-auto bg-background-1 rounded-3xl my-4 shadow-lg md:ml-4 overflow-hidden self-stretch min-h-0`}
+          >
             <MessageProfile
               contact={currentChat.profile}
               attachments={currentChat.attachments}
@@ -404,6 +430,8 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
               onRemoveMember={handleRemoveMember}
               isPinned={pinnedConversations.some((conversation) => conversation.conversationId === selectedConversation.id)}
               onTogglePin={() => togglePin(selectedConversation.id)}
+              onBack={() => setMobileView('chat')}
+              currentUserId={currentUser?.userId}
             />
           </div>
         )}

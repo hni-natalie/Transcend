@@ -46,50 +46,63 @@ const userController = {
         }
     },
 
-    async updateCurrentUser(req, res) {
+	async updateCurrentUser(req, res) {
         try {
-            const allowedUpdates = ['userName', 'userEmail', 'avatarUrl', 'city', 'country', 'timezone'];
-            const updates = {};
-            
-            allowedUpdates.forEach(field => {
-                if (req.body[field] !== undefined) {
-                    updates[field] = req.body[field];
-                }
-            });
-            
-            if (Object.keys(updates).length === 0) {
-                return res.status(400).json({ 
-                    error: 'No valid fields to update. Allowed: name, email, city, country, timezone' 
-                });
-            }
-
+            let validated;
             try {
-                const validated = validateUpdateProfile(updates);
-                Object.keys(validated).forEach(key => {
-                    if (validated[key] !== undefined) updates[key] = validated[key];
-                });
+                validated = validateUpdateProfile(req.body);
             } catch (validationErr) {
                 return res.status(400).json({ error: validationErr.message });
             }
 
-		// 	if (updates.userEmail) {
-        //     const existingUser = await userService.getUserByEmail(updates.userEmail);
-        //     if (existingUser && existingUser.userId !== req.user.userId) {
-        //         return res.status(409).json({ 
-        //             error: 'Email already in use by another account' 
-        //         });
-        //     }
-        // }
-            
-            const user = await userService.updateUserProfile(req.user.userId, updates);
+            const user = await userService.updateUserProfile(req.user.userId, validated);
             return res.json(user);
         } catch (error) {
-			if (error.message === 'Email already in use by another account') {
+            if (error.message === 'Email already in use by another account') {
                 return res.status(409).json({ error: error.message });
+            }
+            if (error.message.includes('No valid fields to update')) {
+                return res.status(400).json({ error: error.message });
             }
             return res.status(500).json({ error: error.message });
         }
     },
+
+    // async updateCurrentUser(req, res) {
+    //     try {
+    //         const allowedUpdates = ['userName', 'userEmail', 'avatarUrl', 'city', 'country', 'timezone'];
+    //         const updates = {};
+            
+    //         allowedUpdates.forEach(field => {
+    //             if (req.body[field] !== undefined) {
+    //                 updates[field] = req.body[field];
+    //             }
+    //         });
+            
+    //         if (Object.keys(updates).length === 0) {
+    //             return res.status(400).json({ 
+    //                 error: 'No valid fields to update. Allowed: name, email, city, country, timezone' 
+    //             });
+    //         }
+
+    //         try {
+    //             const validated = validateUpdateProfile(updates);
+    //             Object.keys(validated).forEach(key => {
+    //                 if (validated[key] !== undefined) updates[key] = validated[key];
+    //             });
+    //         } catch (validationErr) {
+    //             return res.status(400).json({ error: validationErr.message });
+    //         }
+            
+    //         const user = await userService.updateUserProfile(req.user.userId, updates);
+    //         return res.json(user);
+    //     } catch (error) {
+	// 		if (error.message === 'Email already in use by another account') {
+    //             return res.status(409).json({ error: error.message });
+    //         }
+    //         return res.status(500).json({ error: error.message });
+    //     }
+    // },
 
 	async updateUserStatus(req, res) {
 		try {

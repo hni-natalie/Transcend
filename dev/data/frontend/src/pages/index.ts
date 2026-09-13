@@ -7,9 +7,7 @@ export { Privacy } from './public/Privacy'
 // ADMIN
 export { AdminDashboard } from './admin/AdminDashboard'
 export { AdminUserManagement } from './admin/AdminUserManagement'
-export { SpaceManagement} from './admin/AdminSpaceManagement'
 export { AdminActivity } from './admin/AdminActivity'	
-// export { AdminSettings } from './admin/AdminSettings'
 
 // USER
 export { UserDashboard } from './user/UserDashboard'

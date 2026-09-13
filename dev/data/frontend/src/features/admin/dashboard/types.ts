@@ -13,12 +13,6 @@ export interface DashboardMetricsResponse {
   users: DbUser[];
 }
 
-// TO REMOVE
-// interface DepartmentRatio {
-//   active: number;
-//   total: number;
-// }
-
 export interface SpaceWithOccupancy extends Space {
   currentOccupancy: number;
 }
@@ -35,5 +29,6 @@ export interface ActivityItem {
   name: string;
   action: string;
   context: string;
-  time: string;
+//   time: string;
+  timestamp: string;
 }

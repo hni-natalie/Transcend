@@ -1,8 +1,7 @@
 const prisma = require('../../prisma/client');
 const { MeetingRole, AttendanceStatus } = require('@prisma/client');
-const { validateMeetingTime, validateParticipantConflicts, validateRequiredStrings } = require('../validators/meeting.validator');
+const { validateMeetingExists, validateMeetingAuthorization, validateMeetingRules, validateMeetingTime, validateParticipantConflicts } = require('../validators/meeting.validator');
 const { logMeetingActivity } = require('../utils/activity');
-const { containsSuspiciousMarkup } = require('../validators/common.validator');
 
 const normalizeDateTime = (date) => {
     if (!date) return date;
@@ -158,6 +157,24 @@ const meetingService = {
         }));
     },
 
+	// ids allowed to see updates
+    async getMeetingAudienceIds(meetId) {
+        const meeting = await prisma.meeting.findUnique({
+            where: { meetId },
+            select: {
+                createdByUserId: true,
+                participants: { select: { userId: true } }
+            }
+        });
+
+        if (!meeting) return [];
+
+        return [...new Set([
+            meeting.createdByUserId,
+            ...meeting.participants.map(({ userId }) => userId)
+        ])];
+    },
+
     // Create 
     async createMeeting(meetingData) {
         const {
@@ -167,36 +184,49 @@ const meetingService = {
             meetTitle,
             meetDesc,
             meetStart,
-            meetEnd
+            meetEnd,
+			participantIds
         } = meetingData;
 
-        validateRequiredStrings({
-            workspaceId,
-            spaceId,
-            userId,
-            meetTitle
-        });
+        // validateRequiredStrings({
+        //     workspaceId,
+        //     spaceId,
+        //     userId,
+        //     meetTitle
+        // });
 
-        if (containsSuspiciousMarkup(meetTitle) || containsSuspiciousMarkup(meetDesc)) {
-            throw new Error('Input contains suspicious markup');
-        }
+        // if (containsSuspiciousMarkup(meetTitle) || containsSuspiciousMarkup(meetDesc)) {
+        //     throw new Error('Input contains suspicious markup');
+        // }
+
+        validateMeetingRules({ workspaceId, spaceId, userId });
 
         const normalizedStart = normalizeDateTime(meetStart);
         const normalizedEnd = normalizeDateTime(meetEnd);
 
         // Validate meeting time
-        await validateMeetingTime({
+        validateMeetingTime({
             meetStart: normalizedStart,
             meetEnd: normalizedEnd
         });
 
         // Validate creator has no meeting conflict
-        await validateParticipantConflicts({
-            userId,
-            participantIds: [userId],
-            meetStart: normalizedStart,
-            meetEnd: normalizedEnd
-        });
+        // await validateParticipantConflicts({
+        //     userId,
+        //     participantIds: [userId, ...participantIds],
+        //     meetStart: normalizedStart,
+        //     meetEnd: normalizedEnd
+        // });
+
+		// Validate participant conflicts
+		const allParticipantIds = [ ...new Set([userId, ...(participantIds || [])]) ];
+
+		await validateParticipantConflicts({
+			userId,
+			participantIds: allParticipantIds,
+			meetStart: normalizedStart,
+			meetEnd: normalizedEnd
+		});
 
         const meeting = await prisma.$transaction(async (tx) => {
             const newMeeting = await tx.meeting.create({
@@ -225,6 +255,22 @@ const meetingService = {
                 }
             });
 
+            // get participants id and remove dups(by new Set), remove creator
+            const inviteeIds = [...new Set(participantIds || [])]
+                .filter((participantId) => participantId !== userId);
+
+			// if more than creator, add to meeting, set attendance as pending
+            if (inviteeIds.length > 0) {
+                await tx.meetingParticipant.createMany({
+                    data: inviteeIds.map((participantId) => ({
+                        meetId: newMeeting.meetId,
+                        userId: participantId,
+                        role: MeetingRole.participant,
+                        attendance: AttendanceStatus.pending
+                    }))
+                });
+            }
+
             return newMeeting;
         });
 
@@ -233,7 +279,7 @@ const meetingService = {
             userId,
             action: 'scheduled a meeting',
             contextTitle: meeting.meetTitle,
-            spaceName: meeting.space?.spaceName || 'Unknown Space',
+            spaceName: meeting.space?.spaceName || 'Meeting Room',
             date: normalizedStart
         });
 
@@ -249,14 +295,14 @@ const meetingService = {
             meetEnd
         } = data;
 
-        validateRequiredStrings({ meetTitle });
+        // validateRequiredStrings({ meetTitle });
 
-        if (containsSuspiciousMarkup(meetTitle) || containsSuspiciousMarkup(meetDesc)) {
-            throw new Error('Input contains suspicious markup');
-        }
+        // if (containsSuspiciousMarkup(meetTitle) || containsSuspiciousMarkup(meetDesc)) {
+        //     throw new Error('Input contains suspicious markup');
+        // }
 
-        const normalizedStart = normalizeDateTime(meetStart);
-        const normalizedEnd = normalizeDateTime(meetEnd);
+        // const normalizedStart = normalizeDateTime(meetStart);
+        // const normalizedEnd = normalizeDateTime(meetEnd);
 
         const meeting = await prisma.meeting.findUnique({
             where: { meetId },
@@ -267,14 +313,20 @@ const meetingService = {
             }
         });
 
-        if (!meeting) 
-            throw new Error("Meeting not found");
+        // if (!meeting) 
+        //     throw new Error("Meeting not found");
 
-        if (meeting.createdByUserId !== userId)
-            throw new Error('Unauthorized to update this meeting');
+        // if (meeting.createdByUserId !== userId)
+        //     throw new Error('Unauthorized to update this meeting');
+
+        validateMeetingExists(meeting);
+        validateMeetingAuthorization(meeting, userId);
+
+		const normalizedStart = normalizeDateTime(meetStart);
+        const normalizedEnd = normalizeDateTime(meetEnd);
 
         // Validate time if changed
-        await validateMeetingTime({
+        validateMeetingTime({
             meetStart: normalizedStart,
             meetEnd: normalizedEnd
         });
@@ -295,7 +347,7 @@ const meetingService = {
 			userId,
 			action: 'updated a meeting',
 			contextTitle: updatedMeeting.meetTitle,
-			spaceName: meeting.space?.spaceName || 'Unknown Space',
+			spaceName: meeting.space?.spaceName || 'Meeting Room',
 			date: normalizedStart
 		});
 
@@ -303,18 +355,21 @@ const meetingService = {
     },
 
     // Sync Participants
-    async syncParticipants(meetId, userId, participantDatas, meetStart=null, meetEnd=null) {
+    async syncParticipants(meetId, userId, participantDatas, meetStart = null, meetEnd = null) {
         const meeting = await prisma.meeting.findUnique({
             where: { meetId }
         });
 
-        if (!meeting) {
-            throw new Error("Meeting not found");
-        }
+        // if (!meeting) {
+        //     throw new Error("Meeting not found");
+        // }
 
-        if (meeting.createdByUserId !== userId) {
-            throw new Error("Unauthorized to update this meeting");
-        }
+        // if (meeting.createdByUserId !== userId) {
+        //     throw new Error("Unauthorized to update this meeting");
+        // }
+
+        validateMeetingExists(meeting);
+        validateMeetingAuthorization(meeting, userId);
 
         // Ensure creator always exists and is organiser
         const creator = {
@@ -323,9 +378,7 @@ const meetingService = {
             attendance: AttendanceStatus.present
         };
 
-        const otherParticipants = participantDatas.filter(
-            p => p.userId !== meeting.createdByUserId
-        );
+        const otherParticipants = participantDatas.filter( p => p.userId !== meeting.createdByUserId );
 
         const participants = [
             creator,
@@ -378,11 +431,14 @@ const meetingService = {
 			where: { meetId },
 			include: { space: { select: { spaceName: true } } }
 		});
-		if (!meeting) 
-			throw new Error('Meeting not found');
+		// if (!meeting) 
+		// 	throw new Error('Meeting not found');
 
-		if (meeting.createdByUserId !== userId) 
-			throw new Error('Unauthorized to delete this meeting');
+		// if (meeting.createdByUserId !== userId) 
+		// 	throw new Error('Unauthorized to delete this meeting');
+
+        validateMeetingExists(meeting);
+        validateMeetingAuthorization(meeting, userId);
 
 		await prisma.meetingParticipant.deleteMany({ where: { meetId } });
 		await prisma.meeting.delete({ where: { meetId } });
@@ -392,7 +448,7 @@ const meetingService = {
 			userId,
 			action: 'cancelled a meeting',
 			contextTitle: meeting.meetTitle,
-			spaceName: meeting.space?.spaceName || 'Unknown Space',
+			spaceName: meeting.space?.spaceName || 'Meeting Room',
 			date: meeting.meetStart,
 		});
 	},
@@ -403,7 +459,8 @@ const meetingService = {
             where: { meetId }
         });
 
-        if (!meeting) { throw new Error('Meeting not found'); }
+        // if (!meeting) { throw new Error('Meeting not found'); }
+		validateMeetingExists(meeting);
 
         // Check if already pinned by THIS user
         const existingPin = await prisma.meetingPin.findUnique({
@@ -441,13 +498,15 @@ const meetingService = {
             where: { meetId }
         });
 
-        if (!meeting) {
-            throw new Error('Meeting not found');
-        }
+        // if (!meeting) {
+        //     throw new Error('Meeting not found');
+        // }
 
-        if (meeting.createdByUserId !== userId) {
-            throw new Error('Unauthorized to start this meeting');
-        }
+        // if (meeting.createdByUserId !== userId) {
+        //     throw new Error('Unauthorized to start this meeting');
+        // }
+		validateMeetingExists(meeting);
+        validateMeetingAuthorization(meeting, userId);
 
         return prisma.meeting.update({
             where: { meetId },
@@ -460,13 +519,16 @@ const meetingService = {
             where: { meetId }
         });
         
-        if (!meeting) {
-            throw new Error('Meeting not found');
-        }
+        // if (!meeting) {
+        //     throw new Error('Meeting not found');
+        // }
 
-        if (meeting.createdByUserId !== userId) {
-            throw new Error('Unauthorized to end this meeting');
-        }
+        // if (meeting.createdByUserId !== userId) {
+        //     throw new Error('Unauthorized to end this meeting');
+        // }
+
+		validateMeetingExists(meeting);
+        validateMeetingAuthorization(meeting, userId);
 
         return prisma.meeting.update({
             where: { meetId },

@@ -8,8 +8,9 @@ const { randomHslColor }                   = require('../utils/color.js');
 const { apiClient }                        = require('../api/api.client.js');
 const { updateSocketId }                   = require('../utils/socketStatus.js');
 const prisma                               = require('../../prisma/client');
+const messageService                       = require('./message.service');
 const { logSpaceActivity, logMeetingActivity } = require('../utils/activity');
-const { initRoomData, createPlayer, initRoomSpawnPos, getSpawnPosFromDpId, initRoomComponents } = require('../utils/socket');
+const { createPlayer, getSpawnPosFromDpId, getOrInitRoom } = require('../utils/socket');
 
 const players          = new Map();
 const rooms            = new Map();      // Map<roomName, roomData>
@@ -55,6 +56,9 @@ const socketService = (io) => {
   io.on('connection', (socket) => {
     const userId    = socket.user.userId;
     const sessionId = socket.sessionId;
+
+	// private relay
+    socket.join(`user:${userId}`);
 
     console.log(`Player connected lobby: ${socket.id} ${socket.user.userName} (Session: ${sessionId})`);
 
@@ -197,11 +201,18 @@ const socketService = (io) => {
       }
     });
 
-    socket.on('initiate-call', ({ directKey, selectedRoomName, mode }) => {
+    socket.on('initiate-call', async ({ directKey, selectedRoomName, mode, isInitiator }) => {
       if (!directKey) return;
       const targetUserId = directKey.split(':').find((id) => id !== player.userId);
       const target = Array.from(players.values()).find((p) => p.userId === targetUserId);
       if (!target) return; // callee offline
+
+      try {
+        if (isInitiator)
+          await messageService.logCallStart(directKey, player.userId, mode);
+      } catch (err) {
+        console.error('[initiate-call] failed to log call start:', err);
+      }
 
       io.to(target.id).emit('incoming-call', {
         caller: player.userId,
@@ -217,20 +228,14 @@ const socketService = (io) => {
       if (!directKey) return;
       const targetUserId = directKey.split(':').find((id) => id !== player.userId);
       const target = Array.from(players.values()).find((p) => p.userId === targetUserId);
-      if (!target) return;
+      let roomData = rooms.get(roomName);
+      if (!target || !roomData) return;
 
-      io.to(target.id).emit('call-declined', { directKey, roomName, mode });
+      const existingUserIdx = roomData?.users.findIndex(u => u.userId === target.userId);
+      if (existingUserIdx !== -1)
+        io.to(target.id).emit('call-declined', { directKey, roomName, mode });
     });
 
-    socket.on('room-spawn-pos', async (data) => {
-      let roomData = rooms.get(data.roomName);
-      if (!roomData) {
-        roomData = initRoomSpawnPos(rooms, data.roomName, data.positionData);
-      } else {
-        roomData.positionData = data.positionData;
-      }
-      console.log('[room-spawn-pos] update roomData');
-    });
 
     socket.on('object-move', (data) => {
       let roomData = rooms.get(data.roomName);
@@ -283,20 +288,9 @@ const socketService = (io) => {
       let roomData = rooms.get(roomName);
       
       if (!roomData) {
-        roomData = await initRoomData(rooms, roomName);
+        const initResult = await getOrInitRoom(rooms, roomName);
+        roomData = initResult.roomData;
 
-        await new Promise((resolve) => {
-          socket.emit('get-room-spawn-pos', { roomName });
-          socket.once('room-spawn-pos', (data) => {
-            resolve(data);
-          });
-          setTimeout(() => {
-            resolve(null);
-          }, 5000);
-        });
-        console.log('[socket.service] new room!');
-      } else if (roomData.users.length === 0) {
-        await initRoomComponents(roomData);
       }
 
       // Room-size constraints
@@ -305,6 +299,26 @@ const socketService = (io) => {
         console.log('Room Full: current users: ', roomData.users.length);
         return;
       }
+
+	  // check if player is in room and not the same room to join
+	  // check if prev room is meeting, true > update status
+	  if (player.roomName && player.roomName !== roomName) {
+		const previousRoom = player.roomName;
+
+		console.log(`[socket.service] Leaving previous room: ${previousRoom}`);
+		handleLeaveRoom(socket, player, previousRoom);
+
+		const previousMeeting = await prisma.meeting.findUnique({
+			where: { meetId: previousRoom },
+			select: { meetId: true}
+		});
+
+		if (previousMeeting) {
+			const userService = require('./user.service');
+			await userService.updateUserStatus(socket.user.userId, 'online');
+			console.log(`[socket.service] ${player.name} left meeting. Status update to online`);
+		}
+	  }
 
       player.roomName = roomName;
       player.position = getSpawnPosFromDpId(roomData, player.dpId);
@@ -373,21 +387,11 @@ const socketService = (io) => {
     socket.on('request-room-players', async ({ roomName }) => {
       let roomData = rooms.get(roomName);
       if (!roomData) {
-        roomData = await initRoomData(rooms, roomName);
-        
-        await new Promise((resolve) => {
-          socket.emit('get-room-spawn-pos', { roomName });
-          socket.once('room-spawn-pos', (data) => {
-            resolve(data);
-          });
-          setTimeout(() => {
-            resolve(null);
-          }, 5000);
-        });
-      } else if (roomData.users.length === 0) {
-        await initRoomComponents(roomData);
+        const initResult = await getOrInitRoom(rooms, roomName);
+        roomData = initResult.roomData;
       }
       socket.emit('existing-room-players', roomData?.users || []);
+      socket.emit('room-position-data', roomData?.positionData || []);
     });
 
     socket.on('leave-room', async ({ roomName }) => {

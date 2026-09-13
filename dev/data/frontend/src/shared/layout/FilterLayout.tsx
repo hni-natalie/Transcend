@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { LoadingState, getPageNumbers } from '@shared';
 
 interface FilterLayoutProps {
@@ -69,7 +70,7 @@ export const FilterLayout = ({
   showFilters = true,
   showSearch = true,
   showDropdown = true,
-  containerHeight = 'calc(100vh - 95px)',
+  containerHeight = 'calc(100dvh - 95px)',
   className = '',
   showPagination = false,
   totalItems = 0,
@@ -82,6 +83,7 @@ export const FilterLayout = ({
   totalPages = 1,
 }: FilterLayoutProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [tabDropdownPos, setTabDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [showPerPageDropdown, setShowPerPageDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -131,26 +133,30 @@ export const FilterLayout = ({
         
         {/* HEADER */}
         <div className="flex-shrink-0">
-          <div className="p-6 pb-4 flex items-center justify-between gap-4">
+          <div className="p-6 pb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {/* LEFT SIDE: TABS */}
             {showFilters && (
-              <div className="flex items-center gap-1 text-base flex-shrink-0">
+              <div className="flex items-center gap-1 text-base overflow-x-auto no-scrollbar -mx-1 px-1 sm:mx-0 sm:px-0">
                 {filterTabs.map((tab) => (
                   <div key={tab.value} className="relative flex items-center">
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
                         if (tab.value === 'All' || tab.value === 'all' || !showDropdown) {
                           onFilterChange(tab.value);
                         } else {
+                          const rect = e.currentTarget.getBoundingClientRect();
                           if (activeFilter === tab.value) {
-                            setIsDropdownOpen(!isDropdownOpen);
+                            const next = !isDropdownOpen;
+                            setIsDropdownOpen(next);
+                            if (next) setTabDropdownPos({ top: rect.bottom + 4, left: rect.left });
                           } else {
                             onFilterChange(tab.value);
                             setIsDropdownOpen(true);
+                            setTabDropdownPos({ top: rect.bottom + 4, left: rect.left });
                           }
                         }
                       }}
-                      className={`px-4 py-1.5 rounded-lg transition-colors text-xl font-medium flex items-center cursor-pointer ${
+                      className={`px-4 py-2 sm:py-1.5 rounded-lg transition-colors text-xl font-medium flex items-center cursor-pointer ${
                         activeFilter === tab.value
                           ? 'text-accent-lime font-semibold'
                           : 'text-foreground-3 hover:text-foreground'
@@ -168,54 +174,62 @@ export const FilterLayout = ({
                       )}
                     </button>
 
-                    {showDropdown && activeFilter === tab.value && tab.value !== 'All' && tab.value !== 'all' && isDropdownOpen && (
-                      <div 
-                        ref={dropdownRef}
-                        className="absolute top-full left-3 mt-1 min-w-[180px] bg-background-2 border border-background-3 rounded-lg shadow-lg z-50 py-1"
-                      >
-                        <button
-                          onClick={() => {
-                            onFilterSelect('');
-                            setIsDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-background-3 transition-colors cursor-pointer ${
-                            filterValue === '' ? 'text-accent-lime font-medium' : 'text-white'
-                          }`}
+                    {showDropdown &&
+                      activeFilter === tab.value &&
+                      tab.value !== 'All' &&
+                      tab.value !== 'all' &&
+                      isDropdownOpen &&
+                      tabDropdownPos &&
+                      createPortal(
+                        <div
+                          ref={dropdownRef}
+                          style={{ top: tabDropdownPos.top, left: tabDropdownPos.left }}
+                          className="fixed w-60 max-w-[calc(100vw-3rem)] bg-background-2 border border-background-3 rounded-lg shadow-lg z-50 py-1"
                         >
-                          All {getFilterLabel()}
-                        </button>
-                        
-                        <div className="border-t border-background-3 my-1" />
-                        
-                        {filterOptions.map((option) => (
                           <button
-                            key={option}
                             onClick={() => {
-                              onFilterSelect(option);
+                              onFilterSelect('');
                               setIsDropdownOpen(false);
                             }}
                             className={`w-full text-left px-4 py-2 text-sm hover:bg-background-3 transition-colors cursor-pointer ${
-                              filterValue === option ? 'text-accent-lime font-medium' : 'text-white'
+                              filterValue === '' ? 'text-accent-lime font-medium' : 'text-white'
                             }`}
                           >
-                            {option}
+                            All {getFilterLabel()}
                           </button>
-                        ))}
-                      </div>
-                    )}
+
+                          <div className="border-t border-background-3 my-1" />
+
+                          {filterOptions.map((option) => (
+                            <button
+                              key={option}
+                              onClick={() => {
+                                onFilterSelect(option);
+                                setIsDropdownOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm hover:bg-background-3 transition-colors cursor-pointer ${
+                                filterValue === option ? 'text-accent-lime font-medium' : 'text-white'
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>,
+                        document.body
+                      )}
                   </div>
                 ))}
               </div>
             )}
 
             {/* RIGHT SIDE: DATE FILTER + SEARCH */}
-            <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center sm:gap-3 sm:w-auto">
               {/* DATE RANGE FILTER */}
               {showDateFilter && (
-                <div className="relative" ref={dateFilterRef}>
+                <div className="relative w-full sm:w-auto" ref={dateFilterRef}>
                   <button
                     onClick={() => setShowDateDropdown(!showDateDropdown)}
-                    className="bg-background-2 border border-background-3 rounded-lg px-3 py-1.5 text-base text-foreground flex items-center gap-2 cursor-pointer hover:bg-background-3 transition-colors whitespace-nowrap"
+                    className="w-full sm:w-auto justify-between sm:justify-start bg-background-2 border border-background-3 rounded-lg px-3 py-2 sm:py-1.5 text-base text-foreground flex items-center gap-2 cursor-pointer hover:bg-background-3 transition-colors whitespace-nowrap"
                   >
                     <span>
                       {dateRangeValue === 'custom' && customRange.startDate && customRange.endDate
@@ -231,7 +245,7 @@ export const FilterLayout = ({
                   </button>
 
                   {showDateDropdown && (
-                    <div className="absolute top-full right-0 mt-1 min-w-[220px] bg-background-2 border border-background-3 rounded-lg shadow-lg z-50 py-1">
+                    <div className="absolute top-full left-0 right-0 sm:left-auto sm:right-0 mt-1 w-full sm:w-auto sm:min-w-[220px] max-w-[calc(100vw-3rem)] bg-background-2 border border-background-3 rounded-lg shadow-lg z-50 py-1">
                       {dateRangeOptions.map((option) =>
                         option.value === 'custom' ? (
                           <div key={option.value} className="px-4 py-2 border-t border-background-3 mt-1 pt-2">
@@ -294,7 +308,7 @@ export const FilterLayout = ({
 
               {/* SEARCH */}
               {showSearch && (
-                <div className="relative w-80">
+                <div className="relative w-full sm:w-80">
                   <input
                     type="text"
                     placeholder={searchPlaceholder}
@@ -325,23 +339,14 @@ export const FilterLayout = ({
 			children
 		  )}
 		</div>
-        {/* <div className="flex-1 overflow-auto min-h-0 px-6">
-          {React.Children.count(children) === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-foreground-3">{emptyMessage}</p>
-            </div>
-          ) : (
-            children
-          )}
-        </div> */}
 
         {/* PAGINATION - with custom per-page dropdown */}
         {showPagination && totalItems > 0 && onPageChange && onPerPageChange && (
           <>
             <div className="border-t border-background-3" />
-            <div className="flex-shrink-0 p-5 flex items-center justify-between text-base text-foreground-3 bg-background-1">
-              <div className="flex items-center gap-2 px-4">
-                <span>Showing</span>
+            <div className="flex-shrink-0 p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-base text-foreground-3 bg-background-1">
+              <div className="flex items-center justify-center gap-2 px-0 sm:px-4 sm:justify-start">
+                <span className="hidden sm:inline">Showing</span>
                 
                 <div className="relative" ref={perPageRef}>
                   <button
@@ -382,15 +387,15 @@ export const FilterLayout = ({
                 </div>
               </div>
 
-              <p>
-                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} out of {totalItems} items
+              <p className="order-first sm:order-none text-sm sm:text-base text-center sm:text-left">
+                {startIndex + 1}–{Math.min(endIndex, totalItems)} of {totalItems}
               </p>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <button
                   onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
                   disabled={currentPage === 1}
-                  className={`px-2 py-1 rounded transition-colors ${
+                  className={`w-9 h-9 sm:w-auto sm:h-auto px-2 py-1 rounded transition-colors flex items-center justify-center ${
                     currentPage === 1 
                       ? 'opacity-50 cursor-not-allowed' 
                       : 'cursor-pointer hover:bg-background-3'
@@ -401,14 +406,14 @@ export const FilterLayout = ({
 
 				{getPageNumbers(currentPage, totalPages).map((page, idx) =>
 				  page === '...' ? (
-					<span key={`ellipsis-${idx}`} className="w-6 h-6 flex items-center justify-center text-foreground-3">
+					<span key={`ellipsis-${idx}`} className="w-9 h-9 sm:w-6 sm:h-6 flex items-center justify-center text-foreground-3">
 					  …
 					</span>
 				  ) : (
 					<button
 					  key={page}
 					  onClick={() => onPageChange(page as number)}
-					  className={`w-6 h-6 flex items-center justify-center rounded cursor-pointer ${
+					  className={`w-9 h-9 sm:w-6 sm:h-6 flex items-center justify-center rounded cursor-pointer ${
 						currentPage === page
 						? 'bg-accent-lime text-black font-bold'
 						: 'hover:bg-accent-lime-bg'
@@ -419,24 +424,10 @@ export const FilterLayout = ({
 				  )
 				)}
 
-                {/* {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => onPageChange(page)}
-                    className={`w-6 h-6 flex items-center justify-center rounded cursor-pointer ${
-                      currentPage === page
-                        ? 'bg-accent-lime text-black font-bold'
-                        : 'hover:bg-accent-lime-bg'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))} */}
-
                 <button
                   onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className={`px-2 py-1 rounded transition-colors ${
+                  className={`w-9 h-9 sm:w-auto sm:h-auto px-2 py-1 rounded transition-colors flex items-center justify-center ${
                     currentPage === totalPages 
                       ? 'opacity-50 cursor-not-allowed' 
                       : 'cursor-pointer hover:bg-background-3'

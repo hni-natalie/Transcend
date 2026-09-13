@@ -1,4 +1,20 @@
-import { PageHeader, IconTasks, InputDropdown, InputText, IconTaskAdd, IconPlus, LoadingState, Modal, ConfirmDeleteModal, IconClose, ModalHeader, DefaultAvatar, AlertBanner } from '@shared';
+import {
+  PageHeader,
+  IconTasks,
+  InputDropdown,
+  InputText,
+  IconTaskAdd,
+  IconPlus,
+  LoadingState,
+  Modal,
+  ConfirmDeleteModal,
+  IconClose,
+  ModalHeader,
+  DefaultAvatar,
+  AlertBanner,
+  TASK_TITLE_MAX_LENGTH,
+  TASK_DESC_MAX_LENGTH,
+} from '@shared';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { taskApi } from '@features/tasks/task.api';
 import { Task } from '@features/tasks/task.types';
@@ -28,8 +44,10 @@ const taskPriorityOptions : DropdownChoice[] = [
 	{ id: 'high', name: 'High Priority' }
 ];
 
-const TASK_TITLE_MAX_LENGTH = 50;
-const TASK_DESC_MAX_LENGTH = 200;
+const getTodayDate = () => {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+};
 
 const validateCreateTaskForm = (data: {
   title: string;
@@ -47,11 +65,14 @@ const validateCreateTaskForm = (data: {
   if (data.description && data.description.trim().length > TASK_DESC_MAX_LENGTH) {
     return `Task description must be under ${TASK_DESC_MAX_LENGTH} characters.`;
   }
-//   if (!data.dueDate) {
-//     return 'Due date is required.';
-//   }
+  if (!data.dueDate) {
+    return 'Due date is required.';
+  }
   if (data.dueDate && isNaN(Date.parse(data.dueDate))) {
     return 'Invalid due date format.';
+  }
+  if (data.dueDate && data.dueDate < getTodayDate()) {
+	return 'Due date cannot be in the past.';
   }
 //   if (data.assignedUserIds.length === 0) {
 //     return 'Please assign at least one team member.';
@@ -63,6 +84,7 @@ const validateEditTaskForm = (data: {
   title: string;
   description?: string;
   dueDate?: string;
+  originalDueDate?: string;
 }): string | null => {
   const trimmedTitle = data.title.trim();
   if (!trimmedTitle) {
@@ -77,6 +99,13 @@ const validateEditTaskForm = (data: {
   if (data.dueDate && isNaN(Date.parse(data.dueDate))) {
     return 'Invalid due date format.';
   }
+  const dueDateChanged = data.dueDate !== (data.originalDueDate || undefined);
+  if (data.dueDate && dueDateChanged && data.dueDate < getTodayDate()) {
+	return 'Due date cannot be in the past.';
+  }
+//   if (data.dueDate && data.dueDate < getTodayDate()) {
+// 	return 'Due date cannot be in the past.';
+//   }
   return null;
 };
 
@@ -101,6 +130,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
   const [taskDesc, setTaskDesc] = useState(task.taskDesc || '');
   const [taskPriority, setTaskPriority] = useState<'low' | 'medium' | 'high'>( task.assignedTo?.[0]?.taskPriority || 'medium');
   const [taskStatus, setTaskStatus] = useState<'not_started' | 'in_progress' | 'done' >(task.taskStatus);
+  const originalDueDate = task.dueDate ? task.dueDate.split('T')[0] : '';
   const [dueDate, setDueDate] = useState( task.dueDate ? task.dueDate.split('T')[0] : '');
   const [localError, setLocalError] = useState('');
 
@@ -109,6 +139,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
       title: taskTitle,
       description: taskDesc,
       dueDate,
+	  originalDueDate,
     });
     if (validationError) {
       setLocalError(validationError);
@@ -129,7 +160,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
     <div className="form-layout">
 
         <ModalHeader 
-          icon={IconTasks}
+          icon={IconTaskAdd}
           iconClassName='text-white w-6 h-6'
           title='Edit Task'
           onClose={onClose}
@@ -181,6 +212,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
           type='date'
+		  min={getTodayDate()}
           className="bg-background"
         />
 
@@ -322,7 +354,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
     return (
     <div className='form-layout'>
       <ModalHeader 
-        icon={IconTasks}
+        icon={IconTaskAdd}
         iconClassName='text-white w-6 h-6'
         title='Create New Task'
         onClose={onClose}
@@ -364,8 +396,9 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
         title='Due Date'
         value={dueDate}
         onChange={(e) => setDueDate(e.target.value)}
-        // required={true}
+        required={true}
         type='date'
+		min={getTodayDate()}
         className="bg-background"
       />
       <InputDropdownChecklist
@@ -380,8 +413,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
       <div className='flex justify-center pt-4'>
         <button
           onClick={handleSubmit}
-          disabled={loading || !taskTitle}
-		//   disabled={loading || !taskTitle.trim() || !dueDate || selectedUserIds.length === 0}
+          disabled={loading || !taskTitle.trim()}
           className='btn-lime-outline-solid w-[200px] mx-auto'
         >
           {loading ? "Creating..." : "Create Task"}
@@ -430,7 +462,7 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
           // e.stopPropagation();
           setShowMenu(!showMenu);
         }}
-        className="text-2xl text-gray-300 w-8 h-10 flex text-center justify-center rounded-md hover:bg-background-3"
+        className="cursor-pointer text-2xl text-gray-300 w-8 h-10 flex text-center justify-center rounded-md hover:bg-background-3"
       >
         ⋮
       </button>
@@ -697,6 +729,7 @@ export const Tasks = () => {
       const msg = err.message || 'Failed to delete task';
       setError(msg);
       showToast('error', msg);
+	  setTaskPendingDeletion(null);
     } finally {
       setIsDeletingTask(false);
     }
@@ -717,9 +750,12 @@ export const Tasks = () => {
   const groupedTasks = useMemo(() => {
     const now = Date.now();
     return {
-      backlog: tasks.filter((task) => (!task.dueDate || new Date(task.dueDate).getTime() < now) && (task.taskStatus === 'not_started' || task.taskStatus === 'in_progress')),
-      notStarted: tasks.filter((task) => task.taskStatus === 'not_started'),
-      inProgress: tasks.filter((task) => task.taskStatus === 'in_progress'),
+    // 	backlog: tasks.filter((task) => (!task.dueDate || new Date(task.dueDate).getTime() < now) && (task.taskStatus === 'not_started' || task.taskStatus === 'in_progress')),
+	// 	notStarted: tasks.filter((task) => task.taskStatus === 'not_started'),
+	//	inProgress: tasks.filter((task) => task.taskStatus === 'in_progress'),
+	  backlog: tasks.filter((task) => (task.dueDate && new Date(task.dueDate).getTime() < now) && (task.taskStatus === 'not_started' || task.taskStatus === 'in_progress')),
+      notStarted: tasks.filter((task) => task.taskStatus === 'not_started' && (!task.dueDate || new Date(task.dueDate).getTime() >= now)), 
+	  inProgress: tasks.filter((task) => task.taskStatus === 'in_progress' && (!task.dueDate || new Date(task.dueDate).getTime() >= now)),
       done: tasks.filter((task) => task.taskStatus === 'done'),
     };
   }, [tasks]);
@@ -752,12 +788,12 @@ export const Tasks = () => {
         }
       />
 
-      { error && (
+      {/* { error && (
         <AlertBanner
           message={error}
           className='text-danger'
         />
-      )}
+      )} */}
 			<div className="flex-1 overflow-y-auto mt-4">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <TaskColumn

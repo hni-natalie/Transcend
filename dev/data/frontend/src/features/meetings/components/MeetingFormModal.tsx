@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { InputTextArea, IconMeetingAdd, InputDropdownChip, InputText, ModalHeader } from "@shared";
+import {
+    InputTextArea,
+    IconMeetingAdd,
+    InputDropdownChip,
+    InputText,
+    ModalHeader,
+    MEETING_TITLE_MAX_LENGTH,
+    MEETING_DESC_MAX_LENGTH,
+    MIN_MEETING_DURATION_MS,
+    MAX_MEETING_DURATION_MS,
+} from "@shared";
 import { useToast } from '@/context/ToastContext';
 import { meetingApi } from "@features/meetings";
 import type { MeetingDetails, Participant } from "@features/meetings/meeting.types";
@@ -21,6 +31,8 @@ type Props = {
     onClose: () => void;
     onCreated?: () => void;
     onUpdated?: () => void;
+
+    initialParticipantIds?: string[];
 };
 
 const roleOptions : DropdownChoice[] = [
@@ -32,11 +44,6 @@ const attendanceOptions : DropdownChoice[] = [
     { id: 'present', name: 'Present' },
     { id: 'absent', name: 'Absent' },
 ];
-
-const MEETING_TITLE_MAX_LENGTH = 100;
-const MEETING_DESC_MAX_LENGTH = 500;
-const MIN_DURATION_MS = 5 * 60 * 1000;  // 5 minutes
-const MAX_DURATION_MS = 20 * 60 * 1000; // 20 minutes
 
 const validateMeetingForm = (data: {
     title: string;
@@ -74,15 +81,17 @@ const validateMeetingForm = (data: {
     }
 
     const duration = endDate.getTime() - startDate.getTime();
-    if (duration < MIN_DURATION_MS) {
+    if (duration < MIN_MEETING_DURATION_MS) {
         return "Meeting duration too short and must be at least 5 minutes.";
     }
-    if (duration > MAX_DURATION_MS) {
+    if (duration > MAX_MEETING_DURATION_MS) {
         return "Meeting duration cannot exceed 20 minutes.";
     }
 
     return null;
 };
+
+const EMPTY_PARTICIPANT_IDS: string[] = [];
 
 export const ScheduleMeetingModal = ({
     open,
@@ -91,6 +100,7 @@ export const ScheduleMeetingModal = ({
     onUpdated,
     mode,
     meeting,
+    initialParticipantIds = EMPTY_PARTICIPANT_IDS,
 }: Props) => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -184,6 +194,8 @@ export const ScheduleMeetingModal = ({
         });
     }
 
+    const participantIdsKey = initialParticipantIds.join(',');
+
     useEffect(() => {
         if (!open) return;
 
@@ -213,8 +225,9 @@ export const ScheduleMeetingModal = ({
             setSelectedUserIds(meeting.participants.map(p => p.userId));
         } else {
             resetForm();
+			setSelectedUserIds(initialParticipantIds);
         }
-    }, [open, mode, meeting, resetForm]);
+    }, [open, mode, meeting, resetForm, participantIdsKey]);
 
     const selectedUsers = useMemo(() => {
         return users.filter(user => selectedUserIds.includes(user.userId));
@@ -323,17 +336,18 @@ export const ScheduleMeetingModal = ({
                     meetTitle: title,
                     meetDesc: description,
                     meetStart: new Date(start).toISOString(),
-                    meetEnd: new Date(end).toISOString()
+                    meetEnd: new Date(end).toISOString(),
+					participantIds: selectedUserIds,
                 });
 
-                await meetingApi.syncParticipants({
-                    meetId: res.data.meetId,
-                    participants: selectedUsers.map(user => ({
-                        userId: user.userId,
-                        role: user.role,
-                        attendance: user.attendance,
-                    }))
-                });
+                // await meetingApi.syncParticipants({
+                //     meetId: res.data.meetId,
+                //     participants: selectedUsers.map(user => ({
+                //         userId: user.userId,
+                //         role: user.role,
+                //         attendance: user.attendance,
+                //     }))
+                // });
 
 				showToast('success', 'Meeting scheduled successfully!');
                 onCreated?.();

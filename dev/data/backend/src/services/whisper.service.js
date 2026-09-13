@@ -1,9 +1,12 @@
 const axios = require("axios");
 const FormData = require("form-data");
 const fs = require("fs");
+const https = require("https");
 const path = require("path");
 
-const WHISPER_URL = "http://t_whisper:8000/transcribe";
+const WHISPER_URL = "https://t_whisper:8000/transcribe";
+// self-signed internal cert, container has no public CA to verify against
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
 
 const whisperService = {
@@ -49,6 +52,7 @@ const whisperService = {
                     headers: form.getHeaders(),
                     maxContentLength: Infinity,
                     maxBodyLength: Infinity,
+                    httpsAgent,
                 }
             );
 

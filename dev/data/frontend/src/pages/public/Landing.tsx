@@ -29,7 +29,7 @@ export const Landing = () => {
   );
 
   return (
-    <div className="h-screen w-screen bg-background relative flex flex-col justify-between p-6 md:p-10 overflow-hidden select-none">
+    <div className="h-dvh min-h-[520px] w-screen bg-background relative flex flex-col justify-between p-5 sm:p-6 md:p-10 overflow-y-auto select-none">
       <style>{`
         @keyframes marquee {
           0% { transform: translateX(0%); }
@@ -70,30 +70,31 @@ export const Landing = () => {
       `}</style>
 
       {/* TOP HEADER */}
-      <header className="relative w-full flex justify-between items-center z-30">
-        <span className="brand-logo-lean text-4xl font-bold tracking-tight text-accent-lime cursor-default">
+      {/* <header className="relative w-full shrink-0 flex flex-col md:flex-row justify-center md:justify-between items-center gap-1 md:gap-0 text-center md:text-left z-30"> */}
+	  <header className="relative w-full shrink-0 mt-3 md:mt-0 flex flex-col md:flex-row justify-center md:justify-between items-center gap-1 md:gap-0 text-center md:text-left z-30">
+        <span className="brand-logo-lean text-4xl sm:text-5xl md:text-4xl lg:text-5xl font-bold tracking-tight text-accent-lime cursor-default">
           WorkFrom,
         </span>
 
-        <div className="text-[12px] font-main text-foreground-3 text-left w-full md:w-[380px] lg:w-[440px] md:translate-x-24 lg:translate-x-26">
+        <div className="text-[13px] sm:text-sm md:text-[12px] font-main text-foreground-3 w-full md:w-[380px] lg:w-[440px] md:translate-x-24 lg:translate-x-26 text-center md:text-left">
           The Virtual Workspace App.
         </div>
       </header>
 
       {/* HERO STAGE */}
-      <main className="relative flex-1 w-full z-10 flex flex-col md:flex-row items-center justify-between gap-8 py-4">
-        {/* Left: Illustration */}
-        <div className="flex-1 flex justify-center md:justify-start items-center h-full">
+      <main className="relative flex-1 min-h-0 w-full z-10 flex flex-col md:flex-row items-center justify-center md:justify-between gap-2 md:gap-8 py-2 md:py-4">
+        {/* Left: Illustration - hugs its content on mobile, shares remaining space on desktop */}
+        <div className="flex justify-center items-center w-full md:flex-1 md:min-h-0 md:min-w-0 md:justify-start">
           <img
             src="/WF_Landing.png"
             alt="WorkFrom Illustration"
-            className="ml-12 mt-5 max-h-[58vh] md:max-h-[68vh] w-auto object-contain pointer-events-none select-none"
+            className="md:ml-12 md:mt-5 max-h-[24vh] sm:max-h-[30vh] md:h-full md:max-h-[68vh] w-auto object-contain pointer-events-none select-none"
           />
         </div>
 
-        {/* Right: Typography Block - Left aligned text */}
-        <div className="w-full md:w-[380px] lg:w-[440px] flex flex-col justify-center space-y-6 text-left md:translate-x-24 lg:translate-x-26">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-normal tracking-[0.01rem] text-white leading-[1.1]">
+        {/* Right: Typography Block - centered on mobile, left aligned from md up */}
+        <div className="shrink-0 w-full md:w-[380px] lg:w-[440px] flex flex-col justify-center items-center md:items-start space-y-3 md:space-y-6 text-center md:text-left md:translate-x-24 lg:translate-x-26">
+          <h1 className="text-[clamp(1.75rem,5vw+3vh,3.75rem)] md:text-5xl lg:text-6xl font-normal tracking-[0.01rem] text-white leading-[1.15] md:leading-[1.1]">
             Work from<br />
             anywhere.<br />
             Connect from<br />
@@ -114,26 +115,26 @@ export const Landing = () => {
               </span>
             </button>
           </h1>
-          <p className="text-sm md:text-base text-foreground-3 leading-relaxed max-w-sm tracking-[0.03em]">
+          <p className="text-base md:text-base lg:text-lg text-foreground-3 leading-relaxed max-w-xs sm:max-w-sm mx-auto md:mx-0 tracking-[0.03em]">
             Bring your team together with real-time presence, meetings, tasks, and collaboration in one shared workspace.
           </p>
         </div>
       </main>
 
       {/* CONTINUOUS MOVING TICKER (3 VARIATIONS) */}
-      <div className="-mx-6 md:-mx-10 z-30 mb-4">
+      <div className="shrink-0 -mx-5 sm:-mx-6 md:-mx-10 z-30 mb-3 md:mb-4">
         <div
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onMouseMove={handleMouseMove}
           onClick={onNavigate}
-          className="relative w-full overflow-hidden cursor-none py-2 flex items-center"
+          className="relative w-full overflow-hidden cursor-pointer md:cursor-none py-2 flex items-center"
         >
-          <div className="animate-marquee whitespace-nowrap flex items-center gap-12 sm:gap-16">
+          <div className="animate-marquee whitespace-nowrap flex items-center gap-8 sm:gap-12 md:gap-16">
             {[...Array(2)].map((_, loopIdx) => (
               <React.Fragment key={loopIdx}>
                 {/* VARIATION 1: Cyan Badge + Dark Badge */}
-                <h1 className="font-main text-6xl sm:text-8xl md:text-[110px] tracking-tight text-accent-lime pointer-events-none select-none leading-none inline-flex items-center">
+                <h1 className="font-main text-[clamp(1.5rem,4vw+4vh,110px)] tracking-tight text-accent-lime pointer-events-none select-none leading-none inline-flex items-center">
                   W
                   <IconCircle bgClass="bg-[#68D1BF]">
                     <IconTaskDone className="stroke-[2] translate-x-[6px] translate-y-[2px]" />
@@ -146,7 +147,7 @@ export const Landing = () => {
                 </h1>
 
                 {/* VARIATION 2: Gold Badge + Dark Badge + Parentheses */}
-                <h1 className="font-main text-6xl sm:text-8xl md:text-[110px] tracking-tight text-accent-lime pointer-events-none select-none leading-none inline-flex items-center">
+                <h1 className="font-main text-[clamp(1.5rem,4vw+4vh,110px)] tracking-tight text-accent-lime pointer-events-none select-none leading-none inline-flex items-center">
                   W
                   <IconCircle bgClass="bg-[#EECA5C]/90">
                     <IconMeetingAdd className="translate-x-[1px]" />
@@ -159,7 +160,7 @@ export const Landing = () => {
                 </h1>
 
                 {/* VARIATION 3: Yellow Badge + Lime Badge */}
-                <h1 className="font-main text-6xl sm:text-8xl md:text-[110px] tracking-tight text-accent-lime pointer-events-none select-none leading-none inline-flex items-center">
+                <h1 className="font-main text-[clamp(1.5rem,4vw+4vh,110px)] tracking-tight text-accent-lime pointer-events-none select-none leading-none inline-flex items-center">
                   W
                   <IconCircle bgClass="bg-[#EECA5C]">
                     <IconVideo className="stroke-[1.2] w-full h-full scale-140 translate-x-[2px]" />
@@ -176,7 +177,7 @@ export const Landing = () => {
 
           {isHovered && (
             <div
-              className="absolute pointer-events-none font-mono italic text-5xl font-bold text-white tracking-widest whitespace-nowrap mix-blend-difference z-40"
+              className="hidden md:block absolute pointer-events-none font-mono italic text-5xl font-bold text-white tracking-widest whitespace-nowrap mix-blend-difference z-40"
               style={{
                 left: `${cursorPos.x}px`,
                 top: `${cursorPos.y}px`,
@@ -192,12 +193,12 @@ export const Landing = () => {
       </div>
 
       {/* FOOTER */}
-      <footer className="w-full flex justify-between items-center z-30 text-sm">
-        <span className="text-foreground-4">
+      <footer className="w-full shrink-0 mb-6 md:mb-0 flex flex-col-reverse md:flex-row justify-center md:justify-between items-center gap-1.5 md:gap-0 z-30 text-sm">
+        <span className="text-foreground-4 text-sm">
           WorkFrom 2026 ™
         </span>
 
-        <div className="w-full md:w-[380px] lg:w-[440px] flex items-center gap-10 font-main text-foreground-3 md:translate-x-24 lg:translate-x-26">
+        <div className="w-full md:w-[380px] lg:w-[440px] flex items-center justify-center md:justify-start gap-8 sm:gap-10 font-main text-foreground-3 md:translate-x-24 lg:translate-x-26">
           <button
             type="button"
             onClick={() => navigate(R.TERMS)}

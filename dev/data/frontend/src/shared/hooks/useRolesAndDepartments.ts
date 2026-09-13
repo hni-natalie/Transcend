@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Role, Department } from '@shared'
 import { userApi} from '@features/users';
 import { useToast } from '@/context/ToastContext';
@@ -39,17 +39,40 @@ export const useRolesAndDepartments = (): UseRolesAndDepartmentsResult => {
     fetchData();
   }, []);
 
-  const departmentOptions = departments
-    .filter((dept): dept is Department & { dpId: string } => dept.dpId !== undefined)
-    .map(dept => ({
-      id: dept.dpId,
-      name: dept.dpName
-    }));
+  // const departmentOptions = departments
+  //   .filter((dept): dept is Department & { dpId: string } => dept.dpId !== undefined)
+  //   .map(dept => ({
+  //     id: dept.dpId,
+  //     name: dept.dpName
+  //   }));
 
-  const roleOptions = roles.map(role => ({
-    id: role.roleId,
-    name: role.roleName
-  }));
+  // const roleOptions = roles.map(role => ({
+  //   id: role.roleId,
+  //   name: role.roleName
+  // }));
+
+  const departmentOptions = useMemo(
+    () =>
+      departments
+        .filter(
+          (dept): dept is Department & { dpId: string } =>
+            dept.dpId !== undefined
+        )
+        .map(dept => ({
+          id: dept.dpId,
+          name: dept.dpName
+        })),
+    [departments]
+  );
+
+  const roleOptions = useMemo(
+    () =>
+      roles.map(role => ({
+        id: role.roleId,
+        name: role.roleName
+      })),
+    [roles]
+  );
 
   return {
     roles,

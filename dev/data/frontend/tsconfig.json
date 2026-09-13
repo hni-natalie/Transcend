@@ -23,8 +23,11 @@
       "@config/*": ["src/config/*"],
       "@config": ["src/config"],
       "@context/*": ["src/context/*"],
-      "@context": ["src/context"]
-    }
+      "@context": ["src/context"],
+      "@shared-config/*": ["../shared/*"],
+      "@shared-config": ["../shared"]
+    },
+    "resolveJsonModule": true
   },
-  "include": ["src"]
+  "include": ["src", "../shared"]
 }

@@ -1,6 +1,49 @@
 const { apiClient } 		= require("../api/api.client.js");
 const { randomHslColor }    = require('../utils/color.js');
 const { v4:uuidv4 }         = require('uuid')
+const d3                    = require('d3-hierarchy');
+const OFFICE_LAYOUT_CONFIG  = require('../../../shared/office.config.json');
+
+/**
+ * Computes treemap-based spawn positions/sizes for office spaces
+ * @param {Array} spaces - spaces from GET /spaces (spaceId, userCapacity, departmentId, accessLevel)
+ * @returns {Array} positionData - [{ spaceId, spaceName, departmentId, accessLevel, x, z, width, height }]
+ */
+const generatePositionedPlanes = (spaces) => {
+  const { width, height, padding, shrinkFactor } = OFFICE_LAYOUT_CONFIG;
+
+  const root = d3.stratify()
+    .id(d => d.id)
+    .parentId(d => d.parentId || null)
+    ([
+      { id: 'root', value: 0 },
+      ...spaces.map(s => ({ id: s.spaceId, parentId: 'root', value: s.userCapacity }))
+    ])
+    .sum(d => Math.sqrt(d.value ?? 0));
+    // .sum(d => Math.log((d.value ?? 0) + 1)); // lesser diff between large & small
+
+  const treemap = d3.treemap()
+    .size([width, height])
+    .padding(padding)
+    .tile(d3.treemapSquarify.ratio(1));
+
+  const layout = treemap(root);
+
+  const data = layout.leaves().map((leaf) => {
+    const space = spaces.find(s => s.spaceId === leaf.data.id);
+    return {
+      spaceId: space?.spaceId,
+      spaceName: space?.spaceName,
+      departmentId: space?.departmentId,
+      accessLevel: space?.accessLevel,
+      x: (leaf.x0 + leaf.x1) / 2 - width / 2,
+      z: (leaf.y0 + leaf.y1) / 2 - height / 2,
+      width: (leaf.x1 - leaf.x0) * shrinkFactor,
+      height: (leaf.y1 - leaf.y0) * shrinkFactor,
+    };
+  });
+  return data;
+};
 
 /**
  * Creates a player object with default values
@@ -156,6 +199,11 @@ const initRoomComponents = async ( roomData ) => {
   if (!roomData) return ;
   if (roomData.roomName === 'Office') {
 
+    const spacesRes = await apiClient.get('/spaces');
+    if (spacesRes?.success && Array.isArray(spacesRes.data)) {
+      roomData.positionData = generatePositionedPlanes(spacesRes.data);
+    }
+
     const activeUsers = await apiClient.get('/users/status/online');
     const existingObjs = await getRoomObjs();
     const roomParticles = await createDustParticles();
@@ -203,6 +251,28 @@ const initRoomData = async (rooms, roomName) => {
   return roomData
 }
 
+const roomInitLocks = new Map(); // Map<roomName, Promise<roomData>>
+
+const getOrInitRoom = async (rooms, roomName) => {
+  const existing = rooms.get(roomName);
+  if (existing) return { roomData: existing, isNew: false };
+
+  // if someone is initializing room ... wait for result
+  if (roomInitLocks.has(roomName)) {
+    const roomData = await roomInitLocks.get(roomName);
+    return { roomData, isNew: false };
+  }
+
+  const initPromise = initRoomData(rooms, roomName);
+  roomInitLocks.set(roomName, initPromise);
+  try {
+    const roomData = await initPromise;
+    return { roomData, isNew: true };
+  } finally {
+    roomInitLocks.delete(roomName);
+  }
+};
+
 module.exports = {
   initRoomData,
   createPlayer,
@@ -210,4 +280,5 @@ module.exports = {
   initRoomSpawnPos,
   getSpawnPosFromDpId,
   initRoomComponents,
+  getOrInitRoom,
 };

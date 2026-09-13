@@ -188,6 +188,7 @@ const userService = {
                 avatarUrl: true,
 				city: true,
 				country: true,
+				timezone: true,
 				userTitle: true,
                 roleId: true,
                 role: { select: { roleId: true, roleName: true } },
@@ -291,6 +292,9 @@ const userService = {
     
     async updateUserByAdmin(userId, updateData) {
         const { name, email, roleId, dpId, status, password, city, country, avatarUrl, userTitle } = updateData;
+
+		if (Object.keys(updateData).length === 0)
+        	throw new Error('No valid fields to update');
         
         const user = await prisma.user.findUnique({ where: { userId } });
         if (!user) throw new Error('User not found');

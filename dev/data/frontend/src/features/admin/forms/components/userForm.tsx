@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
-import { useRolesAndDepartments, useAvatarUpload, UserTableRow, IconClose, ConfirmDeleteModal } from '@shared';
+import {
+  useRolesAndDepartments,
+  useAvatarUpload,
+  UserTableRow,
+  IconClose,
+  ConfirmDeleteModal,
+  EMAIL_REGEX,
+  USER_NAME_MAX_LENGTH,
+} from '@shared';
 import { userApi, CreateUserRequest, UpdateUserRequest } from '@features/users'
 import { usePasswordField } from '@shared/ui/PasswordField';
 import { UserFormFields } from './userFormFields';
@@ -66,34 +74,82 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
     },
   });
 
+  // useEffect(() => {
+  //   if (isEdit && user?.photo) {
+  //     setAvatarUrl(user.photo);
+  //     setFormData(prev => ({ ...prev, photo: user.photo }));
+  //   }
+  // }, [isEdit, user]);
+
   useEffect(() => {
-    if (isEdit && user?.photo) {
-      setAvatarUrl(user.photo);
-      setFormData(prev => ({ ...prev, photo: user.photo }));
+    if (!isEdit || !user?.photo) {
+      return;
     }
-  }, [isEdit, user]);
+
+    setAvatarUrl(user.photo);
+
+    setFormData(prev => {
+      if (prev.photo === user.photo) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        photo: user.photo,
+      };
+    });
+  }, [isEdit, user, setAvatarUrl]);
 
   const handleFileSelect = (file: File) => {
     handleFileUpload(file);
   };
 
-  useEffect(() => {
-    if (isEdit && user && !isLoadingData && departmentOptions.length && roleOptions.length) {
-      const matchedDept = user.deptId
-        ? departmentOptions.find(d => d.id === user.deptId)
-        : departmentOptions.find(d => d.name === user.department);
-      const matchedRole = user.roleId
-        ? roleOptions.find(r => r.id === user.roleId)
-        : roleOptions.find(r => r.name === user.role);
+  // useEffect(() => {
+  //   if (isEdit && user && !isLoadingData && departmentOptions.length && roleOptions.length) {
+  //     const matchedDept = user.deptId
+  //       ? departmentOptions.find(d => d.id === user.deptId)
+  //       : departmentOptions.find(d => d.name === user.department);
+  //     const matchedRole = user.roleId
+  //       ? roleOptions.find(r => r.id === user.roleId)
+  //       : roleOptions.find(r => r.name === user.role);
       
-      if (matchedDept || matchedRole) {
-        setFormData(prev => ({
-          ...prev,
-          deptId: matchedDept?.id || prev.deptId,
-          roleId: matchedRole?.id || prev.roleId,
-        }));
-      }
+  //     if (matchedDept || matchedRole) {
+  //       setFormData(prev => ({
+  //         ...prev,
+  //         deptId: matchedDept?.id || prev.deptId,
+  //         roleId: matchedRole?.id || prev.roleId,
+  //       }));
+  //     }
+  //   }
+  // }, [isEdit, user, isLoadingData, departmentOptions, roleOptions]);
+
+  useEffect(() => {
+    if ( !isEdit || !user || isLoadingData || !departmentOptions.length || !roleOptions.length) {
+      return;
     }
+
+    const matchedDept = user.deptId
+      ? departmentOptions.find(d => d.id === user.deptId)
+      : departmentOptions.find(d => d.name === user.department);
+
+    const matchedRole = user.roleId
+      ? roleOptions.find(r => r.id === user.roleId)
+      : roleOptions.find(r => r.name === user.role);
+
+    setFormData(prev => {
+      const newDeptId = matchedDept?.id || prev.deptId;
+      const newRoleId = matchedRole?.id || prev.roleId;
+
+      if (prev.deptId === newDeptId && prev.roleId === newRoleId) {
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        deptId: newDeptId,
+        roleId: newRoleId,
+      };
+    });
   }, [isEdit, user, isLoadingData, departmentOptions, roleOptions]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -108,14 +164,12 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
     }
   };
 
-  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
   const validateForm = (): string | null => {
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       return 'First and last name are required.';
     }
-    if (formData.firstName.trim().length > 100 || formData.lastName.trim().length > 100) {
-      return 'Names must be under 100 characters.';
+    if (formData.firstName.trim().length > USER_NAME_MAX_LENGTH || formData.lastName.trim().length > USER_NAME_MAX_LENGTH) {
+      return `Names must be under ${USER_NAME_MAX_LENGTH} characters.`;
     }
     if (!formData.email.trim()) {
       return 'Email is required.';
@@ -243,7 +297,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
   if (isLoadingData && isEdit) {
     return (
       <div className="relative flex items-start gap-4">
-        <div className="bg-background-1 rounded-3xl p-6 shadow-2xl w-[368px] h-[200px] flex items-center justify-center">
+        <div className="form-layout items-center justify-center h-[200px]">
           <div className="text-white">Loading...</div>
         </div>
       </div>
@@ -252,9 +306,10 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
 
   return (
     <div className="relative flex items-start gap-4">
-      <div 
-        className="relative bg-background-1 rounded-3xl p-6 shadow-2xl flex flex-col w-[368px] h-[650px]"
+      <form
+        onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
+        className="form-layout relative"
       >
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -269,24 +324,23 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <UserFormFields
-            formData={formData}
-            onChange={handleChange}
-            onPasswordChange={handlePasswordChange}
-            onFileSelect={handleFileSelect}
-            mode={mode}
-            departmentOptions={departmentOptions}
-            roleOptions={roleOptions}
-            isLoadingData={isLoadingData}
-			uploadError={uploadError} 
-            showPhoto={true}
-            isUploading={isUploading}
-            userDisplayName={`${formData.firstName} ${formData.lastName}`.trim() || 'User'}
-            userId={isEdit && user ? user.userId : undefined}
-          />
+        <UserFormFields
+          formData={formData}
+          onChange={handleChange}
+          onPasswordChange={handlePasswordChange}
+          onFileSelect={handleFileSelect}
+          mode={mode}
+          departmentOptions={departmentOptions}
+          roleOptions={roleOptions}
+          isLoadingData={isLoadingData}
+          uploadError={uploadError} 
+          showPhoto={true}
+          isUploading={isUploading}
+          userDisplayName={`${formData.firstName} ${formData.lastName}`.trim() || 'User'}
+          userId={isEdit && user ? user.userId : undefined}
+        />
 
-          <div className="flex gap-3 pt-4">
+        <div className="flex gap-3 justify-center pt-4">
 			<button
 				type="submit"
 				disabled={isSubmitting || !!uploadError} 
@@ -304,9 +358,8 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
 				Delete
 				</button>
 			)}
-			</div>
-        </form>
-      </div>
+		</div>
+      </form>
 
       <ConfirmDeleteModal
         isOpen={showDeleteConfirm}

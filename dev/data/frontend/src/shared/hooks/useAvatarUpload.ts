@@ -4,6 +4,7 @@ import { apiClient } from '@api/api.client';
 
 interface UseAvatarUploadOptions {
     targetUserId?: string;
+    targetConversationId?: string;
     onSuccess?: (avatarUrl: string) => void;
     onPreview?: (previewUrl: string) => void;
 }
@@ -17,11 +18,13 @@ interface UseAvatarUploadResult {
     handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
     uploadPendingForUser: (userId: string) => Promise<string | null>;
 	uploadPendingForSelf: () => Promise<string | null>;
+    uploadPendingForGroup: (conversationId: string) => Promise<string | null>;
     pendingFile: File | null;
 }
 
 export function useAvatarUpload({ 
     targetUserId, 
+    targetConversationId,
     onSuccess,
     onPreview,
 }: UseAvatarUploadOptions = {}): UseAvatarUploadResult {
@@ -31,7 +34,10 @@ export function useAvatarUpload({
     const [pendingFile, setPendingFile] = useState<File | null>(null);
     const { showToast } = useToast();
 
-    const uploadFile = async (file: File, userId?: string): Promise<string | null> => {
+    const uploadFile = async (
+        file: File, 
+        target?: string | { userId?: string; conversationId?: string }
+    ): Promise<string | null> => {
         if (!file) return null;
 
         if (!file.type.startsWith('image/')) {
@@ -54,15 +60,22 @@ export function useAvatarUpload({
         try {
             const formData = new FormData();
             formData.append('avatar', file);
-            const endpoint = (userId || targetUserId)
-                ? `/users/avatar/${userId || targetUserId}`
+
+            const conversationId = typeof target === 'object' ? target?.conversationId : targetConversationId;
+            const userId = typeof target === 'string' ? target : target?.userId || targetUserId;
+            const isGroup = Boolean(conversationId);
+
+            const endpoint = conversationId
+                ? `/messages/${conversationId}/avatar`
+                : userId
+                ? `/users/avatar/${userId}`
                 : '/users/avatar';
 
             const response = await apiClient.upload<{ avatarUrl: string }>(endpoint, formData);
             const url = response.avatarUrl;
             setAvatarUrl(url);
             onSuccess?.(url);
-            showToast('success', 'Avatar updated successfully!');
+            showToast('success', isGroup ? 'Group avatar updated successfully!' : 'Avatar updated successfully!');
             return url;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to upload avatar';
@@ -85,8 +98,8 @@ export function useAvatarUpload({
         };
         reader.readAsDataURL(file);
 
-        if (targetUserId) {
-            await uploadFile(file);
+        if (targetUserId || targetConversationId) {
+            await uploadFile(file, targetConversationId ? { conversationId: targetConversationId } : targetUserId);
         } else {
             setPendingFile(file);
         }
@@ -98,14 +111,25 @@ export function useAvatarUpload({
         await handleFileUpload(file);
     };
 
-    const uploadPendingForUser = async (newUserId: string) => {
-        if (!pendingFile) return null;
-        return uploadFile(pendingFile, newUserId);
-    };
+	const uploadPendingForUser = async (newUserId: string) => {
+		if (!pendingFile) return null;
+		const url = await uploadFile(pendingFile, newUserId);
+		if (url) setPendingFile(null);
+		return url;
+	};
 
 	const uploadPendingForSelf = async (): Promise<string | null> => {
 		if (!pendingFile) return null;
-		return uploadFile(pendingFile);
+		const url = await uploadFile(pendingFile);
+		if (url) setPendingFile(null);
+		return url;
+	};
+
+	const uploadPendingForGroup = async (conversationId: string): Promise<string | null> => {
+		if (!pendingFile) return null;
+		const url = await uploadFile(pendingFile, { conversationId });
+		if (url) setPendingFile(null);
+		return url;
 	};
 
     return {
@@ -117,6 +141,7 @@ export function useAvatarUpload({
         handleAvatarUpload,
         uploadPendingForUser,
 		uploadPendingForSelf,
+        uploadPendingForGroup,
         pendingFile,
     };
 }

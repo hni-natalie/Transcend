@@ -15,7 +15,7 @@ export const AppLayout = () => {
     <div className='bg-background h-screen'>
       <div className='flex h-full'>
         <MenuSide conf={menuConfig} />
-		<main className='flex-1 py-6 px-8 overflow-hidden flex flex-col'>
+		        <main className='flex-1 py-4 sm:py-6 px-3 sm:px-8 overflow-hidden flex flex-col min-w-0'>
           <Outlet />
         </main>
       </div>
