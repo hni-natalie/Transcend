@@ -104,14 +104,9 @@ export const Meetings = () => {
 				data: ApiMeeting[];
 			};
 
-			setJoinedMeetings(joinedRes.data.map(mapMeeting));
-
-			const myRes = await meetingApi.getMyMeetings(user.userId) as {
-				success: boolean;
-				data: ApiMeeting[];
-			};
-
-			setMyMeetings(myRes.data.map(mapMeeting));
+			const meetings = joinedRes.data.map(mapMeeting);
+			setJoinedMeetings(meetings);
+			setMyMeetings(meetings.filter(meeting => meeting.createdByUserId === user.userId));
 		} catch (err) {
 			console.error("Failed to load meetings:", err);
 			showToast('error', 'Failed to load meetings');
@@ -126,7 +121,6 @@ export const Meetings = () => {
 		if (!socket) return;
 
 		const handleMeetingUpdated = () => {
-			console.log("Meeting updated - reloading...");
 			loadMeetings();
 		};
 
@@ -136,15 +130,6 @@ export const Meetings = () => {
 			socket.off("meetingUpdated", handleMeetingUpdated);
 		};
 	}, [socket, loadMeetings]);
-
-	useEffect(() => {
-		const interval = setInterval(() => {
-			console.log('🔄 Polling refresh');
-			loadMeetings();
-		}, 30000);   // 30 seconds
-
-		return () => clearInterval(interval);
-	}, [loadMeetings]);
 
 	// ======================
 	// PIN TOGGLE

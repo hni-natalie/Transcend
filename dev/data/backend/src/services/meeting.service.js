@@ -157,6 +157,24 @@ const meetingService = {
         }));
     },
 
+	// ids allowed to see updates
+    async getMeetingAudienceIds(meetId) {
+        const meeting = await prisma.meeting.findUnique({
+            where: { meetId },
+            select: {
+                createdByUserId: true,
+                participants: { select: { userId: true } }
+            }
+        });
+
+        if (!meeting) return [];
+
+        return [...new Set([
+            meeting.createdByUserId,
+            ...meeting.participants.map(({ userId }) => userId)
+        ])];
+    },
+
     // Create 
     async createMeeting(meetingData) {
         const {
