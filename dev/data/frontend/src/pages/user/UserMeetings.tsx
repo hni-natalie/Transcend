@@ -137,6 +137,15 @@ export const Meetings = () => {
 		};
 	}, [socket, loadMeetings]);
 
+	useEffect(() => {
+		const interval = setInterval(() => {
+			console.log('🔄 Polling refresh');
+			loadMeetings();
+		}, 30000);   // 30 seconds
+
+		return () => clearInterval(interval);
+	}, [loadMeetings]);
+
 	// ======================
 	// PIN TOGGLE
 	// ======================
