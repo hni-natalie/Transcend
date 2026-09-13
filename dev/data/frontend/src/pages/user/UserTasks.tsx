@@ -65,9 +65,9 @@ const validateCreateTaskForm = (data: {
   if (data.description && data.description.trim().length > TASK_DESC_MAX_LENGTH) {
     return `Task description must be under ${TASK_DESC_MAX_LENGTH} characters.`;
   }
-//   if (!data.dueDate) {
-//     return 'Due date is required.';
-//   }
+  if (!data.dueDate) {
+    return 'Due date is required.';
+  }
   if (data.dueDate && isNaN(Date.parse(data.dueDate))) {
     return 'Invalid due date format.';
   }
@@ -396,7 +396,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
         title='Due Date'
         value={dueDate}
         onChange={(e) => setDueDate(e.target.value)}
-        // required={true}
+        required={true}
         type='date'
 		min={getTodayDate()}
         className="bg-background"
@@ -413,8 +413,7 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
       <div className='flex justify-center pt-4'>
         <button
           onClick={handleSubmit}
-          disabled={loading || !taskTitle}
-		//   disabled={loading || !taskTitle.trim() || !dueDate || selectedUserIds.length === 0}
+          disabled={loading || !taskTitle.trim()}
           className='btn-lime-outline-solid w-[200px] mx-auto'
         >
           {loading ? "Creating..." : "Create Task"}
@@ -730,6 +729,7 @@ export const Tasks = () => {
       const msg = err.message || 'Failed to delete task';
       setError(msg);
       showToast('error', msg);
+	  setTaskPendingDeletion(null);
     } finally {
       setIsDeletingTask(false);
     }
@@ -788,12 +788,12 @@ export const Tasks = () => {
         }
       />
 
-      { error && (
+      {/* { error && (
         <AlertBanner
           message={error}
           className='text-danger'
         />
-      )}
+      )} */}
 			<div className="flex-1 overflow-y-auto mt-4">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <TaskColumn

@@ -29,7 +29,7 @@ function validateCreateTask({
 
     validateOption(taskPriority, VALID_TASK_PRIORITY, 'task priority');
     validateText(taskDesc, 'Task description', DESC_MAX_LENGTH);
-    validateDate(dueDate);
+    validateDate(dueDate, 'Due date');
     validateUserIds(assignedUserIds, true);
 
     return {

@@ -155,6 +155,8 @@ const taskController = {
 		} catch (error) {
 			if (error.message === 'Task not found') {
 				res.status(404).json({ error: error.message });
+			} else if (error.message === 'No permission to delete this task') {
+				res.status(403).json({ error: error.message });
 			} else {
 				console.error('Error deleting task:', error);
 				res.status(500).json({ error: 'Failed to delete task' });
