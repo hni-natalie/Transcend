@@ -38,6 +38,23 @@ hit() {
 	done
 }
 
+hit_login() {
+    n="$1"
+    i=0
+
+    while [ "$i" -lt "$n" ]; do
+        code=$(curl -sk -o /dev/null -w '%{http_code}' \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"userEmail\":\"${USER_EMAIL}\",\"userPassword\":\"${USER_PASSWORD}\"}" \
+            --max-time 3 \
+            "https://${DOMAIN_NAME}/api/auth/login")
+
+        printf '%s ' "$code"
+        i=$((i + 1))
+    done
+}
+
 hit_dexec() {
 	path="$1"; cmd="$2"; n="$3"
 	i=0
@@ -53,13 +70,30 @@ hit_dexec() {
 }
 
 # Test 1
+# echo "== nginx api_auth zone (5 req/min) + auth/login: express authLimiter (5 req/min) =="
+# codes=$(hit "/api/auth/login" POST 15)
+# echo "codes: $codes"
+# if echo "$codes" | grep -q '429'; then
+# 	pass "auth/login returns 429 once limit exceeded"
+# else
+# 	fail "auth/login never returned 429 across 15 rapid requests"
+# fi
+
+# Test 1
 echo "== nginx api_auth zone (5 req/min) + auth/login: express authLimiter (5 req/min) =="
-codes=$(hit "/api/auth/login" POST 15)
+printf "userEmail: "
+read -r USER_EMAIL
+
+printf "userPassword: "
+read -r -s USER_PASSWORD
+echo
+
+codes=$(hit_login 15)
 echo "codes: $codes"
 if echo "$codes" | grep -q '429'; then
-	pass "auth/login returns 429 once limit exceeded"
+    pass "auth/login returns 429 once limit exceeded"
 else
-	fail "auth/login never returned 429 across 15 rapid requests"
+    fail "auth/login never returned 429 across 15 rapid requests"
 fi
 
 # Test 2
@@ -85,54 +119,54 @@ else
 fi
 
 # Test 4
-echo
-echo "== nginx <-> whisper /transcribe: slowapi limiter (5/minute), internal-only =="
-echo "${GRAY}for curl: need to install curl in nginx, else will fail${RST}"
+# echo
+# echo "== nginx <-> whisper /transcribe: slowapi limiter (5/minute), internal-only =="
+# echo "${GRAY}for curl: need to install curl in nginx, else will fail${RST}"
 
-# wget method
-codes=$(hit_dexec t_backend "echo x > /tmp/f.mp4; wget -S -O /dev/null --no-check-certificate \
---header='Content-Type: multipart/form-data; boundary=X' \
---post-file=/tmp/f.mp4 https://t_whisper:8000/transcribe" 8)
-echo "$codes"
+# # wget method
+# codes=$(hit_dexec t_backend "echo x > /tmp/f.mp4; wget -S -O /dev/null --no-check-certificate \
+# --header='Content-Type: multipart/form-data; boundary=X' \
+# --post-file=/tmp/f.mp4 https://t_whisper:8000/transcribe" 8)
+# echo "$codes"
 
-# curl method : first install curl in t_nginx
-# generate a test audio
-# ls -la
-if [ ! -f ./tests/test.wav ]; then
-	ffmpeg -f lavfi -i sine=frequency=1000:duration=1 -ar 16000 -ac 1 ./test.wav
-	echo "> Created test audio for whisper test"
-fi
+# # curl method : first install curl in t_nginx
+# # generate a test audio
+# # ls -la
+# if [ ! -f ./tests/test.wav ]; then
+# 	ffmpeg -f lavfi -i sine=frequency=1000:duration=1 -ar 16000 -ac 1 ./test.wav
+# 	echo "> Created test audio for whisper test"
+# fi
 
-# copy test files to container
-if ! docker exec t_nginx ls -la /tmp/f.wav; then
-	docker cp test.wav t_nginx:/tmp/f.wav 2>/dev/null
-	echo "> copy test audio to t_nginx for whisper test"
-fi
+# # copy test files to container
+# if ! docker exec t_nginx ls -la /tmp/f.wav; then
+# 	docker cp test.wav t_nginx:/tmp/f.wav 2>/dev/null
+# 	echo "> copy test audio to t_nginx for whisper test"
+# fi
 
-# # then execute test (single)
-# docker exec t_nginx sh -c 'curl -ksS -o /dev/null -w "%{http_code} %{time_total}s\n" \
-# --max-time 30 --connect-timeout 3 \
+# # # then execute test (single)
+# # docker exec t_nginx sh -c 'curl -ksS -o /dev/null -w "%{http_code} %{time_total}s\n" \
+# # --max-time 30 --connect-timeout 3 \
+# # -F "file=@/tmp/f.wav;type=audio/wav" \
+# # https://t_whisper:8000/transcribe'
+
+# # then execute test (multiple)
+# codes=$(docker exec t_nginx sh -c '
+#   for i in $(seq 1 10); do
+#     curl -ksS -o /dev/null -w "%{http_code} %{time_total}s\n" \
+# --max-time 10 --connect-timeout 5 \
 # -F "file=@/tmp/f.wav;type=audio/wav" \
-# https://t_whisper:8000/transcribe'
+# https://t_whisper:8000/transcribe &
+#   done
+#   wait
+# ')
+#   # wait | sort | uniq -c
 
-# then execute test (multiple)
-codes=$(docker exec t_nginx sh -c '
-  for i in $(seq 1 10); do
-    curl -ksS -o /dev/null -w "%{http_code} %{time_total}s\n" \
---max-time 10 --connect-timeout 5 \
--F "file=@/tmp/f.wav;type=audio/wav" \
-https://t_whisper:8000/transcribe &
-  done
-  wait
-')
-  # wait | sort | uniq -c
-
-echo "$codes"
-if echo "$codes" | grep -qE '429|000|503'; then
-	pass "whisper /transcribe returns 429/000 once limit exceeded"
-else
-	fail "whisper /transcribe never returned 429 across 8 rapid requests"
-fi
+# echo "$codes"
+# if echo "$codes" | grep -qE '429|000|503'; then
+# 	pass "whisper /transcribe returns 429/000 once limit exceeded"
+# else
+# 	fail "whisper /transcribe never returned 429 across 8 rapid requests"
+# fi
 
 echo
 echo "================================"

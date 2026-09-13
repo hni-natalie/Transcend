@@ -24,7 +24,8 @@ FAIL=0
 pass() { echo "${GREEN}PASS - ${RST}$1"; PASS=$((PASS + 1)); }
 fail() { echo "${RED}FAIL - ${RST}$1"; FAIL=$((FAIL + 1)); }
 
-dexec() { timeout 5 docker exec "$1" sh -c "$2" 2>/dev/null; }
+# dexec() { timeout 5 docker exec "$1" sh -c "$2" 2>/dev/null; }
+dexec() { gtimeout 5 docker exec "$1" sh -c "$2"; }
 
 echo "== containers up =="
 for c in t_nginx t_backend t_whisper; do
