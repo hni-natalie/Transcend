@@ -28,56 +28,82 @@
 #   5xx = server-side bug/crash
 #
 # ---------------------------------------------------------------------------
-# SETUP REQUIRED
+# SETUP
 # ---------------------------------------------------------------------------
 #
-#   BASE_URL:
-#       API base URL.
+#   BASE_URL                       API base URL (default: https://localhost)
+#   TEST_TASK_ID                   an existing task ID, for updateTask tests
+#   TEST_CONVERSATION_ID           an existing conversation ID, for sendMessage tests
 #
-#   ADMIN_TOKEN:
-#       JWT for an administrator.
+# ADMIN_TOKEN / USER_TOKEN are fetched for you - no manual curl/login needed.
+# Pass a mode as the script's first arg to control which one gets prompted:
 #
-#   USER_TOKEN:
-#       JWT for a normal/non-admin user.
-#       Required only for authorization tests.
+#   none   (default)  - no prompt; only unauthenticated tests run, rest skipped
+#   admin              - prompt for admin email/password, fetch ADMIN_TOKEN
+#   user               - prompt for user email/password, fetch USER_TOKEN
+#
+# (If ADMIN_TOKEN/USER_TOKEN are already set as env vars, those are used as-is
+# and prompting is skipped regardless of mode.)
+#
+# RUN WITH `source`, NOT `./` - a plain ./test_validation.sh runs in a
+# subshell, so its `export`s vanish when the script exits and your shell
+# never sees ADMIN_TOKEN/USER_TOKEN. `source` runs it in your current shell
+# so the tokens stick around afterward too.
+#
+# USAGE:
+#   chmod +x test_validation.sh
+#   source ./test_validation.sh          # 1st run: no tokens
+#   source ./test_validation.sh admin    # 2nd run: admin token only
+#   source ./test_validation.sh user     # 3rd run: user token only
+# ---------------------------------------------------------------------------
 
-#	TEST_CONVERSATION_ID
-# 	TEST_GROUP_CONVERSATION_ID
-#
-# run below in terminal;
-# curl -X POST http://localhost:3000/api/auth/login \
-#   -H "Content-Type: application/json" \
-#   -d '{"userEmail":"<email>","userPassword":"<password>"}'
-#
-# !!! run one at a time; 1 - without token, 2 - admin token, 3 - user token
-# export ADMIN_TOKEN="<copy-the-token-here>""
-# export USER_TOKEN="<copy-the-token-here>""
-#  
-# USAGE: chmod +x test_validation.sh && ./test_validation.sh
-# ---------------------------------------------------------------------------
- 
 set -u
- 
-BASE_URL="${BASE_URL:-http://localhost:3000}"
+
+BASE_URL="${BASE_URL:-https://localhost}"
 ADMIN_TOKEN="${ADMIN_TOKEN:-}"
 USER_TOKEN="${USER_TOKEN:-}"
- 
+
+# Defaults - override by exporting before running, e.g.:
+#   export TEST_TASK_ID="566f757c-9d40-4ed7-b58f-f119451f78ed"
+#   export TEST_CONVERSATION_ID="aded0bf5-ecb8-4bf4-8d29-91b1a0915941"
+TEST_TASK_ID="${TEST_TASK_ID:-566f757c-9d40-4ed7-b58f-f119451f78ed}"
+TEST_CONVERSATION_ID="${TEST_CONVERSATION_ID:-aded0bf5-ecb8-4bf4-8d29-91b1a0915941}"
+
+# ---------------------------------------------------------------------------
+# COLORS (auto-disabled when output isn't a terminal, e.g. piped to a file)
+# ---------------------------------------------------------------------------
+
+if [ -t 1 ]; then
+    COLOR_GREEN='\033[0;32m'
+    COLOR_RED='\033[0;31m'
+    COLOR_YELLOW='\033[1;33m'
+    COLOR_RESET='\033[0m'
+else
+    COLOR_GREEN=''
+    COLOR_RED=''
+    COLOR_YELLOW=''
+    COLOR_RESET=''
+fi
+
+section_header() {
+    printf "\n==================================================\n${COLOR_YELLOW}%s${COLOR_RESET}\n==================================================\n" "$1"
+}
+
 # ---------------------------------------------------------------------------
 # ROUTES
 # ---------------------------------------------------------------------------
- 
+
 LOGIN_ROUTE="/api/auth/login"
 GOOGLE_ROUTE="/api/auth/google"
- 
+
 CREATE_USER_ROUTE="/api/users"
 UPDATE_PROFILE_ROUTE="/api/users/me"
 UPDATE_STATUS_ROUTE="/api/users/status"
 CHANGE_PASSWORD_ROUTE="/api/users/change-password"
- 
+
 UPDATE_USER_ROUTE_TEMPLATE="/api/users/{ID}"
 RESET_PASSWORD_ROUTE_TEMPLATE="/api/users/{ID}/reset-password"
 
-ME_ROUTE="/api/users/me"
 
 MEETINGS_ROUTE="/api/meetings"
 SYNC_PARTICIPANTS_ROUTE="/api/meetings/participants"
@@ -85,44 +111,43 @@ SYNC_PARTICIPANTS_ROUTE="/api/meetings/participants"
 CREATE_TASK_ROUTE="/api/tasks"
 UPDATE_TASK_ROUTE_TEMPLATE="/api/tasks/{ID}"
 
-MESSAGES_ROUTE="/api/messages"
-MESSAGES_CONVERSATIONS_ROUTE="/api/messages"
 CREATE_DIRECT_ROUTE="/api/messages/direct"
 CREATE_GROUP_ROUTE="/api/messages/group"
- 
+
 # ---------------------------------------------------------------------------
 # TEST COUNTERS
 # ---------------------------------------------------------------------------
- 
+
 PASS_COUNT=0
 FAIL_COUNT=0
 SKIP_COUNT=0
 TOTAL_COUNT=0
- 
+
 # ---------------------------------------------------------------------------
 # CLEANUP
 # ---------------------------------------------------------------------------
- 
+
 BODY_FILE="/tmp/negtest_body"
- 
+TOKEN_FILE="/tmp/negtest_login_body"
+
 cleanup() {
-    rm -f "$BODY_FILE"
+    rm -f "$BODY_FILE" "$TOKEN_FILE"
 }
- 
+
 trap cleanup EXIT
- 
+
 # ---------------------------------------------------------------------------
 # URL ENCODING
 # ---------------------------------------------------------------------------
- 
+
 urlencode() {
     local string="${1}"
     local strlen=${#string}
     local encoded="" pos c o
- 
+
     for (( pos=0 ; pos<strlen ; pos++ )); do
         c=${string:$pos:1}
- 
+
         case "$c" in
             [-_.~a-zA-Z0-9])
                 o="${c}"
@@ -131,13 +156,128 @@ urlencode() {
                 printf -v o '%%%02x' "'${c}"
                 ;;
         esac
- 
+
         encoded+="${o}"
     done
- 
+
     printf '%s' "${encoded}"
 }
- 
+
+# ---------------------------------------------------------------------------
+# TOKEN FETCHING
+# ---------------------------------------------------------------------------
+#
+# Prompts for an account's email + password, logs in, and extracts the JWT
+# from the response JSON. Works whether or not `jq` is installed.
+#
+# Usage:
+#   ADMIN_TOKEN="$(fetch_token "admin")"
+#   USER_TOKEN="$(fetch_token "regular user")"
+
+extract_token() {
+    # Reads JSON body from stdin, prints the token field's value.
+    # Tries jq first (most reliable), falls back to grep/sed.
+    local json
+    json="$(cat)"
+
+    if command -v jq >/dev/null 2>&1; then
+        local tok
+        tok="$(printf '%s' "$json" | jq -r '.token // .accessToken // .jwt // .data.token // empty' 2>/dev/null)"
+        if [ -n "$tok" ] && [ "$tok" != "null" ]; then
+            printf '%s' "$tok"
+            return 0
+        fi
+    fi
+
+    # Fallback: grab the value of the first key matching token/accessToken/jwt
+    printf '%s' "$json" \
+        | grep -o '"\(token\|accessToken\|jwt\)"[[:space:]]*:[[:space:]]*"[^"]*"' \
+        | head -n1 \
+        | sed -E 's/.*:[[:space:]]*"([^"]*)"/\1/'
+}
+
+fetch_token() {
+    local label="$1"
+    local email password status body token
+
+    echo "" >&2
+    echo "-- Login as $label --" >&2
+    read -r -p "  Email: " email
+    read -r -s -p "  Password: " password
+    echo "" >&2
+
+    status=$(curl \
+        -s \
+        -k \
+        -o "$TOKEN_FILE" \
+        -w "%{http_code}" \
+        --connect-timeout 5 \
+        --max-time 15 \
+        -X POST "$BASE_URL$LOGIN_ROUTE" \
+        -H "Content-Type: application/json" \
+        -d "{\"userEmail\":\"${email}\",\"userPassword\":\"${password}\"}")
+
+    unset password
+
+    body="$(cat "$TOKEN_FILE" 2>/dev/null || true)"
+
+    if [ "$status" != "200" ] && [ "$status" != "201" ]; then
+        echo "  Login failed for $label (HTTP $status)." >&2
+        echo "  body: ${body:0:300}" >&2
+        return 1
+    fi
+
+    token="$(printf '%s' "$body" | extract_token)"
+
+    if [ -z "$token" ]; then
+        echo "  Login succeeded but no token field was found in the response." >&2
+        echo "  body: ${body:0:300}" >&2
+        return 1
+    fi
+
+    echo "  Got token for $label." >&2
+    printf '%s' "$token"
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+# MODE - which token (if any) to prompt for, from the script's first arg
+# ---------------------------------------------------------------------------
+
+MODE="${1:-none}"
+
+case "$MODE" in
+    none)
+        # No prompts. Uses whatever ADMIN_TOKEN/USER_TOKEN are already set
+        # in the environment (often none), so only unauthenticated tests
+        # will run - the rest are skipped.
+        ;;
+    admin)
+        if [ -z "$ADMIN_TOKEN" ]; then
+            if ADMIN_TOKEN="$(fetch_token "admin")"; then
+                export ADMIN_TOKEN
+            else
+                echo "Proceeding without ADMIN_TOKEN - admin-only tests will be skipped." >&2
+                ADMIN_TOKEN=""
+            fi
+        fi
+        ;;
+    user)
+        if [ -z "$USER_TOKEN" ]; then
+            if USER_TOKEN="$(fetch_token "regular user")"; then
+                export USER_TOKEN
+            else
+                echo "Proceeding without USER_TOKEN - user-auth tests will be skipped." >&2
+                USER_TOKEN=""
+            fi
+        fi
+        ;;
+    *)
+        echo "Unknown mode: '$MODE'. Use one of: none, admin, user" >&2
+        return 1 2>/dev/null || exit 1
+        ;;
+esac
+
 # ---------------------------------------------------------------------------
 # TEST RUNNER
 # ---------------------------------------------------------------------------
@@ -145,168 +285,149 @@ urlencode() {
 run_test() {
     local description="$1"
     local expected="$2"
- 
+
     shift 2
- 
+
     rm -f "$BODY_FILE"
- 
+
     TOTAL_COUNT=$((TOTAL_COUNT + 1))
- 
+
     local status
     status=$(curl \
         -s \
+        -k \
         -o "$BODY_FILE" \
         -w "%{http_code}" \
         --connect-timeout 5 \
         --max-time 15 \
         "$@")
- 
+
     local body
     body=$(cat "$BODY_FILE" 2>/dev/null || true)
- 
+
     if [ "$status" = "000" ]; then
-        echo "FAIL  [curl failed to connect/send] $description"
+        printf "${COLOR_RED}FAIL${COLOR_RESET}  [curl failed to connect/send] %s\n" "$description"
         echo "      This usually means the server is unreachable or the URL is invalid."
         FAIL_COUNT=$((FAIL_COUNT + 1))
         return
     fi
- 
+
     if [ "$status" = "$expected" ]; then
-        echo "PASS  [$status] $description"
+        printf "${COLOR_GREEN}PASS${COLOR_RESET}  [%s] %s\n" "$status" "$description"
         PASS_COUNT=$((PASS_COUNT + 1))
     else
-        echo "FAIL  [got $status, expected $expected] $description"
- 
+        printf "${COLOR_RED}FAIL${COLOR_RESET}  [got %s, expected %s] %s\n" "$status" "$expected" "$description"
+
         if [ -n "$body" ]; then
             echo "      body: ${body:0:500}"
         fi
- 
+
         FAIL_COUNT=$((FAIL_COUNT + 1))
     fi
 }
- 
+
 # ---------------------------------------------------------------------------
 # SKIPPED TEST
 # ---------------------------------------------------------------------------
- 
+
 skip_test() {
     echo "SKIP  $1"
     SKIP_COUNT=$((SKIP_COUNT + 1))
     TOTAL_COUNT=$((TOTAL_COUNT + 1))
 }
- 
+
 # ---------------------------------------------------------------------------
 # AUTH HEADERS
 # ---------------------------------------------------------------------------
- 
+
 admin_auth_header() {
     printf '%s' "Authorization: Bearer $ADMIN_TOKEN"
 }
- 
+
 user_auth_header() {
     printf '%s' "Authorization: Bearer $USER_TOKEN"
 }
- 
-# ===========================================================================
-# AUTH — /auth/login
-# ===========================================================================
- 
-echo "=================================================="
-echo "AUTH — /auth/login"
-echo "=================================================="
- 
+
+section_header "AUTH — /auth/login"
+
 run_test "empty body" 400 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{}'
- 
+
 run_test "missing password" 400 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{"userEmail":"a@b.com"}'
- 
+
 run_test "missing email" 400 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{"userPassword":"whatever123"}'
- 
+
 run_test "malformed email (no @)" 400 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{"userEmail":"notanemail","userPassword":"whatever123"}'
- 
+
 run_test "malformed email (no domain)" 400 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{"userEmail":"a@b","userPassword":"whatever123"}'
- 
+
 # This intentionally expects 401 rather than 400.
 # The email is lookup-only and is not stored/rendered by this endpoint.
 run_test "XSS-shaped email (expect 401 — no matching user)" 401 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{"userEmail":"<script>alert(1)</script>@x.com","userPassword":"whatever123"}'
- 
+
 run_test "SQL-injection-shaped email" 400 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
     -d "{\"userEmail\":\"' OR 1=1--@x.com\",\"userPassword\":\"whatever123\"}"
- 
+
 run_test "oversized password (300 chars)" 400 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
     -d "{\"userEmail\":\"a@b.com\",\"userPassword\":\"$(printf 'a%.0s' {1..300})\"}"
- 
+
 run_test "wrong types (numbers instead of strings)" 400 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{"userEmail":12345,"userPassword":67890}'
- 
+
 run_test "wrong password for valid-format email" 401 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{"userEmail":"clearly-fake-test-account@example.com","userPassword":"DefinitelyWrongPassword123!"}'
- 
+
 run_test "nonexistent user" 401 \
     -X POST "$BASE_URL$LOGIN_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{"userEmail":"does-not-exist-987654321@test.com","userPassword":"Whatever123!"}'
- 
-# ===========================================================================
-# AUTH — /auth/google
-# ===========================================================================
- 
-echo ""
-echo "=================================================="
-echo "AUTH — /auth/google"
-echo "=================================================="
- 
+
+section_header "AUTH — /auth/google"
+
 run_test "empty body" 400 \
     -X POST "$BASE_URL$GOOGLE_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{}'
- 
+
 run_test "oversized idToken (5000 chars)" 400 \
     -X POST "$BASE_URL$GOOGLE_ROUTE" \
     -H "Content-Type: application/json" \
     -d "{\"idToken\":\"$(printf 'a%.0s' {1..5000})\"}"
- 
+
 run_test "Google idToken wrong type" 400 \
     -X POST "$BASE_URL$GOOGLE_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{"idToken":12345}'
- 
-# ===========================================================================
-# USER — createUser
-# ===========================================================================
- 
-echo ""
-echo "=================================================="
-echo "USER — createUser"
-echo "=================================================="
- 
+
+section_header "ADMIN — createUser"
+
 if [ -z "$ADMIN_TOKEN" ]; then
- 
+
     skip_test "createUser: empty body"
     skip_test "createUser: missing name"
     skip_test "createUser: malformed email"
@@ -314,274 +435,232 @@ if [ -z "$ADMIN_TOKEN" ]; then
     skip_test "createUser: oversized name"
     skip_test "createUser: SQL-injection-shaped roleId"
     skip_test "createUser: weak password"
- 
+
 else
- 
+
     AUTH_HEADER="$(admin_auth_header)"
- 
+
     run_test "createUser: empty body" 400 \
         -X POST "$BASE_URL$CREATE_USER_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{}'
- 
+
     run_test "createUser: missing name" 400 \
         -X POST "$BASE_URL$CREATE_USER_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"email":"newuser@test.com","roleId":"role123"}'
- 
+
     run_test "createUser: malformed email" 400 \
         -X POST "$BASE_URL$CREATE_USER_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"email":"notanemail","name":"Test User","roleId":"role123"}'
- 
+
     run_test "createUser: XSS in name" 400 \
         -X POST "$BASE_URL$CREATE_USER_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"email":"newuser@test.com","name":"<img src=x onerror=alert(1)>","roleId":"role123"}'
- 
+
     run_test "createUser: oversized name (150 chars)" 400 \
         -X POST "$BASE_URL$CREATE_USER_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d "{\"email\":\"newuser@test.com\",\"name\":\"$(printf 'a%.0s' {1..150})\",\"roleId\":\"role123\"}"
- 
+
     run_test "createUser: SQL-injection-shaped roleId" 400 \
         -X POST "$BASE_URL$CREATE_USER_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d "{\"email\":\"newuser@test.com\",\"name\":\"Test User\",\"roleId\":\"'; DROP TABLE users;--\"}"
- 
+
     run_test "createUser: weak password" 400 \
         -X POST "$BASE_URL$CREATE_USER_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"email":"newuser@test.com","name":"Test User","roleId":"role123","password":"123"}'
- 
+
 fi
- 
-# ===========================================================================
-# USER — updateCurrentUser / profile
-# ===========================================================================
- 
-echo ""
-echo "=================================================="
-echo "USER — updateCurrentUser / profile"
-echo "=================================================="
- 
+
+section_header "USER — updateCurrentUser / profile"
+
 if [ -z "$USER_TOKEN" ]; then
- 
+
     skip_test "updateProfile: no fields"
     skip_test "updateProfile: malformed email"
     skip_test "updateProfile: XSS in city"
     skip_test "updateProfile: city wrong type"
- 
+
 else
- 
+
     AUTH_HEADER="$(user_auth_header)"
- 
+
     run_test "updateProfile: no fields sent" 400 \
         -X PATCH "$BASE_URL$UPDATE_PROFILE_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{}'
- 
+
     run_test "updateProfile: malformed email" 400 \
         -X PATCH "$BASE_URL$UPDATE_PROFILE_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"userEmail":"not-an-email"}'
- 
+
     run_test "updateProfile: XSS in city" 400 \
         -X PATCH "$BASE_URL$UPDATE_PROFILE_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"city":"<script>document.cookie</script>"}'
- 
+
     run_test "updateProfile: city wrong type" 400 \
         -X PATCH "$BASE_URL$UPDATE_PROFILE_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"city":12345}'
- 
+
 fi
- 
-# ===========================================================================
-# USER — status
-# ===========================================================================
- 
-echo ""
-echo "=================================================="
-echo "USER — status update"
-echo "=================================================="
- 
+
+section_header "USER — status update"
+
 if [ -z "$USER_TOKEN" ]; then
- 
+
     skip_test "updateStatus: empty"
     skip_test "updateStatus: invalid value"
     skip_test "updateStatus: wrong type"
- 
+
 else
- 
+
     AUTH_HEADER="$(user_auth_header)"
- 
+
     run_test "updateStatus: empty body" 400 \
         -X PATCH "$BASE_URL$UPDATE_STATUS_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{}'
- 
+
     run_test "updateStatus: invalid value" 400 \
         -X PATCH "$BASE_URL$UPDATE_STATUS_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"status":"hacked"}'
- 
+
     run_test "updateStatus: wrong type" 400 \
         -X PATCH "$BASE_URL$UPDATE_STATUS_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"status":12345}'
- 
+
 fi
- 
-# ===========================================================================
-# USER — change password
-# ===========================================================================
- 
-echo ""
-echo "=================================================="
-echo "USER — change-password"
-echo "=================================================="
- 
+
+section_header "USER — change-password"
+
 if [ -z "$USER_TOKEN" ]; then
- 
+
     skip_test "changePassword: missing oldPassword"
     skip_test "changePassword: weak newPassword"
     skip_test "changePassword: wrong password types"
- 
+
 else
- 
+
     AUTH_HEADER="$(user_auth_header)"
- 
+
     run_test "changePassword: missing oldPassword" 400 \
         -X POST "$BASE_URL$CHANGE_PASSWORD_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"newPassword":"SomethingStrong1!"}'
- 
+
     run_test "changePassword: weak newPassword" 400 \
         -X POST "$BASE_URL$CHANGE_PASSWORD_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"oldPassword":"whatever","newPassword":"123"}'
- 
+
     run_test "changePassword: wrong password types" 400 \
         -X POST "$BASE_URL$CHANGE_PASSWORD_ROUTE" \
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"oldPassword":12345,"newPassword":67890}'
- 
+
 fi
- 
-# ===========================================================================
-# AUTHENTICATION — protected endpoint behaviour
-# ===========================================================================
- 
-echo ""
-echo "=================================================="
-echo "AUTHENTICATION — protected endpoints"
-echo "=================================================="
- 
+
+section_header "AUTHENTICATION — protected endpoints"
+
 run_test "protected profile endpoint: no Authorization header" 401 \
     -X PUT "$BASE_URL$UPDATE_PROFILE_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{}'
- 
+
 run_test "protected status endpoint: no Authorization header" 401 \
     -X PATCH "$BASE_URL$UPDATE_STATUS_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{}'
- 
+
 run_test "protected change-password endpoint: no Authorization header" 401 \
     -X POST "$BASE_URL$CHANGE_PASSWORD_ROUTE" \
     -H "Content-Type: application/json" \
     -d '{}'
- 
+
 run_test "protected profile endpoint: invalid JWT" 401 \
     -X PUT "$BASE_URL$UPDATE_PROFILE_ROUTE" \
     -H "Authorization: Bearer definitely-not-a-real-jwt" \
     -H "Content-Type: application/json" \
     -d '{}'
- 
-# ===========================================================================
-# AUTHORIZATION — admin-only endpoints
-# ===========================================================================
- 
-echo ""
-echo "=================================================="
-echo "AUTHORIZATION — admin-only endpoints"
-echo "=================================================="
- 
+
+section_header "AUTHORIZATION — admin-only endpoints"
+
 if [ -z "$USER_TOKEN" ]; then
- 
- 
+
+
     skip_test "normal user cannot createUser"
     skip_test "normal user cannot update another user"
     skip_test "normal user cannot reset another user's password"
- 
+
 else
- 
+
     USER_AUTH_HEADER="$(user_auth_header)"
- 
+
     run_test "normal user cannot createUser (expect 403)" 403 \
         -X POST "$BASE_URL$CREATE_USER_ROUTE" \
         -H "$USER_AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"email":"unauthorized@test.com","name":"Unauthorized User","roleId":"role123"}'
- 
+
     # Fake ID so we don't accidentally modify a real account.
     AUTHZ_BAD_ID_RAW="00000000-0000-0000-0000-000000000000"
     AUTHZ_BAD_ID="$(urlencode "$AUTHZ_BAD_ID_RAW")"
- 
+
     run_test "normal user cannot update another user (expect 403)" 403 \
         -X PATCH "$BASE_URL${UPDATE_USER_ROUTE_TEMPLATE/\{ID\}/$AUTHZ_BAD_ID}" \
         -H "$USER_AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"name":"Unauthorized Change"}'
- 
+
     run_test "normal user cannot reset another user's password (expect 403)" 403 \
         -X POST "$BASE_URL${RESET_PASSWORD_ROUTE_TEMPLATE/\{ID\}/$AUTHZ_BAD_ID}" \
         -H "$USER_AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"newPassword":"SomethingStrong1!"}'
- 
+
 fi
- 
-# ===========================================================================
-# SQL INJECTION — route parameters
-# ===========================================================================
- 
-echo ""
-echo "=================================================="
-echo "USER — SQL-injection-shaped route param IDs"
-echo "=================================================="
- 
+
+section_header "USER — SQL-injection-shaped route param IDs"
+
 if [ -z "$ADMIN_TOKEN" ]; then
- 
+
     skip_test "updateUser: SQL-injection-shaped :id"
     skip_test "resetPassword: SQL-injection-shaped :id"
- 
+
 else
- 
+
     AUTH_HEADER="$(admin_auth_header)"
- 
+
     BAD_ID_RAW="'; DROP TABLE users;--"
     BAD_ID="$(urlencode "$BAD_ID_RAW")"
- 
+
     run_test \
         "updateUser: SQL-injection-shaped :id (expect 404 — safely treated as literal)" \
         404 \
@@ -589,7 +668,7 @@ else
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"name":"Test"}'
- 
+
     run_test \
         "resetPassword: SQL-injection-shaped :id (expect 404 — safely treated as literal)" \
         404 \
@@ -597,18 +676,11 @@ else
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"newPassword":"SomethingStrong1!"}'
- 
+
 fi
 
 
-# ===========================================================================
-# MEETINGS — createMeeting validation
-# ===========================================================================
-
-echo ""
-echo "=================================================="
-echo "MEETINGS — createMeeting"
-echo "=================================================="
+section_header "MEETINGS — createMeeting"
 
 if [ -z "$USER_TOKEN" ]; then
 
@@ -710,14 +782,7 @@ else
 
 fi
 
-# ===========================================================================
-# MEETINGS — updateMeeting validation
-# ===========================================================================
-
-echo ""
-echo "=================================================="
-echo "MEETINGS — updateMeeting"
-echo "=================================================="
+section_header "MEETINGS — updateMeeting"
 
 if [ -z "$USER_TOKEN" ]; then
 
@@ -771,14 +836,7 @@ else
 
 fi
 
-# ===========================================================================
-# MEETINGS — syncParticipants validation
-# ===========================================================================
-
-echo ""
-echo "=================================================="
-echo "MEETINGS — syncParticipants"
-echo "=================================================="
+section_header "MEETINGS — syncParticipants"
 
 if [ -z "$USER_TOKEN" ]; then
 
@@ -837,14 +895,7 @@ else
 
 fi
 
-# ===========================================================================
-# MEETINGS — SQL injection route parameters
-# ===========================================================================
-
-echo ""
-echo "=================================================="
-echo "MEETINGS — SQL-injection-shaped route param IDs"
-echo "=================================================="
+section_header "MEETINGS — SQL-injection-shaped route param IDs"
 
 if [ -z "$USER_TOKEN" ]; then
 
@@ -892,14 +943,7 @@ else
 
 fi
 
-# ===========================================================================
-# MEETINGS — authorization tests
-# ===========================================================================
-
-echo ""
-echo "=================================================="
-echo "MEETINGS — authorization tests"
-echo "=================================================="
+section_header "MEETINGS — authorization tests"
 
 if [ -z "$USER_TOKEN" ]; then
 
@@ -936,14 +980,7 @@ else
 
 fi
 
-# ===========================================================================
-# TASK — createTask validation
-# ===========================================================================
-
-echo ""
-echo "=================================================="
-echo "TASK — createTask"
-echo "=================================================="
+section_header "TASK — createTask"
 
 if [ -z "$USER_TOKEN" ]; then
 
@@ -1042,14 +1079,7 @@ else
 
 fi
 
-# ===========================================================================
-# TASK — updateTask validation
-# ===========================================================================
-
-echo ""
-echo "=================================================="
-echo "TASK — updateTask"
-echo "=================================================="
+section_header "TASK — updateTask"
 
 if [ -z "$USER_TOKEN" ]; then
 
@@ -1120,14 +1150,7 @@ else
 
 fi
 
-# ===========================================================================
-# MESSAGES — createDirectConversation validation
-# ===========================================================================
-
-echo ""
-echo "=================================================="
-echo "MESSAGES — createDirectConversation"
-echo "=================================================="
+section_header "MESSAGES — createDirectConversation"
 
 if [ -z "$USER_TOKEN" ]; then
 
@@ -1155,14 +1178,7 @@ else
 
 fi
 
-# ===========================================================================
-# MESSAGES — createGroupConversation validation
-# ===========================================================================
-
-echo ""
-echo "=================================================="
-echo "MESSAGES — createGroupConversation"
-echo "=================================================="
+section_header "MESSAGES — createGroupConversation"
 
 if [ -z "$USER_TOKEN" ]; then
 
@@ -1221,14 +1237,7 @@ else
 
 fi
 
-# ===========================================================================
-# MESSAGES — sendMessage validation
-# ===========================================================================
-
-echo ""
-echo "=================================================="
-echo "MESSAGES — sendMessage"
-echo "=================================================="
+section_header "MESSAGES — sendMessage"
 
 if [ -z "$USER_TOKEN" ]; then
 
@@ -1260,41 +1269,34 @@ else
             "text":"<script>alert(1)</script>"
         }'
 
-    run_test "sendMessage: oversized text (5001 chars)" 400 \
+    run_test "sendMessage: oversized text (2001 chars)" 400 \
         -X POST "$BASE_URL$CONVERSATION_ROUTE" \
         -H "$USER_AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d "{
-            \"text\":\"$(printf 'a%.0s' {1..5001})\"
+            \"text\":\"$(printf 'a%.0s' {1..2001})\"
         }"
 
 fi
- 
-# ===========================================================================
-# FINAL RESULTS
-# ===========================================================================
- 
-echo ""
-echo "=================================================="
-echo "RESULTS"
-echo "=================================================="
- 
+
+section_header "RESULTS"
+
 echo "TOTAL:   $TOTAL_COUNT"
 echo "PASSED:  $PASS_COUNT"
 echo "FAILED:  $FAIL_COUNT"
 echo "SKIPPED: $SKIP_COUNT"
- 
+
 echo "=================================================="
- 
+
 if [ "$FAIL_COUNT" -gt 0 ]; then
     echo "RESULT: FAILED"
     exit 1
 fi
- 
+
 if [ "$SKIP_COUNT" -gt 0 ]; then
     echo "RESULT: PASSED WITH SKIPS"
     exit 0
 fi
- 
+
 echo "RESULT: ALL TESTS PASSED"
 exit 0

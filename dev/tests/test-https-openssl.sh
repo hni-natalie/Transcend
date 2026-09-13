@@ -69,7 +69,7 @@ echo "== cert sanity (subject/issuer/validity) =="
 cert_info=$(echo | openssl s_client -connect "${DOMAIN_NAME}:443" 2>/dev/null | openssl x509 -noout -subject -issuer -dates 2>/dev/null)
 if [ -n "$cert_info" ]; then
 	echo "${GRAY}$cert_info${RST}"
-	if echo "$cert_info" | grep -q "CN = ${DOMAIN_NAME}"; then
+	if echo "$cert_info" | grep -qE "CN[[:space:]]*=[[:space:]]*${DOMAIN_NAME}"; then
 		pass "cert CN matches DOMAIN_NAME (${DOMAIN_NAME})"
 	else
 		fail "cert CN does not match DOMAIN_NAME (${DOMAIN_NAME})"
