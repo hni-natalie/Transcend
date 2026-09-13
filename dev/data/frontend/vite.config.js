@@ -25,20 +25,26 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     envDir: envDir,
-    server: hasCerts
-      ? {
-          https: {
-            key: fs.readFileSync(keyPath),
-            cert: fs.readFileSync(certPath),
-          },
-        }
-      : undefined,
+    server: {
+      ...(hasCerts
+        ? {
+            https: {
+              key: fs.readFileSync(keyPath),
+              cert: fs.readFileSync(certPath),
+            },
+          }
+        : {}),
+      fs: {
+        allow: [path.resolve(__dirname, '..')],
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
         '@api': path.resolve(__dirname, './src/api'),
         '@features': path.resolve(__dirname, './src/features'),
         '@shared': path.resolve(__dirname, './src/shared'),
+        '@shared-config': path.resolve(__dirname, '../shared'),
         '@pages': path.resolve(__dirname, './src/pages'),
         '@config': path.resolve(__dirname, './src/config'),
         '@context': path.resolve(__dirname, './src/context'),

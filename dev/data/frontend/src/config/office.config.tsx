@@ -1,6 +1,7 @@
 /*
 	macros defined for office space setup
 */
+import layoutConfig from '@shared-config/office.config.json';
 
 export const officeSceneConfig = {
 	Network: {
@@ -15,9 +16,11 @@ export const officeSceneConfig = {
 		segments: 24,
 	},
 	World: {
-		width: 120,
-		height: 50,
+		width: layoutConfig.width,
+		height: layoutConfig.height,
 		border: 10, // *0.2
+		padding: layoutConfig.padding,
+		shrinkFactor: layoutConfig.shrinkFactor,
 	},
 	Color: {
 		startHue: 0,

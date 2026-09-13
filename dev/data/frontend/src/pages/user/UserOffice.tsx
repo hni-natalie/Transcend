@@ -121,9 +121,7 @@ export function Office({ roomName } : SpaceProps ) {
 			<LoadingState message="Initializing Office resources..." size="full" className='flex-1' />
 		) : (
 		<div className='flex-1 relative'>
-			<Canvas
-				className=''
-			>
+			<Canvas>
 			<Physics>
 				<SpaceProvider localPlayerRef={localPlayerRef} roomName={roomName}>
 				<PositionProvider roomName={roomName}>
