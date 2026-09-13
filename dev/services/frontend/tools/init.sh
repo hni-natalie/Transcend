@@ -16,13 +16,9 @@ chown -R frontend:frontend /app
 echo "> Installing dependencies..."
 # can remove node_modules & package.lock for clean install
 
-if [ -d node_modules ]; then
-    echo "> node_modules exists, clearing for clean install..."
+if [ "${FRESH_NODE_MODULES}" = true ]; then
+    echo "> Clearing node_modules for fresh install..."
     rm -rf node_modules
-fi
-if [ -d package-lock.json ]; then
-    echo "> package-lock.json exists, clearing for clean install..."
-    rm -rf package-lock.json 
 fi
 
 su frontend -c "npm install"
