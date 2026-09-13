@@ -176,29 +176,30 @@ export function VideoConference({
             />
           </div>
           <div
+            className="absolute inset-0 pointer-events-none z-30 overflow-hidden"
             style={{
               visibility: widgetState.showChat ? 'visible' : 'hidden',
-              pointerEvents: 'none', // wrapper never intercepts clicks
-              position: 'absolute',
-              inset: 0,
-              zIndex: 50,
             }}
           >
             <Rnd
+              dragHandleClassName="lk-chat-header"
+              cancel=".lk-chat-close, input, textarea, button, select, a, .lk-chat-body, .lk-chat-messages, .lk-chat-form"
               style={{ pointerEvents: widgetState.showChat ? 'auto' : 'none' }} // only the box itself is clickable
               default={{
-                x: 20,
-                y: 80,
-                width: window.innerWidth < 640 ? window.innerWidth - 40 : 320,
-                height: window.innerWidth < 640 ? window.innerHeight - 160 : 400,
+                x: window.innerWidth < 640 ? 8 : 20,
+                y: window.innerWidth < 640 ? 12 : 60,
+                width: window.innerWidth < 640 ? Math.min(window.innerWidth - 80, 320) : 320,
+                height: window.innerWidth < 640 ? Math.min(window.innerHeight - 180, 420) : 400,
               }}
-              minWidth={260}
-              minHeight={300}
-              bounds="window"
+              minWidth={240}
+              minHeight={250}
+              maxWidth="100%"
+              maxHeight="100%"
+              bounds="parent"
             >
               <Chat
                 meetId={meetId}
-                className="h-full w-full p-2 pt-0"
+                className="h-full w-full"
                 messageFormatter={chatMessageFormatter}
                 messageEncoder={chatMessageEncoder}
                 messageDecoder={chatMessageDecoder}

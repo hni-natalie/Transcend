@@ -2,6 +2,15 @@ const meetingService = require('../services/meeting.service');
 const { getIO } = require("../services/socket.service");
 const { validateCreateMeeting, validateUpdateMeeting, validateSyncParticipants } = require('../validators/meeting.validator');
 
+
+// use existing socket room 
+const emitMeetingUpdated = (participantIds, meetId) => {
+    const update = { meetId };
+    for (const participantId of new Set(participantIds)) {
+        getIO().to(`user:${participantId}`).emit('meetingUpdated', update);
+    }
+};
+
 const meetingController = {
     async getAllMeetings(req, res) {
         try {
@@ -98,7 +107,10 @@ const meetingController = {
                 userId
             });
 
-            getIO().emit("meetingUpdated");
+            emitMeetingUpdated(
+                await meetingService.getMeetingAudienceIds(meeting.meetId),
+                meeting.meetId
+            );
 
             return res.status(201).json({ success: true, data: meeting });
         } catch (error) {
@@ -140,7 +152,10 @@ const meetingController = {
                 validatedData
             );
 
-            getIO().emit("meetingUpdated");
+            emitMeetingUpdated(
+                await meetingService.getMeetingAudienceIds(meeting.meetId),
+                meeting.meetId
+            );
 
             return res.status(200).json({ success: true, data: meeting });
         } catch (error) {
@@ -171,6 +186,10 @@ const meetingController = {
 
             const userId = req.user.userId;
 
+            // Removed participants need one final notification so their
+            // schedule immediately drops the meeting as well.
+            const previousAudience = await meetingService.getMeetingAudienceIds(validatedData.meetId);
+
             const result = await meetingService.syncParticipants(
                 validatedData.meetId,
                 userId,
@@ -178,8 +197,12 @@ const meetingController = {
                 validatedData.meetStart,
                 validatedData.meetEnd
             );
+            const currentAudience = await meetingService.getMeetingAudienceIds(validatedData.meetId);
 
-            getIO().emit("meetingUpdated");
+            emitMeetingUpdated(
+                [...previousAudience, ...currentAudience],
+                validatedData.meetId
+            );
 
             return res.status(200).json({
                 success: true,
@@ -208,9 +231,10 @@ const meetingController = {
             if (!meetId)
                 return res.status(400).json({ success: false, message: 'Meeting ID is required' });
 
+            const audience = await meetingService.getMeetingAudienceIds(meetId);
             const result = await meetingService.deleteMeeting(meetId, userId);
 
-            getIO().emit("meetingUpdated");
+            emitMeetingUpdated(audience, meetId);
 
             return res.status(200).json({ success: true, data: result });
         } catch (error) {
@@ -265,7 +289,10 @@ const meetingController = {
 
             const updatedMeeting = await meetingService.startMeeting(meetId, userId);
 
-            getIO().emit("meetingUpdated");
+            emitMeetingUpdated(
+                await meetingService.getMeetingAudienceIds(updatedMeeting.meetId),
+                updatedMeeting.meetId
+            );
 
             return res.status(200).json({ success: true, data: updatedMeeting });
         } catch (err) {
@@ -290,7 +317,10 @@ const meetingController = {
 
             const updatedMeeting = await meetingService.endMeeting(meetId, userId);
 
-            getIO().emit("meetingUpdated");
+            emitMeetingUpdated(
+                await meetingService.getMeetingAudienceIds(updatedMeeting.meetId),
+                updatedMeeting.meetId
+            );
 
             return res.status(200).json({ success: true, data: updatedMeeting });
         } catch (err) {

@@ -256,7 +256,16 @@ const messageController = {
             );
 			
 			console.log("message.created");
-			getIO().emit("messageUpdated");
+			const participantIds = await messageService.getConversationParticipantIds(
+				conversationValidated.conversationId,
+			);
+			const update = {
+				conversationId: conversationValidated.conversationId,
+				message,
+			};
+			participantIds.forEach((participantId) => {
+				getIO().to(`user:${participantId}`).emit('messageUpdated', update);
+			});
 			return res.status(201).json(message);
 
 		} catch (error) {

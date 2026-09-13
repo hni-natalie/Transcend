@@ -104,6 +104,15 @@ function conversationResponseSelect(userId) {
 }
 
 const messageService = {
+	async getConversationParticipantIds(conversationId) {
+		const participants = await prisma.conversationParticipant.findMany({
+			where: { conversationId, removedAt: null },
+			select: { userId: true },
+		});
+
+		return participants.map(({ userId }) => userId);
+	},
+
 	async getAllConversations(userId) {
 		console.log("Fetching all conversations for userId:", userId);
 
