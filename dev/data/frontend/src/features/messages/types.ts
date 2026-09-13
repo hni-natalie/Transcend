@@ -14,6 +14,7 @@ export interface Profile {
   memberCount?: number;
   deletedAt?: string | null;
   creatorId?: string;
+  timezone?: string | null;
 }
 
 export interface Conversation {
@@ -71,6 +72,7 @@ export interface ConversationResponse {
         dpName: string;
       } | null;
 	  deletedAt?: string | null;
+	  timezone?: string | null;
     };
   }[];
 

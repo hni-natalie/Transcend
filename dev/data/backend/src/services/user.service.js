@@ -188,6 +188,7 @@ const userService = {
                 avatarUrl: true,
 				city: true,
 				country: true,
+				timezone: true,
 				userTitle: true,
                 roleId: true,
                 role: { select: { roleId: true, roleName: true } },

@@ -1,10 +1,17 @@
-export function formatClockTime(date: Date | string = new Date()): string {
+export function formatClockTime(date: Date | string = new Date(), timezone?: string | null): string {
+  if (!timezone) return '';
   const d = typeof date === 'string' ? new Date(date) : date;
-
-  return d.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  
+  try {
+    return d.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: timezone,
+    });
+  } catch {
+    return 'Unavailable';
+  }
 }
 
 export function truncate(text: string, maxLength = 60): string {
