@@ -42,20 +42,22 @@ interface MessageHeaderProps {
 
 export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, onBack }: MessageHeaderProps) {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [localTime, setLocalTime] = useState(() => formatClockTime());
+  const [localTime, setLocalTime] = useState(() => formatClockTime(new Date(), contact.timezone));
   const { incomingCalls, callStatus, setCallStatus, isConnected } = useSocket();
   const isRinging = !!directKey && !!incomingCalls[directKey];
-  // Only allow calling when the contact is actively online — offline, away,
-  // in-meeting, or any other/unknown status all disable the call buttons.
   const isContactOnline = contact.status === 'online';
   const canCall = isConnected && isContactOnline;
   const [callMode, setCallMode] = useState('none');
 
   useEffect(() => {
-    const interval = setInterval(() => setLocalTime(formatClockTime()), 60000);
+    setLocalTime(formatClockTime(new Date(), contact.timezone));
+
+    const interval = setInterval(() => {
+      setLocalTime(formatClockTime(new Date(), contact.timezone));
+    }, 60000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [contact.id, contact.timezone]);
 
   useEffect(() => {
 	  // if (!incomingCalls) return ;
@@ -104,13 +106,19 @@ export function MessageHeader({ contact, directKey, isInfoOpen, onToggleInfo, on
 
         <div className="min-w-0">
           <p className="text-[14px] text-foreground font-semibold truncate">{contact.name}</p>
-          <p className="text-[11px] text-foreground-3 truncate">Local Time {localTime}</p>
+          {contact.isGroup ? (
+            <p className="text-[11px] text-foreground-3 truncate">
+              {contact.memberCount ?? contact.members?.length ?? 0} members
+            </p>
+          ) : (
+            <p className="text-[11px] text-foreground-3 truncate">Local Time {localTime}</p>
+          )}
         </div>
       </div>
 
-      <div className="flex items-center gap-3 text-foreground-3">
+      <div className="flex items-center gap-3 text-foregroaund-3">
         {/* {!contact.isGroup && ( */}
-		{!contact.isGroup && !contact.deletedAt && (
+		    {!contact.isGroup && !contact.deletedAt && (
           <>
             {callStatus.status === 'ringing' && callStatus.directKey === directKey && <LoadingState message='Awaiting' size='none' msgClassName='font-sans'/>}
             {isRinging && callStatus.status === 'connected' && <LoadingState message='Connected' size='none' msgClassName='font-sans animate-none!'/>}

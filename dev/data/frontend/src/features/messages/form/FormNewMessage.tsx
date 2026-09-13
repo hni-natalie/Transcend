@@ -1,5 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { EmptyState, IconMessageAdd, IconSearch, LoadingState, UploadPhoto, User, getDisplayName, getDisplayAvatar } from '@shared';
+import {
+  EmptyState,
+  IconMessageAdd,
+  IconSearch,
+  LoadingState,
+  UploadPhoto,
+  User,
+  getDisplayName,
+  getDisplayAvatar,
+  MAX_GROUP_NAME_LENGTH,
+  MAX_AVATAR_SIZE,
+  SUSPICIOUS_MARKUP_REGEX,
+} from '@shared';
 import { useToast } from '@/context/ToastContext';
 import { UserRow } from '../components/UserRow';
 
@@ -19,6 +31,44 @@ interface NewMessageFormProps {
   currentUserId?: string;
   existingConversationUserIds?: Set<string>;
 }
+
+const validateCreateConversationForm = (data: {
+  participantIds: string[];
+  isGroup: boolean;
+  groupName?: string;
+}): string | null => {
+  if (!data.participantIds || data.participantIds.length === 0) {
+    return 'Please select at least one person.';
+  }
+
+  if (data.isGroup) {
+    const trimmedGroupName = (data.groupName || '').trim();
+    if (!trimmedGroupName) {
+      return 'Group name is required.';
+    }
+    if (trimmedGroupName.length > MAX_GROUP_NAME_LENGTH) {
+      return `Group name must be under ${MAX_GROUP_NAME_LENGTH} characters.`;
+    }
+    if (SUSPICIOUS_MARKUP_REGEX.test(trimmedGroupName)) {
+      return 'Group name contains characters that are not allowed.';
+    }
+  }
+
+  return null;
+};
+
+const validateAvatarFile = (file: File): string | null => {
+  if (!file) {
+    return 'Please select a file.';
+  }
+  if (!file.type.startsWith('image/')) {
+    return 'Please select a valid image file.';
+  }
+  if (file.size > MAX_AVATAR_SIZE) {
+    return 'File size should be less than 10MB.';
+  }
+  return null;
+};
 
 export function FormNewMessage({
   users,
@@ -80,13 +130,9 @@ export function FormNewMessage({
   const handleFileSelect = (file: File) => {
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      showToast('error', 'Please select a valid image file');
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      showToast('error', 'File size should be less than 10MB');
+    const error = validateAvatarFile(file);
+    if (error) {
+      showToast('error', error);
       return;
     }
 
@@ -101,13 +147,14 @@ export function FormNewMessage({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (selectedUserIds.length === 0) {
-      showToast('error', 'Please select at least one person.');
-      return;
-    }
+    const error = validateCreateConversationForm({
+      participantIds: selectedUserIds,
+      isGroup,
+      groupName,
+    });
 
-    if (isGroup && !groupName.trim()) {
-      showToast('error', 'Please enter a name for the group.');
+    if (error) {
+      showToast('error', error);
       return;
     }
 
@@ -213,7 +260,7 @@ export function FormNewMessage({
                   placeholder="Enter group name..."
                   value={groupName}
                   onChange={(e) => setGroupName(e.target.value)}
-                  maxLength={30}
+                  maxLength={MAX_GROUP_NAME_LENGTH}
                   className="pl-2.5 bg-transparent border-b border-border outline-none text-sm text-foreground placeholder:text-foreground-4 w-full pb-1 focus:border-accent-lime transition-colors"
                 />
 

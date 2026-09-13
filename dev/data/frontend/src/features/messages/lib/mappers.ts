@@ -35,6 +35,7 @@ export function toProfile(user?: User): Profile {
     departmentId,
     isGroup: false,
 	deletedAt: user.deletedAt ?? null,
+    timezone: user.timezone ?? null,
   };
 }
 
@@ -120,6 +121,7 @@ export function mapUserToProfile(
     status: user.userStatus ?? 'offline',
     isGroup: false,
 	deletedAt: user.deletedAt ?? null,
+    timezone: user.timezone ?? null,
   };
 }
 

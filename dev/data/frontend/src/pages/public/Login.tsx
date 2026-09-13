@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useAuth } from '@/features/auth/AuthContext';
-import { IconGoogle } from '@shared';
+import { IconGoogle, EMAIL_REGEX } from '@shared';
 
 declare global {
     interface Window {
@@ -34,8 +34,6 @@ export const Login = () => {
     const googleInitialized = useRef<boolean>(false);
 
     const onBack = () => { navigate('/'); };
-
-    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const validateLoginForm = (): string | null => {
         if (!userEmail.trim() || !userPassword) {

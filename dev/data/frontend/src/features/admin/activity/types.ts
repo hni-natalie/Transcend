@@ -3,8 +3,9 @@ export type DateRangeFilter = 'all' | 'today' | 'week' | 'month' | 'quarter' | '
 export interface ActivityEvent {
   id: string;
   type: string;
-  time: string;
-  relativeTime: string;
+//   time: string;
+//   relativeTime: string;
+  timestamp: string,
   user: string;
   avatarUrl?: string | null;
   role: string;

@@ -64,6 +64,42 @@ export function getPageNumbers(currentPage: number, totalPages: number): (number
   return pages;
 }
 
+export function formatLocalTime(isoUtc: string): string {
+  return new Date(isoUtc).toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+  .toUpperCase();
+}
+
+export function formatRelativeTime(isoUtc: string): string {
+  const diffMs = Date.now() - new Date(isoUtc).getTime();
+  const diffSec = Math.round(diffMs / 1000);
+  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+
+  const divisions: [number, Intl.RelativeTimeFormatUnit][] = [
+    [60, 'second'],
+    [60, 'minute'],
+    [24, 'hour'],
+    [7, 'day'],
+    [4.34, 'week'],
+    [12, 'month'],
+  ];
+
+  let value = -diffSec;
+  let unit: Intl.RelativeTimeFormatUnit = 'second';
+  for (const [amount, u] of divisions) {
+    if (Math.abs(value) < amount) {
+      unit = u;
+      break;
+    }
+    value = Math.trunc(value / amount);
+    unit = u;
+  }
+  return rtf.format(value, unit);
+}
+
 // export const normalizeChoices = (choices: any[]): DropdownChoice[] => 
 //   choices.map(choice => {
 //     if (typeof choice === 'string') {
