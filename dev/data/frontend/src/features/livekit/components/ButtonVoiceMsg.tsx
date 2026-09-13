@@ -94,17 +94,19 @@ export function ButtonVoiceMsg({
     };
 
     sessionStorage.removeItem('activeMeeting');
-    sessionStorage.setItem(
-      "activeMsgMeeting",
-      JSON.stringify({
-        roomName,
-        meetingTitle,
-        meetId,
-        isHost,
-        leaveTo: leaveTo || R.USER_MESSAGES,
-        comeFrom: comeFrom || R.USER_MESSAGES,
-      }),
-    );
+    if (mode === "video") {
+      sessionStorage.setItem(
+        "activeMsgMeeting",
+        JSON.stringify({
+          roomName,
+          meetingTitle,
+          meetId,
+          isHost,
+          leaveTo: leaveTo || R.USER_MESSAGES,
+          comeFrom: comeFrom || R.USER_MESSAGES,
+        }),
+      );
+    }
 
     if (isHost) {
       await meetingApi.startMeeting(roomName);

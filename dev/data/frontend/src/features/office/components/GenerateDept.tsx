@@ -8,8 +8,8 @@ import { useOfficeSpace } from '@features/office/context/SpaceContext';
 import { useOfficeSpaceLayout } from '@features/office/context/SpaceLayoutContext';
 
 export function GenerateDept() {
-const { planes, activeOverlay, hoverOverlay } = useOfficeSpace();
-const { loading } = useOfficeSpaceLayout();
+const { activeOverlay, hoverOverlay } = useOfficeSpace();
+const { planes, loading } = useOfficeSpaceLayout();
 
   if (loading || !planes) {
     return (

@@ -1,5 +1,6 @@
 /*
 	Handling all planes in Scene
+	Context for managing plane overlay(mouse) & collision with players
 */
 import * as THREE from 'three';
 import { createContext, useContext, useMemo, useState, useEffect, useRef, useCallback } from 'react';
@@ -56,11 +57,11 @@ const updateRoomPlayer = (prev, data) => {
 
 export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } : SpaceProviderProps ) {
 	const { socket, shouldConnect, setRoomPlayers } = useSocket();
-	const { positionedPlanes, positionDataRef, canvasHeight, canvasWidth } = useOfficeSpaceLayout();
+	const { positionedPlanes, positionDataRef, planeRefs, themeColor, hoveredIndex } = useOfficeSpaceLayout();
 	const { activePlane, setActivePlane, isConnectedRoom } = useLiveKit(roomName);
-	const [hoveredIndex, setHoveredIndex] = useState(null)
+	// const [hoveredIndex, setHoveredIndex] = useState(null)
 	const { textRef, textWidth, getTextWidth } = useTextWidth();
-	const planeRefs = useRef(new Map());
+	// const planeRefs = useRef(new Map());
 	const previousActivePlaneRef = useRef<number | null>(null);
 
   /* **************************************************************
@@ -135,13 +136,13 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 		};
 	}, [socket]);
 
-  const setPlaneRef = ( index:number ) => ( el:THREE.Mesh ) => {
-    if (el) {
-      planeRefs.current.set(index, el);
-    } else {
-      planeRefs.current.delete(index);
-    }
-  };
+  // const setPlaneRef = ( index:number ) => ( el:THREE.Mesh ) => {
+  //   if (el) {
+  //     planeRefs.current.set(index, el);
+  //   } else {
+  //     planeRefs.current.delete(index);
+  //   }
+  // };
 
 	useFrame(() => {
 		if (!localPlayerRef.current || !isConnectedRoom) return;
@@ -169,55 +170,55 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
   /* **************************************************************
    * Memo declarations
    * **************************************************************/
-	const themeColor = conf.Color.themes.golden;
+	// const themeColor = conf.Color.themes.golden;
 
 	// 4. Create meshes at calculated positions
-	const planes = useMemo(() => {
+	// const planes = useMemo(() => {
 		
-		const result = [];
-		const loader = new THREE.TextureLoader();
-		const tileSize = 10;
+	// 	const result = [];
+	// 	const loader = new THREE.TextureLoader();
+	// 	const tileSize = 10;
 		
-		positionedPlanes.forEach((plane, i) => {
-			// const hue = (i / count) * conf.Color.endHue;
-			const theme = themeColor[i % themeColor.length];
-			const texture = loader.load('/texture/marble-2/roughness.png');
+	// 	positionedPlanes.forEach((plane, i) => {
+	// 		// const hue = (i / count) * conf.Color.endHue;
+	// 		const theme = themeColor[i % themeColor.length];
+	// 		const texture = loader.load('/texture/marble-2/roughness.png');
 
-			texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-			texture.repeat.set(
-				plane.width / tileSize,
-				plane.height / tileSize
-			);
-			result.push(
-				<mesh
-					key={i}
-					ref={setPlaneRef(i)}
-					position={[plane.x, -0.5, plane.z]}
-					rotation={[-Math.PI / 2, 0, 0]}
-					userData={{
-						index:i,
-						name:plane.spaceName,
-						accessLevel: plane.accessLevel,
-						dpId: plane.departmentId,
-						spaceId: plane.spaceId
-					}}
-					onPointerOver={() => setHoveredIndex(i)}
-					onPointerOut={() => setHoveredIndex(null)}
-				>
-					{/* office floor plane */}
-					<planeGeometry args={[plane.width, plane.height]} />
-					<meshStandardMaterial
-						color={theme}
-						map={texture}
-						side={THREE.DoubleSide}
-						roughness={0.4}
-						metalness={0.2}
-					/>
-				</mesh>
-			);
-	}) // map
-	return result;
-	}, [canvasWidth, canvasHeight, positionedPlanes]);
+	// 		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+	// 		texture.repeat.set(
+	// 			plane.width / tileSize,
+	// 			plane.height / tileSize
+	// 		);
+	// 		result.push(
+	// 			<mesh
+	// 				key={i}
+	// 				ref={setPlaneRef(i)}
+	// 				position={[plane.x, -0.5, plane.z]}
+	// 				rotation={[-Math.PI / 2, 0, 0]}
+	// 				userData={{
+	// 					index:i,
+	// 					name:plane.spaceName,
+	// 					accessLevel: plane.accessLevel,
+	// 					dpId: plane.departmentId,
+	// 					spaceId: plane.spaceId
+	// 				}}
+	// 				onPointerOver={() => setHoveredIndex(i)}
+	// 				onPointerOut={() => setHoveredIndex(null)}
+	// 			>
+	// 				{/* office floor plane */}
+	// 				<planeGeometry args={[plane.width, plane.height]} />
+	// 				<meshStandardMaterial
+	// 					color={theme}
+	// 					map={texture}
+	// 					side={THREE.DoubleSide}
+	// 					roughness={0.4}
+	// 					metalness={0.2}
+	// 				/>
+	// 			</mesh>
+	// 		);
+	// }) // map
+	// return result;
+	// }, [canvasWidth, canvasHeight, positionedPlanes]);
 
 	const activeOverlay = useMemo(() => {
 		if (activePlane === null) return null;
@@ -257,7 +258,7 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 		>
 			<mesh name='rec-bg' position={[0, 0, -0.1]}>
 				<planeGeometry args={[textWidth[hoveredIndex], 0.9]} />
-				<meshStandardMaterial color="#FFFFFF" opacity={0.5} transparent />
+				<meshStandardMaterial color="#FFFFFF" opacity={0.4} transparent />
 			</mesh>
 			<Text
 				ref={(ref) => textRef.current[hoveredIndex] = ref}
@@ -266,7 +267,7 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 				color="white"
 				onSync={() => getTextWidth(hoveredIndex)}
 			>
-				{plane.spaceName}
+				{plane.spaceName || 'Loading...'}
 			</Text>
 
 		</group>
@@ -274,8 +275,6 @@ export function SpaceProvider({ children, padding=1, localPlayerRef, roomName } 
 	}, [hoveredIndex, textWidth])
 
 	const value = {
-		planes,
-		planeRefs,
 		hoverOverlay,
 		activeOverlay,
 		getPlanePosition,

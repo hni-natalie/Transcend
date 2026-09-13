@@ -10,7 +10,7 @@ const { updateSocketId }                   = require('../utils/socketStatus.js')
 const prisma                               = require('../../prisma/client');
 const messageService                       = require('./message.service');
 const { logSpaceActivity, logMeetingActivity } = require('../utils/activity');
-const { initRoomData, createPlayer, initRoomSpawnPos, getSpawnPosFromDpId, initRoomComponents } = require('../utils/socket');
+const { createPlayer, getSpawnPosFromDpId, getOrInitRoom } = require('../utils/socket');
 
 const players          = new Map();
 const rooms            = new Map();      // Map<roomName, roomData>
@@ -233,15 +233,6 @@ const socketService = (io) => {
         io.to(target.id).emit('call-declined', { directKey, roomName, mode });
     });
 
-    socket.on('room-spawn-pos', async (data) => {
-      let roomData = rooms.get(data.roomName);
-      if (!roomData) {
-        roomData = initRoomSpawnPos(rooms, data.roomName, data.positionData);
-      } else {
-        roomData.positionData = data.positionData;
-      }
-      console.log('[room-spawn-pos] update roomData');
-    });
 
     socket.on('object-move', (data) => {
       let roomData = rooms.get(data.roomName);
@@ -294,20 +285,9 @@ const socketService = (io) => {
       let roomData = rooms.get(roomName);
       
       if (!roomData) {
-        roomData = await initRoomData(rooms, roomName);
+        const initResult = await getOrInitRoom(rooms, roomName);
+        roomData = initResult.roomData;
 
-        await new Promise((resolve) => {
-          socket.emit('get-room-spawn-pos', { roomName });
-          socket.once('room-spawn-pos', (data) => {
-            resolve(data);
-          });
-          setTimeout(() => {
-            resolve(null);
-          }, 5000);
-        });
-        console.log('[socket.service] new room!');
-      } else if (roomData.users.length === 0) {
-        await initRoomComponents(roomData);
       }
 
       // Room-size constraints
@@ -404,21 +384,11 @@ const socketService = (io) => {
     socket.on('request-room-players', async ({ roomName }) => {
       let roomData = rooms.get(roomName);
       if (!roomData) {
-        roomData = await initRoomData(rooms, roomName);
-        
-        await new Promise((resolve) => {
-          socket.emit('get-room-spawn-pos', { roomName });
-          socket.once('room-spawn-pos', (data) => {
-            resolve(data);
-          });
-          setTimeout(() => {
-            resolve(null);
-          }, 5000);
-        });
-      } else if (roomData.users.length === 0) {
-        await initRoomComponents(roomData);
+        const initResult = await getOrInitRoom(rooms, roomName);
+        roomData = initResult.roomData;
       }
       socket.emit('existing-room-players', roomData?.users || []);
+      socket.emit('room-position-data', roomData?.positionData || []);
     });
 
     socket.on('leave-room', async ({ roomName }) => {

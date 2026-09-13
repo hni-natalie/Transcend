@@ -8,7 +8,7 @@
 */
 
 import { useTexture } from '@react-three/drei';
-import { useBox, useContactMaterial } from '@react-three/cannon';
+import { useBox } from '@react-three/cannon';
 import { Text } from '@react-three/drei';
 import React, { useRef, useState, useEffect, useCallback, RefObject } from 'react';
 import * as THREE from 'three';
@@ -39,12 +39,6 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>(({
 	} : ObjectProps,
 	ref) => {
 
-	useContactMaterial('objMaterial', 'objMaterial', {
-		friction: 0.8,
-		restitution: 0.5,        				// 0 no bounce - 1 elastic
-		contactEquationStiffness: 1,   	// lower = softer push
-		contactEquationRelaxation: 500, // higher = softer/slower correction
-	});
   const [objectRef, api] = useBox(() => ({
     mass: 1,
 	  type: type,
