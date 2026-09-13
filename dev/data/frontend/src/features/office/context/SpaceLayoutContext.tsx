@@ -7,26 +7,20 @@ import React, { createContext, useContext, useMemo, useState, useEffect, useRef,
 import { officeService } from '@/features/office/services/office.service';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { useSocket } from '@/context';
-import * as d3 from 'd3-hierarchy';
 import * as THREE from 'three';
 
-const SpaceLayoutContext = createContext({
-	positionedPlanes: undefined,
-	positionDataRef: { current: [] },
-	canvasHeight: 0,
-	canvasWidth: 0,
-	setLoading: () => {},
-	loading: false,
-	count: 0,
-});
-export const useOfficeSpaceLayout = () => useContext(SpaceLayoutContext);
-
-
-interface TreemapData {
-	id: string;
-	parentId?: string | null;
-	value: number;
+interface SpaceLayoutContextType {
+  positionedPlanes: any[];
+  positionDataRef: React.RefObject<any[]>;
+  canvasHeight: number;
+  canvasWidth: number;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;  // <-- exact match
+  loading: boolean;
+  count: number;
 }
+const SpaceLayoutContext = createContext<SpaceLayoutContextType | null>(null);
+
+export const useOfficeSpaceLayout = () => useContext(SpaceLayoutContext);
 
 export interface SpaceLayoutProviderProps {
 	children: React.ReactNode | React.ReactNode[];
@@ -151,7 +145,6 @@ export function SpaceLayoutProvider({ children, padding=1, roomName } : SpaceLay
 				</mesh>
 			);
 	}) // map
-	console.log('[SpaceLayout] 3/3 planes meshes ready!');
 	return result;
 	}, [canvasWidth, canvasHeight, positionedPlanes]);
 

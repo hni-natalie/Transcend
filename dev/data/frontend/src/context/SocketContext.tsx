@@ -393,7 +393,6 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
   }, [socket, isConnected, currentRoom]);
 
   const fetchRoomPlayers = (roomName: string) => {
-    console.log('Fetching room players in ', roomName);
     socket?.emit('request-room-players', { roomName });
   };
 
