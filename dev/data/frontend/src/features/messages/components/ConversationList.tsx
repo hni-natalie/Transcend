@@ -58,6 +58,9 @@ function ConversationGroup({ label, conversations, activeConversationId, onSelec
               {isRinging && callStatus.status === 'idle' &&
                 <LoadingState message='Ringing' size='none' msgClassName='font-sans text-accent-lime!'/>
               }
+              {callStatus.status === 'connected' && callStatus.directKey === conversation.directKey &&
+                <LoadingState message='Connected' size='none' msgClassName='font-sans text-accent-lime!'/>
+              }
 
               <div className="relative shrink-0 w-6 h-6 flex items-center justify-center">
                 {hasUnread && (
