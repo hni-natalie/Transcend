@@ -220,7 +220,6 @@ dev
 ## Documentation
 
 - [API Documentation](dev/data/backend/docs/API_DOC.md)
-- [Frontend Documentation](dev/data/frontend/FE_DOC.md)
 - [Database Documentation](dev/data/backend/docs/DB_DOC.md)
 
 ----
