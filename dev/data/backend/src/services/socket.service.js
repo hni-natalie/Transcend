@@ -57,6 +57,9 @@ const socketService = (io) => {
     const userId    = socket.user.userId;
     const sessionId = socket.sessionId;
 
+	// private relay
+    socket.join(`user:${userId}`);
+
     console.log(`Player connected lobby: ${socket.id} ${socket.user.userName} (Session: ${sessionId})`);
 
     // --- DUPLICATE SESSION / MULTI-WINDOW DETECTION ---

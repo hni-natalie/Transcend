@@ -1,6 +1,6 @@
 import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
-import { Conversation, ConversationResponse, Message, MessageResponse, UploadedAttachment, type Attachment } from '../types';
+import { Conversation, ConversationResponse, MessageResponse, UploadedAttachment, type Attachment } from '../types';
 
 const base = API_CONFIG.endpoints.messages;
 
@@ -50,7 +50,7 @@ export const messagesApi = {
     text?: string;
     attachments?: UploadedAttachment[];
   }) {
-    return apiClient.post<Message>(`${base}/${data.conversationId}/messages`, data);
+    return apiClient.post<MessageResponse>(`${base}/${data.conversationId}/messages`, data);
   },
 
   addMembers(data: { conversationId: string; participantIds: string[] }) {

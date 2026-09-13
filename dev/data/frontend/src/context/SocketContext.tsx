@@ -348,7 +348,7 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
    * Helper functions
    * **************************************************************/
   const getToken = () => localStorage.getItem('token');
-  const enableSocket = () => setShouldConnect(true);
+  const enableSocket = useCallback(() => setShouldConnect(true), []);
   const getPlayerCount = () => players.length;
   const getPlayerById = (playerId: string) => players.find(p => p.id === playerId);
   const getPlayerPosById = (playerId: string) => players.find(p => p.id === playerId)?.position;
