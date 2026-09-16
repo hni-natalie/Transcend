@@ -18,11 +18,14 @@ import { Player, Position, getInitials } from '@/shared';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { useTextWidth } from '@/features/office/hooks/useTextWidth';
 import { usePosition } from '@/context';
+import { OfficeObjectAction, useOfficeInteraction } from '@/features/office/context/OfficeInteractionContext';
 
 interface ObjectProps extends Player {
 	type?: 'Kinematic' | 'Dynamic';
 	radius?: number;
 	segments?: number;
+	emissive?: string;
+	action?: OfficeObjectAction;
 }
 
 export const Object = React.forwardRef<THREE.Object3D, ObjectProps>(({
@@ -35,9 +38,22 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>(({
 	color="#D0F05C",
 	type='Dynamic',
 	photo,
+	action,
+	emissive='#1A1A1A',
 	ownership
 	} : ObjectProps,
 	ref) => {
+	const { enableSocket, localPlayerId } = useSocket();
+	const { handleTouch } = useOfficeInteraction();
+
+	const handleCollision = useCallback((event: any) => {
+		if (event.body?.userData?.userId !== localPlayerId) return;
+		console.log('collided!!');
+		// pass in onObjectTouch here
+		// onObjectTouch(id ?? userId, 'share-window-audio');
+		if (action)
+			handleTouch(name ?? id, action);
+	}, [localPlayerId]);
 
   const [objectRef, api] = useBox(() => ({
     mass: 1,
@@ -50,12 +66,12 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>(({
   	allowSleep: false,
     args: [radius * 3, radius * 3, 3], // Match circle size
 	  userData: { userId },
-  }));
+		onCollide: handleCollision,
+	}));
 
 	const [hovered, setHovered] = useState(false);
 	const { registerObject, unregisterObject, hasChangedRef, lockSystem } = usePosition();
 	const { textRef, textWidth, getTextWidth } = useTextWidth();
-	const { enableSocket, socket, localPlayerId } = useSocket();
 	useEffect(() => { enableSocket(); }, []);
 
 	let texture = null;
@@ -110,15 +126,21 @@ export const Object = React.forwardRef<THREE.Object3D, ObjectProps>(({
 		<>
 		{/* plane mesh need rotation as default position = facing z pos */}
 		<group
-			ref={objectRef}
-		  onPointerOver={() => setHovered(true)}
-			onPointerOut={() => setHovered(false)}
-		>
+				ref={objectRef}
+			  onPointerOver={() => setHovered(true)}
+			  onPointerOut={() => setHovered(false)}
+				onClick={(event) => {
+					if (action) {
+						event.stopPropagation();
+						handleTouch(name ?? id, action);
+					}
+				}}
+			>
 			<mesh>
 				{/* main surface */}
 				<circleGeometry args={[radius, segments]} />
 				{texture ? (
-				<meshStandardMaterial map={texture} color={color} emissive="#1A1A1A" side={THREE.DoubleSide} />
+				<meshStandardMaterial map={texture} color={color} emissive={emissive} side={THREE.DoubleSide} />
 				) : (
 					<meshStandardMaterial color={color} side={THREE.DoubleSide} /> 
 				)}

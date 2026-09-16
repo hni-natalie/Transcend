@@ -20,6 +20,7 @@ export function SpawnObject({ roomName }) {
 						photo='/objects/ball/ball.png'
 						ownership={object.ownership}
 						radius={1.5}
+						action={object.action}
 					/>
 				);
 			})}

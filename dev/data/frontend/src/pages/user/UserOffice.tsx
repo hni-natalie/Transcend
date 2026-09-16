@@ -5,12 +5,13 @@ import { useLocation } from 'react-router-dom';
 import { Physics } from '@react-three/cannon';
 import { PerspectiveCamera, MapControls, SpotLight, Plane } from '@react-three/drei';
 import { useSocket } from '@/context/SocketContext';
-import { PageHeader, IconOffice, LoadingState, BlinkingText } from '@shared';;
-import { useLiveKit, isAudioSupported, ButtonVoiceSpace } from '@features/livekit';
+import { PageHeader, IconOffice, LoadingState, BlinkingText, Modal, ModalHeader } from '@shared';;
+import { useLiveKit, isAudioSupported, ButtonVoiceSpace, ModalShareAudio } from '@features/livekit';
 import { GenerateDept, CameraTracking, SpawnCharacter, Character, PlaneGround, SpawnObject, SpawnParticle } from '@features/office';
 import { KeyboardProvider, PositionProvider } from '@/context';
 import { SpaceProvider } from '@/features/office/context/SpaceContext';
 import { useOfficeSpaceLayout } from '@/features/office/context/SpaceLayoutContext';
+import { OfficeInteractionProvider, useOfficeInteraction } from '@/features/office/context/OfficeInteractionContext';
 
 // Main Scene
 interface SpaceProps {
@@ -31,12 +32,20 @@ interface SpaceProps {
 // }
 
 export function Office({ roomName } : SpaceProps ) {
+	return (
+		<OfficeInteractionProvider>
+			<OfficeContent roomName={roomName} />
+		</OfficeInteractionProvider>
+	);
+}
+
+function OfficeContent({ roomName } : SpaceProps ) {
 	/* ------------- nav  ------------- */
 	const location = useLocation();
 	const spawnPosition = location.state?.targetPosition;
 	/* ------------- sockets  ------------- */
 	const { enableSocket, socket, players, fetchRoomPlayers, roomPlayers, localPlayerId } = useSocket();
-	const { disconnect, getAudioListener, getPositionalAudio, isPlayerAudioReady, isConnectedRoom } = useLiveKit(roomName);
+	const { disconnect, getAudioListener, isConnectedRoom, shareWindowAudio } = useLiveKit(roomName);
 	/* ------------- threejs  ------------- */
   const localPlayerRef = useRef<THREE.Group>(null);
 	const controlsRef = useRef<React.ElementRef<typeof MapControls>>(null);
@@ -47,6 +56,7 @@ export function Office({ roomName } : SpaceProps ) {
 	const listenerRef = useRef<THREE.AudioListener | null>(null);
 	/* ------------- general  ------------- */
   const [error, setError] = useState<string>('');
+	const { touchedObject, setTouchedObject } = useOfficeInteraction();
   const { loading: spaceLayoutLoading } = useOfficeSpaceLayout();
 
 	const isConnectedRoomRef = useRef(isConnectedRoom);
@@ -73,6 +83,20 @@ export function Office({ roomName } : SpaceProps ) {
 		// console.log('Click point (world):', clickPoint);
 	}
 
+	const handleShareWindowAudio = async () => {
+		try {
+			console.log('hihi');
+			await shareWindowAudio();
+			setTouchedObject(null);
+			setError('');
+		} catch (captureError: any) {
+			if (captureError?.name !== 'NotAllowedError') {
+				setError(captureError?.message || 'Unable to share window audio.');
+			}
+			console.log(captureError);
+		}
+	};
+
 	// run once on mount
   useEffect(() => { enableSocket(); }, []);
   useEffect(() => {window.addEventListener('unhandledrejection', handleUncaughtRejection);
@@ -84,6 +108,7 @@ export function Office({ roomName } : SpaceProps ) {
 		const supported = isAudioSupported();
 		if (!supported) {
 			setError('Audio features are not supported in this browser');
+			alert('Audio features are not supported in this browser');
 		}
 		// init local listener
 		if (!listenerRef.current) {
@@ -193,6 +218,29 @@ export function Office({ roomName } : SpaceProps ) {
 				</SpaceProvider>
 			</Physics>
 			</Canvas>
+
+				<Modal
+					isOpen={isConnectedRoom && touchedObject?.action === 'share-window-audio'}
+					onClose={() => setTouchedObject(null)}
+				>
+					<ModalShareAudio
+						roomName={roomName}
+						onClose={() => setTouchedObject(null)}
+					/>
+					{/* <div className='w-full max-w-md rounded-[1.5rem] border border-background-4 bg-background-1 p-6 pb-8 text-center text-white shadow-2xl'>
+					<ModalHeader
+							title='Share window audio?'
+							titleClassName='text-lg font-semibold text-white!'
+							iconClassName='w-6! h-6!'
+								onClose={() => setTouchedObject(null)}
+					/>
+						<p className='mt-4 text-sm text-foreground-3'>You touched {touchedObject?.id}. Select a source with audio enabled to share your music with others.</p>
+					<nav className='mt-5 flex justify-center gap-3'>
+						<button type='button' className='btn-header' onClick={handleShareWindowAudio}>Share audio</button>
+					</nav>
+				</div> */}
+			</Modal>
+
 			{error && (<div className='text-danger'>{error}</div>)}
 		</div>
 		)}
