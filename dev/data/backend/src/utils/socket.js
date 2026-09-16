@@ -75,6 +75,7 @@ const createPlayer = ({
   audioEnabled = true,
   speaking = false,
   ownership = { ownerId: null, timestamp: null },
+  action = '',
 } = {}) => {
   return {
     id,
@@ -89,6 +90,7 @@ const createPlayer = ({
     audioEnabled,
     speaking,
     ownership,
+    action,
   };
 }
 
@@ -149,8 +151,8 @@ const getRoomObjs = async() => {
   // future: implement from db or admin config
   const mockObjects = [];
   const count = 2;
-  
-  for (let i = 0; i < count; i++) {
+  let i = 0;
+  for (i; i < count; i++) {
     const objectId = uuidv4();
 
     mockObjects.push(
@@ -172,6 +174,26 @@ const getRoomObjs = async() => {
         },
       }));
   }
+  // create radio
+  mockObjects.push(
+  createPlayer({
+    id: i,
+    userId: uuidv4(),
+    name: `Audio Streamer`,
+    dpId: 'guest',
+    roomName: 'Office',
+    position: randomPosition(8),
+    rotation: { x:-Math.PI/2, y:0, z:0 },
+    color: randomHslColor("90"),
+    photo: '',
+    audioEnabled: true,
+    speaking: false,
+    ownership: {
+      ownerId: null,
+      timestamp: null,
+    },
+    action: 'share-window-audio'
+  }));
   return mockObjects; // Return array
 }
 

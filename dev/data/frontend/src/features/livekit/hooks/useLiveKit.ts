@@ -127,6 +127,12 @@ export function useLiveKit( roomName:string ) {
   const getLivekitRoom = () => {
     return livekitService.lkRoom;
   }
+  const shareWindowAudio = () => {
+    return livekitService.shareWindowAudio();
+  }
+  const stopWindowAudio = () => {
+    return livekitService.stopWindowAudio();
+  }
   const setActivePlane = useCallback(( index:number | null ) => {
       livekitService.setActivePlane(index);
   }, []);
@@ -160,6 +166,7 @@ export function useLiveKit( roomName:string ) {
           isBrowserSupported: livekitService.checkBrowserSupport(),
           isPlayerAudioReady,
           getMediaStream, getPositionalAudio, getAudioListener, getLivekitRoom,
+          shareWindowAudio, stopWindowAudio,
           error: state.error,
           locateOfficeUser,
         };

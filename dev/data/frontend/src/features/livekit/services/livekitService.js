@@ -27,6 +27,8 @@ for reference:
 class LiveKitService {
   constructor() {
     this._room = null;
+    this.displayStream = null;
+    this.windowAudioTrack = null;
     this.audioElements = new Map();         // map for all audio tracks in room
     this.mediaStreams = new Map();          // map for all media streams in room
     this.positionalAudios = new Map();      // map for all positional audios in room
@@ -121,6 +123,51 @@ class LiveKitService {
 
   checkBrowserSupport() {
     return isBrowserSupported();
+  }
+
+  async stopWindowAudio() {
+    const audioTrack = this.windowAudioTrack;
+    const room = this._room;
+
+    try {
+      if (audioTrack && this._room?.state === 'connected') {
+        await room.localParticipant.unpublishTrack(audioTrack, true);
+      }
+    } finally {
+      this.displayStream?.getTracks().forEach((track) => track.stop());
+      this.windowAudioTrack = null;
+      this.displayStream = null;
+    }
+  }
+
+  async shareWindowAudio() {
+    if (!this._room || this._room.state !== 'connected') {
+      throw new Error('Join voice space before sharing window audio.');
+    }
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      throw new Error('Window audio sharing is not supported in this browser.');
+    }
+    // Must run from direct user gesture so browser may open capture picker.
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    const [audioTrack] = stream.getAudioTracks();
+    if (!audioTrack) {
+      stream.getTracks().forEach((track) => track.stop());
+      throw new Error('No audio shared. Select a source with audio enabled in browser picker.');
+    }
+
+    await this.stopWindowAudio();
+    this.displayStream = stream;
+    this.windowAudioTrack = audioTrack;
+
+    try {
+      await this._room.localParticipant.publishTrack(audioTrack, { source: Track.Source.ScreenShareAudio });
+      audioTrack.addEventListener('ended', () => {
+        if (this.windowAudioTrack === audioTrack) void this.stopWindowAudio();
+      }, { once: true });
+    } catch (error) {
+      await this.stopWindowAudio();
+      throw error;
+    }
   }
   /*
     mode must be either "room" || "call" || "video"
@@ -425,6 +472,7 @@ class LiveKitService {
 
   // cleanup
   async disconnectFromRoom() {
+    await this.stopWindowAudio();
     if (this._room) {
       try {
         await this._room.localParticipant.setCameraEnabled(false);
