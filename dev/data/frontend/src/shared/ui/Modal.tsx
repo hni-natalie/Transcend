@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export interface ModalProps {
+interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
@@ -39,7 +39,8 @@ export const Modal = ({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    // <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+	<div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/20 backdrop-blur-[5px] transition-all duration-200"

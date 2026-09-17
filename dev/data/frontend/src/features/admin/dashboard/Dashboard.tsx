@@ -15,10 +15,10 @@ export const Dashboard = () => {
   }
 
   return (
-    <div className="">
-      <div className="flex gap-6">
-        {/* LEFT */}
-        <div className="w-[27%] p-6 pt-0">
+    <div className="p-4 md:p-0">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+        {/* LEFT - Full width on mobile, 27% on desktop */}
+        <div className="w-full md:w-[27%] p-4 md:p-6 md:pt-0">
           <MetricsRing
             availableCount={metrics.availableCount}
             focusCount={metrics.focusCount}
@@ -31,11 +31,11 @@ export const Dashboard = () => {
           <StatusGrid users={users} isExcludedUser={isExcludedUser} />
         </div>
 
-        {/* RIGHT */}
-        <div className="w-[72%] space-y-3">
+        {/* RIGHT - Full width on mobile, 72% on desktop */}
+        <div className="w-full md:w-[72%] space-y-3 md:space-y-3">
           <DepartmentStats getDepartmentRatio={getDepartmentRatio} />
           
-          <div className="grid grid-cols-16 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-16 gap-3">
             <OfficeMap spaces={spaces}/>
             <SpacesProgress spaces={spaces}/>
           </div>

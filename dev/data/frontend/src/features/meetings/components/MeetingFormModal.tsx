@@ -1,14 +1,25 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { IconMeetingAdd, InputDropdownChip, InputText, ModalHeader } from "@shared";
+import {
+    InputTextArea,
+    IconMeetingAdd,
+    InputDropdownChip,
+    InputText,
+    ModalHeader,
+    MEETING_TITLE_MAX_LENGTH,
+    MEETING_DESC_MAX_LENGTH,
+    MIN_MEETING_DURATION_MS,
+    MAX_MEETING_DURATION_MS,
+} from "@shared";
+import { useToast } from '@/context/ToastContext';
 import { meetingApi } from "@features/meetings";
 import type { MeetingDetails, Participant } from "@features/meetings/meeting.types";
-import { InputTextArea } from "@/shared";
 import { DropdownChoice } from "@/shared/types/ui.types";
 
 type User = {
     userId: string;
     userName: string;
     userEmail: string;
+	deletedAt?: string | null;
 };
 
 type Props = {
@@ -20,6 +31,8 @@ type Props = {
     onClose: () => void;
     onCreated?: () => void;
     onUpdated?: () => void;
+
+    initialParticipantIds?: string[];
 };
 
 const roleOptions : DropdownChoice[] = [
@@ -32,6 +45,54 @@ const attendanceOptions : DropdownChoice[] = [
     { id: 'absent', name: 'Absent' },
 ];
 
+const validateMeetingForm = (data: {
+    title: string;
+    description?: string;
+    start: string;
+    end: string;
+}): string | null => {
+    const trimmedTitle = data.title.trim();
+    if (!trimmedTitle) {
+        return "Meeting title is required.";
+    }
+    if (trimmedTitle.length > MEETING_TITLE_MAX_LENGTH) {
+        return `Meeting title must be under ${MEETING_TITLE_MAX_LENGTH} characters.`;
+    }
+    if (data.description && data.description.trim().length > MEETING_DESC_MAX_LENGTH) {
+        return `Meeting description must be under ${MEETING_DESC_MAX_LENGTH} characters.`;
+    }
+    if (!data.start || !data.end) {
+        return "Please select both start and end time.";
+    }
+
+    const startDate = new Date(data.start);
+    const endDate = new Date(data.end);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return "Please enter valid meeting dates.";
+    }
+
+    if (startDate < new Date()) {
+        return "Meeting start time cannot be in the past.";
+    }
+
+    if (startDate >= endDate) {
+        return "Meeting start time must be before end time.";
+    }
+
+    const duration = endDate.getTime() - startDate.getTime();
+    if (duration < MIN_MEETING_DURATION_MS) {
+        return "Meeting duration too short and must be at least 5 minutes.";
+    }
+    if (duration > MAX_MEETING_DURATION_MS) {
+        return "Meeting duration cannot exceed 20 minutes.";
+    }
+
+    return null;
+};
+
+const EMPTY_PARTICIPANT_IDS: string[] = [];
+
 export const ScheduleMeetingModal = ({
     open,
     onClose,
@@ -39,6 +100,7 @@ export const ScheduleMeetingModal = ({
     onUpdated,
     mode,
     meeting,
+    initialParticipantIds = EMPTY_PARTICIPANT_IDS,
 }: Props) => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -50,6 +112,7 @@ export const ScheduleMeetingModal = ({
 
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+	const { showToast } = useToast();
     
 
     const resetForm = useCallback(() => {
@@ -107,11 +170,12 @@ export const ScheduleMeetingModal = ({
             });
         } catch (err) {
             console.error(err);
+            showToast('error', 'Failed to load users');
         }
         };
 
         loadUsers();
-    }, [open]);
+    }, [open, showToast]);
 
     const toDateTimeLocal = (date: string) => {
         const d = new Date(date);
@@ -129,6 +193,8 @@ export const ScheduleMeetingModal = ({
             return [...prevSelected, userId];
         });
     }
+
+    const participantIdsKey = initialParticipantIds.join(',');
 
     useEffect(() => {
         if (!open) return;
@@ -151,6 +217,7 @@ export const ScheduleMeetingModal = ({
                         userEmail: p.user.userEmail,
                         role: p.role,
                         attendance: p.attendance,
+						deletedAt: p.user.deletedAt,
                     });
                 });
                 return Array.from(byId.values());
@@ -158,8 +225,9 @@ export const ScheduleMeetingModal = ({
             setSelectedUserIds(meeting.participants.map(p => p.userId));
         } else {
             resetForm();
+			setSelectedUserIds(initialParticipantIds);
         }
-    }, [open, mode, meeting, resetForm]);
+    }, [open, mode, meeting, resetForm, participantIdsKey]);
 
     const selectedUsers = useMemo(() => {
         return users.filter(user => selectedUserIds.includes(user.userId));
@@ -193,46 +261,74 @@ export const ScheduleMeetingModal = ({
 
     const isFormValid = title.trim() !== "" && start !== "" && end !== "";
 
+    // Format a Date object to the local datetime-local string (YYYY-MM-DDTHH:mm)
+    const toLocalDateTimeString = (date: Date): string => {
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+
+    const getNowMin = () => toLocalDateTimeString(new Date());
+
     const getMinEndTime = () => {
         if (!start) return "";
-
         const startDate = new Date(start);
-
         // minimum 5 minutes duration
         startDate.setMinutes(startDate.getMinutes() + 5);
-
-        return startDate.toISOString().slice(0, 16);
+        return toLocalDateTimeString(startDate);
     };
+
+    const getMaxEndTime = () => {
+        if (!start) return "";
+        const startDate = new Date(start);
+        // maximum 20 minutes duration (known limitation)
+        startDate.setMinutes(startDate.getMinutes() + 20);
+        return toLocalDateTimeString(startDate);
+    };
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!title.trim()) {
-            setErrorMessage("Meeting title is required.");
-        return;
-        }
+		const validationError = validateMeetingForm({
+            title,
+            description,
+            start,
+            end,
+        });
 
-        if (!start || !end) {
-            setErrorMessage("Please select both start and end time.");
-        return;
-        }
+		if (validationError) {
+            setErrorMessage(validationError);
+            return;
+		}
 
-        if (new Date(start) >= new Date(end)) {
-            setErrorMessage("Meeting start time must be before end time.");
-            return;
-        } else if (
-            new Date(end).getTime() -
-            new Date(start).getTime()
-            < 5 * 60 * 1000
-        ) {
-            setErrorMessage(
-                "Meeting duration too short and must be at least 5 minutes."
-            );
-            return;
-        } 
+
+        // if (!title.trim()) {
+        //     setErrorMessage("Meeting title is required.");
+        // return;
+        // }
+
+        // if (!start || !end) {
+        //     setErrorMessage("Please select both start and end time.");
+        // return;
+        // }
+
+        // if (new Date(start) >= new Date(end)) {
+        //     setErrorMessage("Meeting start time must be before end time.");
+        //     return;
+        // } else if (
+        //     new Date(end).getTime() -
+        //     new Date(start).getTime()
+        //     < 5 * 60 * 1000
+        // ) {
+        //     setErrorMessage(
+        //         "Meeting duration too short and must be at least 5 minutes."
+        //     );
+        //     return;
+        // } 
 
         try {
             setLoading(true);
+			setErrorMessage("");
 
             if (mode === "create") {
                 const res = await meetingApi.createMeeting({
@@ -240,19 +336,20 @@ export const ScheduleMeetingModal = ({
                     meetTitle: title,
                     meetDesc: description,
                     meetStart: new Date(start).toISOString(),
-                    meetEnd: new Date(end).toISOString()
+                    meetEnd: new Date(end).toISOString(),
+					participantIds: selectedUserIds,
                 });
 
-                await meetingApi.syncParticipants({
-                    meetId: res.data.meetId,
-                    participants: selectedUsers.map(user => ({
-                        userId: user.userId,
-                        role: user.role,
-                        attendance: user.attendance,
-                    }))
-                });
+                // await meetingApi.syncParticipants({
+                //     meetId: res.data.meetId,
+                //     participants: selectedUsers.map(user => ({
+                //         userId: user.userId,
+                //         role: user.role,
+                //         attendance: user.attendance,
+                //     }))
+                // });
 
-                alert("Meeting scheduled successfully!");
+				showToast('success', 'Meeting scheduled successfully!');
                 onCreated?.();
 
             } else if (mode === "edit" && meeting) {
@@ -276,7 +373,7 @@ export const ScheduleMeetingModal = ({
                     meetEnd: new Date(end).toISOString(),
                 });    
             
-                alert("Meeting updated successfully!");
+				showToast('success', 'Meeting updated successfully!');
                 onUpdated?.();
             }
 
@@ -290,7 +387,9 @@ export const ScheduleMeetingModal = ({
             if (message?.startsWith("Meeting conflict detected for:")) {
                 setErrorMessage(message);
             } else {
-                setErrorMessage("Failed to schedule meeting. Please try again.");
+                const fallback = "Failed to schedule meeting. Please try again.";
+                setErrorMessage(fallback);
+                showToast('error', fallback);
             }
         } finally {
             setLoading(false);
@@ -337,9 +436,12 @@ export const ScheduleMeetingModal = ({
             <InputText
                 title='Start Time'
                 value={start}
+                min={getNowMin()}
                 onChange={(e) => {
-                    setStart(e.target.value);
-                    if (end && e.target.value >= end) {
+                    const newStart = e.target.value;
+                    setStart(newStart);
+                    // Reset end if it's no longer valid relative to the new start
+                    if (end && new Date(end).getTime() <= new Date(newStart).getTime()) {
                         setEnd("");
                     }
                 }}
@@ -350,7 +452,7 @@ export const ScheduleMeetingModal = ({
             <InputText
                 title='End Time'
                 value={end}
-                min={getMinEndTime()}
+                min={start || getNowMin()}
                 onChange={(e) => setEnd(e.target.value)}
                 required={true}
                 type='datetime-local'

@@ -26,7 +26,7 @@ function emitActivityCreated(workspaceId, activity) {
     try {
         const { getIO } = require('./socket.service'); // lazy require
         const io = getIO();
-        io.to('dashboard-viewers').emit('activity-created', {
+        io.to('activity-viewers').emit('activity-created', {
             workspaceId,
             activity: formatActivity(activity),
         });
@@ -40,8 +40,9 @@ function formatActivity(activity) {
     return {
         id: activity.activityId,
         type: activity.type,
-        time: formatTime(activity.createdAt),
-        relativeTime: getRelativeTime(activity.createdAt),
+        // time: formatTime(activity.createdAt),
+        // relativeTime: getRelativeTime(activity.createdAt),
+		timestamp: activity.createdAt.toISOString(),
         user: user?.userName || 'Unknown',
 		avatarUrl: user?.avatarUrl || null,
         role: user?.role?.roleName || 'Unknown',
@@ -52,7 +53,6 @@ function formatActivity(activity) {
     };
 }
 
-// for user's dashboard
 async function getPaginatedActivities({ filters, page = 1, limit = 50, sortBy = 'createdAt', sortOrder = 'desc' }) {
     const skip = (page - 1) * limit;
 
@@ -137,30 +137,30 @@ function formatDate(date) {
     return new Date(date).toISOString().slice(0, 10);
 }
 
-function formatTime(date) {
-    if (!date) return '--:--';
-    return new Date(date).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-    });
-}
+// function formatTime(date) {
+//     if (!date) return '--:--';
+//     return new Date(date).toLocaleTimeString('en-US', {
+//         hour: '2-digit',
+//         minute: '2-digit',
+//         hour12: true,
+//     });
+// }
 
-function getRelativeTime(date) {
-    if (!date) return 'Unknown';
-    const now = new Date();
-    const diffMs = now - new Date(date);
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+// function getRelativeTime(date) {
+//     if (!date) return 'Unknown';
+//     const now = new Date();
+//     const diffMs = now - new Date(date);
+//     const diffMins = Math.floor(diffMs / 60000);
+//     const diffHours = Math.floor(diffMs / 3600000);
+//     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
-    return new Date(date).toLocaleDateString();
-}
+//     if (diffMins < 1) return 'Just now';
+//     if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+//     if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+//     if (diffDays === 1) return 'Yesterday';
+//     if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+//     return new Date(date).toLocaleDateString();
+// }
 
 module.exports = {
     createActivityLog,

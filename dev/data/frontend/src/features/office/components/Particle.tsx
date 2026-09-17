@@ -8,7 +8,7 @@
 */
 
 import { useLoader, useFrame } from '@react-three/fiber';
-import { useBox, useContactMaterial, useCylinder } from '@react-three/cannon';
+import { useBox } from '@react-three/cannon';
 import { Text } from '@react-three/drei';
 import React, { useRef, useState, useEffect, useCallback, RefObject } from 'react';
 import * as THREE from 'three';
@@ -38,12 +38,6 @@ export const Particle = React.forwardRef<THREE.Object3D, ObjectProps>(({
 	} : ObjectProps,
 	ref) => {
 
-	useContactMaterial('objMaterial', 'objMaterial', {
-		friction: 0.1,
-		restitution: 1,        				// 0 no bounce - 1 elastic
-		contactEquationStiffness: 1,   	// lower = softer push
-		contactEquationRelaxation: 1, // higher = softer/slower correction
-	});
   const [objectRef, api] = useBox(() => ({
     mass: 0.5,
 	  type: type,

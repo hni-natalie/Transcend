@@ -1,17 +1,8 @@
 import { apiClient } from '@api/api.client';
 import { API_CONFIG } from '@api/api.config';
-import { Conversation, ConversationResponse, Message, MessageResponse, UploadedAttachment, type Attachment } from '../types';
-import { mapConversation } from '../lib/mappers'
-import { useAuth } from '@/features/auth/AuthContext';
+import { Conversation, ConversationResponse, MessageResponse, UploadedAttachment, type Attachment } from '../types';
 
 const base = API_CONFIG.endpoints.messages;
-
-
-// response shape for uploadAttachment; kept here (rather than in types.ts) since it's a network-response wrapper, not a domain type
-// check: tally with BE
-// export interface UploadAttachmentResponse {
-//   attachment: Attachment;
-// }
 
 export const messagesApi = {
   getAllConversations() {
@@ -21,10 +12,20 @@ export const messagesApi = {
   createGroupConversation(data: {
     groupName?: string;
     participantIds: string[];
+    avatarUrl?: string;
   }) {
     return apiClient.post<ConversationResponse>(
       `${base}/group`,
       data
+    );
+  },
+
+  uploadGroupAvatar(conversationId: string, file: File) {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    return apiClient.upload<{ success: boolean; avatarUrl: string; conversation?: ConversationResponse }>(
+      `${base}/${conversationId}/avatar`,
+      formData
     );
   },
 
@@ -49,7 +50,7 @@ export const messagesApi = {
     text?: string;
     attachments?: UploadedAttachment[];
   }) {
-    return apiClient.post<Message>(`${base}/${data.conversationId}/messages`, data);
+    return apiClient.post<MessageResponse>(`${base}/${data.conversationId}/messages`, data);
   },
 
   addMembers(data: { conversationId: string; participantIds: string[] }) {
@@ -71,14 +72,12 @@ export const messagesApi = {
   	return apiClient.post(`${base}/${conversationId}/read`);
   },
 
-  // uses apiClient.upload because file uploads require FormData and upload progress
   uploadAttachment(conversationId: string, file: File, onProgress?: (percent: number) => void,
   ): Promise<UploadedAttachment> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('conversationId', conversationId);
 
-	// check: tally with BE
     return apiClient.upload<UploadedAttachment>(`${base}/${conversationId}/attachments`, formData, onProgress);
   },
 };

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Role, Department } from '@shared'
-import { fetchRoles, fetchDepartments } from '@features/users';
+import { userApi} from '@features/users';
 import { useToast } from '@/context/ToastContext';
 
 interface UseRolesAndDepartmentsResult {
@@ -22,8 +22,8 @@ export const useRolesAndDepartments = (): UseRolesAndDepartmentsResult => {
     setIsLoading(true);
     try {
       const [rolesData, departmentsData] = await Promise.all([
-        fetchRoles(),
-        fetchDepartments()
+        userApi.fetchRoles(),
+        userApi.fetchDepartments()
       ]);
       setRoles(Array.isArray(rolesData) ? rolesData : []);
       setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
@@ -39,17 +39,40 @@ export const useRolesAndDepartments = (): UseRolesAndDepartmentsResult => {
     fetchData();
   }, []);
 
-  const departmentOptions = departments
-    .filter((dept): dept is Department & { dpId: string } => dept.dpId !== undefined)
-    .map(dept => ({
-      id: dept.dpId,
-      name: dept.dpName
-    }));
+  // const departmentOptions = departments
+  //   .filter((dept): dept is Department & { dpId: string } => dept.dpId !== undefined)
+  //   .map(dept => ({
+  //     id: dept.dpId,
+  //     name: dept.dpName
+  //   }));
 
-  const roleOptions = roles.map(role => ({
-    id: role.roleId,
-    name: role.roleName
-  }));
+  // const roleOptions = roles.map(role => ({
+  //   id: role.roleId,
+  //   name: role.roleName
+  // }));
+
+  const departmentOptions = useMemo(
+    () =>
+      departments
+        .filter(
+          (dept): dept is Department & { dpId: string } =>
+            dept.dpId !== undefined
+        )
+        .map(dept => ({
+          id: dept.dpId,
+          name: dept.dpName
+        })),
+    [departments]
+  );
+
+  const roleOptions = useMemo(
+    () =>
+      roles.map(role => ({
+        id: role.roleId,
+        name: role.roleName
+      })),
+    [roles]
+  );
 
   return {
     roles,

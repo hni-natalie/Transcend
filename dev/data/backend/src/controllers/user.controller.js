@@ -39,54 +39,70 @@ const userController = {
             const user = await userService.getUserById(req.user.userId);
             return res.json(user);
         } catch (error) {
-            if (error.message === 'User Not Found')
+            if (error.message === 'User not found')
                 return res.status(404).json({ error: error.message });
             else
                 return res.status(500).json({ error: error.message });
         }
     },
 
-    async updateCurrentUser(req, res) {
+	async updateCurrentUser(req, res) {
         try {
-            const allowedUpdates = ['userName', 'userEmail', 'city', 'country', 'timezone'];
-            const updates = {};
-            
-            allowedUpdates.forEach(field => {
-                if (req.body[field] !== undefined) {
-                    updates[field] = req.body[field];
-                }
-            });
-            
-            if (Object.keys(updates).length === 0) {
-                return res.status(400).json({ 
-                    error: 'No valid fields to update. Allowed: name, email, city, country, timezone' 
-                });
-            }
-
+            let validated;
             try {
-                const validated = validateUpdateProfile(updates);
-                Object.keys(validated).forEach(key => {
-                    if (validated[key] !== undefined) updates[key] = validated[key];
-                });
+                validated = validateUpdateProfile(req.body);
             } catch (validationErr) {
                 return res.status(400).json({ error: validationErr.message });
             }
 
-			if (updates.userEmail) {
-            const existingUser = await userService.getUserByEmail(updates.userEmail);
-            if (existingUser && existingUser.userId !== req.user.userId) {
-                return res.status(409).json({ 
-                    error: 'Email already in use by another account' 
-                });
-            }
-        }
-            
-            const user = await userService.updateUserProfile(req.user.userId, updates);
+            const user = await userService.updateUserProfile(req.user.userId, validated);
             return res.json(user);
         } catch (error) {
+            if (error.message === 'Email already in use by another account') {
+                return res.status(409).json({ error: error.message });
+            }
+            if (error.message.includes('No valid fields to update')) {
+                return res.status(400).json({ error: error.message });
+            }
             return res.status(500).json({ error: error.message });
         }
     },
+
+    // async updateCurrentUser(req, res) {
+    //     try {
+    //         const allowedUpdates = ['userName', 'userEmail', 'avatarUrl', 'city', 'country', 'timezone'];
+    //         const updates = {};
+            
+    //         allowedUpdates.forEach(field => {
+    //             if (req.body[field] !== undefined) {
+    //                 updates[field] = req.body[field];
+    //             }
+    //         });
+            
+    //         if (Object.keys(updates).length === 0) {
+    //             return res.status(400).json({ 
+    //                 error: 'No valid fields to update. Allowed: name, email, city, country, timezone' 
+    //             });
+    //         }
+
+    //         try {
+    //             const validated = validateUpdateProfile(updates);
+    //             Object.keys(validated).forEach(key => {
+    //                 if (validated[key] !== undefined) updates[key] = validated[key];
+    //             });
+    //         } catch (validationErr) {
+    //             return res.status(400).json({ error: validationErr.message });
+    //         }
+            
+    //         const user = await userService.updateUserProfile(req.user.userId, updates);
+    //         return res.json(user);
+    //     } catch (error) {
+	// 		if (error.message === 'Email already in use by another account') {
+    //             return res.status(409).json({ error: error.message });
+    //         }
+    //         return res.status(500).json({ error: error.message });
+    //     }
+    // },
 
 	async updateUserStatus(req, res) {
 		try {
@@ -143,7 +159,6 @@ const userController = {
     async getUsersByStatus(req, res) {
         try {
             const status = req.params.status;
-            console.log(`📥 Getting users with status: "${status}"`);
 
             if (!status) {
                 return res.status(400).json({ error: 'User status required' });
@@ -151,11 +166,7 @@ const userController = {
             const user = await userService.getUsersByStatus(status);
             return res.json(user);
         } catch (error) {
-            if (error.message === 'User not found') {
-                res.status(404).json({ error: error.message });
-            } else {
                 res.status(500).json({ error: error.message });
-            }
         }
     },
 
@@ -187,7 +198,7 @@ const userController = {
 				password,
 				name,
 				roleId,
-				workspaceId: currentUser.workspaceId,  // user admin's
+				workspaceId: currentUser.workspaceId,
 				dpId,
 				userTitle
 			});
@@ -227,47 +238,46 @@ const userController = {
 	},
 
     async changePassword(req, res) {
-        try {
-            const userId = req.user.userId;
-            let oldPassword, newPassword;
-            try {
-                ({ oldPassword, newPassword } = validateChangePassword(req.body));
-            } catch (validationErr) {
-                return res.status(400).json({
-                    success: false,
-                    message: validationErr.message,
-                    code: 'PASSWORD_RULES_VIOLATION'
-                });
-            }
-            
-            const updatedUser = await userService.changePassword(userId, oldPassword, newPassword);
-            
-            return res.status(200).json({
-                success: true,
-                message: 'Password changed successfully',
-                data: updatedUser
-            });
-            
-        } catch (error) {
-			if (error.message.includes('Password must')) {
-			return res.status(400).json({
-				success: false,
-				message: error.message,
-				code: 'PASSWORD_RULES_VIOLATION'
-			});
+		try {
+			const userId = req.user.userId;
+			let oldPassword, newPassword;
+			try {
+				({ oldPassword, newPassword } = validateChangePassword(req.body));
+			} catch (validationErr) {
+				return res.status(400).json({
+					success: false,
+					message: validationErr.message,
+					code: 'PASSWORD_RULES_VIOLATION'
+				});
 			}
-            if (error.message === 'User not found') {
-                return res.status(404).json({ success: false, message: error.message });
-            }
-            if (error.message === 'Current password is incorrect') {
-                return res.status(401).json({ success: false, message: error.message });
-            }
-            if (error.message.includes('password')) {
-                return res.status(400).json({ success: false, message: error.message });
-            }
-            return res.status(500).json({ success: false, message: error.message });
-        }
-    },
+
+			await userService.changePassword(userId, oldPassword, newPassword);
+
+			return res.status(200).json({
+				success: true,
+				message: 'Password changed successfully'
+			});
+
+		} catch (error) {
+			if (error.message.includes('Password must')) {
+				return res.status(400).json({
+					success: false,
+					message: error.message,
+					code: 'PASSWORD_RULES_VIOLATION'
+				});
+			}
+			if (error.message === 'User not found') {
+				return res.status(404).json({ success: false, message: error.message });
+			}
+			if (error.message === 'Current password is incorrect') {
+				return res.status(401).json({ success: false, message: error.message });
+			}
+			if (error.message.includes('password')) {
+				return res.status(400).json({ success: false, message: error.message });
+			}
+			return res.status(500).json({ success: false, message: error.message });
+		}
+	},
 
 	async resetUserPassword(req, res) {
 		try {
@@ -286,29 +296,24 @@ const userController = {
 					code: 'PASSWORD_RULES_VIOLATION'
 				});
 			}
-			
-			const updatedUser = await userService.resetUserPassword(userId, newPassword);
-			
+
+			await userService.resetUserPassword(userId, newPassword);
+
 			return res.status(200).json({
 				success: true,
-				message: 'Password reset successfully',
-				data: {
-					userId: updatedUser.userId,
-					userEmail: updatedUser.userEmail,
-					userName: updatedUser.userName
-				}
+				message: 'Password reset successfully'
 			});
-			
+
 		} catch (error) {
 			if (error.message === 'User not found') {
-				return res.status(404).json({ 
-					success: false, 
-					message: error.message 
+				return res.status(404).json({
+					success: false,
+					message: error.message
 				});
 			}
-			return res.status(500).json({ 
-				success: false, 
-				message: error.message 
+			return res.status(500).json({
+				success: false,
+				message: error.message
 			});
 		}
 	},
@@ -332,7 +337,7 @@ const userController = {
         } catch (error) {
             if (error.message === 'User not found') {
                 res.status(404).json({ error: error.message });
-            } else if (error.message.includes('password')) {
+            } else if (error.message.toLowerCase().includes('password')) {
                 res.status(400).json({ error: error.message });
             } else {
                 res.status(500).json({ error: error.message });
@@ -351,6 +356,34 @@ const userController = {
             } else {
                 res.status(500).json({ error: error.message });
             }
+        }
+    },
+
+	async uploadAvatar(req, res) {
+        try {
+            const userId = req.user.userId;
+            const result = await userService.uploadAvatar(userId, req.file, process.env.SUPABASE_ASSET_BUCKET);
+            res.json({ success: true, ...result });
+        } catch (error) {
+            if (error.message === 'No file uploaded') {
+                return res.status(400).json({ error: error.message });
+            }
+            console.error('Upload error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+ 
+    async uploadAvatarForUser(req, res) {
+        try {
+            const userId = req.params.id;
+            const result = await userService.uploadAvatar(userId, req.file, process.env.SUPABASE_ASSET_BUCKET);
+            res.json({ success: true, ...result });
+        } catch (error) {
+            if (error.message === 'No file uploaded') {
+                return res.status(400).json({ error: error.message });
+            }
+            console.error('Admin upload error:', error);
+            res.status(500).json({ error: error.message });
         }
     },
 

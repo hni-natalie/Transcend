@@ -179,7 +179,7 @@
 
   /* task list */
   .task-tab {
-    @apply flex items-center justify-between border border-gray-700 rounded-2xl px-8 py-4 mb-6 font-semibold;
+    @apply flex items-center justify-between bg-accent-lime-bg/80 rounded-2xl px-8 py-4 mb-6 font-semibold;
   }
   .task-card {
     @apply bg-background-1 p-6 px-8 rounded-2xl;
@@ -244,7 +244,7 @@
 
   /* LiveKit class overrides */
   .lk-video-conference {
-    @apply flex h-screen w-full;
+    @apply relative flex h-full w-full overflow-hidden;
   }
 
   .lk-video-conference-inner {
@@ -277,13 +277,8 @@
     @apply gap-1 text-white/70
   }
 
-  .lk-chat-overlay {
-    @apply fixed inset-0 z-50 flex items-center justify-center;
-    pointer-events: none;
-  }
-  
   .lk-chat-panel {
-    @apply flex flex-col w-[400px] h-[500px] rounded-2xl overflow-hidden;
+    @apply flex flex-col w-full h-full rounded-2xl overflow-hidden;
     @apply bg-background-1 text-white shadow-2xl border border-background-2;
     pointer-events: auto;
   }
@@ -296,18 +291,18 @@
   
   /* ── Header (top): title + exit ───────────────────────────── */
   .lk-chat-header {
-    @apply flex items-center justify-between h-14 px-6 pr-2 shrink-0;
-    @apply border-b border-background-3;
+    @apply flex items-center justify-between h-12 sm:h-14 px-4 sm:px-6 pr-2 shrink-0;
+    @apply border-b border-background-3 select-none;
   }
   
   .lk-chat-title {
-    @apply text-lg font-semibold ml-2;
+    @apply text-base sm:text-lg font-semibold ml-2;
   }
   
   .lk-chat-close {
     @apply flex items-center justify-center w-8 h-8 rounded-full;
     @apply text-zinc-400 hover:text-white hover:bg-zinc-800;
-    @apply transition-colors;
+    @apply transition-colors cursor-pointer;
   }
   
   /* ── Body: scrollable message list ────────────────────────── */
@@ -342,8 +337,8 @@
   
   /* ── Form (bottom): input + send ──────────────────────────── */
   .lk-chat-form {
-    @apply flex gap-3 p-6 shrink-0 mt-1;
-    @apply border-t border-zinc-700;
+    @apply flex items-end gap-2 sm:gap-3 p-3 sm:p-4 shrink-0 mt-1;
+    @apply border-t border-background-3;
   }
   
   .lk-chat-input {

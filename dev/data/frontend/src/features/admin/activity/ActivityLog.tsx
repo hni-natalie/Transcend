@@ -1,18 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSocket } from '@/context';
-import { FilterLayout } from '@shared';
+import { useSocket, useToast } from '@/context';
+import { FilterLayout, formatLocalTime, formatRelativeTime } from '@shared';
 import { DefaultAvatar } from '@/shared/ui/DefaultAvatar';
-import { activityApi } from '@/features/admin/activity/api/activity.api';
+import { activityApi, TAB_TO_TYPE } from '@/features/admin/activity/api/activity.api';
 import type { ActivityEvent, DateRangeFilter, CustomDateRange } from '@/features/admin/activity/types';
 import { getDateRangeBounds, DATE_RANGE_OPTIONS } from '@/features/admin/activity/components';
-
-// maps ui filter labels to match api event types
-const TAB_TO_TYPE: Record<string, string> = {
-  Presence: 'presence',
-  Spaces: 'space',
-  Tasks: 'task',
-  Meetings: 'meeting',
-};
 
 const ActivityAvatar = ({ url, name }: { url?: string | null; name: string }) => {
   const [failed, setFailed] = useState(false);
@@ -32,28 +24,26 @@ const ActivityAvatar = ({ url, name }: { url?: string | null; name: string }) =>
 };
 
 export function ActivityLog() {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'All' | 'Presence' | 'Spaces' | 'Tasks' | 'Meetings'>('All');
-  // searchInput updates instantly on every keystroke (keeps the field responsive).
-  // searchQuery only updates after the user pauses typing, and is what actually
-  // drives the API call / re-render of the list below.
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState<DateRangeFilter>('all');
   const [customRange, setCustomRange] = useState<CustomDateRange>({ startDate: '', endDate: '' });
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
-
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasNewActivity, setHasNewActivity] = useState(false); 
+  
+  // 
   const { startDate, endDate } = useMemo(
 	() => getDateRangeBounds(dateRange, customRange),
 	[dateRange, customRange.startDate, customRange.endDate]
   );
 
-  const { subscribeDashboard, unsubscribeDashboard, latestActivity, activitySeq } = useSocket();
+  const { subscribeActivity, unsubscribeActivity, latestActivity, activitySeq } = useSocket();
 
   // debounce: only push searchInput > seachQuery after typing for 300ms
   useEffect(() => {
@@ -70,44 +60,44 @@ export function ActivityLog() {
   const fetchActivities = useCallback(() => {
     if (dateRange === 'custom' && (!customRange.startDate || !customRange.endDate)) return () => {};
 
-    let cancelled = false;
+    let isStale = false;
     setIsLoading(true);
 
     activityApi
       .getAllActivities({ type: activeTab, search: searchQuery, page, limit: perPage, startDate, endDate })
       .then((res) => {
-        if (cancelled) return;
+        if (isStale) return;
         setActivities(res.data);
         setTotalItems(res.pagination.total);
         setTotalPages(res.pagination.totalPages);
-        setHasNewActivity(false);
       })
       .catch((err) => {
         console.error('Failed to fetch activities:', err);
-        if (!cancelled) {
+        showToast('error', 'Failed to load activity logs');
+        if (!isStale) {
           setActivities([]);
           setTotalItems(0);
           setTotalPages(1);
         }
       })
       .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        if (!isStale) setIsLoading(false);
       });
 
     return () => {
-      cancelled = true;
+      isStale = true;
     };
-  }, [activeTab, searchQuery, page, perPage, dateRange, customRange, startDate, endDate]);
+  }, [activeTab, searchQuery, page, perPage, dateRange, customRange, startDate, endDate, showToast]);
 
   useEffect(() => {
-    const cancel = fetchActivities();
-    return cancel;
+    const cleanup = fetchActivities();
+    return cleanup;
   }, [fetchActivities]);
 
   useEffect(() => {
-    subscribeDashboard();
-    return () => unsubscribeDashboard();
-  }, [subscribeDashboard, unsubscribeDashboard]);
+    subscribeActivity();
+    return () => unsubscribeActivity();
+  }, [subscribeActivity, unsubscribeActivity]);
 
   // Handle real-time activity updates
   // If user is on page 1 with no filters, merge new activity directly
@@ -120,12 +110,12 @@ export function ActivityLog() {
 
     if (canMergeInPlace) {
       setActivities((prev) => [latestActivity, ...prev].slice(0, perPage));
-      setTotalItems((prev) => prev + 1);
-    } else if (tabMatches) {
-      setHasNewActivity(true);
+      setTotalItems((prev) => {
+      	const newTotal = prev + 1;
+      	setTotalPages(Math.ceil(newTotal / perPage));
+      	return newTotal;
+      });
     }
-	// only trigger on new socket events, silence filters
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activitySeq]);
 
   const categoryStyles: Record<string, { dotColor: string; textColor: string }> = {
@@ -182,14 +172,6 @@ export function ActivityLog() {
 	totalPages={totalPages}
 	containerHeight="calc(103vh - 120px)"
 	>
-      {hasNewActivity && (
-        <button
-          onClick={fetchActivities}
-          className="w-full text-center text-sm font-medium text-accent-lime bg-background-2 hover:bg-background rounded-lg py-2 mb-2 transition-colors"
-        >
-          New activity available — click to refresh
-        </button>
-      )}
       <div className="relative pl-4.5 space-y-2 pt-8 pb-8">
         <div className="absolute left-[19px] top-8 bottom-8 w-[1px] bg-background-4 pointer-events-none" />
 
@@ -207,7 +189,7 @@ export function ActivityLog() {
                 <div className="absolute top-1/2 -translate-y-1/2 flex items-center gap-12">
                   <div className={`w-4 h-4 rounded-full ring-4 ring-background z-10 flex-shrink-0 ${styles.dotColor}`} />
                   <span className="text-base font-medium text-foreground-1 w-20 text-left select-none">
-                    {item.time}
+                    {formatLocalTime(item.timestamp)}
                   </span>
                 </div>
 
@@ -243,7 +225,7 @@ export function ActivityLog() {
                   )}
 
                   <div className="text-right flex-shrink-0 w-36 text-base text-foreground-3 group-hover:text-foreground-3 transition-colors">
-                    {item.relativeTime}
+                    {formatRelativeTime(item.timestamp)}
                   </div>
                 </div>
               </div>

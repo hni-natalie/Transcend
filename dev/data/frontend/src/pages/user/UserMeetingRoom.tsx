@@ -8,7 +8,11 @@ import { meetingApi } from '@/features/meetings/api/meeting.api';
 import { Room, RoomEvent } from 'livekit-client';
 import '@livekit/components-styles';
 
-export function UserMeetingRoom() {
+export function UserMeetingRoom({
+  headerIcon=<IconMeetings className="w-7 h-7" />,
+} : {
+  headerIcon?: React.ReactNode;
+}) {
   const [room, setRoom] = useState<Room | null>(null);
   const [recordingStatus, setRecordingStatus] = useState('');
   const [hasConnected, setHasConnected] = useState(false);
@@ -22,12 +26,14 @@ export function UserMeetingRoom() {
     meetingTitle,
     isHost,
     leaveTo,
+    comeFrom,
   } = location.state || {
     roomName: '',
     meetId: '',
     meetingTitle: 'Meeting',
     isHost: false,
     leaveTo: R.USER_MEETINGS,
+    comeFrom: R.USER_MEETINGS,
   };
 
   const {
@@ -38,6 +44,9 @@ export function UserMeetingRoom() {
     error,
   } = useLiveKit(roomName);
 
+  useEffect(() => {
+    window.history.replaceState({}, '', comeFrom);
+  }, []);
   /*
    * Set room when LiveKit connects
    */
@@ -254,9 +263,7 @@ export function UserMeetingRoom() {
     <div className="flex flex-col h-full">
 
       <PageHeader
-        icon={
-          <IconMeetings className="w-7 h-7" />
-        }
+        icon={headerIcon}
         title={meetingTitle}
         action={
           isConnectedRoom && (

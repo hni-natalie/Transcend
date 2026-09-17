@@ -3,7 +3,7 @@ import { Modal } from '@shared';
 import { FormAddUser, FormEditUser } from '@features/admin/forms';
 import type { UserTableRow } from '@shared/types/user.types';
 
-export interface UserModalsProps {
+interface UserModalsProps {
   showAddForm: boolean;
   showEditForm: boolean;
   selectedUser: UserTableRow | null;

@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { fetchAllUsers } from '@features/users';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { userApi } from '@features/users';
 import { User } from '@shared';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { useSocket } from '@/context/SocketContext';
 
 interface UseUsersOptions {
   excludeCurrentUser?: boolean;
@@ -17,13 +18,14 @@ export function useUsers(options: UseUsersOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const { showToast } = useToast();
   const { user: currentUser } = useAuth();
+  const { userStatuses } = useSocket();
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const allUsers = await fetchAllUsers();
+      const allUsers = await userApi.fetchAllUsers();
       
       let filteredUsers = allUsers;
 
@@ -68,9 +70,18 @@ export function useUsers(options: UseUsersOptions = {}) {
     fetchUsers();
   }, [fetchUsers]);
 
+  const usersWithLiveStatus = useMemo(
+    () =>
+      users.map((user) => ({
+        ...user,
+        userStatus: userStatuses[user.userId] ?? user.userStatus,
+      })),
+    [users, userStatuses],
+  );
+
   const refetch = useCallback(() => {
     fetchUsers();
   }, [fetchUsers]);
 
-  return { users, isLoading, error, refetch };
+  return { users: usersWithLiveStatus, isLoading, error, refetch };
 }

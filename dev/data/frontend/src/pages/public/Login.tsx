@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useAuth } from '@/features/auth/AuthContext';
-import { IconGoogle } from '@shared';
+import { IconGoogle, EMAIL_REGEX } from '@shared';
 
 declare global {
     interface Window {
@@ -24,7 +24,7 @@ const loginInputClass = [
 
 export const Login = () => {
     const navigate = useNavigate();
-    const { googleLogin, login } = useAuth(); 
+    const { googleLogin, login } = useAuth();
     const [userEmail, setUserEmail] = useState<string>('');
     const [userPassword, setUserPassword] = useState<string>('');
     const [error, setError] = useState<string>('');
@@ -34,8 +34,6 @@ export const Login = () => {
     const googleInitialized = useRef<boolean>(false);
 
     const onBack = () => { navigate('/'); };
-
-    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const validateLoginForm = (): string | null => {
         if (!userEmail.trim() || !userPassword) {
@@ -100,7 +98,7 @@ export const Login = () => {
     useEffect(() => {
         if (isGoogleSDKLoaded && !googleInitialized.current) {
             googleInitialized.current = true;
-            
+
             window.google?.accounts.id.initialize({
                 client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
                 callback: async (response: any) => {
@@ -127,78 +125,76 @@ export const Login = () => {
             setError('Google login is still loading. Please try again.');
             return;
         }
-        
+
         setGoogleLoading(true);
 
-	// timeout if no prompt
-    const timeoutId = setTimeout(() => {
-        setGoogleLoading(false);
-        setError('Google login timed out. Please try again.');
-    }, 10000); // 10 second timeout
-    
-    // prompt callback handles success/error
-    window.google?.accounts.id.prompt((notification: any) => {
-        clearTimeout(timeoutId);
-        
-        if (notification.isNotDisplayed()) {
-            setError(`Google login couldn't display: ${notification.getNotDisplayedReason()}`);
+        // timeout if no prompt
+        const timeoutId = setTimeout(() => {
             setGoogleLoading(false);
-        }
-        
-        if (notification.isSkippedMoment()) {
-            // popup closed or canceled
-            setGoogleLoading(false);
-        }
+            setError('Google login timed out. Please try again.');
+        }, 10000); // 10 second timeout
 
-	    // if notification is displayed, keep loading true
-        // callback will handle success via the initialize callback
-    });
-};
+        // prompt callback handles success/error
+        window.google?.accounts.id.prompt((notification: any) => {
+            clearTimeout(timeoutId);
 
+            if (notification.isNotDisplayed()) {
+                setError(`Google login couldn't display: ${notification.getNotDisplayedReason()}`);
+                setGoogleLoading(false);
+            }
+
+			// popup closed / cancelled
+            if (notification.isSkippedMoment()) {
+                setGoogleLoading(false);
+            }
+
+            // if notification is displayed, keep loading true
+            // callback will handle success via the initialize callback
+        });
+    };
 
     return (
-        <div className="h-screen w-screen bg-background flex justify-center items-center m-0">
-            <div className="w-full max-w-[500px] flex flex-col items-center">
-                <h1 
-                    className="brand-logo-lean text-[48px] font-bold mb-9"
-                    onClick={onBack}
-                >
-                    WorkFrom,
-                </h1>
+		<div className="min-h-dvh w-screen bg-background flex justify-center items-center m-0 px-6 py-10 sm:px-8">
+			<div className="w-full max-w-[500px] flex flex-col items-center">
+				<h1
+					className="brand-logo-lean text-5xl sm:text-6xl md:text-[48px] font-bold mb-16 sm:mb-12 cursor-pointer"
+					onClick={onBack}
+				>
+					WorkFrom,
+				</h1>
 
-                <div className="w-[60%]">
-                    {/* Google Login */}
-                    <button 
-                        className="
-							w-full py-3 border border-background-4 bg-background-1 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-6 rounded-lg cursor-pointer
-							hover:bg-accent-lime-bg hover:text-accent-lime transition-colors cursor-pointer"
-                        onClick={handleGoogleLogin}
-                        disabled={!isGoogleSDKLoaded || googleLoading}
-                    >
-                        <IconGoogle className="w-5 h-5" />
-                        {googleLoading ? 'Logging in...' : 'Continue with Google'}
-                    </button>
+				{/* <div className="w-full sm:w-[80%] md:w-[60%]"> */}
+				<div className="w-full max-w-[300px] mx-auto">
+					{/* Google Login */}
+					<button
+						className="w-full py-3 border border-background-4 bg-background-1 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-3 sm:gap-6 rounded-lg cursor-pointer hover:bg-accent-lime-bg hover:text-accent-lime transition-colors"
+						onClick={handleGoogleLogin}
+						disabled={!isGoogleSDKLoaded || googleLoading}
+					>
+						<IconGoogle className="w-5 h-5" />
+						{googleLoading ? 'Logging in...' : 'Continue with Google'}
+					</button>
 
 					{/* Email Login */}
-                    <div className="my-6 text-foreground-4 text-sm w-full text-center">or</div>
-                    <form className="w-full flex flex-col gap-6" onSubmit={handleEmailLogin}>
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            className={loginInputClass} 
-                            value={userEmail}
-                            onChange={(e) => setUserEmail(e.target.value)}
-                        />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            className={loginInputClass}
-                            value={userPassword}
-                            onChange={(e) => setUserPassword(e.target.value)}
-                        />
+					<div className="my-6 text-foreground-4 text-sm w-full text-center">or</div>
+					<form className="w-full flex flex-col gap-6" onSubmit={handleEmailLogin}>
+						<input
+							type="email"
+							placeholder="Email"
+							className={loginInputClass}
+							value={userEmail}
+							onChange={(e) => setUserEmail(e.target.value)}
+						/>
+						<input
+							type="password"
+							placeholder="Password"
+							className={loginInputClass}
+							value={userPassword}
+							onChange={(e) => setUserPassword(e.target.value)}
+						/>
 
-						<button 
-							type="submit" 
+						<button
+							type="submit"
 							className="btn-lime w-full mt-3 py-3 text-base lg:text-lg font-bold group flex items-center justify-center gap-2"
 							disabled={loading}
 						>
@@ -213,13 +209,13 @@ export const Login = () => {
 						</button>
 
 						{/* Error */}
-                        <div className="h-4">
-                            {error && <p className="error-message text-center text-sm lg:text-base">{error}</p>}
-                        </div>
-                    </form>
-                </div>
-                
-                <div className="mt-10 flex flex-col items-center gap-8 text-center">
+						<div className="h-4">
+							{error && <p className="error-message text-center text-sm lg:text-base">{error}</p>}
+						</div>
+					</form>
+				</div>
+
+				<div className="mt-8 sm:mt-10 flex flex-col items-center gap-6 sm:gap-8 text-center">
 					{/* No account */}
 					<p className="text-sm text-foreground-2">
 						No account?{' '}
@@ -232,25 +228,25 @@ export const Login = () => {
 					</p>
 
 					{/* Legal */}
-                    <p className="mt-15 text-[12px] md:text-sm text-foreground-2 leading-relaxed max-w-[320px] md:max-w-none opacity-80">
-                        By continuing, you acknowledge that you understand <br className="hidden md:block" />
-                        and agree to the{' '}
-                        <span 
-                            className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
-                            onClick={() => navigate(R.TERMS)}
-                        >
-                            Terms & Conditions
-                        </span>
-                        {' '}and{' '}
-                        <span 
-                            className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
-                            onClick={() => navigate(R.PRIVACY)}
-                        >
-                            Privacy Policy
-                        </span>.
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
+					<p className="mt-8 md:mt-15 text-[12px] md:text-sm text-foreground-2 leading-relaxed max-w-[320px] md:max-w-none opacity-80">
+						By continuing, you acknowledge that you understand <br className="hidden md:block" />
+						and agree to the{' '}
+						<span
+							className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
+							onClick={() => navigate(R.TERMS)}
+						>
+							Terms & Conditions
+						</span>
+						{' '}and{' '}
+						<span
+							className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
+							onClick={() => navigate(R.PRIVACY)}
+						>
+							Privacy Policy
+						</span>.
+					</p>
+				</div>
+			</div>
+		</div>
+	);
 };

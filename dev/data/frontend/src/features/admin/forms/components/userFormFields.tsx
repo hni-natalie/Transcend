@@ -2,7 +2,6 @@ import React from 'react';
 import { InputText, InputDropdown } from '@shared';
 import { PasswordField } from '@shared/ui/PasswordField';
 import { UploadPhoto } from '@shared';
-import { countryOptions } from '@shared/lib/constants/countries';
 
 interface UserFormFieldsProps {
   formData: {
@@ -12,7 +11,6 @@ interface UserFormFieldsProps {
     roleId: string;
     deptId: string;
 	userTitle: string;
-    // location: string;
     photo: string;
     password: string;
   };
@@ -27,6 +25,7 @@ interface UserFormFieldsProps {
   userDisplayName?: string;
   userId?: string;
   isUploading?: boolean;
+  uploadError?: string | null;
 }
 
 export function UserFormFields({
@@ -42,24 +41,28 @@ export function UserFormFields({
   userDisplayName = '',
   userId,
   isUploading = false,
+  uploadError = null,
 }: UserFormFieldsProps) {
   const isEdit = mode === 'edit';
 
   return (
     <>
       {showPhoto && (
-        <div className="flex justify-center mt-6">
-          <UploadPhoto
-            previewUrl={formData.photo}
-            onFileSelect={onFileSelect}
-            isUploading={isUploading}
-            mode={mode}
-            size="md"
-            fallbackName={userDisplayName || 'User'}
-            disabled={isLoadingData}
-          />
-        </div>
-      )}
+		<div className="flex flex-col items-center mt-6 gap-2">
+		  <UploadPhoto
+			previewUrl={formData.photo}
+			onFileSelect={onFileSelect}
+			isUploading={isUploading}
+			mode={mode}
+			size="md"
+			fallbackName={userDisplayName || 'User'}
+			disabled={isLoadingData}
+		  />
+			{uploadError && (
+			  <p className="text-red-500 text-sm text-center">{uploadError}</p>
+			)}
+		</div>
+	  )}
 
       <div className="mt-4 space-y-3 flex-1">
         <InputText 
@@ -69,6 +72,7 @@ export function UserFormFields({
           value={formData.firstName} 
           onChange={onChange} 
           required 
+		  disabled={isEdit && isLoadingData}
           className="bg-background"
         />
 
@@ -79,6 +83,7 @@ export function UserFormFields({
           value={formData.lastName} 
           onChange={onChange} 
           required 
+		  disabled={isEdit && isLoadingData}
           className="bg-background"
         />
 
@@ -90,30 +95,32 @@ export function UserFormFields({
           value={formData.email} 
           onChange={onChange} 
           required 
+		  disabled={isEdit && isLoadingData}
           className="bg-background"
         />
 
         <PasswordField
+          title="Password"
+          placeholder={isEdit ? "Leave blank to keep current password" : "Leave blank to auto-generate"}
           value={formData.password}
           onChange={onPasswordChange}
-          title="Password"
-          placeholder="Leave blank to keep current password"
           className="bg-background"
         />
 
         <InputDropdown
           title="Department"
+          placeholder="Select Department"
           name="deptId"
           choices={departmentOptions}
           value={formData.deptId}
           onChange={onChange}
           disabled={isLoadingData}
           className="bg-background"
-          placeholder="Select Department"
         />
 
         <InputDropdown
           title="Role"
+          placeholder="Select Role"
           name="roleId"
           choices={roleOptions}
           value={formData.roleId}
@@ -121,7 +128,6 @@ export function UserFormFields({
           required
           disabled={isLoadingData}
           className="bg-background"
-          placeholder="Select Role"
         />
 
 		<InputText 
@@ -130,18 +136,9 @@ export function UserFormFields({
 		  name="userTitle"
 		  value={formData.userTitle}
 		  onChange={onChange}
+		  disabled={isEdit && isLoadingData}
 		  className="bg-background"
 		/>
-
-
-        {/* <InputDropdown
-          title="Location"
-          name="location"
-          choices={countryOptions}
-          value={formData.location}
-          onChange={onChange}
-          className="bg-background"
-        /> */}
       </div>
     </>
   );

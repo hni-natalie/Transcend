@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { MeetingDetails } from '../meeting.types';
-import { ModalHeader } from '@/shared';
+import { ModalHeader, getDisplayName } from '@/shared';
 
 type Props = {
   meeting: MeetingDetails | null;
@@ -68,7 +68,7 @@ export const MeetingDetailsModal = ({ meeting, onClose }: Props) => {
                 key={index}
                 className="flex items-center justify-between task-list-layout"
               >
-                <div>
+                {/* <div>
                   <p className="font-medium text-white pb-1">
                     {participant.user.userName}
                   </p>
@@ -76,6 +76,22 @@ export const MeetingDetailsModal = ({ meeting, onClose }: Props) => {
                   <p className="text-sm text-gray-400">
                     {participant.user.userEmail} 
                   </p>
+
+                  <p className="text-xs text-gray-400 capitalize">
+                    {participant.role} 
+                  </p>
+                </div> */}
+
+				 <div>
+                  <p className="font-medium text-white pb-1">
+                    {getDisplayName(participant.user)}
+                  </p>
+
+                  {!participant.user.deletedAt && (
+                    <p className="text-sm text-gray-400">
+                      {participant.user.userEmail}
+                    </p>
+                  )}
 
                   <p className="text-xs text-gray-400 capitalize">
                     {participant.role} 

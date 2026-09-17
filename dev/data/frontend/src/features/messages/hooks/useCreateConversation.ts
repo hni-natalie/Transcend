@@ -3,7 +3,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 
 import { useToast } from '@/context/ToastContext';
 import type { Conversation } from '../types';
-import { messagesApi } from '../api/messages.api'; // uncomment for BE implmentation
+import { messagesApi } from '../api/messages.api';
 import { mapConversation } from '../lib/mappers';
 
 
@@ -11,6 +11,7 @@ export interface CreateConversationInput {
   participantIds: string[];
   isGroup: boolean;
   groupName?: string;
+  avatarFile?: File;
 }
 
 export const useCreateConversation = () => {
@@ -34,36 +35,27 @@ export const useCreateConversation = () => {
         throw new Error('Group name is required');
       }
 
-	  // TO DO: 
-	  // call API (POST /conversations)
-    let response;
-    if (data.isGroup)
-      response = await messagesApi.createGroupConversation({ groupName: data.groupName, participantIds: data.participantIds });
-    else
-      response = await messagesApi.createDirectConversation({ participantId: data.participantIds[0] });
-      
-	  // messagesApi.createConversation({ isGroup, groupName, userIds, message }).
-	  // >>>>>>>>>>>>>>> MOCK >>>>>>>>>>>>>>>>>>
-      // await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      let response;
+      if (data.isGroup) {
+        response = await messagesApi.createGroupConversation({
+          groupName: data.groupName,
+          participantIds: data.participantIds,
+        });
 
-      // const id = data.isGroup ? `group-${Date.now()}` : `user-${data.userIds[0]}`;
-      // const createdAt = new Date().toISOString();
-
-      // const conversation: Conversation = {
-      //   id,
-      //   type: data.isGroup ? 'group' : 'direct',
-      //   name: data.isGroup ? data.groupName!.trim() : 'New Conversation',
-      //   createdAt,
-      //   updatedAt: undefined,
-      //   pinned: false,
-      //   lastMessage: undefined,
-      //   ...(data.isGroup ? {} : { userId: data.userIds[0] }),
-      //   ...(data.isGroup ? { members: [] } : {}),
-      // };
-
-      // return conversation;
-	  // >>>>>>>>>>>>>>> END OF MOCK >>>>>>>>>>>>>>>>>>
-
+        if (data.avatarFile && response.conversationId) {
+          try {
+            const avatarRes = await messagesApi.uploadGroupAvatar(response.conversationId, data.avatarFile);
+            if (avatarRes.avatarUrl) {
+              response.avatarUrl = avatarRes.avatarUrl;
+            }
+          } catch (avatarError) {
+            console.error('Failed to upload group avatar:', avatarError);
+            showToast('error', 'Group created, but avatar upload failed.');
+          }
+        }
+      } else {
+        response = await messagesApi.createDirectConversation({ participantId: data.participantIds[0] });
+      }
 
 	   // >>>>>>>>>>>>>>>  REAL API (uncomment once BE route is ready)
       // const response = await messagesApi.createConversation({

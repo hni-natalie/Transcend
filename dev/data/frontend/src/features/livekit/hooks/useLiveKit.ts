@@ -90,6 +90,8 @@ export function useLiveKit( roomName:string ) {
     leaveRoom(roomName); // emit leave-room signal to backend
     await livekitService.disconnectFromRoom(); // frontend cleanup, setLoading false 
     setCallStatus({status: 'idle', directKey: null});
+    sessionStorage.removeItem('activeMeeting');
+    sessionStorage.removeItem('activeMsgMeeting');
   };
 
   const toggleMute = () => {

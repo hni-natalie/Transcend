@@ -1,11 +1,14 @@
 import React, { useRef, ChangeEvent } from 'react';
 import { IconCamera } from '@shared/ui/Icons';
+import { DefaultAvatar } from '@shared/ui/DefaultAvatar';
+
 
 interface UploadPhotoProps {
-    onFileSelect: (file: File) => void;
+    onFileSelect?: (file: File) => void;
+    onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
     previewUrl?: string;
     isUploading?: boolean;
-    size?: 'sm' | 'md' | 'lg';
+    size?: 'xs' | 'sm' | 'md' | 'lg';
     disabled?: boolean;
     className?: string;
     mode?: 'create' | 'edit';
@@ -14,6 +17,7 @@ interface UploadPhotoProps {
 
 export function UploadPhoto({
     onFileSelect,
+    onChange,
     previewUrl = '',
     isUploading = false,
     size = 'md',
@@ -23,12 +27,14 @@ export function UploadPhoto({
     fallbackName = '',
 }: UploadPhotoProps) {
     const sizeClasses = {
+        xs: 'w-14 h-14',
         sm: 'w-16 h-16',
         md: 'w-28 h-28',
         lg: 'w-32 h-32'
     };
 
     const iconSizes = {
+        xs: 'w-6 h-6',
         sm: 'w-5 h-5',
         md: 'w-9 h-9',
         lg: 'w-11 h-11'
@@ -37,6 +43,7 @@ export function UploadPhoto({
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        onChange?.(e);
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -45,7 +52,7 @@ export function UploadPhoto({
             return;
         }
 
-        onFileSelect(file);
+        onFileSelect?.(file);
         
         e.target.value = '';
     };
@@ -107,9 +114,14 @@ export function UploadPhoto({
                                 className="w-full h-full object-cover"
                                 alt="Profile"
                             />
+						) : fallbackName ? (
+                            <DefaultAvatar name={fallbackName} className="w-full h-full" />
                         ) : (
-                            <div className="flex items-center justify-center w-full h-full text-2xl font-medium text-white bg-background-3">
-                                {getInitials() || <IconCamera className="w-9 h-9 text-accent-lime" />}
+                            <div className="flex items-center justify-center w-full h-full bg-background-3">
+                                <IconCamera className="w-9 h-9 text-accent-lime" />
+                        {/* // ) : (
+                            // <div className="flex items-center justify-center w-full h-full text-2xl font-medium text-white bg-background-3">
+                            //     {getInitials() || <IconCamera className="w-9 h-9 text-accent-lime" />} */}
                             </div>
                         )}
                     </div>

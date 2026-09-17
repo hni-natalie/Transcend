@@ -23,6 +23,7 @@ type ButtonVoiceRoomProps = {
   className?: string;
   joinTo?: string;
   leaveTo?: string;
+  comeFrom?: string;
   showMute?: boolean;
   isHost?: boolean;
   meetId?: string;
@@ -40,6 +41,7 @@ export function ButtonVoiceRoom({
   showMute = true,
   joinTo,
   leaveTo,
+  comeFrom,
   isHost = false,
   meetId = "",
 }: ButtonVoiceRoomProps) {
@@ -75,6 +77,7 @@ export function ButtonVoiceRoom({
       meetingTitle,
     };
 
+    sessionStorage.removeItem('activeMsgMeeting');
     sessionStorage.setItem(
       "activeMeeting",
       JSON.stringify({
@@ -83,6 +86,7 @@ export function ButtonVoiceRoom({
         meetId,
         isHost,
         leaveTo: leaveTo || R.USER_MEETINGS,
+        comeFrom: comeFrom || R.USER_MEETINGS,
       }),
     );
 
@@ -113,6 +117,7 @@ export function ButtonVoiceRoom({
             meetId: selectedMeetId,
             isHost: isHost,
             leaveTo: leaveTo || R.USER_MEETINGS,
+            comeFrom: comeFrom || R.USER_MEETINGS,
           },
         });
     }

@@ -1,7 +1,10 @@
 const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL } = require('../utils/secrets');
 const { AccessToken, RoomServiceClient } = require('livekit-server-sdk');
+const { limiterMiddleware } = require('../middleware/limiter.middleware');
 const router        = require('express').Router();
 const roomService   = new RoomServiceClient(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET);
+
+const tokenLimiter = limiterMiddleware(60 * 1000, 10, { error: 'Too many token requests, try again later.' });
 
 
 async function generateRoomToken(roomName, participantIdentity, participantName) {
@@ -35,7 +38,7 @@ async function generateRoomToken(roomName, participantIdentity, participantName)
  * ****************************************************************/
 
 // > GET : frontend calls this to get a token
-router.get('/token', async (req, res) => {
+router.get('/token', tokenLimiter, async (req, res) => {
     const { roomName, participantName } = req.query;
     
     // Validate inputs

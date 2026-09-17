@@ -4,14 +4,15 @@ import { Landing, Login, Terms, Privacy,
 		AdminDashboard, AdminUserManagement, SpaceManagement, AdminActivity,
 		UserDashboard, Office, OfficeRoom, Tasks, Meetings, Messages, UserSettings, UserMeetingRoom 
 		} from '@pages';
+import { IconMessages } from '@/shared';
 
-export interface RouteConfig {
+interface RouteConfig {
   path: string;
   element: React.ReactNode;
   title: string;
   requiresAuth?: boolean;
   allowedRoles?: string[];
-  isGuestOnly?: boolean;		// redirects to dashboard if logged in
+  isGuestOnly?: boolean;
 }
 
 export const routes: RouteConfig[] = [
@@ -81,14 +82,6 @@ export const routes: RouteConfig[] = [
 		requiresAuth: true,
 		allowedRoles: ['Admin'],
 	},
-	// {
-	// 	path: R.ADMIN_SETTINGS,
-	// 	element: <AdminSettings />,
-	// 	title: 'Settings · Admin · WorkFrom,',
-	// 	requiresAuth: true,
-	// 	allowedRoles: ['Admin'],
-	// },
-
 
 	// User 
 	{
@@ -130,6 +123,12 @@ export const routes: RouteConfig[] = [
 	{
 		path: R.USER_VIDEOCALL,
 		element: <UserMeetingRoom />,
+		title: 'Video Call · User · WorkFrom,',
+		requiresAuth: true,
+	},
+	{
+		path: R.USER_VIDEOCALL_MSG,
+		element: <UserMeetingRoom headerIcon={<IconMessages className='w-7 h-7'/>} />,
 		title: 'Video Call · User · WorkFrom,',
 		requiresAuth: true,
 	},

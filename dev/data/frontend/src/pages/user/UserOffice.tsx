@@ -17,6 +17,19 @@ interface SpaceProps {
   roomName: string;
 }
 
+// registered once for the whole room instead of per Object/Particle instance —
+// avoids the add/remove race in @react-three/cannon's worker when many
+// instances mount/unmount concurrently for the same material pair
+// function ObjectContactMaterial() {
+// 	useContactMaterial('objMaterial', 'objMaterial', {
+// 		friction: 0.8,
+// 		restitution: 0.5,        				// 0 no bounce - 1 elastic
+// 		contactEquationStiffness: 1,   	// lower = softer push
+// 		contactEquationRelaxation: 500, // higher = softer/slower correction
+// 	});
+// 	return null;
+// }
+
 export function Office({ roomName } : SpaceProps ) {
 	/* ------------- nav  ------------- */
 	const location = useLocation();
@@ -121,9 +134,7 @@ export function Office({ roomName } : SpaceProps ) {
 			<LoadingState message="Initializing Office resources..." size="full" className='flex-1' />
 		) : (
 		<div className='flex-1 relative'>
-			<Canvas
-				className=''
-			>
+			<Canvas>
 			<Physics>
 				<SpaceProvider localPlayerRef={localPlayerRef} roomName={roomName}>
 				<PositionProvider roomName={roomName}>
