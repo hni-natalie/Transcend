@@ -297,7 +297,7 @@ export const Meetings = () => {
 					const start = new Date(m.meetStart);
 					const end = new Date(m.meetEnd);
 
-					return start <= now && end > now;
+					return isToday(start) && end > now;
 				})
 				.sort(sortAscending),
 
