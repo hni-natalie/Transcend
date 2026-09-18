@@ -165,6 +165,7 @@ const socketService = (io) => {
         }
       }
 
+      socket.broadcast.emit('user-status-changed', { userId, status: nextStatus });
       socket.emit('online-status', { userId, status: nextStatus });
     })().catch((error) => {
       console.error('[socket.service] Failed to sync socket status on connect:', error);
