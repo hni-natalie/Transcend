@@ -138,9 +138,6 @@ const socketService = (io) => {
         disconnectTimers.delete(userId);
       }
 
-      // update socket id after user reconnect
-      await updateSocketId(socket.id, userId);
-
 	  // update the user status to online if the user was offline
       let nextStatus = currentUser.userStatus;
       if (currentUser.userStatus === 'offline') {
@@ -162,10 +159,12 @@ const socketService = (io) => {
             select: { userStatus: true },
           });
           nextStatus = latestUser?.userStatus ?? currentUser.userStatus;
+          socket.broadcast.emit('user-status-changed', { userId, status: nextStatus });
         }
       }
+      // update socket id after user reconnect
+      await updateSocketId(socket.id, userId, nextStatus);
 
-      socket.emit('online-status', { userId, status: nextStatus });
     })().catch((error) => {
       console.error('[socket.service] Failed to sync socket status on connect:', error);
     });
