@@ -47,6 +47,7 @@ export const activityApi = {
     if (backendType) params.set('type', backendType);
     if (search) params.set('search', search);
     params.set('format', 'csv');
+	// params.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone);
 
     return apiClient.get(`${base}/export?${params.toString()}`, {
       responseType: 'text',
