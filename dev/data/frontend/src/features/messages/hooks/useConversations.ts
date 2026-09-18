@@ -93,8 +93,8 @@ export const useConversations = () => {
             ...participant,
             status: participant.status ? userStatuses[participant.id] ?? participant.status : participant.status,
           })),
-        };
-      }
+		};
+      };
 
       const liveUserStatus = conversation.userId
         ? userStatuses[conversation.userId] ?? conversation.userStatus

@@ -367,15 +367,14 @@ const socketService = (io) => {
           spaceName: space.spaceName,
         });
       } else {
-        const meeting = await prisma.meeting.findUnique({ where: { meetId: roomName }, select: { meetTitle: true } });
+        const meeting = await prisma.meeting.findUnique({ where: { meetId: roomName }, select: { meetTitle: true, space: { select: { spaceName: true } } } });
         if (meeting) {
           await logMeetingActivity({
             workspaceId: socket.user.workspaceId,
             userId: socket.user.userId,
             action: 'joined a meeting',
             contextTitle: meeting.meetTitle,
-            spaceName: undefined,
-            date: new Date(),
+            spaceName: meeting.space?.spaceName
           });
           
           const userService = require('./user.service');

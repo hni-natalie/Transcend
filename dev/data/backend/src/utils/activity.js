@@ -1,28 +1,14 @@
 const { createActivityLog } = require('../services/activity.service');
 
-const formatDateTime = (date) => {
-    if (!date) return 'Unknown Date';
-    return `${new Date(date).toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: 'long', 
-        year: 'numeric' 
-    })} • ${new Date(date).toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        hour12: true 
-    })}`;
-};
-
 const logMeetingActivity = async ({
     workspaceId,
     userId,
     action,
     contextTitle,
     spaceName,
-    date,
     extraDetails = null
 }) => {
-    let contextDetails = `${spaceName || 'Unknown Space'} • ${formatDateTime(date)}`;
+    let contextDetails = `${spaceName || 'Meeting Room'}`;
     
     if (extraDetails) {
         contextDetails = `${contextDetails} • ${extraDetails}`;
@@ -97,7 +83,6 @@ const logPresenceActivity = async ({
 };
 
 module.exports = {
-    formatDateTime,
     logMeetingActivity,
     logTaskActivity,
     logSpaceActivity,
