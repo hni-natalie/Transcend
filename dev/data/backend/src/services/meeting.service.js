@@ -279,8 +279,7 @@ const meetingService = {
             userId,
             action: 'scheduled a meeting',
             contextTitle: meeting.meetTitle,
-            spaceName: meeting.space?.spaceName || 'Meeting Room',
-            date: normalizedStart
+            spaceName: meeting.space?.spaceName || 'Meeting Room'
         });
 
         return meeting;
@@ -347,8 +346,7 @@ const meetingService = {
 			userId,
 			action: 'updated a meeting',
 			contextTitle: updatedMeeting.meetTitle,
-			spaceName: meeting.space?.spaceName || 'Meeting Room',
-			date: normalizedStart
+			spaceName: meeting.space?.spaceName || 'Meeting Room'
 		});
 
 	    return updatedMeeting;
@@ -448,8 +446,7 @@ const meetingService = {
 			userId,
 			action: 'cancelled a meeting',
 			contextTitle: meeting.meetTitle,
-			spaceName: meeting.space?.spaceName || 'Meeting Room',
-			date: meeting.meetStart,
+			spaceName: meeting.space?.spaceName || 'Meeting Room'
 		});
 	},
 
