@@ -101,6 +101,18 @@ export const CameraTracking = ({ localPlayerRef, controlsRef, isConnectedRoom, c
           controlsRef.current.target.y,
           target.z,
         );
+
+        // zoom in camera to target user
+        if (!hasUsedSpawnPosition.current && spawnPosition) {
+          const camera = controlsRef.current.object;
+          const distance = 20; // how close you want to be
+          const direction = new THREE.Vector3()
+            .subVectors(camera.position, controlsRef.current.target)
+            .normalize();
+          camera.position.copy(controlsRef.current.target).add(
+            direction.multiplyScalar(distance)
+          );
+        }
         controlsRef.current.update();
       }
     }
