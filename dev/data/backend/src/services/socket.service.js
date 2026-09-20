@@ -355,6 +355,8 @@ const socketService = (io) => {
         roomName,
         participantCount: roomData.users.length
       });
+      if (roomName === "Office")
+        socket.broadcast.emit('room-joined-messages');
       console.log(`${player.name} joined room: ${player.roomName}`);
 
       emitOccupancyUpdate(roomName); 
@@ -594,7 +596,13 @@ const socketService = (io) => {
           roomName,
           playerName: player.name,
         });
-        
+
+        if (roomName === "Office")
+          socket.broadcast.emit('room-left-messages', {
+            id: player.id,
+            roomName,
+            playerName: player.name,
+        });     
         if (roomData.users.length === 0) {
           rooms.delete(roomName);
           console.log(`Room ${roomName} closed.`);

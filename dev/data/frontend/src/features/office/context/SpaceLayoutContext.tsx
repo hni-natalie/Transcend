@@ -17,6 +17,9 @@ interface SpaceLayoutContextType {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;  // <-- exact match
   loading: boolean;
   count: number;
+	planeRefs: any;
+	themeColor: any;
+	hoveredIndex: number;
 }
 const SpaceLayoutContext = createContext<SpaceLayoutContextType | null>(null);
 

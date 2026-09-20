@@ -49,14 +49,15 @@ export function MessageProfile({
   onBack,
   currentUserId,
 }: MessageProfileProps) {
+  const roomName = "Office"
   const [activeTab, setActiveTab] = useState<'attachments' | 'links'>('attachments');
   const [showMembers, setShowMembers] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const { connect, isConnectedRoom, locateOfficeUser } = useLiveKit("Office");
+  const { connect, locateOfficeUser } = useLiveKit(roomName);
   const { positionedPlanes, loading: spaceLayoutLoading } = useOfficeSpaceLayout();
-  const { roomPlayers } = useSocket();
+  const { roomPlayers, setRoomPlayers, socket, fetchRoomPlayers } = useSocket();
 
   const getDeptSpawnPos = (dpId?: string) => {
     const planes = positionedPlanes as { departmentId?: string; x: number; z: number }[] | undefined;
@@ -71,6 +72,29 @@ export function MessageProfile({
     // return livePlayer?.position ?? getDeptSpawnPos(targetContact.departmentId);
   };
 
+  const [targetPos, setTargetPos] = useState(null);
+  useEffect(() => {
+    setTargetPos(getTargetPos(contact));
+  }, [contact, roomPlayers]);
+
+  useEffect(() => {
+    if (!socket) return ;
+    const handleJoin = async () => {
+      // console.log('[join] roomPlayers updated! ', contact.name);
+      fetchRoomPlayers(roomName);
+    }
+    const handleLeave = (data) => {
+      // console.log('[leave] roomPlayers updated! ', contact.name);
+      setRoomPlayers(prev => prev.filter(p => p.id !== data.id));
+    }
+    socket.on('room-joined-messages', handleJoin);
+    socket.on('room-left-messages', handleLeave);
+
+    return () => {
+      socket.off('room-joined-messages', handleJoin);
+      socket.off('room-left-messages', handleLeave);
+    }
+  }, [socket, contact])
 
   // console.log('debugging group messages: ', groupMessages);
   useEffect(() => {
@@ -146,8 +170,6 @@ export function MessageProfile({
     setShowInvite(false);
     setInviteSearch('');
   };
-
-  const targetPos = getTargetPos(contact);
 
   // only group creator can add/remove participants
   const isGroupCreator = contact.isGroup && !!currentUserId && contact.creatorId === currentUserId;
