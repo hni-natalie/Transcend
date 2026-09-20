@@ -74,6 +74,7 @@ function OfficeContent({ roomName } : SpaceProps ) {
 		if (!isConnectedRoomRef.current) return ;
 		clickPoint.current = new THREE.Vector3(e.point.x, 0, e.point.z);
 
+		// clickPoint subtract localPlayer.pos
 		const direction = new THREE.Vector3()
 		.copy(clickPoint.current)
 		.sub(localPlayerRef.current.position)
@@ -227,18 +228,6 @@ function OfficeContent({ roomName } : SpaceProps ) {
 						roomName={roomName}
 						onClose={() => setTouchedObject(null)}
 					/>
-					{/* <div className='w-full max-w-md rounded-[1.5rem] border border-background-4 bg-background-1 p-6 pb-8 text-center text-white shadow-2xl'>
-					<ModalHeader
-							title='Share window audio?'
-							titleClassName='text-lg font-semibold text-white!'
-							iconClassName='w-6! h-6!'
-								onClose={() => setTouchedObject(null)}
-					/>
-						<p className='mt-4 text-sm text-foreground-3'>You touched {touchedObject?.id}. Select a source with audio enabled to share your music with others.</p>
-					<nav className='mt-5 flex justify-center gap-3'>
-						<button type='button' className='btn-header' onClick={handleShareWindowAudio}>Share audio</button>
-					</nav>
-				</div> */}
 			</Modal>
 
 			{error && (<div className='text-danger'>{error}</div>)}
