@@ -388,7 +388,7 @@ class LiveKitService {
           this.setError(error.message || "Unable to connect to meeting.");
         }
         alert(this.error);
-        // window.location.reload();
+        window.location.reload();
 
         return {
             success: false,
