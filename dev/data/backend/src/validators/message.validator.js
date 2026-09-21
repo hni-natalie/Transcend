@@ -47,9 +47,12 @@ function validateCreateGroupConversation({ participantIds, groupName, avatarUrl 
     };
 }
 
-function validateSendMessage({ text }) {
-    if (!isNonEmptyString(text)) 
-        throw new Error('Message text is required');
+function validateSendMessage( text ) {
+    if (!isNonEmptyString(text)) {
+        return {
+            text: null,
+        };
+    }
 
     validateText(text, 'Message text', MAX_MESSAGE_LENGTH, true);
 

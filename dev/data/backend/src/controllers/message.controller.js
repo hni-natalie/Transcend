@@ -217,20 +217,14 @@ const messageController = {
 		try {
 		// 	const { id } = req.params; // conversationId
 		// 	const { userId } = req.user;
-		// 	const { text, attachments = [] } = req.body;
+			const { text, attachments = [] } = req.body;
 
 		// 	if (!id) {
 		// 		return res.status(400).json({
 		// 			error: "Conversation ID required"
 		// 		});
 		// 	}
-		// 	const hasText = typeof text === "string" && text.trim().length > 0;
-		// 	const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
-
-		// 	if (!hasText && !hasAttachments) {
-		// 		return res.status(400).json({ error: "Message text or attachment is required"});
-		// 	}
-
+		
 		// 	const message = await messageService.sendMessage(id, userId, text, attachments);
 
             let conversationValidated;
@@ -242,17 +236,24 @@ const messageController = {
 
             let validated;
             try {
-                validated = validateSendMessage(req.body);
+                validated = validateSendMessage(text);
             } catch (validationErr) {
                 return res.status(400).json({ error: validationErr.message });
             }
 
+			const hasText = typeof text === "string" && text.trim().length > 0;
+			const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
+
+			if (!hasText && !hasAttachments) {
+				return res.status(400).json({ error: "Message text or attachment is required"});
+			}
+			
             const { userId } = req.user;
             const message = await messageService.sendMessage(
                 conversationValidated.conversationId,
                 userId,
                 validated.text,
-                req.body.attachments || []
+                attachments
             );
 			
 			console.log("message.created");
