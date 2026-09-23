@@ -11,32 +11,7 @@ const {
     validateAttachmentId,
 } = require('../validators/message.validator');
 
-const ACCEPTED_FILE_EXTENSIONS = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg', '.gif'];
-const ACCEPTED_MIME_TYPES = [
-	'application/pdf',
-	'application/msword',
-	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-	'image/png',
-	'image/jpeg',
-	'image/gif'
-];
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
-
-function validateAttachment(file) {
-	if (!file)
-		throw new Error('File is required');
-
-	if (!ACCEPTED_FILE_EXTENSIONS.includes(path.extname(file.originalname).toLowerCase()))
-		throw new Error('Invalid file type');
-
-	if (!ACCEPTED_MIME_TYPES.includes(file.mimetype))
-		throw new Error('Invalid file type');
-
-	if (file.size > MAX_FILE_SIZE) 
-		throw new Error('File size exceeds the limit');
-}
+const { validateAttachment, validateAvatar } = require('../validators/file.validator');
 
 
 const messageController = {
@@ -146,9 +121,7 @@ const messageController = {
 				return res.status(400).json({ error: 'Conversation ID required' });
 			}
 
-			if (!req.file) {
-				return res.status(400).json({ error: 'No file uploaded' });
-			}
+			validateAvatar(req.file);
 
 			const result = await messageService.uploadGroupAvatar(
 				conversationId,
@@ -161,7 +134,13 @@ const messageController = {
 			getIO().emit('messageUpdated');
 			return res.json({ success: true, ...result });
 		} catch (error) {
-			if (error.message === 'No file uploaded') {
+			if (
+				error.message === 'No file uploaded' ||
+				error.message === 'Invalid file type' ||
+				error.message === 'Invalid file name' ||
+				error.message === 'File content does not match its extension' ||
+				error.message === 'File size exceeds the limit'
+			) {
 				return res.status(400).json({ error: error.message });
 			}
 			if (error.message.includes('Conversation not found') || error.message.includes('cannot access')) {

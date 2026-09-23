@@ -9,6 +9,7 @@ const {
     validateChangePassword,
     validateResetPassword
 } = require('../validators/user.validator');
+const { validateAvatar } = require('../validators/file.validator');
 
 const userController = {
 	async getDashboardMetrics(req, res) {
@@ -362,10 +363,17 @@ const userController = {
 	async uploadAvatar(req, res) {
         try {
             const userId = req.user.userId;
+            validateAvatar(req.file);
             const result = await userService.uploadAvatar(userId, req.file, process.env.SUPABASE_ASSET_BUCKET);
             res.json({ success: true, ...result });
         } catch (error) {
-            if (error.message === 'No file uploaded') {
+            if (
+                error.message === 'No file uploaded' ||
+                error.message === 'Invalid file type' ||
+                error.message === 'Invalid file name' ||
+                error.message === 'File content does not match its extension' ||
+                error.message === 'File size exceeds the limit'
+            ) {
                 return res.status(400).json({ error: error.message });
             }
             console.error('Upload error:', error);
@@ -376,10 +384,17 @@ const userController = {
     async uploadAvatarForUser(req, res) {
         try {
             const userId = req.params.id;
+            validateAvatar(req.file);
             const result = await userService.uploadAvatar(userId, req.file, process.env.SUPABASE_ASSET_BUCKET);
             res.json({ success: true, ...result });
         } catch (error) {
-            if (error.message === 'No file uploaded') {
+            if (
+                error.message === 'No file uploaded' ||
+                error.message === 'Invalid file type' ||
+                error.message === 'Invalid file name' ||
+                error.message === 'File content does not match its extension' ||
+                error.message === 'File size exceeds the limit'
+            ) {
                 return res.status(400).json({ error: error.message });
             }
             console.error('Admin upload error:', error);
