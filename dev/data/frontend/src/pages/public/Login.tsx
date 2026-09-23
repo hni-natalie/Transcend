@@ -216,9 +216,9 @@ export const Login = () => {
 				</div>
 
 				<div className="mt-8 sm:mt-10 flex flex-col items-center gap-6 sm:gap-8 text-center">
-					{/* No account */}
+					{/* Forgot Password */}
 					<p className="text-sm text-foreground-2">
-						No account?{' '}
+						Forgot Password?{' '}
 						<a 
 							href="mailto:support@workfrom.com"
 							className="font-semibold text-foreground-2 underline decoration-foreground-2/30 underline-offset-4 cursor-pointer hover:text-white hover:decoration-white transition-colors"
