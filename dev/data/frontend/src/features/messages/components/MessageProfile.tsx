@@ -6,7 +6,7 @@ import { UserRow, SelectToggle, RemoveButton } from './UserRow';
 import { ChatAvatar } from './ChatAvatar';
 import { useLiveKit } from '@/features/livekit';
 import { useOfficeSpaceLayout } from '@/features/office/context/SpaceLayoutContext';
-import { useSocket } from '@/context';
+import { useSocket, useToast } from '@/context';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { Tooltip } from '@features/messages/components/MessageHeader';
 
@@ -58,6 +58,32 @@ export function MessageProfile({
   const { connect, locateOfficeUser } = useLiveKit(roomName);
   const { positionedPlanes, loading: spaceLayoutLoading } = useOfficeSpaceLayout();
   const { roomPlayers, setRoomPlayers, socket, fetchRoomPlayers } = useSocket();
+  const { showToast } = useToast();
+
+  const handleDownloadAttachment = async (attachment: Attachment) => {
+    try {
+      const response = await fetch(attachment.url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch attachment: ${response.statusText}`);
+      }
+      const blob = await response.blob();
+
+      const downloadUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = attachment.name;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Failed to download attachment:', error);
+      showToast('error', 'Failed to download attachment');
+    }
+  };
 
   const getDeptSpawnPos = (dpId?: string) => {
     const planes = positionedPlanes as { departmentId?: string; x: number; z: number }[] | undefined;
@@ -441,7 +467,8 @@ export function MessageProfile({
                   attachments.map((attachment) => (
                     <div
                       key={attachment.id}
-                      className="flex items-center justify-between gap-3 bg-background-1 border border-border rounded-xl px-4 py-2.5"
+                      onClick={() => handleDownloadAttachment(attachment)}
+                      className="flex items-center justify-between gap-3 bg-background-1 border border-border rounded-xl px-4 py-2.5 cursor-pointer hover:bg-background-2 transition-colors"
                     >
                       <div className="flex items-center gap-4 min-w-0">
                         {attachment.kind === 'pdf' ? (
