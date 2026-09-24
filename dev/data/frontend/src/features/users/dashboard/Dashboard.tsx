@@ -140,14 +140,14 @@ export const Dashboard = () => {
   const sortedTasks = sortTasksByUrgency(tasks, now);
 
   return (
-    <div className="p-4 md:p-0">
+    <div className="p-4 lg:p-0">
 
       {/* TOP METRICS HORIZON GRID - Stack on mobile, 4 cols on desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4 mb-4">
 
         {/* Card 1: Status with Dropdown */}
-        <div className="flex items-start gap-3 md:gap-5 ml-0 md:ml-7">
-          <div className="relative w-28 h-28 md:w-35 md:h-35 flex-shrink-0">
+        <div className="flex items-start gap-3 lg:gap-5 ml-0 lg:ml-7">
+          <div className="relative w-28 h-28 lg:w-35 lg:h-35 flex-shrink-0">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 42 42">
               <circle
                 cx="21" cy="21" r="18.5"
@@ -195,7 +195,7 @@ export const Dashboard = () => {
                 onSelect={updateStatus}
               />
             </div>
-            <p className="text-base text-foreground-3 mt-4 md:mt-7">
+            <p className="text-base text-foreground-3 mt-4 lg:mt-7">
               Logged in
             </p>
             <p className="text-base text-foreground-3">
@@ -205,8 +205,8 @@ export const Dashboard = () => {
         </div>
 
         {/* Card 2: Upcoming Meeting */}
-        <div className="flex items-start gap-3 md:gap-5 ml-0 md:ml-1">
-          <div className="relative w-28 h-28 md:w-35 md:h-35 flex-shrink-0 flex items-center justify-center">
+        <div className="flex items-start gap-3 lg:gap-5 ml-0 lg:ml-1">
+          <div className="relative w-28 h-28 lg:w-35 lg:h-35 flex-shrink-0 flex items-center justify-center">
             <svg className="absolute w-full h-full transform -rotate-90" viewBox="0 0 42 42">
               <circle cx="21" cy="21" r="18.5" className="text-background-3" strokeWidth="5" stroke="currentColor" fill="none" />
               <circle
@@ -253,7 +253,7 @@ export const Dashboard = () => {
               )}
             </div>
 
-            <p className="text-base text-foreground-3 mt-4 md:mt-7">
+            <p className="text-base text-foreground-3 mt-4 lg:mt-7">
               {nextMeeting?.meetTitle ?? 'No upcoming meetings'}
             </p>
             <p className="text-base text-foreground-3">
@@ -265,9 +265,9 @@ export const Dashboard = () => {
         </div>
 
         {/* Card 3: Tasks Today */}
-        <div className="bg-background-1 rounded-3xl p-4 md:p-6 space-y-1">
+        <div className="bg-background-1 rounded-3xl p-4 lg:p-6 space-y-1">
           <span className="text-base text-foreground font-semibold">Tasks Today</span>
-          <div className="mt-6 md:mt-10">
+          <div className="mt-6 lg:mt-10">
             <span className="text-2xl font-semibold text-foreground">{tasksCompleted}</span>
             <span className="text-2xl text-foreground-4 mx-2">/</span>
             <span className="text-2xl text-foreground-4">{tasksTotal}</span>
@@ -275,9 +275,9 @@ export const Dashboard = () => {
         </div>
 
         {/* Card 4: Team Presence - Moved to bottom on mobile */}
-        <div className="bg-background-1 rounded-3xl p-4 md:p-6 space-y-1 md:block">
+        <div className="bg-background-1 rounded-3xl p-4 lg:p-6 space-y-1 lg:block">
           <span className="text-base text-foreground font-semibold">Team Presence</span>
-          <div className="mt-6 md:mt-10">
+          <div className="mt-6 lg:mt-10">
             <span className="text-2xl font-semibold text-foreground">{totalActive}</span>
             <span className="text-2xl text-foreground-4 mx-2">/</span>
             <span className="text-2xl text-foreground-4">{totalTeamMembers}</span>
@@ -286,37 +286,37 @@ export const Dashboard = () => {
       </div>
 
       {/* Outer 4-Column Track Shell - Stack on mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
 
         {/* CONSOLIDATED OPERATIONAL DECK (Columns 1–3) - Stack on mobile */}
-        <div className="col-span-1 md:col-span-3 bg-background-1 p-4 md:p-6 pt-6 md:pt-8 rounded-3xl grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div className="col-span-1 lg:col-span-3 bg-background-1 p-4 lg:p-6 pt-6 lg:pt-8 rounded-3xl grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
           {/* TRACK 1: CALENDAR OVERVIEW */}
-          <div className="space-y-6 md:space-y-10">
+          <div className="space-y-6 lg:space-y-10">
             <CalendarGrid calendarDays={calendarDays} monthYear={monthYear} />
 
             {/* Stats Quantifiers - 3 cols on both mobile and desktop */}
-			<div className="space-y-3 p-2 md:p-3 pt-4">
-			  <div className="grid grid-cols-3 gap-4 md:gap-20">
+			<div className="space-y-3 p-2 lg:p-3 pt-4">
+			  <div className="grid grid-cols-3 gap-4 lg:gap-20">
 				{[
 				{ value: getMeetingsToday(meetings, now),      label: 'Meetings\nToday' },
 				{ value: getMeetingsThisWeek(meetings, now),   label: 'Meetings\nThis Week' },
 				{ value: getMeetingsThisMonth(meetings, now),  label: 'Meetings\nThis Month' },
 				].map(({ value, label }) => (
 				<div key={label}>
-					<div className="text-2xl md:text-3xl font-semibold text-foreground">{value}</div>
+					<div className="text-2xl lg:text-3xl font-semibold text-foreground">{value}</div>
 					<div className="text-sm text-foreground-3 leading-tight mt-1 whitespace-pre-line">{label}</div>
 				</div>
 				))}
 			  </div>
-			  <div className="grid grid-cols-3 gap-4 md:gap-20 pt-2">
+			  <div className="grid grid-cols-3 gap-4 lg:gap-20 pt-2">
 				{[
 				{ value: getTasksToday(tasks, now),      label: 'Tasks\nToday' },
 				{ value: getTasksThisWeek(tasks, now),   label: 'Tasks\nThis Week' },
 				{ value: getTasksThisMonth(tasks, now),  label: 'Tasks\nThis Month' },
 				].map(({ value, label }) => (
 				<div key={label}>
-					<div className="text-2xl md:text-3xl font-semibold text-foreground">{value}</div>
+					<div className="text-2xl lg:text-3xl font-semibold text-foreground">{value}</div>
 					<div className="text-sm text-foreground-3 leading-tight mt-1 whitespace-pre-line">{label}</div>
 				</div>
 				))}
@@ -326,8 +326,8 @@ export const Dashboard = () => {
 
           {/* TRACK 2: MEETINGS */}
           <div className="space-y-4">
-            <h2 className="text-base font-medium text-foreground ml-4 md:ml-6 mb-4 md:mb-7">Meetings</h2>
-            <div className="space-y-4 md:space-y-5">
+            <h2 className="text-base font-medium text-foreground ml-4 lg:ml-6 mb-4 lg:mb-7">Meetings</h2>
+            <div className="space-y-4 lg:space-y-5">
               {upcomingMeetings.slice(0, 3).map((meeting, index) => {
                 const isFeatured = index === 0;
                 const meetingDate = new Date(meeting.meetStart);
@@ -351,12 +351,12 @@ export const Dashboard = () => {
                 return (
                   <div
                     key={meeting.meetId}
-                    className={`p-4 md:p-5 mr-0 md:mr-2 rounded-2xl flex flex-col justify-between transition-all ${
-                      isFeatured ? 'bg-accent-gold-bg min-h-[150px] md:min-h-[180px]' : 'bg-background-2 min-h-[100px] md:min-h-[125px]'
+                    className={`p-4 lg:p-5 mr-0 lg:mr-2 rounded-2xl flex flex-col justify-between transition-all ${
+                      isFeatured ? 'bg-accent-gold-bg min-h-[150px] lg:min-h-[180px]' : 'bg-background-2 min-h-[100px] lg:min-h-[125px]'
                     }`}
                   >
                     <div className="flex justify-between items-center">
-                      <div className={`w-11 h-11 md:w-12 md:h-12 rounded-full flex items-center justify-center ${
+                      <div className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full flex items-center justify-center ${
                         isFeatured ? 'bg-accent-gold text-accent-gold' : 'bg-accent-gold-bg text-foreground-4'
                       }`}>
                         <IconMeetings 
@@ -370,15 +370,15 @@ export const Dashboard = () => {
                           {periodLabel}
                         </span>
                         {isFeatured && (
-                          <p className="text-sm md:text-base text-foreground-3 mt-0.5">
+                          <p className="text-sm lg:text-base text-foreground-3 mt-0.5">
                             {dateDisplay}
                           </p>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex justify-between items-end mt-3 md:mt-4 gap-4">
-                      <h3 className={`text-base font-medium truncate max-w-[120px] md:max-w-[170px] ${
+                    <div className="flex justify-between items-end mt-3 lg:mt-4 gap-4">
+                      <h3 className={`text-base font-medium truncate max-w-[120px] lg:max-w-[170px] ${
                         isFeatured ? 'text-[#F3C15F]' : 'text-accent-gold'
                       }`}>
                         {meeting.meetTitle}
@@ -398,15 +398,15 @@ export const Dashboard = () => {
                 );
               })}
               {upcomingMeetings.length === 0 && (
-                <div className="text-left text-foreground-3 px-4 md:px-6 -mt-2">No upcoming meetings</div>
+                <div className="text-left text-foreground-3 px-4 lg:px-6 -mt-2">No upcoming meetings</div>
               )}
             </div>
           </div>
 
           {/* TRACK 3: WORK TASKBOARD */}
           <div className="space-y-4">
-            <h2 className="text-base font-semibold text-foreground ml-4 md:ml-6">Tasks</h2>
-            <div className="space-y-4 md:space-y-5 mt-4 md:mt-7">
+            <h2 className="text-base font-semibold text-foreground ml-4 lg:ml-6">Tasks</h2>
+            <div className="space-y-4 lg:space-y-5 mt-4 lg:mt-7">
               {sortedTasks.slice(0, 3).map((task, index) => {
                 const isHigh   = task.taskPriority === 'high';
                 const isMedium = task.taskPriority === 'medium';
@@ -416,12 +416,12 @@ export const Dashboard = () => {
                 return (
                   <div
                     key={task.taskId}
-                    className={`p-4 md:p-5 mr-0 md:mr-2 rounded-2xl flex flex-col justify-between transition-all ${
-                      isFeatured ? 'bg-accent-teal-bg min-h-[150px] md:min-h-[180px]' : 'bg-background-2 min-h-[100px] md:min-h-[125px]'
+                    className={`p-4 lg:p-5 mr-0 lg:mr-2 rounded-2xl flex flex-col justify-between transition-all ${
+                      isFeatured ? 'bg-accent-teal-bg min-h-[150px] lg:min-h-[180px]' : 'bg-background-2 min-h-[100px] lg:min-h-[125px]'
                     }`}
                   >
                     <div className="flex justify-between items-center">
-                      <div className={`w-11 h-11 md:w-12 md:h-12 rounded-full flex items-center justify-center ${
+                      <div className={`w-11 h-11 lg:w-12 lg:h-12 rounded-full flex items-center justify-center ${
                         isFeatured ? 'bg-accent-teal text-accent-teal' : 'bg-accent-teal-bg text-foreground-4'
                       }`}>
                         <IconTasks 
@@ -435,8 +435,8 @@ export const Dashboard = () => {
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-end mt-3 md:mt-4 gap-4">
-                      <h3 className="text-base font-medium truncate max-w-[120px] md:max-w-[170px] text-accent-teal">
+                    <div className="flex justify-between items-end mt-3 lg:mt-4 gap-4">
+                      <h3 className="text-base font-medium truncate max-w-[120px] lg:max-w-[170px] text-accent-teal">
                         {task.taskTitle}
                       </h3>
                       <span className={`text-base font-normal tracking-wide flex-shrink-0 ${
@@ -450,7 +450,7 @@ export const Dashboard = () => {
                 );
               })}
               {tasks.length === 0 && (
-                <div className="text-left text-foreground-3 px-4 md:px-6 -mt-2">No tasks assigned</div>
+                <div className="text-left text-foreground-3 px-4 lg:px-6 -mt-2">No tasks assigned</div>
               )}
             </div>
           </div>
@@ -458,7 +458,7 @@ export const Dashboard = () => {
         </div>
 
         {/* TRACK 4: TEAM CONNECTIVITY */}
-        <div className="bg-background-1 p-4 md:p-6 pt-6 md:pt-8 rounded-3xl flex flex-col h-full -ml-0 md:-ml-1.5">
+        <div className="bg-background-1 p-4 lg:p-6 pt-6 lg:pt-8 rounded-3xl flex flex-col h-full -ml-0 lg:-ml-1.5">
           <h2 className="text-base font-semibold text-foreground flex-shrink-0">
             Team · {currentUser.department?.dpName ?? 'Team Members'}
           </h2>
@@ -467,7 +467,7 @@ export const Dashboard = () => {
             <FeaturedMemberRow member={featuredMember} />
           )}
 
-          <div className="flex-1 overflow-y-auto min-h-0 mt-4 px-2 md:px-3 space-y-3 max-h-[200px] md:max-h-[270px]">
+          <div className="flex-1 overflow-y-auto min-h-0 mt-4 px-2 lg:px-3 space-y-3 max-h-[200px] lg:max-h-[270px]">
             {regularMembers.map((member, i) => (
               <MemberRow key={i} member={member} />
             ))}
