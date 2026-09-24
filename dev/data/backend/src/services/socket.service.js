@@ -165,6 +165,7 @@ const socketService = (io) => {
         }
       }
 
+      socket.broadcast.emit('user-status-changed', { userId, status: nextStatus });
       socket.emit('online-status', { userId, status: nextStatus });
     })().catch((error) => {
       console.error('[socket.service] Failed to sync socket status on connect:', error);
@@ -354,6 +355,8 @@ const socketService = (io) => {
         roomName,
         participantCount: roomData.users.length
       });
+      if (roomName === "Office")
+        socket.broadcast.emit('room-joined-messages');
       console.log(`${player.name} joined room: ${player.roomName}`);
 
       emitOccupancyUpdate(roomName); 
@@ -367,15 +370,14 @@ const socketService = (io) => {
           spaceName: space.spaceName,
         });
       } else {
-        const meeting = await prisma.meeting.findUnique({ where: { meetId: roomName }, select: { meetTitle: true } });
+        const meeting = await prisma.meeting.findUnique({ where: { meetId: roomName }, select: { meetTitle: true, space: { select: { spaceName: true } } } });
         if (meeting) {
           await logMeetingActivity({
             workspaceId: socket.user.workspaceId,
             userId: socket.user.userId,
             action: 'joined a meeting',
             contextTitle: meeting.meetTitle,
-            spaceName: undefined,
-            date: new Date(),
+            spaceName: meeting.space?.spaceName
           });
           
           const userService = require('./user.service');
@@ -594,7 +596,13 @@ const socketService = (io) => {
           roomName,
           playerName: player.name,
         });
-        
+
+        if (roomName === "Office")
+          socket.broadcast.emit('room-left-messages', {
+            id: player.id,
+            roomName,
+            playerName: player.name,
+        });     
         if (roomData.users.length === 0) {
           rooms.delete(roomName);
           console.log(`Room ${roomName} closed.`);

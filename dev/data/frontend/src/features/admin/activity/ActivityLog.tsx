@@ -37,34 +37,37 @@ export function ActivityLog() {
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   
-  // 
+  // Calculate date range bounds
   const { startDate, endDate } = useMemo(
-	() => getDateRangeBounds(dateRange, customRange),
-	[dateRange, customRange.startDate, customRange.endDate]
+    () => getDateRangeBounds(dateRange, customRange),
+    [dateRange, customRange.startDate, customRange.endDate]
   );
 
   const { subscribeActivity, unsubscribeActivity, latestActivity, activitySeq } = useSocket();
 
-  // debounce: only push searchInput > seachQuery after typing for 300ms
+  // debounce: update searchQuery and reset page after 300ms
   useEffect(() => {
     const timeout = setTimeout(() => {
       setSearchQuery(searchInput);
+      setPage(1);
     }, 300);
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
+  // Fetch activities when filters, pagination, or search change
   useEffect(() => {
-    setPage(1);
-  }, [activeTab, searchQuery, perPage, dateRange, customRange]);
-
-  const fetchActivities = useCallback(() => {
-    if (dateRange === 'custom' && (!customRange.startDate || !customRange.endDate)) return () => {};
-
     let isStale = false;
     setIsLoading(true);
 
     activityApi
-      .getAllActivities({ type: activeTab, search: searchQuery, page, limit: perPage, startDate, endDate })
+      .getAllActivities({
+        type: activeTab,
+        search: searchQuery,
+        page,
+        limit: perPage,
+        startDate,
+        endDate,
+      })
       .then((res) => {
         if (isStale) return;
         setActivities(res.data);
@@ -87,12 +90,7 @@ export function ActivityLog() {
     return () => {
       isStale = true;
     };
-  }, [activeTab, searchQuery, page, perPage, dateRange, customRange, startDate, endDate, showToast]);
-
-  useEffect(() => {
-    const cleanup = fetchActivities();
-    return cleanup;
-  }, [fetchActivities]);
+  }, [activeTab, searchQuery, page, perPage, startDate, endDate, showToast]);
 
   useEffect(() => {
     subscribeActivity();
@@ -135,6 +133,17 @@ export function ActivityLog() {
 
   const handleFilterChange = (filter: string) => {
     setActiveTab(filter as typeof activeTab);
+    setPage(1);
+  };
+
+  const handleDateRangeChange = (value: string) => {
+    setDateRange(value as DateRangeFilter);
+    setPage(1);
+  };
+
+  const handleCustomRangeChange = (range: CustomDateRange) => {
+    setCustomRange(range);
+    setPage(1);
   };
 
   const startIndex = (page - 1) * perPage;
@@ -156,9 +165,9 @@ export function ActivityLog() {
 	showDateFilter={true}
 	dateRangeValue={dateRange}
 	dateRangeOptions={DATE_RANGE_OPTIONS}
-	onDateRangeChange={(value) => setDateRange(value as DateRangeFilter)}
+	onDateRangeChange={handleDateRangeChange}
 	customRange={customRange}
-    onCustomRangeChange={setCustomRange}
+    onCustomRangeChange={handleCustomRangeChange}
 	isLoading={isLoading}
 	emptyMessage="No live activities stream discovered matching this view context."
 	showPagination={true}

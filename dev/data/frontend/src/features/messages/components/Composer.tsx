@@ -63,6 +63,7 @@ interface PendingAttachment {
   file: File;
   progress: number; // 0-100
   status: 'uploading' | 'done' | 'error';
+  errorMessage?: string;
   attachment?: UploadedAttachment;
 }
 
@@ -168,9 +169,14 @@ export function Composer({ contactName, conversationId, onSend, disabled = false
       console.error('Attachment upload failed: no conversationId');
 
       setPendingAttachments((previous) =>
-        previous.map((item) => (item.localId === localId ? { ...item, status: 'error' } : item)),
+      //   previous.map((item) => (item.localId === localId ? { ...item, status: 'error' } : item)),
+      // );
+      previous.map((item) =>
+          item.localId === localId
+            ? { ...item, status: 'error', errorMessage: 'No conversation selected' }
+            : item,
+        ),
       );
-
       return;
     }
 
@@ -188,11 +194,21 @@ export function Composer({ contactName, conversationId, onSend, disabled = false
             : item,
         ),
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Attachment upload failed:', error);
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        (error instanceof Error ? error.message : null) ||
+        (typeof error === 'string' ? error : 'Upload failed');
 
       setPendingAttachments((previous) =>
-        previous.map((item) => (item.localId === localId ? { ...item, status: 'error' } : item)),
+        // previous.map((item) => (item.localId === localId ? { ...item, status: 'error' } : item)),
+        previous.map((item) =>
+          item.localId === localId
+            ? { ...item, status: 'error', errorMessage }
+            : item,
+        ),
       );
     }
   };
@@ -264,7 +280,15 @@ export function Composer({ contactName, conversationId, onSend, disabled = false
                     <p className="text-[9px] md:text-xs text-foreground-3">{formatFileSize(item.file.size)}</p>
                   )}
 
-                  {item.status === 'error' && <p className="text-[9px] md:text-xs text-red-400">Upload failed</p>}
+                  {/* {item.status === 'error' && <p className="text-[9px] md:text-xs text-red-400">Upload failed</p>} */}
+                  {item.status === 'error' && (
+                    <p
+                      className="text-[9px] md:text-sm text-red-400 truncate"
+                      title={item.errorMessage || 'Upload failed'}
+                    >
+                      {item.errorMessage || 'Upload failed'}
+                    </p>
+                  )}
                 </div>
 
                 <RemoveButton label={`Remove ${item.file.name}`} onClick={() => handleRemovePending(item.localId)} />

@@ -6,7 +6,7 @@ import { UserRow, SelectToggle, RemoveButton } from './UserRow';
 import { ChatAvatar } from './ChatAvatar';
 import { useLiveKit } from '@/features/livekit';
 import { useOfficeSpaceLayout } from '@/features/office/context/SpaceLayoutContext';
-import { useSocket } from '@/context';
+import { useSocket, useToast } from '@/context';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { Tooltip } from '@features/messages/components/MessageHeader';
 
@@ -49,14 +49,41 @@ export function MessageProfile({
   onBack,
   currentUserId,
 }: MessageProfileProps) {
+  const roomName = "Office"
   const [activeTab, setActiveTab] = useState<'attachments' | 'links'>('attachments');
   const [showMembers, setShowMembers] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const { connect, isConnectedRoom, locateOfficeUser } = useLiveKit("Office");
+  const { connect, locateOfficeUser } = useLiveKit(roomName);
   const { positionedPlanes, loading: spaceLayoutLoading } = useOfficeSpaceLayout();
-  const { roomPlayers } = useSocket();
+  const { roomPlayers, setRoomPlayers, socket, fetchRoomPlayers } = useSocket();
+  const { showToast } = useToast();
+
+  const handleDownloadAttachment = async (attachment: Attachment) => {
+    try {
+      const response = await fetch(attachment.url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch attachment: ${response.statusText}`);
+      }
+      const blob = await response.blob();
+
+      const downloadUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = attachment.name;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Failed to download attachment:', error);
+      showToast('error', 'Failed to download attachment');
+    }
+  };
 
   const getDeptSpawnPos = (dpId?: string) => {
     const planes = positionedPlanes as { departmentId?: string; x: number; z: number }[] | undefined;
@@ -71,6 +98,29 @@ export function MessageProfile({
     // return livePlayer?.position ?? getDeptSpawnPos(targetContact.departmentId);
   };
 
+  const [targetPos, setTargetPos] = useState(null);
+  useEffect(() => {
+    setTargetPos(getTargetPos(contact));
+  }, [contact, roomPlayers]);
+
+  useEffect(() => {
+    if (!socket) return ;
+    const handleJoin = async () => {
+      // console.log('[join] roomPlayers updated! ', contact.name);
+      fetchRoomPlayers(roomName);
+    }
+    const handleLeave = (data) => {
+      // console.log('[leave] roomPlayers updated! ', contact.name);
+      setRoomPlayers(prev => prev.filter(p => p.id !== data.id));
+    }
+    socket.on('room-joined-messages', handleJoin);
+    socket.on('room-left-messages', handleLeave);
+
+    return () => {
+      socket.off('room-joined-messages', handleJoin);
+      socket.off('room-left-messages', handleLeave);
+    }
+  }, [socket, contact])
 
   // console.log('debugging group messages: ', groupMessages);
   useEffect(() => {
@@ -146,8 +196,6 @@ export function MessageProfile({
     setShowInvite(false);
     setInviteSearch('');
   };
-
-  const targetPos = getTargetPos(contact);
 
   // only group creator can add/remove participants
   const isGroupCreator = contact.isGroup && !!currentUserId && contact.creatorId === currentUserId;
@@ -419,7 +467,8 @@ export function MessageProfile({
                   attachments.map((attachment) => (
                     <div
                       key={attachment.id}
-                      className="flex items-center justify-between gap-3 bg-background-1 border border-border rounded-xl px-4 py-2.5"
+                      onClick={() => handleDownloadAttachment(attachment)}
+                      className="flex items-center justify-between gap-3 bg-background-1 border border-border rounded-xl px-4 py-2.5 cursor-pointer hover:bg-background-2 transition-colors"
                     >
                       <div className="flex items-center gap-4 min-w-0">
                         {attachment.kind === 'pdf' ? (
