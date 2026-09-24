@@ -139,14 +139,13 @@ The database schema consists of entities supporting users, meetings, tasks, mess
 
 
 ## Modules 
-*Each major module is worth 2 points. Each minor module is worth 2 points.*
+*Each major module is worth 2 points. Each minor module is worth 1 points.*
 
-### General Modules 
+### General Modules - 10 points
 | Module | Modules | Team | Justification | Implementation |
 | --- | --- | --- | --- | --- |
 | Major | *Framework for Frontend and Backend - React, Vite, Node.js, Express* | All | Provides a consistent and scalable foundation for developing the client-side interface and server-side API. | React and Vite are used for the frontend application, while Node.js and Express are used to implement the backend REST API. |
 | Major | *Real-time Features - Socket.IO, LiveKit* | All | Real-time communication is required across the virtual 3D office, meetings, messaging, and dashboard. | *Socket.IO*: Real-time updates for task changes, meeting scheduling, messages, dashboard data, and virtual 3D office. *LiveKit*: Real-time voice and video communication for the virtual office and meetings. |
-| Major | *Public API* | All | Provides a structured interface for the frontend and external clients to interact with the application's backend and database through RESTful HTTP endpoints. | Implemented using Node.js and Express, with RESTful endpoints exposed under `/api`. The API provides endpoints for users, authentication, roles, departments, spaces, tasks, meetings, recordings, messages, and activities. `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` methods are used for CRUD operations. |
 | Major | *Advanced Permissions* | Lyara | Provides role-based access control with different permissions and views for administrators and regular users. | Implemented role-based access control with admin and user roles. Admins can view organisation-wide activity logs and manage users, while regular users can access features such as creating tasks, scheduling meetings, and using chat. Protected routes enforce access based on the user's assigned role. |
 | Minor | *ORM* | All | Prisma ORM is used to interact with the PostgreSQL database, providing a type-safe and efficient way to manage data models and queries. | Prisma is integrated into the backend, allowing for easy database schema management and query execution. |
 | Minor | *Progressive Web App (PWA)* | Natalie | Enables an installable application with offline support. | Integrated `vite-plugin-pwa` into the Vite configuration and enabled automatic service-worker updates using `registerType: 'autoUpdate'`.| 
@@ -156,11 +155,11 @@ The database schema consists of entities supporting users, meetings, tasks, mess
 
 --- 
 
-### Feature Modules - 10 points 
-*Each module is worth 1 point.*
+### Feature Modules - 12 points 
+*Each major module is worth 2 points. Each minor module is worth 1 points.*
+
 | Module| Modules | Team | Justification | Implementation |
 | --- | --- | --- | --- | --- |
-| Major | *Standard User Management* | Lyara | Provides secure authentication and allows users to manage their personal profiles and account information. | Implemented user authentication with JWT. Users can update their profile information, upload avatars with a default avatar fallback, and view their profile information. Socket.IO provides real-time online presence. |
 | Major | *User Interaction (Chat, Profile)* | Yee Joo, Hoi Ling, Lyara | Provides communication and user identity features that allow users to interact and collaborate within the platform. | Chat: Socket.IO provides real-time message delivery, while conversation and message data are persisted in PostgreSQL using Prisma. Profile: User profiles are stored and managed through the backend, supporting personal information. |
 | Major | *Advanced 3D feature* | Hoi Ling | Provides an immersive 3D virtual office environment with real-time collaboration and communication features. | Implemented a 3D office scene using Three.js and React Three Fiber, allowing users to navigate the space, interact with objects, and communicate with others in real-time. Socket.IO synchronizes user presence and positions, while LiveKit provides proximity-based voice communication. |
 | Major | *Advanced Analytic Dashboard* | Lyara | Provides organisation-wide insights into user activity, attendance, and space utilisation through interactive data visualisations and activity analytics. | Implemented an admin analytics dashboard with graphs for user attendance and space usage, as well as activity logs covering user activity, meetings, tasks, and user entry and exit events. Administrators can filter activity logs by time range and export the filtered activity data for further analysis. |
@@ -174,12 +173,13 @@ The database schema consists of entities supporting users, meetings, tasks, mess
 
 ---- 
 
-### Custom Major Modules - 2 points
-
+### Custom Major Modules - 2 points --- TO BE UPDATED ---
 
 | No | Modules | Team | Why Chosen | Key Challenges | How it adds value | Why deserve 2 points | 
 | --- | --- | --- | --- | --- | --- | --- |
 | 1. | *Advanced Meeting System* | Natalie | Meetings are a core part of WorkFrom's virtual workspace. | Integrates LiveKit video/audio, Egress recording, Socket.IO chat, attendance tracking, Faster-Whisper transcription, and Gemini summarisation. | Enables real-time collaboration while preserving and transforming meetings into useful transcripts and summaries. | Combines multiple complex real-time, media-processing, speech-to-text, and AI components into an end-to-end meeting workflow, making it substantially more complex than a basic CRUD feature. | 
+| 2. | *Custom User Management* | Lyara | Provides secure authentication and allows users to manage their personal profiles and account information. | Implemented user authentication with JWT. Users can update their profile information, upload avatars with a default avatar fallback, and view their profile information. Socket.IO provides real-time online presence. |
+
 
 --- 
 
@@ -190,7 +190,7 @@ The database schema consists of entities supporting users, meetings, tasks, mess
 | --- | --- | --- | --- | --- | --- | --- |
 | 1. | *Task Management* | Yee Joo | Provides a structured way for users to assign and manage work within the virtual workspace. | Supports task assignment, priority levels, due dates, status tracking, and validation across the frontend and backend. | Helps teams organise responsibilities, monitor progress, and keep track of deadlines. | It provides straightforward task management capabilities designed for ease of use. | 
 
-#### Total Points: 29 points
+#### Total Points: 27 points
 
 ---- 
 
@@ -246,6 +246,10 @@ dev
 - **[Flaticon](https://www.flaticon.com/)** - Magnific
 - **[mont gomery](https://www.figma.com/@designproduct?fuid=1180451303293992827)** - [Stratis UI Icons](https://www.figma.com/community/file/1177180791780461401/stratis-ui-icons-1000-free-figma-icons?q_id=4bb3bea7-7efd-40ec-82e3-9fb5fb21e6b7&fuid=1180451303293992827)
 - **[Adobe Firefly](https://firefly.adobe.com/)** - AI-generated visual asset (WorkFrom Landing Page Illustration)
+
+## AI usage
+
+AI was used in this project as a tool to aid learning, debugging, drafting documentations & support certain aspects of its development and functionality. All code was reviewed, understood, written and adapted manually.
 
 ## References 
 - [Real-time communication with Socket.io](https://videosdk.live/developer-hub/socketio/expressjs-socketio)
