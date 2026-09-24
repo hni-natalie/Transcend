@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ButtonVoiceRoom } from '@/features/livekit/components/ButtonVoiceRoom';
-import { EmptyCard } from '@shared';
+import { EmptyCard, IconCamera, IconChat, IconChatRound, IconMedia, IconRecording } from '@shared';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import type { Meeting } from '@/features/meetings/meeting.types';
 
@@ -10,6 +10,7 @@ import {
   IconUsers,
   IconPin,
 } from '@shared';
+import { Tooltip } from '@/features/messages/components';
 
 
 type Props = {
@@ -130,11 +131,12 @@ export const MeetingColumn = ({
               </button>
 
               {/* Actions */}
-              <div>
+              <div className="flex gap-2 flex-wrap">
               {action === 'join' ? (
-                meeting.status === "started" ? (
+                <>
+                {meeting.status === "started" ? (
                   <ButtonVoiceRoom
-                    joinText={isHost ? "Start Meeting" : "Join Meeting"}
+                    joinText={isHost ? "Start Meeting" : "Join"}
                     roomName={meeting.id}
                     meetingTitle={meeting.title}
                     meetId={meeting.id}
@@ -155,31 +157,53 @@ export const MeetingColumn = ({
                     className="btn-header"
                   />
                 ) : (
+                <div className="flex gap-2 flex-wrap">
                   <button
                     disabled
-                    className="btn-gray"
+                    className="btn-gray cursor-not-allowed"
                   >
                     Waiting for host
                   </button>
-                )
-              ) : action === 'transcript' ? (
-                <div className="flex gap-2">
+                </div>
+                )}
+                <Tooltip text='Recording'>
                   <button
                       onClick={() => onViewRecording?.(meeting.id)}
-                      className='btn-orange'
+                      className='btn-orange rounded-full'
                   >
-                      Recordings
+                    <IconMedia className='w-5 h-5'/>
                   </button>
-
+                </Tooltip>
+                <Tooltip text='Chat'>
                   <button
                       onClick={() => onViewChat?.(meeting.id)}
-                      className='btn-header'
+                      className='btn-header rounded-full'
                   >
-                      Chat
+                    <IconChatRound className='w-5 h-5'/>
                   </button>
-              </div>
+                </Tooltip>
+                </>
+              ) : action === 'transcript' ? (
+                <>
+                  <Tooltip text='Recording'>
+                    <button
+                        onClick={() => onViewRecording?.(meeting.id)}
+                        className='btn-orange rounded-full'
+                    >
+                      <IconMedia className='w-5 h-5'/>
+                    </button>
+                  </Tooltip>
+                  <Tooltip text='Chat'>
+                    <button
+                        onClick={() => onViewChat?.(meeting.id)}
+                        className='btn-header rounded-full'
+                    >
+                      <IconChatRound className='w-5 h-5'/>
+                    </button>
+                  </Tooltip>
+              </>
               ) : (
-                <div className="flex gap-2 flex-wrap">
+                <>
                   <ButtonVoiceRoom 
                     className='btn-header' 
                     joinText='Start Meeting' 
@@ -191,12 +215,12 @@ export const MeetingColumn = ({
                     isHost={true}
                   />
 
-                <button 
-                  onClick={() => onEdit?.(meeting.id)}
-                  className="btn-header"
-                >
-                  Edit
-                </button>
+                  <button 
+                    onClick={() => onEdit?.(meeting.id)}
+                    className="btn-gray"
+                  >
+                    Edit
+                  </button>
 
                   <button
                     onClick={() => onDelete?.(meeting.id)}
@@ -204,7 +228,7 @@ export const MeetingColumn = ({
                   >
                     Delete
                   </button>
-                </div>
+                </>
               )}
               </div>
             </div>
