@@ -248,12 +248,12 @@ export function MessageProfile({
   const memberCount = contact.memberCount ?? contact.members?.length ?? 0;
 
   return (
-    <aside className="w-full md:w-[320px] shrink-0 p-6 pt-10 flex flex-col min-h-0 overflow-y-auto rounded-3xl">
+    <aside className="w-full lg:w-[320px] shrink-0 p-6 pt-10 flex flex-col min-h-0 overflow-y-auto rounded-3xl">
       {onBack && (
         <button
           aria-label="Back"
           onClick={onBack}
-          className="md:hidden flex items-center gap-1.5 text-foreground-3 hover:text-foreground mb-4 -mt-2 cursor-pointer"
+          className="lg:hidden flex items-center gap-1.5 text-foreground-3 hover:text-foreground mb-4 -mt-2 cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -441,7 +441,7 @@ export function MessageProfile({
           <div className="flex bg-background-2 rounded-xl mb-4">
             <button
               onClick={() => setActiveTab('attachments')}
-              className={`flex-1 py-2 text-base font-medium transition-colors cursor-pointer rounded-lg ${
+              className={`flex-1 p-2 text-base font-medium transition-colors cursor-pointer rounded-lg ${
                 activeTab === 'attachments' ? 'bg-accent-lime-bg text-accent-lime' : 'text-foreground-3 hover:text-foreground'
               }`}
             >
