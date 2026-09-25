@@ -10,40 +10,25 @@ const normalizeDateTime = (date) => {
 };
 
 const meetingService = {
-    // Search for meeting that created and invited by the specific user
-    async getAllMeetings(userId) {
-        const meetings = await prisma.meeting.findMany({
-            include: {
-				space: {
-                    select: { spaceName: true }
-                },
-                _count: {
-                    select: {
-                        participants: true
+    async getMeetingById(meetingId, userId) {
+        return prisma.meeting.findFirst({
+            where: {
+                meetId: meetingId,
+                OR: [
+                    {
+                        createdByUserId: userId
+                    },
+                    {
+                        participants: {
+                            some: {
+                                userId
+                            }
+                        }
                     }
-                }
-            }
-        });
-
-        // fetch all pins for this user once
-        const pins = await prisma.meetingPin.findMany({
-            where: { userId },
-            select: { meetId: true }
-        });
-
-        const pinnedSet = new Set(pins.map(p => p.meetId));
-
-        return meetings.map(meeting => ({
-            ...meeting,
-            pinned: pinnedSet.has(meeting.meetId)
-        }));
-    },
-
-    async getMeetingById(meetingId) {
-        return prisma.meeting.findUnique({
-            where: { meetId: meetingId },
+                ]
+            },
             include: {
-				space: {
+                space: {
                     select: { spaceName: true }
                 },
                 participants: {
@@ -55,7 +40,7 @@ const meetingService = {
                             select: {
                                 userName: true,
                                 userEmail: true,
-								deletedAt: true
+                                deletedAt: true
                             }
                         }
                     }
@@ -188,17 +173,6 @@ const meetingService = {
 			participantIds
         } = meetingData;
 
-        // validateRequiredStrings({
-        //     workspaceId,
-        //     spaceId,
-        //     userId,
-        //     meetTitle
-        // });
-
-        // if (containsSuspiciousMarkup(meetTitle) || containsSuspiciousMarkup(meetDesc)) {
-        //     throw new Error('Input contains suspicious markup');
-        // }
-
         validateMeetingRules({ workspaceId, spaceId, userId });
 
         const normalizedStart = normalizeDateTime(meetStart);
@@ -209,14 +183,6 @@ const meetingService = {
             meetStart: normalizedStart,
             meetEnd: normalizedEnd
         });
-
-        // Validate creator has no meeting conflict
-        // await validateParticipantConflicts({
-        //     userId,
-        //     participantIds: [userId, ...participantIds],
-        //     meetStart: normalizedStart,
-        //     meetEnd: normalizedEnd
-        // });
 
 		// Validate participant conflicts
 		const allParticipantIds = [ ...new Set([userId, ...(participantIds || [])]) ];
@@ -294,15 +260,6 @@ const meetingService = {
             meetEnd
         } = data;
 
-        // validateRequiredStrings({ meetTitle });
-
-        // if (containsSuspiciousMarkup(meetTitle) || containsSuspiciousMarkup(meetDesc)) {
-        //     throw new Error('Input contains suspicious markup');
-        // }
-
-        // const normalizedStart = normalizeDateTime(meetStart);
-        // const normalizedEnd = normalizeDateTime(meetEnd);
-
         const meeting = await prisma.meeting.findUnique({
             where: { meetId },
             include: {
@@ -311,12 +268,6 @@ const meetingService = {
                 }
             }
         });
-
-        // if (!meeting) 
-        //     throw new Error("Meeting not found");
-
-        // if (meeting.createdByUserId !== userId)
-        //     throw new Error('Unauthorized to update this meeting');
 
         validateMeetingExists(meeting);
         validateMeetingAuthorization(meeting, userId);
@@ -357,14 +308,6 @@ const meetingService = {
         const meeting = await prisma.meeting.findUnique({
             where: { meetId }
         });
-
-        // if (!meeting) {
-        //     throw new Error("Meeting not found");
-        // }
-
-        // if (meeting.createdByUserId !== userId) {
-        //     throw new Error("Unauthorized to update this meeting");
-        // }
 
         validateMeetingExists(meeting);
         validateMeetingAuthorization(meeting, userId);
@@ -429,11 +372,6 @@ const meetingService = {
 			where: { meetId },
 			include: { space: { select: { spaceName: true } } }
 		});
-		// if (!meeting) 
-		// 	throw new Error('Meeting not found');
-
-		// if (meeting.createdByUserId !== userId) 
-		// 	throw new Error('Unauthorized to delete this meeting');
 
         validateMeetingExists(meeting);
         validateMeetingAuthorization(meeting, userId);
@@ -456,7 +394,6 @@ const meetingService = {
             where: { meetId }
         });
 
-        // if (!meeting) { throw new Error('Meeting not found'); }
 		validateMeetingExists(meeting);
 
         // Check if already pinned by THIS user
@@ -495,13 +432,6 @@ const meetingService = {
             where: { meetId }
         });
 
-        // if (!meeting) {
-        //     throw new Error('Meeting not found');
-        // }
-
-        // if (meeting.createdByUserId !== userId) {
-        //     throw new Error('Unauthorized to start this meeting');
-        // }
 		validateMeetingExists(meeting);
         validateMeetingAuthorization(meeting, userId);
 
@@ -515,14 +445,6 @@ const meetingService = {
         const meeting = await prisma.meeting.findUnique({
             where: { meetId }
         });
-        
-        // if (!meeting) {
-        //     throw new Error('Meeting not found');
-        // }
-
-        // if (meeting.createdByUserId !== userId) {
-        //     throw new Error('Unauthorized to end this meeting');
-        // }
 
 		validateMeetingExists(meeting);
         validateMeetingAuthorization(meeting, userId);
@@ -533,7 +455,6 @@ const meetingService = {
         });
     },
 
-    
 }
 
 module.exports = meetingService;

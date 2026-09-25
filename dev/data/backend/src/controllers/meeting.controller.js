@@ -12,34 +12,35 @@ const emitMeetingUpdated = (participantIds, meetId) => {
 };
 
 const meetingController = {
-    async getAllMeetings(req, res) {
-        try {
-            const userId = req.user.userId;
-            
-            const meetings = await meetingService.getAllMeetings(userId);
-            return res.status(200).json({ success: true, data: meetings });
-        } catch (error) {
-            console.error('Error fetching meetings:', error);
-            return res.status(500).json({ success: false, message: 'Failed to fetch meetings' });
-        }
-    },
-
     async getMeetingById(req, res) {
         try {
             const { meetingId } = req.params;
+            const userId = req.user.userId;
 
-            if (!meetingId) 
-                return res.status(400).json({ success: false, message: 'Meeting ID is required' });
+            if (!meetingId)
+                return res.status(400).json({
+                    success: false,
+                    message: 'Meeting ID is required'
+                });
 
-            const meeting = await meetingService.getMeetingById(meetingId);
+            const meeting = await meetingService.getMeetingById(meetingId, userId);
 
             if (!meeting)
-                return res.status(404).json({ success: false, message: 'Meeting not found' });
+                return res.status(404).json({
+                    success: false,
+                    message: 'Meeting not found'
+                });
 
-            return res.status(200).json({ success: true, data: meeting });
+            return res.status(200).json({
+                success: true,
+                data: meeting
+            });
         } catch (error) {
-			console.error('Error fetching meeting:', error);
-            return res.status(500).json({ success: false, message: 'Failed to fetch meetings' });
+            console.error('Error fetching meeting:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to fetch meeting'
+            });
         }
     },
 

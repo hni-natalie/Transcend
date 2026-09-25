@@ -3,9 +3,7 @@ const {
     isNonEmptyString,
     isValidId,
     hasValue,
-    containsSuspiciousMarkup,
     validateText,
-    validateOption,
     validateId,
     validateDate,
     TITLE_MAX_LENGTH,
@@ -240,6 +238,27 @@ function validateMeetingAuthorization(meeting, userId) {
         throw new Error('Unauthorized to perform this action');
 }
 
+async function validateMeetingParticipant(meetId, userId) {
+    const meeting = await prisma.meeting.findFirst({
+        where: {
+            meetId,
+            OR: [
+                { createdByUserId: userId },
+                {
+                    participants: {
+                        some: { userId }
+                    }
+                }
+            ]
+        }
+    });
+
+    validateMeetingExists(meeting);
+
+    return meeting;
+}
+
+
 module.exports = {
     VALID_MEETING_STATUS,
     VALID_MEETING_ROLE,
@@ -254,5 +273,6 @@ module.exports = {
 
     validateCreateMeeting,
     validateUpdateMeeting,
-    validateSyncParticipants
+    validateSyncParticipants,
+    validateMeetingParticipant
 };

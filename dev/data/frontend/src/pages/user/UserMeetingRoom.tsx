@@ -190,28 +190,16 @@ export function UserMeetingRoom({
 
     const checkRecording = async () => {
       try {
-        const response =
-          await meetingApi.getRecordingStatus(meetId);
-
-        console.log(
-          'Recording status response:',
-          response
-        );
+        const response = await meetingApi.getRecordingStatus(meetId);
+        console.log('Recording status response:', response);
 
         const isRecording =
           response.status?.status === 'active' ||
           response.status?.status === 'starting';
 
-        setRecordingStatus(
-          isRecording
-            ? '🔴 Recording started'
-            : ''
-        );
+        setRecordingStatus( isRecording ? '🔴 Recording started' : '' );
       } catch (error) {
-        console.error(
-          'Failed to get recording status:',
-          error
-        );
+        console.error('Failed to get recording status:', error);
       }
     };
 
@@ -245,10 +233,7 @@ export function UserMeetingRoom({
       navigate(leaveTo, { replace: true });
 
     } catch (error) {
-      console.error(
-        'Failed to leave meeting:',
-        error
-      );
+      console.error('Failed to leave meeting:', error);
 
       sessionStorage.removeItem('activeMeeting');
 

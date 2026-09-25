@@ -10,11 +10,6 @@ export const meetingApi = {
     // =====================
     // CORE MEETINGS
     // =====================
-
-    getAllMeetings() {
-    	return apiClient.get(`${base}`);
-    },
-
     getMeetingById(meetId: string) {
     	return apiClient.get<{ success: boolean; data: MeetingDetails }>(`${base}/${meetId}`);
     },

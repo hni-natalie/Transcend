@@ -16,7 +16,7 @@ router.get('/health', async (req, res) => {
     } catch (err) {
     res.status(500).json({ 
         status: 'unhealthy', 
-        database: 'disconnected', 
+        database: 'disconnected',
         error: err.message 
     });
   }
