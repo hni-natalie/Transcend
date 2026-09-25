@@ -5,7 +5,6 @@ const meetingChatController = require('../controllers/meetingChat.controller');
 
 router.use(authMiddleware);
 
-router.get('/', meetingController.getAllMeetings);
 router.get('/user/:userId', meetingController.getMeetingByUserId);
 router.get('/participant/:userId', meetingController.getMeetingByParticipantId);
 router.get('/pin', meetingController.getAllMeetingPin);
@@ -14,7 +13,6 @@ router.get('/:meetingId', meetingController.getMeetingById);
 router.patch('/pin/:meetId', meetingController.toggleMeetingPin);
 
 router.post('/', meetingController.createMeeting);
-
 router.patch('/', meetingController.updateMeeting);
 router.patch('/participants', meetingController.syncParticipants);
 

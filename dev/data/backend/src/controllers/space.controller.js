@@ -47,8 +47,6 @@ const spaceController = {
                 userCapacity
             } = req.body;
 
-            const userId = req.user.userId;
-
             const space = await spaceService.createSpace({
                 spaceName,
                 workspaceId,
