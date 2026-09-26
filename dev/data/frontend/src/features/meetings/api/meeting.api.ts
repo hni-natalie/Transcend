@@ -69,6 +69,14 @@ export const meetingApi = {
       	return apiClient.patch(`${base}/participants`, data);
     },
 
+    recordParticipantJoin(meetId: string) {
+      return apiClient.patch(`${base}/${meetId}/attendance/join`);
+    },
+
+    recordParticipantLeave(meetId: string) {
+      return apiClient.patch(`${base}/${meetId}/attendance/leave`);
+    },
+
     // =====================
     // FEATURES
     // =====================

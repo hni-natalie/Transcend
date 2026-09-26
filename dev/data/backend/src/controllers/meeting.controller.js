@@ -224,6 +224,44 @@ const meetingController = {
         }
     },
 
+    async recordParticipantJoin(req, res) {
+        try {
+            const { meetId } = req.params;
+            if (!meetId)
+                return res.status(400).json({ success: false, message: 'Meeting ID is required' });
+
+            const participant = await meetingService.recordParticipantJoin(meetId, req.user.userId);
+            emitMeetingUpdated(await meetingService.getMeetingAudienceIds(meetId), meetId);
+
+            return res.status(200).json({ success: true, data: participant });
+        } catch (error) {
+            if (error.message === 'Meeting not found')
+                return res.status(404).json({ success: false, message: error.message });
+
+            console.error('Error recording participant join:', error);
+            return res.status(500).json({ success: false, message: 'Failed to record participant join' });
+        }
+    },
+
+    async recordParticipantLeave(req, res) {
+        try {
+            const { meetId } = req.params;
+            if (!meetId)
+                return res.status(400).json({ success: false, message: 'Meeting ID is required' });
+
+            const participant = await meetingService.recordParticipantLeave(meetId, req.user.userId);
+            emitMeetingUpdated(await meetingService.getMeetingAudienceIds(meetId), meetId);
+
+            return res.status(200).json({ success: true, data: participant });
+        } catch (error) {
+            if (error.message === 'Meeting not found')
+                return res.status(404).json({ success: false, message: error.message });
+
+            console.error('Error recording participant leave:', error);
+            return res.status(500).json({ success: false, message: 'Failed to record participant leave' });
+        }
+    },
+
     async deleteMeeting(req, res) {
         try {
             const { meetId } = req.params;

@@ -159,7 +159,10 @@ export const ScheduleMeetingModal = ({
                 prevById.get(u.userId) ?? {
                   ...u,
                   role: "participant" as const,
-                  attendance: "pending" as const,
+                  attendance: {
+                    status: "pending" as const,
+                    updated: false
+                  }
                 }
               );
               // add if users non existent in list (?)
@@ -205,6 +208,7 @@ export const ScheduleMeetingModal = ({
 
             setStart(toDateTimeLocal(meeting.meetStart));
             setEnd(toDateTimeLocal(meeting.meetEnd));
+            const isPastMeeting = new Date(meeting.meetEnd).getTime() <= Date.now();
 
             // update with Users existing role status
             setUsers(prev => {
@@ -216,7 +220,10 @@ export const ScheduleMeetingModal = ({
                         userName: p.user.userName,
                         userEmail: p.user.userEmail,
                         role: p.role,
-                        attendance: p.attendance,
+                        attendance: {
+                            status: isPastMeeting && p.role !== 'organiser' ? 'pending' : p.attendance,
+                            updated: false
+                        },
 						deletedAt: p.user.deletedAt,
                     });
                 });
@@ -252,8 +259,11 @@ export const ScheduleMeetingModal = ({
     ) => {
         setUsers(prev =>
             prev.map(user =>
-                user.userId === userId
-                    ? { ...user, attendance }
+                user.userId === userId ?
+                    { 
+                        ...user,
+                        attendance: { status: attendance, updated: true}
+                    }
                     : user
             )
         );
@@ -353,14 +363,20 @@ export const ScheduleMeetingModal = ({
                 onCreated?.();
 
             } else if (mode === "edit" && meeting) {
+                const now = Date.now();
+                const isReschedulingPastMeeting =
+                    new Date(meeting.meetEnd).getTime() <= now &&
+                    new Date(start).getTime() > now;
+
+                const participantsForSubmit = selectedUsers.map(user => ({
+                    userId: user.userId,
+                    role: user.role,
+                    attendance: isReschedulingPastMeeting && !user.attendance.updated ? 'pending' : user.attendance.status,
+                }));
 
                 await meetingApi.syncParticipants({
                     meetId: meeting.meetId,
-                    participants: selectedUsers.map(user => ({
-                        userId: user.userId,
-                        role: user.role,
-                        attendance: user.attendance,
-                    })),
+                    participants: participantsForSubmit,
                     meetStart: new Date(start).toISOString(),
                     meetEnd: new Date(end).toISOString()
                 });
