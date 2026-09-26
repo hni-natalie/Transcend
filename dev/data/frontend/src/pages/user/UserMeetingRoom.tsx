@@ -214,6 +214,10 @@ export function UserMeetingRoom({
       /*
        * Host ends the meeting first
        */
+
+      if (roomName) {
+        await meetingApi.recordParticipantLeave(roomName);
+      }
       if (isHost) {
         await meetingApi.endMeeting(roomName);
         console.log('Meeting ended');

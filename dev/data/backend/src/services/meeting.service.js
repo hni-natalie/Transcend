@@ -1,7 +1,9 @@
 const prisma = require('../../prisma/client');
 const { MeetingRole, AttendanceStatus } = require('@prisma/client');
-const { validateMeetingExists, validateMeetingAuthorization, validateMeetingRules, validateMeetingTime, validateParticipantConflicts } = require('../validators/meeting.validator');
+const { validateMeetingExists, validateMeetingAuthorization, validateMeetingRules, validateMeetingTime, validateParticipantConflicts, validateMeetingParticipant } = require('../validators/meeting.validator');
 const { logMeetingActivity } = require('../utils/activity');
+
+const ATTENDANCE_MIN_DURATION_MS = 5 * 60 * 1000;
 
 const normalizeDateTime = (date) => {
     if (!date) return date;
@@ -36,6 +38,8 @@ const meetingService = {
                         userId: true,
                         role: true,
                         attendance: true,
+                        meetingJoinAt: true,
+                        meetingLeaveAt: true,
                         user: {
                             select: {
                                 userName: true,
@@ -274,6 +278,7 @@ const meetingService = {
 
 		const normalizedStart = normalizeDateTime(meetStart);
         const normalizedEnd = normalizeDateTime(meetEnd);
+        const resetAttendanceTimes = meeting.meetStart < new Date();
 
         // Validate time if changed
         validateMeetingTime({
@@ -282,15 +287,27 @@ const meetingService = {
         });
 
         // Update meeting
-		const updatedMeeting = await prisma.meeting.update({
-        where: { meetId },
-        data: {
-            meetTitle,
-            meetDesc,
-            meetStart: normalizedStart,
-            meetEnd: normalizedEnd
-        }
-		});
+        const updatedMeeting = await prisma.$transaction(async (tx) => {
+            const updateMeeting = await prisma.meeting.update({
+            where: { meetId },
+            data: {
+                meetTitle,
+                meetDesc,
+                meetStart: normalizedStart,
+                meetEnd: normalizedEnd
+            }
+            });
+            if (resetAttendanceTimes) {
+                await tx.meetingParticipant.updateMany({
+                where: { meetId },
+                data: {
+                    meetingJoinAt: null,
+                    meetingLeaveAt: null,
+                },
+                });
+            }
+            return updateMeeting;
+        })
 
 		await logMeetingActivity({
 			workspaceId: meeting.workspaceId,
@@ -340,30 +357,99 @@ const meetingService = {
 
         return prisma.$transaction(async (tx) => {
 
-            // Remove all current participants except organiser
+            const participantIds = participants.map(({ userId: participantId }) => participantId);
+
+            // Only remove users no longer invited. Deleting and recreating every
+            // participant would discard their latest attendance session.
             await tx.meetingParticipant.deleteMany({
                 where: {
                     meetId,
                     userId: {
-                        not: meeting.createdByUserId
+                        notIn: participantIds
                     }
                 }
             });
 
-            // Add participants except creator
-            return tx.meetingParticipant.createMany({
-                data: participants
-                    .filter(
-                        p => p.userId !== meeting.createdByUserId
-                    )
-                    .map(p => ({
+            await Promise.all(participants.map((participant) => tx.meetingParticipant.upsert({
+                where: {
+                    meetId_userId: {
                         meetId,
-                        userId: p.userId,
-                        role: p.role ?? MeetingRole.participant,
-                        attendance: p.attendance ?? AttendanceStatus.pending
-                    }))
-            });
+                        userId: participant.userId
+                    }
+                },
+                create: {
+                    meetId,
+                    userId: participant.userId,
+                    role: participant.role ?? MeetingRole.participant,
+                    attendance: participant.attendance ?? AttendanceStatus.pending
+                },
+                // Manual participant sync may change role/attendance, but must
+                // preserve latest join/leave timestamps for retained users.
+                update: {
+                    role: participant.role ?? MeetingRole.participant,
+                    attendance: participant.attendance ?? AttendanceStatus.pending
+                }
+            })));
+
+            return tx.meetingParticipant.findMany({ where: { meetId } });
         });
+    },
+
+    async recordParticipantJoin(meetId, userId) {
+        await validateMeetingParticipant(meetId, userId);
+
+        return prisma.meetingParticipant.update({
+            where: { meetId_userId: { meetId, userId } },
+            data: {
+                meetingJoinAt: new Date(),
+                meetingLeaveAt: null
+            }
+        });
+    },
+
+    async recordParticipantLeave(meetId, userId) {
+        await validateMeetingParticipant(meetId, userId);
+
+        const participant = await prisma.meetingParticipant.findUnique({
+            where: { meetId_userId: { meetId, userId } }
+        });
+
+        if (!participant?.meetingJoinAt) return participant;
+
+        const meetingLeaveAt = new Date();
+        const attendedLongEnough = meetingLeaveAt.getTime() - participant.meetingJoinAt.getTime()
+            > ATTENDANCE_MIN_DURATION_MS;
+
+        const isHost = participant.role?.toLowerCase() === 'organiser';
+
+        const updated = await prisma.$transaction(async (tx) => {
+            // Update the current participant
+            const participant = await tx.meetingParticipant.update({
+                where: { meetId_userId: { meetId, userId } },
+                data: {
+                meetingLeaveAt,
+                ...(attendedLongEnough && { attendance: AttendanceStatus.present }),
+                },
+            });
+
+            // If host, mark everyone who never joined as absent
+            if (isHost) {
+                await tx.meetingParticipant.updateMany({
+                where: {
+                    meetId,
+                    meetingJoinAt: null,     // never joined
+                    userId: { not: userId }, // skip self(host)
+                },
+                data: {
+                    attendance: AttendanceStatus.absent,
+                },
+                });
+            }
+
+            return participant;
+        });
+
+        return updated;
     },
 
     // Delete 

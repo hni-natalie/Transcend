@@ -20,6 +20,8 @@ router.delete('/:meetId', meetingController.deleteMeeting);
 
 router.patch('/:meetId/start', meetingController.startMeeting);
 router.patch('/:meetId/end', meetingController.endMeeting);
+router.patch('/:meetId/attendance/join', meetingController.recordParticipantJoin);
+router.patch('/:meetId/attendance/leave', meetingController.recordParticipantLeave);
 
 router.post('/:meetId/chat', meetingChatController.createChatMessage);
 router.get('/:meetId/chat', meetingChatController.getMeetingChat);

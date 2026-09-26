@@ -287,6 +287,8 @@ model MeetingParticipant {
   attendance AttendanceStatus @default(pending)
 
   createdAt DateTime @default(now())
+  meetingJoinAt DateTime?
+  meetingLeaveAt DateTime?
 
   meet Meeting @relation(fields: [meetId], references: [meetId])
   user User    @relation(fields: [userId], references: [userId])
