@@ -7,6 +7,7 @@ export const API_CONFIG = {
       me: '/auth/me',
       google: '/auth/google',
       logout: '/auth/logout',
+      signUp: '/auth/signup',
     },
     lk: '/lk',
     player: '/player',
