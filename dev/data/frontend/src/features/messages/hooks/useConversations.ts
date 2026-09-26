@@ -276,6 +276,58 @@ export const useConversations = () => {
   //     // refetch();
   //   });
   // }, [refetch]);
+  const renameGroupConversation = useCallback(
+    async (conversationId: string, groupName: string) => {
+      const conversation = conversations.find(
+        (c) => c.conversationId === conversationId
+      );
+      if (!conversation) return;
+
+      const prevName = conversation.name;
+
+      // Optimistic update
+      setConversations((previous) =>
+        previous.map((c) =>
+          c.conversationId === conversationId ? { ...c, name: groupName } : c
+        )
+      );
+
+      try {
+        await messagesApi.renameGroup(conversationId, groupName);
+      } catch (error) {
+        console.error('Failed to rename group:', error);
+        showToast('error', 'Failed to rename group');
+        // Revert
+        setConversations((previous) =>
+          previous.map((c) =>
+            c.conversationId === conversationId ? { ...c, name: prevName } : c
+          )
+        );
+      }
+    },
+    [conversations, showToast]
+  );
+
+  const updateGroupAvatar = useCallback(
+    async (conversationId: string, file: File) => {
+      try {
+        const result = await messagesApi.uploadGroupAvatar(conversationId, file);
+        if (result.avatarUrl) {
+          setConversations((previous) =>
+            previous.map((c) =>
+              c.conversationId === conversationId ? { ...c, avatarUrl: result.avatarUrl } : c
+            )
+          );
+        }
+      } catch (error) {
+        console.error('Failed to update group avatar:', error);
+        showToast('error', 'Failed to update group avatar');
+        throw error;
+      }
+    },
+    [showToast]
+  );
+
   const togglePin = useCallback(
     async (conversationId: string) => {
       const conversation = conversations.find(
@@ -389,6 +441,8 @@ export const useConversations = () => {
     addMembersToConversation,
     removeMemberFromConversation,
     removeConversation,
+    renameGroupConversation,
+    updateGroupAvatar,
     existingConversationUserIds,
     groupMessages,
     refetch,

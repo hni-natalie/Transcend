@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { IconFile, IconImage, IconLink, IconMemberAdd, IconMembers, IconMessagePin, IconOffice } from '@shared';
+import { IconCamera, IconFile, IconImage, IconLink, IconMemberAdd, IconMembers, IconMessagePin, IconOffice, IconPencil} from '@shared';
 import type { IconProps } from '@shared';
 import type { Attachment, Link, Profile, InvitableGroup } from '../types';
 import { UserRow, SelectToggle, RemoveButton } from './UserRow';
@@ -22,6 +22,8 @@ interface MessageProfileProps {
   onInviteUsers?: (userIds: string[]) => void;
   onJoinGroup?: (groupId: string) => void;
   onRemoveMember?: (userId: string) => void;
+  onRenameGroup?: (groupName: string) => void;
+  onAvatarChange?: (file: File) => Promise<void>;
   onBack?: () => void;
   currentUserId?: string;
 }
@@ -46,6 +48,8 @@ export function MessageProfile({
   onInviteUsers,
   onJoinGroup,
   onRemoveMember,
+  onRenameGroup,
+  onAvatarChange,
   onBack,
   currentUserId,
 }: MessageProfileProps) {
@@ -55,6 +59,9 @@ export function MessageProfile({
   const [showInvite, setShowInvite] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const { connect, locateOfficeUser } = useLiveKit(roomName);
   const { positionedPlanes, loading: spaceLayoutLoading } = useOfficeSpaceLayout();
   const { roomPlayers, setRoomPlayers, socket, fetchRoomPlayers } = useSocket();
@@ -128,6 +135,8 @@ export function MessageProfile({
     setShowInvite(false);
     setSelectedUsers([]);
     setInviteSearch('');
+    setEditingName(false);
+    setNameInput('');
   }, [contact.id]);
 
   const toggleMembers = () => {
@@ -200,6 +209,19 @@ export function MessageProfile({
   // only group creator can add/remove participants
   const isGroupCreator = contact.isGroup && !!currentUserId && contact.creatorId === currentUserId;
 
+  const handleSaveName = () => {
+    const trimmed = nameInput.trim();
+    if (trimmed && trimmed !== contact.name) {
+      onRenameGroup?.(trimmed);
+    }
+    setEditingName(false);
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSaveName();
+    if (e.key === 'Escape') setEditingName(false);
+  };
+
 //   const actionButtons: ActionButton[] = [
 //     { icon: IconMessagePin, label: isPinned ? 'Unpin' : 'Pin', onClick: onTogglePin, isActive: isPinned },
 //     { icon: IconMemberAdd, label: 'Invite', onClick: toggleInvite, isActive: showInvite },
@@ -264,10 +286,71 @@ export function MessageProfile({
 
       <div className="text-center mb-6 min-h-[190px]">
         <div className="flex justify-center mb-10">
-          <ChatAvatarProxy contact={contact} />
+          <div className="relative group shrink-0">
+            <ChatAvatarProxy contact={contact} />
+            {contact.isGroup && isGroupCreator && onAvatarChange && (
+              <label
+                className="absolute bottom-0 right-0 w-8 h-8 bg-accent-lime rounded-full flex items-center justify-center shadow-md cursor-pointer hover:bg-accent-lime/80 transition-colors"
+                title="Change group avatar"
+              >
+                {avatarUploading ? (
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <IconCamera className="w-5 h-5 text-background-3" />
+                )}
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  disabled={avatarUploading}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      setAvatarUploading(true);
+                      await onAvatarChange(file);
+                    } finally {
+                      setAvatarUploading(false);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+              </label>
+            )}
+          </div>
         </div>
 
-        <p className="text-[17px] text-foreground font-semibold mb-3">{contact.name}</p>
+        <p className="text-[17px] text-foreground font-semibold mb-3 flex items-center justify-center gap-1.5">
+          {contact.isGroup && isGroupCreator && editingName ? (
+            <input
+              autoFocus
+              value={nameInput}
+              maxLength={25}
+              onChange={(e) => setNameInput(e.target.value)}
+              onBlur={handleSaveName}
+              onKeyDown={handleNameKeyDown}
+              className="bg-background-2 border border-accent-lime/40 rounded-lg px-2 py-0.5 text-[15px] text-foreground text-center outline-none focus:border-accent-lime w-[160px]"
+            />
+          ) : (
+            <>
+              <span>{contact.name}</span>
+              {contact.isGroup && isGroupCreator && (
+				<Tooltip text="Edit Group Name">
+					<button
+						aria-label="Rename group"
+						onClick={() => {
+						setNameInput(contact.name);
+						setEditingName(true);
+						}}
+						className="text-foreground-3 hover:text-foreground transition-colors cursor-pointer"
+					>
+						<IconPencil className="w-8 h-8" />
+					</button>
+				</Tooltip>
+              )}
+            </>
+          )}
+        </p>
 
         {contact.isGroup ? (
           <p className="text-base text-foreground-2">{memberCount} members</p>

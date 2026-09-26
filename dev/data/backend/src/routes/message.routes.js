@@ -12,6 +12,7 @@ router.get('/', messageController.getAllConversations);
 router.post('/direct', messageController.createDirectConversation);
 router.post('/group', messageController.createGroupConversation);
 router.post('/:id/avatar', upload.single('avatar'), messageController.uploadGroupAvatar);
+router.patch('/:id/name', messageController.renameGroup);
 router.delete('/:id', messageController.deleteConversation);
 
 // Messages

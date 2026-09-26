@@ -835,6 +835,23 @@ export const IconSearch = ({ className }: IconProps) => (
   </svg>
 );
 
+export const IconPencil = ({ className }: IconProps) => (
+  <svg 
+  	width="9" 
+	height="9" 
+	viewBox="0 0 9 9" 
+	fill="none" 
+	xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M1.25 5.75L3 7.25M1 5.75L5.92974 0.648095C6.46053 0.117303 7.32111 0.117301 7.85191 0.648093C8.3827 1.17888 8.3827 2.03947 7.85191 2.57026L2.75 7.5L0.25 8.25L1 5.75Z"
+      stroke="currentColor"
+      strokeLinecap="round"
+	  strokeLinejoin="round"
+    />
+  </svg>
+);
+
 export const IconCheck = ({ className }: IconProps) => (
   <svg
     className="w-3.5 h-3.5 text-background-1"

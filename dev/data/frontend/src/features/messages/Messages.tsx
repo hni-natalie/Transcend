@@ -39,6 +39,8 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
     addMembersToConversation,
     removeMemberFromConversation,
     removeConversation,
+    renameGroupConversation,
+    updateGroupAvatar,
     existingConversationUserIds,
     groupMessages,
   } = useConversations();
@@ -304,6 +306,16 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
     removeMemberFromConversation(selectedConversation.id, userId);
   };
 
+  const handleRenameGroup = (groupName: string) => {
+    if (!selectedConversation.id) return;
+    renameGroupConversation(selectedConversation.id, groupName);
+  };
+
+  const handleAvatarChange = (file: File) => {
+    if (!selectedConversation.id) return Promise.resolve();
+    return updateGroupAvatar(selectedConversation.id, file);
+  };
+
   const handleRequestDeleteConversation = (conversation: Conversation) => {
     setConversationPendingDeletion(conversation);
   };
@@ -428,6 +440,8 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
               onInviteUsers={handleInviteUsersToGroup}
               onJoinGroup={handleJoinGroup}
               onRemoveMember={handleRemoveMember}
+              onRenameGroup={handleRenameGroup}
+              onAvatarChange={handleAvatarChange}
               isPinned={pinnedConversations.some((conversation) => conversation.conversationId === selectedConversation.id)}
               onTogglePin={() => togglePin(selectedConversation.id)}
               onBack={() => setMobileView('chat')}

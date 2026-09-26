@@ -381,14 +381,12 @@ const messageService = {
 				conversationId,
 				type: 'group',
 				deletedAt: null,
-				participants: {
-					some: { userId }
-				}
+				createdByUserId: userId,
 			}
 		});
 
 		if (!conversation) {
-			throw new Error('Conversation not found or user cannot access this group');
+			throw new Error('Conversation not found or you are not the group creator');
 		}
 
 		const fileExt = file.originalname.split('.').pop();
@@ -404,6 +402,27 @@ const messageService = {
 		});
 
 		return { avatarUrl: publicUrl, conversation: updated };
+	},
+
+	async updateGroupName(conversationId, userId, groupName) {
+		const conversation = await prisma.conversation.findFirst({
+			where: {
+				conversationId,
+				type: 'group',
+				deletedAt: null,
+				createdByUserId: userId,
+			},
+		});
+
+		if (!conversation) {
+			throw new Error('Conversation not found or you are not the group creator');
+		}
+
+		return prisma.conversation.update({
+			where: { conversationId },
+			data: { groupName },
+			select: conversationResponseSelect(userId),
+		});
 	},
 
 	async deleteConversation(conversationId, userId) {
