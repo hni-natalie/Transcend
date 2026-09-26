@@ -10,6 +10,7 @@ import { useAuth } from '@/features/auth';
 import { livekitService } from '@/features/livekit/services/livekitService';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { useNavigate } from "react-router-dom";
+import { meetingApi } from '@/features/meetings';
 
 interface IncomingCallData {
   caller:string;
@@ -314,6 +315,15 @@ export function SocketProvider ({ children }: { children: ReactNode }) {
     }
 
     return () => {
+      try {
+        const raw = sessionStorage.getItem("activeMeeting");
+        let roomName = raw ? JSON.parse(raw).roomName : undefined;
+        if (roomName) {
+          meetingApi.recordParticipantLeave(roomName);
+          console.log("Participant left meeting!");
+        }
+      } catch {
+      }
       sessionStorage.removeItem('activeMeeting');
       sessionStorage.removeItem('activeMsgMeeting');
       if (socket) {
