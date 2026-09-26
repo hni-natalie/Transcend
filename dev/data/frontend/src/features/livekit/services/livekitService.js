@@ -10,6 +10,7 @@
 import { Room, RoomEvent, Track, isBrowserSupported } from 'livekit-client';
 import { AudioManager } from './audioManager';
 import * as THREE from 'three';
+import { meetingApi } from '@/features/meetings';
 
 /*
 for reference:
@@ -303,6 +304,13 @@ class LiveKitService {
       if (this._room && this._room.state === 'connected') {
         console.warn('Existing room found! Disconnecting before start new connection');
         await this._room.disconnect();
+
+        const raw = sessionStorage.getItem("activeMeeting");
+        let roomName = raw ? JSON.parse(raw).roomName : undefined;
+        if (roomName) {
+          meetingApi.recordParticipantLeave(roomName);
+          console.log("Participant left left meeting!");
+        }
       }
 
       this._room = new Room();
