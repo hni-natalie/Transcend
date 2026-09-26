@@ -1,5 +1,5 @@
 const authService = require('../services/auth.service');
-const { validateLogin, validateGoogleLogin } = require('../validators/auth.validator');
+const { validateLogin, validateGoogleLogin, validateSignUp } = require('../validators/auth.validator');
 
 function handleAuthError(err, res, fallbackMessage) {
   if (err instanceof authService.AuthError) {
@@ -41,6 +41,22 @@ async function google(req, res) {
   }
 }
 
+async function signUp(req, res) {
+  let validatedData;
+  try {
+    validatedData = validateSignUp(req.body);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+
+  try {
+    const result = await authService.requestAccess(validatedData);
+    res.json(result);
+  } catch (err) {
+    handleAuthError(err, res, 'Sign up / access request error:');
+  }
+}
+
 async function me(req, res) {
   try {
     const user = await authService.getCurrentUser(req.user.userId);
@@ -59,4 +75,4 @@ async function logout(req, res) {
   }
 }
 
-module.exports = { login, google, me, logout };
+module.exports = { login, google, signUp, me, logout };

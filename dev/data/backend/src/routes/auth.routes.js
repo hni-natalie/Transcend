@@ -1,4 +1,3 @@
-// auth.routes
 const router = require('express').Router();
 const { authMiddleware } = require('../middleware/auth.middleware');
 const { limiterMiddleware } = require('../middleware/limiter.middleware');
@@ -8,6 +7,7 @@ const authLimiter = limiterMiddleware(60 * 1000, 10, { error: '[auth] Too many a
 
 router.post('/login', authLimiter, authController.login);
 router.post('/google', authLimiter, authController.google);
+router.post('/signup', authLimiter, authController.signUp);
 router.get('/me', authMiddleware, authController.me);
 router.post('/logout', authMiddleware, authController.logout);
 
