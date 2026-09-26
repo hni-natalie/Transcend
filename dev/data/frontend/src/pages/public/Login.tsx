@@ -6,15 +6,15 @@ import { IconGoogle, EMAIL_REGEX } from '@shared';
 
 declare global {
     interface Window {
-        google: any;
+        google?: any;
     }
 }
 
-const loginInputClass = [
+export const loginInputClass = [
     "w-full rounded-lg",
     "bg-background-2",
     "px-4 py-3",
-    "text-base lg:text-l text-white placeholder:text-white/85",
+    "text-base lg:text-l text-white placeholder:text-foreground-3",
     "border-[0.5px] border-transparent",
     "hover:border-[0.5px] hover:border-accent-lime",
     "focus:border-[0.5px] focus:border-accent-lime",
@@ -45,7 +45,7 @@ export const Login = () => {
         return null;
     };
 
-    const handleEmailLogin = async (e: React.SubmitEvent) => {
+    const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
 
@@ -78,11 +78,9 @@ export const Login = () => {
         script.async = true;
         script.defer = true;
         script.onload = () => {
-            // console.log('Google SDK loaded'); // debug
             setIsGoogleSDKLoaded(true);
         };
         script.onerror = () => {
-            // console.error('Failed to load Google SDK'); // debug
             setError('Failed to load Google login. Please refresh the page.');
         };
         document.body.appendChild(script);
@@ -128,13 +126,11 @@ export const Login = () => {
 
         setGoogleLoading(true);
 
-        // timeout if no prompt
         const timeoutId = setTimeout(() => {
             setGoogleLoading(false);
             setError('Google login timed out. Please try again.');
-        }, 10000); // 10 second timeout
+        }, 10000);
 
-        // prompt callback handles success/error
         window.google?.accounts.id.prompt((notification: any) => {
             clearTimeout(timeoutId);
 
@@ -143,110 +139,123 @@ export const Login = () => {
                 setGoogleLoading(false);
             }
 
-			// popup closed / cancelled
             if (notification.isSkippedMoment()) {
                 setGoogleLoading(false);
             }
-
-            // if notification is displayed, keep loading true
-            // callback will handle success via the initialize callback
         });
     };
 
     return (
-		<div className="min-h-dvh w-screen bg-background flex justify-center items-center m-0 px-6 py-10 sm:px-8">
-			<div className="w-full max-w-[500px] flex flex-col items-center">
-				<h1
-					className="brand-logo-lean text-5xl sm:text-6xl md:text-[48px] font-bold mb-16 sm:mb-12 cursor-pointer"
-					onClick={onBack}
-				>
-					WorkFrom,
-				</h1>
+        <div className="min-h-dvh w-screen bg-background flex justify-center items-center m-0 px-6 py-10 sm:px-8">
+            <div className="w-full max-w-[500px] flex flex-col items-center">
+                <h1
+					
+                    className="brand-logo-lean text-6xl sm:text-6xl md:text-[48px] font-bold mb-1 sm:mb-2 pl-3 cursor-pointer"
+                    onClick={onBack}
+                >
+                    WorkFrom,
+                </h1>
 
-				{/* <div className="w-full sm:w-[80%] md:w-[60%]"> */}
-				<div className="w-full max-w-[300px] mx-auto">
-					{/* Google Login */}
-					<button
-						className="w-full py-3 border border-background-4 bg-background-1 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-3 sm:gap-6 rounded-lg cursor-pointer hover:bg-accent-lime-bg hover:text-accent-lime transition-colors"
-						onClick={handleGoogleLogin}
-						disabled={!isGoogleSDKLoaded || googleLoading}
-					>
-						<IconGoogle className="w-5 h-5" />
-						{googleLoading ? 'Logging in...' : 'Continue with Google'}
-					</button>
+				<p className="font-mono italic text-center text-foreground-3 text-xl sm:text-xl mb-10 sm:mb-12">
+					login to your workspace account.
+				</p>
 
-					{/* Email Login */}
-					<div className="my-6 text-foreground-4 text-sm w-full text-center">or</div>
-					<form className="w-full flex flex-col gap-6" onSubmit={handleEmailLogin}>
-						<input
-							type="email"
-							placeholder="Email"
-							className={loginInputClass}
-							value={userEmail}
-							onChange={(e) => setUserEmail(e.target.value)}
-						/>
-						<input
-							type="password"
-							placeholder="Password"
-							className={loginInputClass}
-							value={userPassword}
-							onChange={(e) => setUserPassword(e.target.value)}
-						/>
+				{/* <p className="font-mono italic text-center text-foreground-3 text-xl sm:text-xl mb-10 sm:mb-12">
+                    login to your workspace account.
+                </p> */}
 
-						<button
-							type="submit"
-							className="btn-lime w-full mt-3 py-3 text-base lg:text-lg font-bold group flex items-center justify-center gap-2"
-							disabled={loading}
-						>
-							<span>{loading ? 'Logging in...' : 'Log In'}</span>
-							{!loading && (
-								<span className="inline-block opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300">
-									<svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-										<path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-									</svg>
-								</span>
-							)}
-						</button>
+                <div className="w-full max-w-[300px] mx-auto">
+                    {/* Google Login */}
+                    <button
+                        className="w-full py-3 border border-background-4 bg-background-1 text-base text-foreground-2 lg:text-lg font-medium flex items-center justify-center gap-3 sm:gap-6 rounded-lg cursor-pointer hover:bg-accent-lime-bg hover:text-accent-lime transition-colors"
+                        onClick={handleGoogleLogin}
+                        disabled={!isGoogleSDKLoaded || googleLoading}
+                    >
+                        <IconGoogle className="w-5 h-5" />
+                        {googleLoading ? 'Logging in...' : 'Continue with Google'}
+                    </button>
 
-						{/* Error */}
-						<div className="h-4">
-							{error && <p className="error-message text-center text-sm lg:text-base">{error}</p>}
-						</div>
-					</form>
-				</div>
+                    {/* Email Login */}
+                    <div className="my-6 text-foreground-4 text-sm w-full text-center">or</div>
+                    <form className="w-full flex flex-col gap-6" onSubmit={handleEmailLogin}>
+                        <input
+                            type="email"
+                            placeholder="Email"
+                            className={loginInputClass}
+                            value={userEmail}
+                            onChange={(e) => setUserEmail(e.target.value)}
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            className={loginInputClass}
+                            value={userPassword}
+                            onChange={(e) => setUserPassword(e.target.value)}
+                        />
 
-				<div className="mt-8 sm:mt-10 flex flex-col items-center gap-6 sm:gap-8 text-center">
-					{/* Forgot Password */}
-					<p className="text-sm text-foreground-2">
-						Forgot Password?{' '}
-						<a 
-							href="mailto:support@workfrom.com"
-							className="font-semibold text-foreground-2 underline decoration-foreground-2/30 underline-offset-4 cursor-pointer hover:text-white hover:decoration-white transition-colors"
-						>
-							Contact us
-						</a>.
-					</p>
+                        {/* Forgot Password */}
+                        <a
+                            href="mailto:support@workfrom.com"
+                            className="-mt-3 text-right text-sm text-foreground-3 hover:text-white transition-colors"
+                        >
+                            Forgot password?
+                        </a>
 
-					{/* Legal */}
-					<p className="mt-8 md:mt-15 text-[12px] md:text-sm text-foreground-2 leading-relaxed max-w-[320px] md:max-w-none opacity-80">
-						By continuing, you acknowledge that you understand <br className="hidden md:block" />
-						and agree to the{' '}
-						<span
-							className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
-							onClick={() => navigate(R.TERMS)}
-						>
-							Terms & Conditions
-						</span>
-						{' '}and{' '}
-						<span
-							className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
-							onClick={() => navigate(R.PRIVACY)}
-						>
-							Privacy Policy
-						</span>.
-					</p>
-				</div>
-			</div>
-		</div>
-	);
+                        <button
+                            type="submit"
+                            className="btn-lime w-full py-3 text-base lg:text-lg font-bold group flex items-center justify-center gap-2"
+                            disabled={loading}
+                        >
+                            <span>{loading ? 'Logging in...' : 'Log In'}</span>
+                            {!loading && (
+                                <span className="inline-block opacity-0 group-hover:opacity-100 group-hover:translate-x-0 -translate-x-2 transition-all duration-300">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                    </svg>
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Error */}
+                        <div className="h-4">
+                            {error && <p className="error-message text-center text-sm lg:text-base">{error}</p>}
+                        </div>
+
+                        {/* Sign Up */}
+                        <p className="text-center text-sm text-foreground-2 -mt-2">
+                            Need access?{' '}
+                            <button
+                                type="button"
+                                onClick={() => navigate(R.SIGNUP)}
+                                className="font-semibold text-foreground-2 underline decoration-foreground-2/30 underline-offset-4 hover:text-accent-lime hover:decoration-accent-lime transition-colors cursor-pointer"
+                            >
+                                Sign up.
+                            </button>
+                        </p>
+                    </form>
+                </div>
+
+                <div className="mt-8 sm:mt-10 flex flex-col items-center gap-6 sm:gap-8 text-center">
+                    {/* Legal */}
+                    <p className="text-[12px] md:text-sm text-foreground-2 leading-relaxed max-w-[320px] md:max-w-none opacity-80">
+                        By continuing, you acknowledge that you understand <br className="hidden md:block" />
+                        and agree to the{' '}
+                        <span
+                            className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
+                            onClick={() => navigate(R.TERMS)}
+                        >
+                            Terms & Conditions
+                        </span>
+                        {' '}and{' '}
+                        <span
+                            className="font-semibold text-foreground-3 underline decoration-foreground-3/30 underline-offset-4 cursor-pointer hover:text-accent-lime hover:decoration-accent-lime transition-all"
+                            onClick={() => navigate(R.PRIVACY)}
+                        >
+                            Privacy Policy
+                        </span>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
 };
