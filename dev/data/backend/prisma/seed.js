@@ -128,6 +128,7 @@ async function main() {
         where: { userEmail: 'superuser@workfrom.com' },
         update: { 
             userPassword: adminHash, 
+            workspaceId: wsId,
             // userStatus: 'online',
             // userTitle: 'System Administrator'
         },

@@ -79,7 +79,7 @@ async function loginWithPassword(userEmail, userPassword) {
     include: USER_INCLUDE,
   });
 
-  if (!user) {
+  if (!user || user.deletedAt) {
     throw new AuthError(401, 'Invalid email or password');
   }
 
@@ -143,7 +143,7 @@ async function loginWithGoogle(idToken) {
     include: USER_INCLUDE,
   });
 
-  if (!user) {
+  if (!user || user.deletedAt) {
     throw new AuthError(401, 'No account found with this email. Please contact your administrator.');
   }
 

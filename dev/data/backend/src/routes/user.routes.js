@@ -7,7 +7,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 router.use(authMiddleware);
 
-router.get('/me', userController.getCurrentUser);
+// router.get('/me', userController.getCurrentUser);
 router.patch('/me', userController.updateCurrentUser);
 router.get('/dashboard', userController.getUserDashboard);
 router.patch('/status', userController.updateUserStatus);
@@ -18,9 +18,10 @@ router.post('/avatar', upload.single('avatar'), userController.uploadAvatar);
 router.get('/me/data-export', userController.getMyDataExport);
 router.post('/me/deletion-request', userController.requestAccountDeletion);
 
-router.get('/', userController.getAllUsers);
+router.get('/directory', userController.getUserDirectory);
+router.get('/', requireAdmin, userController.getAllUsers);
 router.get('/dashboard/metrics', requireAdmin, userController.getDashboardMetrics);
-router.get('/:id', userController.getUserById);
+// router.get('/:id', requireAdmin, userController.getUserById);
 
 router.post('/', requireAdmin, userController.createUser);
 router.patch('/:id', requireAdmin, userController.updateUser);

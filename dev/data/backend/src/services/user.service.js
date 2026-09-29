@@ -30,12 +30,47 @@ function extractSupabaseStoragePath(publicUrl) {
     return bucket && filePath ? { bucket, filePath } : null;
 }
 
+// object for any auth user
+const DIRECTORY_SELECT = {
+    userId: true,
+    userName: true,
+    userEmail: true,
+    userStatus: true,
+    avatarUrl: true,
+    userTitle: true,
+    city: true,
+    country: true,
+    timezone: true,
+    roleId: true,
+    role: { select: { roleId: true, roleName: true } },
+    department: { select: { dpId: true, dpName: true } },
+};
+
+// object for admin only
+const USER_DETAIL_SELECT = {
+    userId: true,
+    userEmail: true,
+    userName: true,
+    userStatus: true,
+    createdAt: true,
+    deletedAt: true,
+    updatedAt: true,
+    avatarUrl: true,
+    city: true,
+    country: true,
+    userTitle: true,
+    role: { select: { roleId: true, roleName: true } },
+    workspace: { select: { workspaceId: true, workspaceName: true } },
+    department: { select: { dpId: true, dpName: true } },
+};
+
 const userService = {
-    async getDashboardMetrics() {
+    async getDashboardMetrics(workspaceId) {
+		if (!workspaceId) return [];
         try {
             // pull the entire active user base with related department names
             const users = await prisma.user.findMany({
-				where: { deletedAt: null },
+				where: { deletedAt: null, workspaceId },
                 select: {
                     userId: true,
                     userName: true,
@@ -68,6 +103,7 @@ const userService = {
 				where: { userId },
 				select: {
 					userId: true,
+					workspaceId: true,
 					userName: true,
 					userEmail: true,
 					userStatus: true,
@@ -88,9 +124,9 @@ const userService = {
 				throw new Error('User not found');
 			}
 			
-			// Get all users (for team presence)
-			const allUsers = await prisma.user.findMany({
-				where: { deletedAt: null },
+			// Get workspace teammates (for team presence)
+			const allUsers = !currentUser.workspaceId ? [] : await prisma.user.findMany({
+				where: { deletedAt: null, workspaceId: currentUser.workspaceId },
 				select: {
 					userId: true,
 					userName: true,
@@ -163,10 +199,22 @@ const userService = {
 		}
 	},
 
-    async getAllUsers(filters = {}) {
-        const { search, roleId, workspaceId, status } = filters;
+	// for any auth user
+    async getUserDirectory(workspaceId) {
+        if (!workspaceId) return [];
+        return await prisma.user.findMany({
+            where: { deletedAt: null, workspaceId },
+            select: DIRECTORY_SELECT,
+            orderBy: { userName: 'asc' },
+        });
+    },
+
+	// for admin
+    async getAllUsers(filters = {}, workspaceId) {
+		if (!workspaceId) return [];
+        const { search, roleId, status } = filters;
         
-        const where = { deletedAt: null };
+        const where = { deletedAt: null, workspaceId };
         if (search) {
             where.OR = [
                 { userName: { contains: search, mode: 'insensitive' } },
@@ -174,7 +222,6 @@ const userService = {
             ];
         }
         if (roleId) where.roleId = roleId;
-        if (workspaceId) where.workspaceId = workspaceId;
         if (status) where.userStatus = status;
         
         return await prisma.user.findMany({
@@ -201,31 +248,47 @@ const userService = {
     async getUserById(userId) {
         const user = await prisma.user.findUnique({
             where: { userId },
-            select: {
-                userId: true,
-                userEmail: true,
-                userName: true,
-                userStatus: true,
-                createdAt: true,
-				deletedAt: true,
-                updatedAt: true,
-                avatarUrl: true,
-				city: true,
-				country: true,
-				userTitle: true,
-                role: { select: { roleId: true, roleName: true } },
-                workspace: { select: { workspaceId: true, workspaceName: true } },
-                department: { select: { dpId: true, dpName: true } }
-            }
+            select: USER_DETAIL_SELECT,
         });
-        
+
         if (!user || user.deletedAt) throw new Error('User not found');
         return user;
     },
+
+    async getUserInWorkspace(userId, workspaceId) {
+        if (!workspaceId) throw new Error('User not found');
+        const user = await prisma.user.findFirst({
+            where: { userId, workspaceId, deletedAt: null },
+            select: USER_DETAIL_SELECT,
+        });
+        if (!user) throw new Error('User not found');
+        return user;
+    },
+
+	// for workspace admin to edit their workers
+    async assertUserInWorkspace(userId, workspaceId, { allowDeleted = false } = {}) {
+        if (!workspaceId) throw new Error('User not found');
+        const target = await prisma.user.findFirst({
+            where: { userId, workspaceId, ...(allowDeleted ? {} : { deletedAt: null }) },
+            select: { userId: true }
+        });
+        if (!target) throw new Error('User not found');
+    },
     
-    async getUsersByStatus(userStatus) {
+    // deps that belongs to a workspace
+    async assertDepartmentInWorkspace(dpId, workspaceId) {
+        if (dpId === undefined || dpId === null || dpId === '') return;
+        const dept = await prisma.department.findFirst({
+            where: { dpId, workspaceId },
+            select: { dpId: true }
+        });
+        if (!dept) throw new Error('Invalid department');
+    },
+    
+    async getUsersByStatus(userStatus, workspaceId) {
+        if (!workspaceId) return [];
         const users = await prisma.user.findMany({
-            where: { userStatus, deletedAt: null },
+            where: { userStatus, deletedAt: null, workspaceId },
             select: {
                 userId: true,
                 userEmail: true,
@@ -297,7 +360,16 @@ const userService = {
         	throw new Error('No valid fields to update');
         
         const user = await prisma.user.findUnique({ where: { userId } });
-        if (!user) throw new Error('User not found');
+        if (!user || user.deletedAt) throw new Error('User not found');
+
+        await userService.assertDepartmentInWorkspace(dpId, user.workspaceId);
+
+        if (email) {
+            const existingUser = await prisma.user.findUnique({ where: { userEmail: email } });
+            if (existingUser && existingUser.userId !== userId) {
+                throw new Error('Email already in use by another account');
+            }
+        }
 
         const data = {
             userName: name,
@@ -342,24 +414,53 @@ const userService = {
             throw new Error('No file uploaded');
         }
 
+		// check the target BEFORE uploading so a bad target never leaves an orphaned file
+        const target = await prisma.user.findUnique({
+            where: { userId },
+            select: { deletedAt: true }
+        });
+        if (!target || target.deletedAt) throw new Error('User not found');
+
         const filePath = buildAvatarPath(userId, file.originalname);
         const publicUrl = await uploadFile(bucket, filePath, file.buffer, file.mimetype);
 
-        const user = await prisma.user.update({
-            where: { userId },
-            data: { avatarUrl: publicUrl },
-            select: {
-                userId: true,
-                userName: true,
-                avatarUrl: true,
-            }
-        });
+        // const user = await prisma.user.update({
+        //     where: { userId },
+        //     data: { avatarUrl: publicUrl },
+        //     select: {
+        //         userId: true,
+        //         userName: true,
+        //         avatarUrl: true,
+        //     }
+        // });
+
+		let user;
+        try {
+            user = await prisma.user.update({
+                where: { userId },
+                data: { avatarUrl: publicUrl },
+                select: {
+                    userId: true,
+                    userName: true,
+                    avatarUrl: true,
+                }
+            });
+		} catch (err) {
+			// if db write failed after upload, remove the file
+            deleteFile(bucket, filePath).catch((cleanupErr) =>
+                console.error('[user.service] Failed to clean up avatar after DB error:', cleanupErr)
+            );
+            throw err;
+        }
+
+
 
         return { avatarUrl: publicUrl, user };
     },
     
     async createUser(userData) {
-        const { email, password, name, roleId, workspaceId, dpId, userTitle } = userData;
+		const { email, password, name, roleId, workspaceId, dpId, userTitle } = userData;
+		await userService.assertDepartmentInWorkspace(dpId, workspaceId);
         
         const existingUser = await prisma.user.findUnique({
             where: { userEmail: email }
@@ -367,46 +468,15 @@ const userService = {
         
         if (existingUser) throw new Error('Email already exists');
         
-        let hashedPassword;
-        let plainTextPassword = null;
-        
-        if (password) {
-            // admin provided a password
-			const validation = validatePassword(password);
-			if (!validation.isValid) {
-			throw new Error(validation.errors.join('. '));
-			}
-            hashedPassword = await bcrypt.hash(password, 10);
-            plainTextPassword = password;
-        } else {
-            // generate temporary password
-            plainTextPassword = generateTemporaryPassword();
-			hashedPassword = await bcrypt.hash(plainTextPassword, 10);
-		}
+        if (!password) {
+            throw new Error('Password is required');
+        }
 
-		function generateTemporaryPassword() {
-		const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-		const numbers = '0123456789';
-		const specials = '!@#$%^&*()';
-		
-		const allChars = uppercase + lowercase + numbers + specials;
-		let password = '';
-		
-		// Ensure at least one of each required type
-		password += uppercase[Math.floor(Math.random() * uppercase.length)];
-		password += lowercase[Math.floor(Math.random() * lowercase.length)];
-		password += numbers[Math.floor(Math.random() * numbers.length)];
-		password += specials[Math.floor(Math.random() * specials.length)];
-		
-		// Fill rest
-		for (let i = 4; i < 12; i++) {
-			password += allChars[Math.floor(Math.random() * allChars.length)];
-		}
-		
-		// Shuffle
-		return password.split('').sort(() => Math.random() - 0.5).join('');
-		}
+        const validation = validatePassword(password);
+        if (!validation.isValid) {
+            throw new Error(validation.errors.join('. '));
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
         
         const user = await prisma.user.create({
             data: {
@@ -429,11 +499,7 @@ const userService = {
             }
         });
         
-        // return the user + plain text password (for admin to share)
-        return {
-            ...user,
-            temporaryPassword: plainTextPassword
-        };
+        return user;
     },
     
     async changePassword(userId, oldPassword, newPassword) {
@@ -468,7 +534,7 @@ const userService = {
 			where: { userId }
 		});
 
-		if (!user) throw new Error('User not found');
+		if (!user || user.deletedAt) throw new Error('User not found');
 
 		const validation = validatePassword(newPassword);
 		if (!validation.isValid) {
@@ -608,7 +674,24 @@ const userService = {
 			prisma.meetingParticipant.findMany({ where: { userId }, include: { meet: { select: { meetTitle: true, meetStart: true, meetEnd: true } } } }),
 			prisma.message.findMany({
 				where: { authorId: userId, deletedAt: null },
-				select: { messageId: true, conversationId: true, text: true, createdAt: true, attachments: { select: { name: true, kind: true, url: true } } }
+				select: {
+					messageId: true,
+					conversationId: true,
+					text: true,
+					linkUrl: true,
+					createdAt: true,
+					attachments: {
+						select: {
+							id: true,
+							name: true,
+							kind: true,
+							url: true,
+							mimeType: true,
+							sizeInBytes: true,
+							createdAt: true,
+						},
+					},
+				},
 			}),
 		]);
 

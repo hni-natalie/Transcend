@@ -41,15 +41,16 @@ function validateCreateUser({ email, password, name, roleId, dpId, userTitle }) 
     if (hasValue(userTitle))
         assertSafeText(userTitle, 'Title', TITLE_MAX_LENGTH);
 
-    if (password) {
-        const validation = validatePassword(password);
-        if (!validation.isValid)
-            throw new Error(validation.errors.join('. '));
-    }
+    if (!isNonEmptyString(password))
+        throw new Error('Password is required');
+
+    const validation = validatePassword(password);
+    if (!validation.isValid)
+        throw new Error(validation.errors.join('. '));
 
     return {
         email: email.trim().toLowerCase(),
-        password: password || undefined,
+        password: password,
         name: name.trim(),
         roleId: roleId.trim(),
         dpId: hasValue(dpId) ? dpId.trim() : undefined,
