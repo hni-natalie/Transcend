@@ -1,6 +1,6 @@
 const meetingService = require('../services/meeting.service');
 const { getIO } = require("../services/socket.service");
-const { validateCreateMeeting, validateUpdateMeeting, validateSyncParticipants } = require('../validators/meeting.validator');
+const { validateCreateMeeting, validateUpdateMeeting, validateSyncParticipants, validateMeetingRules } = require('../validators/meeting.validator');
 
 
 // use existing socket room 
@@ -97,6 +97,12 @@ const meetingController = {
                     meetEnd: req.body.meetEnd,
 					participantIds: req.body.participantIds
                 });
+                await validateMeetingRules({
+                    workspaceId: req.user.workspaceId,
+                    spaceId: req.body.spaceId,
+                    userId: req.user.userId
+                });
+
             } catch (validationErr) {
                 return res.status(400).json({ success: false, message: validationErr.message });
             }

@@ -216,7 +216,7 @@ function validateSyncParticipants({
     };
 }
 
-function validateMeetingRules({
+async function validateMeetingRules({
     meetId,
     userId,
     workspaceId,
@@ -226,6 +226,27 @@ function validateMeetingRules({
     validateId(userId, 'userId');
     validateId(workspaceId, 'workspaceId');
     validateId(spaceId, 'spaceId');
+    await validateMeetingCountPerDay(userId);
+}
+
+async function validateMeetingCountPerDay(userId) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const count = await prisma.meeting.count({
+        where: {
+        createdByUserId: userId,
+        createdAt: {
+            gte: today,     // greater than or equal
+            lt: tomorrow,   // less than
+        },
+        },
+    });
+    if (count >= 10)
+        throw new Error(`You've reached the daily limit of meetings scheduled in a day.`);
 }
 
 function validateMeetingExists(meeting) {

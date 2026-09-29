@@ -402,6 +402,8 @@ export const ScheduleMeetingModal = ({
 
             if (message?.startsWith("Meeting conflict detected for:")) {
                 setErrorMessage(message);
+            } else if (message?.startsWith("You've reached the daily limit")) {
+                setErrorMessage(message);
             } else {
                 const fallback = "Failed to schedule meeting. Please try again.";
                 setErrorMessage(fallback);

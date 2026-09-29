@@ -177,8 +177,6 @@ const meetingService = {
 			participantIds
         } = meetingData;
 
-        validateMeetingRules({ workspaceId, spaceId, userId });
-
         const normalizedStart = normalizeDateTime(meetStart);
         const normalizedEnd = normalizeDateTime(meetEnd);
 
