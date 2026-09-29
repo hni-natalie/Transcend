@@ -14,11 +14,10 @@ export const API_CONFIG = {
     roles: '/roles',
     users: {
       base: '/users',
-	  me: '/users/me',
+	  directory: '/users/directory',
       dashboardMetrics: '/users/dashboard/metrics',
-	  userDashboard: '/users/dashboard', 
-	  changePassword: '/users/change-password', 
-	  resetPassword: '/users/reset-password',
+      userDashboard: '/users/dashboard', 
+      changePassword: '/users/change-password',
     },
     departments: {
       data: '/departments',

@@ -3,7 +3,7 @@ import { API_CONFIG } from '@api/api.config';
 import { Task } from './task.types';
 
 const API_URL = API_CONFIG.endpoints.tasks;
-const usersBase = API_CONFIG.endpoints.users.base;
+const usersDirectory = API_CONFIG.endpoints.users.directory;
 
 export const taskApi = {
 	getAllTasks: () => {
@@ -37,6 +37,6 @@ export const taskApi = {
 		return apiClient.delete(`${API_URL}/${taskId}`);
 	},
 	allUsers: () => {
-			return apiClient.get(`${usersBase}`);
+			return apiClient.get(`${usersDirectory}`);
 		}
 }

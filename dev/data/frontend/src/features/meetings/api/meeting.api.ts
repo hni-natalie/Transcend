@@ -3,7 +3,7 @@ import { API_CONFIG } from '@api/api.config';
 import { MeetingDetails, RecordingStatusResponse } from '../meeting.types';
 
 const base = API_CONFIG.endpoints.meetings;
-const usersBase = API_CONFIG.endpoints.users.base;
+const userDirectory = API_CONFIG.endpoints.users.directory;
 const recordingsBase = API_CONFIG.endpoints.recordings;
 
 export const meetingApi = {
@@ -81,7 +81,7 @@ export const meetingApi = {
     // USERS
     // =====================
     allUsers() {
-      	return apiClient.get(`${usersBase}`);
+      	return apiClient.get(`${userDirectory}`);
     },
 
     // =====================
