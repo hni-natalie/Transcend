@@ -157,7 +157,7 @@ export const Login = () => {
                 </h1>
 
 				<p className="font-mono italic text-center text-foreground-3 text-xl sm:text-xl mb-10 sm:mb-12">
-					login to your workspace account.
+					your workspace account.
 				</p>
 
 				{/* <p className="font-mono italic text-center text-foreground-3 text-xl sm:text-xl mb-10 sm:mb-12">
