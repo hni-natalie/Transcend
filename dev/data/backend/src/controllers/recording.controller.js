@@ -20,7 +20,7 @@ const recordingController = {
             console.error(error);
 
             if (error.message === 'Meeting not found') {
-                return res.status(404).json({
+                return res.status(403).json({
                     success: false,
                     message: error.message,
                 });
@@ -54,7 +54,7 @@ const recordingController = {
             return res.status(200).json({ success: true, data: recording, });
         } catch (error) {
             if (error.message === 'Meeting not found') {
-                return res.status(404).json({
+                return res.status(403).json({
                     success: false,
                     message: error.message,
                 });
@@ -106,7 +106,7 @@ const recordingController = {
             return res.json({ success: true, recordings, });
         } catch (error) {
             if (error.message === 'Meeting not found') {
-                return res.status(404).json({
+                return res.status(403).json({
                     success: false,
                     message: error.message,
                 });
@@ -140,7 +140,7 @@ const recordingController = {
             return res.json({ success: true, status });
         } catch (error) {
             if (error.message === 'Meeting not found') {
-                return res.status(404).json({
+                return res.status(403).json({
                     success: false,
                     message: error.message,
                 });

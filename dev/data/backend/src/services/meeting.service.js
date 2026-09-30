@@ -1,6 +1,6 @@
 const prisma = require('../../prisma/client');
 const { MeetingRole, AttendanceStatus } = require('@prisma/client');
-const { validateMeetingExists, validateMeetingAuthorization, validateMeetingRules, validateMeetingTime, validateParticipantConflicts, validateMeetingParticipant } = require('../validators/meeting.validator');
+const { validateMeetingExists, validateMeetingAuthorization, validateMeetingTime, validateParticipantConflicts, validateMeetingParticipant } = require('../validators/meeting.validator');
 const { logMeetingActivity } = require('../utils/activity');
 
 const ATTENDANCE_MIN_DURATION_MS = 5 * 60 * 1000;
@@ -479,6 +479,7 @@ const meetingService = {
         });
 
 		validateMeetingExists(meeting);
+        validateMeetingAuthorization(meeting, userId);
 
         // Check if already pinned by THIS user
         const existingPin = await prisma.meetingPin.findUnique({
@@ -487,7 +488,7 @@ const meetingService = {
             }
         });
 
-        // 3. Toggle
+        // Toggle
         if (existingPin) {
             // Unpin
             await prisma.meetingPin.delete({
