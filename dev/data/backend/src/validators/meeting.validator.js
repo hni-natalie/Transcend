@@ -328,6 +328,14 @@ async function validateMeetingParticipant(meetId, userId) {
     return meeting;
 }
 
+function validateMeetingNotEnded(meeting) {
+    if (meeting.meetEnd <= new Date()) {
+        throw new ValidatorError(
+            'Cannot update a meeting that has already ended'
+        );
+    }
+}
+
 module.exports = {
     ValidatorError,
     AuthorizationError,
@@ -345,5 +353,6 @@ module.exports = {
     validateCreateMeeting,
     validateUpdateMeeting,
     validateSyncParticipants,
-    validateMeetingParticipant
+    validateMeetingParticipant,
+    validateMeetingNotEnded
 };

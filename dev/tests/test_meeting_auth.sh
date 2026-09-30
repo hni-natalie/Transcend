@@ -13,6 +13,7 @@
 #   - User cannot delete another user's meeting -> 403
 #   - User cannot start/end another user's meeting -> 403
 #   - User cannot access another user's meeting chat -> 403
+#   - User cannot update an already-ended meeting -> 400
 #
 # USAGE:
 #   chmod +x test_meeting_authorization.sh
@@ -24,6 +25,7 @@
 #   OTHER_USER_TOKEN
 #   OWN_MEETING_ID
 #   OTHER_MEETING_ID
+#   PAST_MEETING_ID
 # ============================================================
 
 set -u
@@ -35,6 +37,7 @@ OTHER_USER_TOKEN="${OTHER_USER_TOKEN:-}"
 
 OWN_MEETING_ID="${OWN_MEETING_ID:-}"
 OTHER_MEETING_ID="${OTHER_MEETING_ID:-}"
+PAST_MEETING_ID="${PAST_MEETING_ID:-}"
 
 # ============================================================
 # COLORS
@@ -167,6 +170,11 @@ if [ -z "$OTHER_MEETING_ID" ]; then
     read -r -p "Enter User B's meeting ID: " OTHER_MEETING_ID
 fi
 
+if [ -z "$PAST_MEETING_ID" ]; then
+    echo ""
+    read -r -p "Enter User A's past meeting ID: " PAST_MEETING_ID
+fi
+
 # ============================================================
 # AUTH HEADERS
 # ============================================================
@@ -214,6 +222,28 @@ else
         200 \
         -X GET "$BASE_URL/api/meetings/$OWN_MEETING_ID" \
         -H "$USER_AUTH_HEADER"
+
+fi
+
+# ============================================================
+# PAST MEETING UPDATE
+# ============================================================
+
+section_header "PAST MEETING — update restriction"
+
+if [ -z "$USER_TOKEN" ] || [ -z "$PAST_MEETING_ID" ]; then
+
+    skip_test "User A cannot update a meeting that has already ended"
+
+else
+
+    run_test \
+        "User A cannot update a meeting that has already ended -> 400" \
+        400 \
+        -X PATCH "$BASE_URL/api/meetings" \
+        -H "$USER_AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d "{\"meetId\":\"$PAST_MEETING_ID\",\"meetTitle\":\"Updated Past Meeting\"}"
 
 fi
 

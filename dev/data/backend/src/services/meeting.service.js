@@ -1,6 +1,13 @@
 const prisma = require('../../prisma/client');
 const { MeetingRole, AttendanceStatus } = require('@prisma/client');
-const { validateMeetingExists, validateMeetingAuthorization, validateMeetingTime, validateParticipantConflicts, validateMeetingParticipant } = require('../validators/meeting.validator');
+const { 
+    validateMeetingExists, 
+    validateMeetingAuthorization, 
+    validateMeetingTime, 
+    validateParticipantConflicts, 
+    validateMeetingParticipant,
+    validateMeetingNotEnded
+} = require('../validators/meeting.validator');
 const { logMeetingActivity } = require('../utils/activity');
 
 const ATTENDANCE_MIN_DURATION_MS = 5 * 60 * 1000;
@@ -273,6 +280,7 @@ const meetingService = {
 
         validateMeetingExists(meeting);
         validateMeetingAuthorization(meeting, userId);
+        validateMeetingNotEnded(meeting);
 
 		const normalizedStart = normalizeDateTime(meetStart);
         const normalizedEnd = normalizeDateTime(meetEnd);
