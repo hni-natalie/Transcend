@@ -17,7 +17,6 @@ export type ControlBarControls = {
   leave?: boolean;
   settings?: boolean;
   recording?: boolean;
-  attendance?: boolean;
 };
 
 const trackSourceToProtocol = (source: Track.Source) => {
@@ -37,7 +36,6 @@ const trackSourceToProtocol = (source: Track.Source) => {
 /** @public */
 export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   onDeviceError?: (error: { source: Track.Source; error: Error }) => void;
-  onAttendanceClick?: () => void;
   onRecordingChange?: (isRecording: boolean) => void;
   variation?: 'minimal' | 'verbose' | 'textOnly';
   controls?: ControlBarControls;
@@ -73,7 +71,6 @@ export function ControlBar({
   saveUserChoices = true,
   meetId,
   onDeviceError,
-  onAttendanceClick,
   onRecordingChange,
   ...props
 }: ControlBarProps) {
@@ -216,18 +213,6 @@ export function ControlBar({
             onRecordingChange={onRecordingChange}
             showText={showText}
           />
-        )}
-
-        {visibleControls.attendance && meetId && (
-          <button
-            type="button"
-            className="lk-button"
-            onClick={onAttendanceClick}
-            title="Attendance"
-          >
-            {showIcon && <IconMembers />}
-            {showText && 'Attendance'}
-          </button>
         )}
 
         {visibleControls.chat && (

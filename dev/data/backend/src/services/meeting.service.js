@@ -226,7 +226,7 @@ const meetingService = {
                     meetId: newMeeting.meetId,
                     userId,
                     role: MeetingRole.organiser,
-                    attendance: AttendanceStatus.present
+                    attendance: AttendanceStatus.pending
                 }
             });
 
