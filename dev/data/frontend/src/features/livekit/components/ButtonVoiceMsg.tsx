@@ -93,7 +93,14 @@ export function ButtonVoiceMsg({
       meetingTitle,
     };
 
+    const raw = sessionStorage.getItem("activeMeeting");
+    let pastMeetId = raw ? JSON.parse(raw).roomName : undefined;
+    if (pastMeetId) {
+      meetingApi.recordParticipantLeave(pastMeetId);
+      console.log("Participant left meeting!");
+    }
     sessionStorage.removeItem('activeMeeting');
+
     if (mode === "video") {
       sessionStorage.setItem(
         "activeMsgMeeting",

@@ -15,7 +15,6 @@ import { useCreateLayoutContext } from '@livekit/components-react';
 import { usePinnedTracks, useTracks } from '@livekit/components-react';
 import { Chat, ControlBar, ParticipantTile, FocusLayout } from '@/features/livekit';
 import { Rnd } from "react-rnd";
-import { Attendance } from './Attendance';
 
 /**
  * @public
@@ -64,8 +63,6 @@ export function VideoConference({
     unreadMessages: 0,
     showSettings: false,
   });
-  
-  const [showAttendance, setShowAttendance] = React.useState(false);
   
   const lastAutoFocusedScreenShareTrack = React.useRef<TrackReferenceOrPlaceholder | null>(null);
 
@@ -169,10 +166,8 @@ export function VideoConference({
               controls={{ 
                 chat: true, 
                 recording: isHost, 
-                attendance: isHost,
                 settings: !!SettingsComponent 
               }}
-              onAttendanceClick={() => setShowAttendance((prev) => !prev)} 
             />
           </div>
           <div
@@ -206,14 +201,6 @@ export function VideoConference({
               />
             </Rnd>
           </div>
-
-          {/* Attendance */}
-          {showAttendance && (
-            <Attendance
-              meetId={meetId}
-              onClose={() => setShowAttendance(false)}
-            />
-          )}
 
           {/* Setting */}
           {SettingsComponent && (

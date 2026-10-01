@@ -12,7 +12,7 @@ const tokenLimiter = limiterMiddleware(60 * 1000, 10, { error: 'Too many token r
 router.use(authMiddleware);
 
 async function generateRoomToken(roomName, participantIdentity, participantName) {
-    if (!roomName || !participantIdentity || !participantName) {
+    if (!roomName || !participantIdentity) {
         throw new Error('Missing token information');
     }
     
@@ -21,7 +21,7 @@ async function generateRoomToken(roomName, participantIdentity, participantName)
         LIVEKIT_API_SECRET,
         {
             identity: participantIdentity,
-            name: participantName,
+            name: participantName || participantIdentity,
             ttl: '6h', // token expiration
         }
     );
@@ -65,6 +65,12 @@ router.get('/token', tokenLimiter, async (req, res) => {
             }
         });
 
+        console.log('========== LIVEKIT DEBUG ==========');
+        console.log('roomName:', roomName);
+        console.log('userId:', userId);
+        console.log('user:', req.user);
+        console.log('meeting:', meeting);
+
         if (!meeting) {
             return res.status(403).json({
                 error: 'You are not allowed to join this meeting'
@@ -82,7 +88,7 @@ router.get('/token', tokenLimiter, async (req, res) => {
 
     } catch (error) {
         console.error('Token generation failed:', error);
-        res.status(500).json({ error: 'Failed to generate token' });
+        res.status(403).json({ error: 'Failed to generate token' });
     }
 });
 
@@ -125,7 +131,7 @@ router.post('/create-room', async (req, res) => {
         res.json({ room });
     } catch (error) {
         console.error('Failed to create room:', error);
-        res.status(500).json({
+        res.status(403).json({
             error: 'Failed to create room'
         });
     }

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { ButtonVoiceRoom } from '@/features/livekit/components/ButtonVoiceRoom';
-import { EmptyCard, IconCamera, IconChat, IconChatRound, IconMedia, IconRecording } from '@shared';
+import { EmptyCard, IconChatRound, IconMedia } from '@shared';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import type { Meeting } from '@/features/meetings/meeting.types';
 
@@ -215,12 +215,14 @@ export const MeetingColumn = ({
                     isHost={true}
                   />
 
-                  <button 
-                    onClick={() => onEdit?.(meeting.id)}
-                    className="btn-gray"
-                  >
-                    Edit
-                  </button>
+                  {new Date(meeting.meetEnd) > new Date() && (
+                    <button 
+                      onClick={() => onEdit?.(meeting.id)}
+                      className="btn-gray"
+                    >
+                      Edit
+                    </button>
+                  )}
 
                   <button
                     onClick={() => onDelete?.(meeting.id)}

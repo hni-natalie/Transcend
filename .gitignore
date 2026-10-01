@@ -23,3 +23,5 @@ dev/data/frontend/dist*
 ref.*
 initvm.sh
 test.sh
+
+dev/tests/meeting_input

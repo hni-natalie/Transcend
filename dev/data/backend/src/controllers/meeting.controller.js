@@ -1,13 +1,21 @@
 const meetingService = require('../services/meeting.service');
 const { getIO } = require("../services/socket.service");
-const { validateCreateMeeting, validateUpdateMeeting, validateSyncParticipants } = require('../validators/meeting.validator');
 
+const {
+    validateCreateMeeting,
+    validateUpdateMeeting,
+    validateSyncParticipants,
+    validateMeetingRules
+} = require('../validators/meeting.validator');
 
-// use existing socket room 
+// Use existing socket room
 const emitMeetingUpdated = (participantIds, meetId) => {
     const update = { meetId };
+
     for (const participantId of new Set(participantIds)) {
-        getIO().to(`user:${participantId}`).emit('meetingUpdated', update);
+        getIO()
+            .to(`user:${participantId}`)
+            .emit('meetingUpdated', update);
     }
 };
 
@@ -23,7 +31,43 @@ const meetingController = {
                     message: 'Meeting ID is required'
                 });
 
-            const meeting = await meetingService.getMeetingById(meetingId, userId);
+            const meeting = await meetingService.getMeetingById(
+                meetingId,
+                userId
+            );
+
+            if (!meeting)
+                return res.status(403).json({
+                    success: false,
+                    message: 'Meeting not found'
+                });
+
+            return res.status(200).json({
+                success: true,
+                data: meeting
+            });
+        } catch (error) {
+            console.error('Error fetching meeting:', error);
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to fetch meeting'
+            });
+        }
+    },
+
+    // Meeting created by user
+    async getMeetingByUserId(req, res) {
+        try {
+            const { userId } = req.params;
+
+            if (!userId)
+                return res.status(400).json({
+                    success: false,
+                    message: 'User ID is required'
+                });
+
+            const meeting = await meetingService.getMeetingByUserId(userId);
 
             if (!meeting)
                 return res.status(404).json({
@@ -36,57 +80,54 @@ const meetingController = {
                 data: meeting
             });
         } catch (error) {
-            console.error('Error fetching meeting:', error);
+            console.error('Error fetching meetings by user:', error);
+
             return res.status(500).json({
                 success: false,
-                message: 'Failed to fetch meeting'
+                message: 'Failed to fetch meetings'
             });
         }
     },
 
-    // Meeting Created by User 
-    async getMeetingByUserId(req, res) {
-        try {
-            const { userId } = req.params;
-
-            if (!userId)
-                return res.status(400).json({ success: false, message: 'User ID is required' });
-
-            const meeting = await meetingService.getMeetingByUserId(userId);
-
-            if (!meeting) 
-                return res.status(404).json({ success: false, message: 'Meeting not found' });
-
-            return res.status(200).json({ success: true, data: meeting });
-        } catch (error) {
-            console.error('Error fetching meetings by user:', error);
-            return res.status(500).json({ success: false, message: 'Failed to fetch meetings' });
-        }
-    },
-
-    // Meeting that User Joined
+    // Meeting that user joined
     async getMeetingByParticipantId(req, res) {
         try {
             const { userId } = req.params;
 
             if (!userId)
-                return res.status(400).json({ success: false, message: 'User ID is required' });
+                return res.status(400).json({
+                    success: false,
+                    message: 'User ID is required'
+                });
 
-            const meeting = await meetingService.getMeetingByParticipantId(userId);
+            const meeting = await meetingService.getMeetingByParticipantId(
+                userId
+            );
 
-            if (!meeting) 
-                return res.status(404).json({ success: false, message: 'Meeting not found' });
+            if (!meeting)
+                return res.status(404).json({
+                    success: false,
+                    message: 'Meeting not found'
+                });
 
-            return res.status(200).json({ success: true, data: meeting });
+            return res.status(200).json({
+                success: true,
+                data: meeting
+            });
         } catch (error) {
             console.error('Error fetching meetings by participant:', error);
-            return res.status(500).json({ success: false, message: 'Failed to fetch meetings' });
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to fetch meetings'
+            });
         }
     },
 
     async createMeeting(req, res) {
         try {
             let validatedData;
+
             try {
                 validatedData = validateCreateMeeting({
                     workspaceId: req.user.workspaceId,
@@ -95,10 +136,19 @@ const meetingController = {
                     meetDesc: req.body.meetDesc,
                     meetStart: req.body.meetStart,
                     meetEnd: req.body.meetEnd,
-					participantIds: req.body.participantIds
+                    participantIds: req.body.participantIds
+                });
+
+                await validateMeetingRules({
+                    workspaceId: req.user.workspaceId,
+                    spaceId: req.body.spaceId,
+                    userId: req.user.userId
                 });
             } catch (validationErr) {
-                return res.status(400).json({ success: false, message: validationErr.message });
+                return res.status(validationErr.statusCode || 400).json({
+                    success: false,
+                    message: validationErr.message
+                });
             }
 
             const userId = req.user.userId;
@@ -113,19 +163,37 @@ const meetingController = {
                 meeting.meetId
             );
 
-            return res.status(201).json({ success: true, data: meeting });
+            return res.status(201).json({
+                success: true,
+                data: meeting
+            });
         } catch (error) {
+            if (error.statusCode) {
+                return res.status(error.statusCode).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+
             if (error.message.includes('conflict'))
-                return res.status(409).json({ success: false, message: error.message });
-            
+                return res.status(409).json({
+                    success: false,
+                    message: error.message
+                });
+
             console.error('Error creating meeting:', error);
-            return res.status(500).json({ success: false, message: 'Failed to create meeting' });
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to create meeting'
+            });
         }
     },
 
     async updateMeeting(req, res) {
         try {
             let validatedData;
+
             try {
                 validatedData = validateUpdateMeeting({
                     meetId: req.body.meetId,
@@ -135,7 +203,10 @@ const meetingController = {
                     meetEnd: req.body.meetEnd
                 });
             } catch (validationErr) {
-                return res.status(400).json({ success: false, message: validationErr.message });
+                return res.status(validationErr.statusCode || 400).json({
+                    success: false,
+                    message: validationErr.message
+                });
             }
 
             if (Object.keys(validatedData).length <= 1) {
@@ -158,22 +229,37 @@ const meetingController = {
                 meeting.meetId
             );
 
-            return res.status(200).json({ success: true, data: meeting });
+            return res.status(200).json({
+                success: true,
+                data: meeting
+            });
         } catch (error) {
-            if (error.message === 'Meeting not found') 
-                return res.status(404).json({ success: false, message: error.message });
+            if (error.statusCode) {
+                return res.status(error.statusCode).json({
+                    success: false,
+                    message: error.message
+                });
+            }
 
-            if (error.message.includes('Unauthorized'))
-                return res.status(403).json({ success: false, message: error.message });
-            
+            if (error.message === 'Meeting not found')
+                return res.status(404).json({
+                    success: false,
+                    message: error.message
+                });
+
             console.error('Error updating meeting:', error);
-            return res.status(500).json({ success: false, message: 'Failed to update meeting' });
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to update meeting'
+            });
         }
     },
 
     async syncParticipants(req, res) {
         try {
             let validatedData;
+
             try {
                 validatedData = validateSyncParticipants({
                     meetId: req.body.meetId,
@@ -182,14 +268,20 @@ const meetingController = {
                     meetEnd: req.body.meetEnd
                 });
             } catch (validationErr) {
-                return res.status(400).json({ success: false, message: validationErr.message });
+                return res.status(validationErr.statusCode || 400).json({
+                    success: false,
+                    message: validationErr.message
+                });
             }
 
             const userId = req.user.userId;
 
             // Removed participants need one final notification so their
             // schedule immediately drops the meeting as well.
-            const previousAudience = await meetingService.getMeetingAudienceIds(validatedData.meetId);
+            const previousAudience =
+                await meetingService.getMeetingAudienceIds(
+                    validatedData.meetId
+                );
 
             const result = await meetingService.syncParticipants(
                 validatedData.meetId,
@@ -198,7 +290,11 @@ const meetingController = {
                 validatedData.meetStart,
                 validatedData.meetEnd
             );
-            const currentAudience = await meetingService.getMeetingAudienceIds(validatedData.meetId);
+
+            const currentAudience =
+                await meetingService.getMeetingAudienceIds(
+                    validatedData.meetId
+                );
 
             emitMeetingUpdated(
                 [...previousAudience, ...currentAudience],
@@ -210,17 +306,125 @@ const meetingController = {
                 data: result
             });
         } catch (error) {
-            if (error.message === 'Meeting not found')
-                return res.status(404).json({ success: false, message: error.message });
+            if (error.statusCode) {
+                return res.status(error.statusCode).json({
+                    success: false,
+                    message: error.message
+                });
+            }
 
-            if (error.message.includes('Unauthorized'))
-                return res.status(403).json({ success: false, message: error.message });
+            if (error.message === 'Meeting not found')
+                return res.status(404).json({
+                    success: false,
+                    message: error.message
+                });
 
             if (error.message.includes('conflict'))
-                return res.status(409).json({ success: false, message: error.message });
-            
+                return res.status(409).json({
+                    success: false,
+                    message: error.message
+                });
+
             console.error('Error syncing participants:', error);
-            return res.status(500).json({ success: false, message: 'Failed to sync participants' });
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to sync participants'
+            });
+        }
+    },
+
+    async recordParticipantJoin(req, res) {
+        try {
+            const { meetId } = req.params;
+
+            if (!meetId)
+                return res.status(400).json({
+                    success: false,
+                    message: 'Meeting ID is required'
+                });
+
+            const participant = await meetingService.recordParticipantJoin(
+                meetId,
+                req.user.userId
+            );
+
+            emitMeetingUpdated(
+                await meetingService.getMeetingAudienceIds(meetId),
+                meetId
+            );
+
+            return res.status(200).json({
+                success: true,
+                data: participant
+            });
+        } catch (error) {
+            if (error.statusCode) {
+                return res.status(error.statusCode).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+
+            if (error.message === 'Meeting not found')
+                return res.status(404).json({
+                    success: false,
+                    message: error.message
+                });
+
+            console.error('Error recording participant join:', error);
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to record participant join'
+            });
+        }
+    },
+
+    async recordParticipantLeave(req, res) {
+        try {
+            const { meetId } = req.params;
+
+            if (!meetId)
+                return res.status(400).json({
+                    success: false,
+                    message: 'Meeting ID is required'
+                });
+
+            const participant = await meetingService.recordParticipantLeave(
+                meetId,
+                req.user.userId
+            );
+
+            emitMeetingUpdated(
+                await meetingService.getMeetingAudienceIds(meetId),
+                meetId
+            );
+
+            return res.status(200).json({
+                success: true,
+                data: participant
+            });
+        } catch (error) {
+            if (error.statusCode) {
+                return res.status(error.statusCode).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+
+            if (error.message === 'Meeting not found')
+                return res.status(404).json({
+                    success: false,
+                    message: error.message
+                });
+
+            console.error('Error recording participant leave:', error);
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to record participant leave'
+            });
         }
     },
 
@@ -230,23 +434,45 @@ const meetingController = {
             const userId = req.user.userId;
 
             if (!meetId)
-                return res.status(400).json({ success: false, message: 'Meeting ID is required' });
+                return res.status(400).json({
+                    success: false,
+                    message: 'Meeting ID is required'
+                });
 
-            const audience = await meetingService.getMeetingAudienceIds(meetId);
-            const result = await meetingService.deleteMeeting(meetId, userId);
+            const audience =
+                await meetingService.getMeetingAudienceIds(meetId);
+
+            const result = await meetingService.deleteMeeting(
+                meetId,
+                userId
+            );
 
             emitMeetingUpdated(audience, meetId);
 
-            return res.status(200).json({ success: true, data: result });
+            return res.status(200).json({
+                success: true,
+                data: result
+            });
         } catch (error) {
-            if (error.message === 'Meeting not found')
-                return res.status(404).json({ success: false, message: error.message });
+            if (error.statusCode) {
+                return res.status(error.statusCode).json({
+                    success: false,
+                    message: error.message
+                });
+            }
 
-            if (error.message.includes('Unauthorized'))
-                return res.status(403).json({ success: false, message: error.message });
-            
+            if (error.message === 'Meeting not found')
+                return res.status(404).json({
+                    success: false,
+                    message: error.message
+                });
+
             console.error('Error deleting meeting:', error);
-            return res.status(500).json({ success: false, message: 'Failed to delete meeting' });
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to delete meeting'
+            });
         }
     },
 
@@ -256,27 +482,58 @@ const meetingController = {
             const userId = req.user.userId;
 
             if (!meetId)
-                return res.status(400).json({ success: false, message: 'Meeting ID is required' });
+                return res.status(400).json({
+                    success: false,
+                    message: 'Meeting ID is required'
+                });
 
-            const updated = await meetingService.togglePin(meetId, userId);
+            const updated = await meetingService.togglePin(
+                meetId,
+                userId
+            );
 
-            return res.status(200).json({ success: true, data: updated });
-        } catch (err) {
-            if (err.message === 'Meeting not found')
-                return res.status(404).json({ success: false, message: err.message });
-            
-            console.error('Error toggling pin:', err);
-            return res.status(500).json({ success: false, message: 'Failed to toggle pin' });
+            return res.status(200).json({
+                success: true,
+                data: updated
+            });
+        } catch (error) {
+            if (error.statusCode) {
+                return res.status(error.statusCode).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+
+            if (error.message === 'Meeting not found')
+                return res.status(404).json({
+                    success: false,
+                    message: error.message
+                });
+
+            console.error('Error toggling pin:', error);
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to toggle pin'
+            });
         }
     },
 
     async getAllMeetingPin(req, res) {
         try {
             const result = await meetingService.getAllMeetingPin();
-            return res.status(200).json({ success: true, data: result });
-        } catch (err) {
-            console.error('Error fetching pins:', err);
-            return res.status(500).json({ success: false, message: 'Failed to fetch pins' });
+
+            return res.status(200).json({
+                success: true,
+                data: result
+            });
+        } catch (error) {
+            console.error('Error fetching pins:', error);
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to fetch pins'
+            });
         }
     },
 
@@ -286,25 +543,47 @@ const meetingController = {
             const userId = req.user.userId;
 
             if (!meetId)
-                return res.status(400).json({ success: false, message: 'Meeting ID is required' });
+                return res.status(400).json({
+                    success: false,
+                    message: 'Meeting ID is required'
+                });
 
-            const updatedMeeting = await meetingService.startMeeting(meetId, userId);
+            const updatedMeeting = await meetingService.startMeeting(
+                meetId,
+                userId
+            );
 
             emitMeetingUpdated(
-                await meetingService.getMeetingAudienceIds(updatedMeeting.meetId),
+                await meetingService.getMeetingAudienceIds(
+                    updatedMeeting.meetId
+                ),
                 updatedMeeting.meetId
             );
 
-            return res.status(200).json({ success: true, data: updatedMeeting });
-        } catch (err) {
-            if (err.message === 'Meeting not found')
-                return res.status(404).json({ success: false, message: err.message });
+            return res.status(200).json({
+                success: true,
+                data: updatedMeeting
+            });
+        } catch (error) {
+            if (error.statusCode) {
+                return res.status(error.statusCode).json({
+                    success: false,
+                    message: error.message
+                });
+            }
 
-            if (err.message.includes('Unauthorized'))
-                return res.status(403).json({ success: false, message: err.message });
+            if (error.message === 'Meeting not found')
+                return res.status(404).json({
+                    success: false,
+                    message: error.message
+                });
 
-            console.error('Error starting meeting:', err);
-            return res.status(500).json({ success: false, message: 'Failed to start meeting' });
+            console.error('Error starting meeting:', error);
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to start meeting'
+            });
         }
     },
 
@@ -314,25 +593,47 @@ const meetingController = {
             const userId = req.user.userId;
 
             if (!meetId)
-                return res.status(400).json({ success: false, message: 'Meeting ID is required' });
+                return res.status(400).json({
+                    success: false,
+                    message: 'Meeting ID is required'
+                });
 
-            const updatedMeeting = await meetingService.endMeeting(meetId, userId);
+            const updatedMeeting = await meetingService.endMeeting(
+                meetId,
+                userId
+            );
 
             emitMeetingUpdated(
-                await meetingService.getMeetingAudienceIds(updatedMeeting.meetId),
+                await meetingService.getMeetingAudienceIds(
+                    updatedMeeting.meetId
+                ),
                 updatedMeeting.meetId
             );
 
-            return res.status(200).json({ success: true, data: updatedMeeting });
-        } catch (err) {
-            if (err.message === 'Meeting not found')
-                return res.status(404).json({ success: false, message: err.message });
+            return res.status(200).json({
+                success: true,
+                data: updatedMeeting
+            });
+        } catch (error) {
+            if (error.statusCode) {
+                return res.status(error.statusCode).json({
+                    success: false,
+                    message: error.message
+                });
+            }
 
-            if (err.message.includes('Unauthorized'))
-                return res.status(403).json({ success: false, message: err.message });
-            
-            console.error('Error ending meeting:', err);
-            return res.status(500).json({ success: false, message: 'Failed to end meeting' });
+            if (error.message === 'Meeting not found')
+                return res.status(404).json({
+                    success: false,
+                    message: error.message
+                });
+
+            console.error('Error ending meeting:', error);
+
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to end meeting'
+            });
         }
     }
 };

@@ -1,4 +1,5 @@
 const prisma = require('../../prisma/client');
+
 const {
     isNonEmptyString,
     isValidId,
@@ -10,22 +11,37 @@ const {
     DESC_MAX_LENGTH,
 } = require('./common.validator');
 
+class ValidatorError extends Error {
+    constructor(message, statusCode = 400) {
+        super(message);
+        this.name = 'ValidatorError';
+        this.statusCode = statusCode;
+    }
+}
+
+class AuthorizationError extends ValidatorError {
+    constructor(message = 'Unauthorized to perform this action') {
+        super(message, 403);
+        this.name = 'AuthorizationError';
+    }
+}
+
 const VALID_MEETING_STATUS = ['scheduled', 'started', 'completed', 'cancelled'];
 const VALID_MEETING_ROLE = ['organiser', 'participant', 'viewer'];
 const VALID_ATTENDANCE_STATUS = ['present', 'absent', 'pending'];
 
-function validateMeetingTime({ meetStart, meetEnd }) { 
-    if (!hasValue(meetStart) || !hasValue(meetEnd)) 
-        throw new Error('Meeting start and end time are required');
+function validateMeetingTime({ meetStart, meetEnd }) {
+    if (!hasValue(meetStart) || !hasValue(meetEnd))
+        throw new ValidatorError('Meeting start and end time are required');
 
     const start = new Date(meetStart);
     const end = new Date(meetEnd);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime()))
-        throw new Error('Invalid meeting date');
+        throw new ValidatorError('Invalid meeting date');
 
     if (start >= end)
-        throw new Error('Meeting end time must be after start time');
+        throw new ValidatorError('Meeting end time must be after start time');
 
     return { start, end };
 }
@@ -35,35 +51,45 @@ function validateParticipants(participants) {
         return;
 
     if (!Array.isArray(participants))
-        throw new Error('Participants must be an array');
+        throw new ValidatorError('Participants must be an array');
 
     participants.forEach((p, index) => {
         if (!p.userId)
-            throw new Error(`Participant at index ${index} missing userId`);
+            throw new ValidatorError(
+                `Participant at index ${index} missing userId`
+            );
 
         if (!isValidId(p.userId))
-            throw new Error(`Invalid userId at index ${index}`);
+            throw new ValidatorError(
+                `Invalid userId at index ${index}`
+            );
 
         if (p.role && !VALID_MEETING_ROLE.includes(p.role))
-            throw new Error(`Invalid role at index ${index}. Must be organiser, participant, or viewer`);
+            throw new ValidatorError(
+                `Invalid role at index ${index}. Must be organiser, participant, or viewer`
+            );
 
         if (p.attendance && !VALID_ATTENDANCE_STATUS.includes(p.attendance))
-            throw new Error(`Invalid attendance at index ${index}. Must be present, absent, or pending`);
+            throw new ValidatorError(
+                `Invalid attendance at index ${index}. Must be present, absent, or pending`
+            );
     });
 }
 
-async function validateParticipantConflicts({ userId,
+async function validateParticipantConflicts({
+    userId,
     participantIds = [],
     meetStart,
     meetEnd,
     excludeMeetId = null
 }) {
-    if (participantIds.length === 0) {
+    if (participantIds.length === 0)
         return;
-    }
 
-    // const { start, end } = validateMeetingTime(meetStart, meetEnd);
-	const { start, end } = validateMeetingTime({ meetStart, meetEnd });
+    const { start, end } = validateMeetingTime({
+        meetStart,
+        meetEnd
+    });
 
     const conflicts = await prisma.meetingParticipant.findMany({
         where: {
@@ -94,15 +120,15 @@ async function validateParticipantConflicts({ userId,
         const conflictUsers = [
             ...new Set(
                 conflicts.map(c => {
-                    if (c.user.userId === userId) {
+                    if (c.user.userId === userId)
                         return `(You) ${c.user.userName}`;
-                    }
+
                     return c.user.userName || c.userId;
                 })
             )
         ];
 
-        throw new Error(
+        throw new ValidatorError(
             `Meeting conflict detected for: ${conflictUsers.join(", ")}`
         );
     }
@@ -115,16 +141,16 @@ function validateCreateMeeting({
     meetDesc,
     meetStart,
     meetEnd,
-	participantIds
+    participantIds
 }) {
     if (!isNonEmptyString(workspaceId))
-        throw new Error('Workspace ID is required');
+        throw new ValidatorError('Workspace ID is required');
 
     if (!isNonEmptyString(spaceId))
-        throw new Error('Space ID is required');
+        throw new ValidatorError('Space ID is required');
 
     if (!isNonEmptyString(meetTitle))
-        throw new Error('Meeting title is required');
+        throw new ValidatorError('Meeting title is required');
 
     validateId(workspaceId, 'workspaceId');
     validateId(spaceId, 'spaceId');
@@ -132,15 +158,21 @@ function validateCreateMeeting({
     validateText(meetDesc, 'Meeting description', DESC_MAX_LENGTH);
     validateDate(meetStart, 'meetStart');
     validateDate(meetEnd, 'meetEnd');
-    validateMeetingTime({ meetStart, meetEnd });
 
-	if (hasValue(participantIds)) {
+    validateMeetingTime({
+        meetStart,
+        meetEnd
+    });
+
+    if (hasValue(participantIds)) {
         if (!Array.isArray(participantIds))
-            throw new Error('Participant IDs must be an array');
+            throw new ValidatorError('Participant IDs must be an array');
 
         participantIds.forEach((id, index) => {
             if (!isValidId(id))
-                throw new Error(`Invalid participant userId at index ${index}`);
+                throw new ValidatorError(
+                    `Invalid participant userId at index ${index}`
+                );
         });
     }
 
@@ -151,7 +183,7 @@ function validateCreateMeeting({
         meetDesc: hasValue(meetDesc) ? meetDesc.trim() : '',
         meetStart,
         meetEnd,
-		participantIds: participantIds || []
+        participantIds: participantIds || []
     };
 }
 
@@ -163,7 +195,7 @@ function validateUpdateMeeting({
     meetEnd
 }) {
     if (!isNonEmptyString(meetId))
-        throw new Error('Meeting ID is required');
+        throw new ValidatorError('Meeting ID is required');
 
     validateId(meetId, 'meetId');
     validateText(meetTitle, 'Meeting title', TITLE_MAX_LENGTH, true);
@@ -175,8 +207,12 @@ function validateUpdateMeeting({
     if (hasValue(meetEnd))
         validateDate(meetEnd, 'meetEnd');
 
-    if (hasValue(meetStart) && hasValue(meetEnd))
-        validateMeetingTime({ meetStart, meetEnd });
+    if (hasValue(meetStart) && hasValue(meetEnd)) {
+        validateMeetingTime({
+            meetStart,
+            meetEnd
+        });
+    }
 
     return {
         meetId: meetId.trim(),
@@ -194,7 +230,7 @@ function validateSyncParticipants({
     meetEnd
 }) {
     if (!isNonEmptyString(meetId))
-        throw new Error('Meeting ID is required');
+        throw new ValidatorError('Meeting ID is required');
 
     validateId(meetId, 'meetId');
     validateParticipants(participants);
@@ -205,8 +241,12 @@ function validateSyncParticipants({
     if (hasValue(meetEnd))
         validateDate(meetEnd, 'meetEnd');
 
-    if (hasValue(meetStart) && hasValue(meetEnd))
-        validateMeetingTime({ meetStart, meetEnd });
+    if (hasValue(meetStart) && hasValue(meetEnd)) {
+        validateMeetingTime({
+            meetStart,
+            meetEnd
+        });
+    }
 
     return {
         meetId: meetId.trim(),
@@ -216,7 +256,7 @@ function validateSyncParticipants({
     };
 }
 
-function validateMeetingRules({
+async function validateMeetingRules({
     meetId,
     userId,
     workspaceId,
@@ -226,16 +266,42 @@ function validateMeetingRules({
     validateId(userId, 'userId');
     validateId(workspaceId, 'workspaceId');
     validateId(spaceId, 'spaceId');
+
+    await validateMeetingCountPerDay(userId);
+}
+
+async function validateMeetingCountPerDay(userId) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const count = await prisma.meeting.count({
+        where: {
+            createdByUserId: userId,
+            createdAt: {
+                gte: today,
+                lt: tomorrow
+            }
+        }
+    });
+
+    if (count >= 10) {
+        throw new ValidatorError(
+            `You've reached the daily limit of meetings scheduled in a day.`
+        );
+    }
 }
 
 function validateMeetingExists(meeting) {
     if (!meeting)
-        throw new Error('Meeting not found');
+        throw new ValidatorError('Meeting not found', 404);
 }
 
 function validateMeetingAuthorization(meeting, userId) {
     if (meeting.createdByUserId !== userId)
-        throw new Error('Unauthorized to perform this action');
+        throw new AuthorizationError();
 }
 
 async function validateMeetingParticipant(meetId, userId) {
@@ -243,10 +309,14 @@ async function validateMeetingParticipant(meetId, userId) {
         where: {
             meetId,
             OR: [
-                { createdByUserId: userId },
+                {
+                    createdByUserId: userId
+                },
                 {
                     participants: {
-                        some: { userId }
+                        some: {
+                            userId
+                        }
                     }
                 }
             ]
@@ -258,21 +328,31 @@ async function validateMeetingParticipant(meetId, userId) {
     return meeting;
 }
 
+function validateMeetingNotEnded(meeting) {
+    if (meeting.meetEnd <= new Date()) {
+        throw new ValidatorError(
+            'Cannot update a meeting that has already ended'
+        );
+    }
+}
 
 module.exports = {
+    ValidatorError,
+    AuthorizationError,
+
     VALID_MEETING_STATUS,
     VALID_MEETING_ROLE,
     VALID_ATTENDANCE_STATUS,
+
     validateMeetingTime,
     validateParticipants,
-
     validateParticipantConflicts,
     validateMeetingRules,
     validateMeetingExists,
     validateMeetingAuthorization,
-
     validateCreateMeeting,
     validateUpdateMeeting,
     validateSyncParticipants,
-    validateMeetingParticipant
+    validateMeetingParticipant,
+    validateMeetingNotEnded
 };
