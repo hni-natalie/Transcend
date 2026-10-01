@@ -28,9 +28,11 @@ for reference:
 class LiveKitService {
   constructor() {
     this._room = null;
+    this.displayStream = null;
+    this.windowAudioTrack = null;
     this.audioElements = new Map();         // map for all audio tracks in room
     this.mediaStreams = new Map();          // map for all media streams in room
-    this.positionalAudios = new Map();      // map for all positional audios in room
+    this.positionalAudios = new Map();      // map for all positional audios in room <string, Map(string, posAudio)>
     this.audioManager = new AudioManager(); // manage own audio mic, mute state
     this.listeners = new Map();             // event listener
     this.isInitialized = false;
@@ -43,7 +45,7 @@ class LiveKitService {
       joinCount: 0,
       isLoading: false,
       loadingRoomName: null,
-      readyStreams: new Set(),
+      readyStreams: new Set(),            // set of userIds record where their streams is ready
       hasRemoteParticipant: false,
       error: null
     }
@@ -62,6 +64,15 @@ class LiveKitService {
   _setState(updates) {
     this._state = { ...this._state, ...updates };
     this.emit('stateChange', this._state);
+  }
+
+  _getCreateInnerMap(key, outer) {
+    let inner = outer.get(key);
+    if (!inner) {
+      inner = new Map();
+      outer.set(key, inner);
+    }
+    return inner;
   }
   
   getState(){
@@ -123,6 +134,51 @@ class LiveKitService {
   checkBrowserSupport() {
     return isBrowserSupported();
   }
+
+  async stopWindowAudio() {
+    const audioTrack = this.windowAudioTrack;
+    const room = this._room;
+
+    try {
+      if (audioTrack && this._room?.state === 'connected') {
+        await room.localParticipant.unpublishTrack(audioTrack, true);
+      }
+    } finally {
+      this.displayStream?.getTracks().forEach((track) => track.stop());
+      this.windowAudioTrack = null;
+      this.displayStream = null;
+    }
+  }
+
+  async shareWindowAudio() {
+    if (!this._room || this._room.state !== 'connected') {
+      throw new Error('Join voice space before sharing window audio.');
+    }
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      throw new Error('Window audio sharing is not supported in this browser.');
+    }
+    // Must run from direct user gesture so browser may open capture picker.
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    const [audioTrack] = stream.getAudioTracks();
+    if (!audioTrack) {
+      stream.getTracks().forEach((track) => track.stop());
+      throw new Error('No audio shared. Select a source with audio enabled in browser picker.');
+    }
+
+    await this.stopWindowAudio();
+    this.displayStream = stream;
+    this.windowAudioTrack = audioTrack;
+
+    try {
+      await this._room.localParticipant.publishTrack(audioTrack, { source: Track.Source.ScreenShareAudio });
+      audioTrack.addEventListener('ended', () => {
+        if (this.windowAudioTrack === audioTrack) void this.stopWindowAudio();
+      }, { once: true });
+    } catch (error) {
+      await this.stopWindowAudio();
+      throw error;
+    }
+  }
   /*
     mode must be either "room" || "call" || "video"
     room: spatial audio, call: non spatial audio, video: video call
@@ -162,7 +218,7 @@ class LiveKitService {
   }
 
   // setup room audio for remote participants
-  async setupRoomAudio(key, mediaStream) {
+  async setupRoomAudio(key, track, mediaStream) {
     await this.audioManager.resumeListener(); // .resume
     if (this.audioManager.listener.context.state !== 'running')
       console.error('AudioContext not running ', key);
@@ -178,12 +234,14 @@ class LiveKitService {
         audioElement.srcObject = mediaStream;
         audioElement.muted = true;  // Mute the element so it doesn't double-play
         audioElement.autoplay = true; // Start playback immediately
-        this.audioElements.set(key, audioElement);
+        let audioByTrack = this._getCreateInnerMap(key, this.audioElements)
+        audioByTrack.set(track.sid, audioElement);
 
         positionalAudio.setVolume(1);
         positionalAudio.isPlaying = true;
         positionalAudio.setMediaStreamSource(audioElement.srcObject);
-        this.positionalAudios.set(key, positionalAudio);
+        let streamsByTrack = this._getCreateInnerMap(key, this.positionalAudios);
+        streamsByTrack.set(track.sid, positionalAudio);
 
       // debug section
       const ctx = this.audioManager.listener.context;
@@ -200,78 +258,67 @@ class LiveKitService {
         console.log("✅ Positional Audio is currently playing");
       } else
         console.error("Positional Audio is not playing");
-      const pa = this.positionalAudios.get(key);
-      console.log('[audio] panner position:', pa.panner.positionX?.value, pa.panner.positionY?.value, pa.panner.positionZ?.value);
-      console.log('[audio] listener position:', this.audioManager.listener.position);
-      // console.warn('[audio] positionalAudio parent:', pa.parent?.name ?? 'NO PARENT — not in scene graph', '\nkey: ', key);
+      const paMap = this.positionalAudios.get(key);
+      for (const [sid, pa] of paMap)  {
+        console.log('[audio] panner position:', pa.panner.positionX?.value, pa.panner.positionY?.value, pa.panner.positionZ?.value);
+        console.log('[audio] listener position:', this.audioManager.listener.position);
+        console.warn('[audio] positionalAudio parent:', pa.parent?.name ?? 'NO PARENT — not in scene graph', '\nkey: ', key);
+      }
   }
 
   // this runs everytime when a track is subscribed
   async handleRoom(track, remoteParticipants) {
     const mediaStream = track.mediaStream;
-    this.mediaStreams.set(remoteParticipants.identity, mediaStream);
+    let mediaStreams = this._getCreateInnerMap(remoteParticipants.identity, this.mediaStreams);
+    mediaStreams.set(track.sid, mediaStream);
     // --------------------------------------------------------
-
-    // kiv
-    // const audioTrack = mediaStream?.getAudioTracks()[0];
-    // if (audioTrack) {
-    //   if (audioTrack.muted) {
-    //     console.log('[audio] waiting for RTP flow...');
-    //     await new Promise((resolve) => {
-    //       // This fires when the browser starts receiving RTP packets
-    //       audioTrack.addEventListener('unmute', () => {
-    //         console.log('[audio] RTP flowing, muted:', audioTrack.muted);
-    //         resolve();
-    //       }, { once: true });
-    //       // Safety net — if unmute never fires something else is wrong
-    //       setTimeout(() => {
-    //         console.warn('[audio] unmute timeout, muted still:', audioTrack.muted);
-    //         resolve();
-    //       }, 5000);
-    //     });
-    //   } else {
-    //     console.log('[audio] track already live, muted:', audioTrack.muted);
-    //   }
-    // }
-    // --------------------------------------------------------
-    await this.setupRoomAudio(remoteParticipants.identity, mediaStream);
+    await this.setupRoomAudio(remoteParticipants.identity, track, mediaStream);
     // this.emit('audio-track-subscribed', { id: remoteParticipants.identity });
     this.setReadyStreams(remoteParticipants.identity)
 
     // debug
     const tstream = this.mediaStreams.get(remoteParticipants.identity);
-    if (tstream instanceof MediaStream) {
-      console.log('Local: Valid MediaStream! ', remoteParticipants.identity);
-    }
-    else {
-      console.error('Local: Invalid media stream');
+    for (const [sid, stream] of tstream)  {
+      if (stream instanceof MediaStream) {
+        console.log('Local: Valid MediaStream! ', remoteParticipants.identity);
+      }
+      else {
+        console.error('Local: Invalid media stream');
+      }
     }
   }
 
   handleLeaveRoom(track, remoteParticipants) {
-    const mediaStream = this.mediaStreams.get(remoteParticipants.identity);
-    if (mediaStream) {
-      this.mediaStreams.delete(remoteParticipants.identity);
+    const key = remoteParticipants.identity;
+    const mediaStreams = this.mediaStreams.get(key);
+    if (mediaStreams?.delete(track.sid)) {
+      if (mediaStreams.size === 0) this.mediaStreams.delete(key);
       console.log("Removed media stream ", remoteParticipants.identity);
     }
-    const positionalAudio = this.positionalAudios.get(remoteParticipants.identity);
+
+    const positionalAudios = this.positionalAudios.get(key);
+    const positionalAudio = positionalAudios?.get(track.sid);
     if (positionalAudio) {
       positionalAudio.isPlaying = false;
       positionalAudio.disconnect();
-      // positionalAudio.parent.remove(positionalAudio);
-
-      this.positionalAudios.delete(remoteParticipants.identity);
+      // positionalAudio.parent?.remove(positionalAudio);
+      positionalAudios.delete(track.sid);
+      if (positionalAudios.size === 0) this.positionalAudios.delete(key);
       console.log("Removed positional audio ", remoteParticipants.identity);
     }
-    const audioElement = this.audioElements.get(remoteParticipants.identity);
+    const audioElements = this.audioElements.get(key);
+    const audioElement = audioElements?.get(track.sid);
     if (audioElement) {
+      audioElement.pause();
+      audioElement.srcObject = null;
       audioElement.remove();
-      this.audioElements.delete(remoteParticipants.identity);
+      audioElements.delete(track.sid);
+      if (audioElements.size === 0) this.audioElements.delete(key);
       console.log("Removed audio element ", remoteParticipants.identity);
     }
 
     // this.emit('audio-track-unsubscribed', { id: remoteParticipants.identity });
-    this.deleteReadyStreams(remoteParticipants.identity)
+    this.deleteReadyStreams(key)
   }
 
   handleCall(track, remoteParticipants) {
@@ -279,14 +326,21 @@ class LiveKitService {
     audioElement.autoplay = true;
     audioElement.volume = 1.0;
     // store this element to mute individual participants later
-    this.audioElements.set(remoteParticipants.identity, audioElement);
+    let audioByTrack = this.audioElements.get(remoteParticipants.identity);
+    if (!audioByTrack) {
+      audioByTrack = new Map();
+      this.audioElements.set(remoteParticipants.identity, audioByTrack);
+    }
+    audioByTrack.set(track.sid, audioElement);
   }
 
   handleLeaveCall(track, remoteParticipants) {
-    const audioElement = this.audioElements.get(remoteParticipants.identity);
+    const audioByTrack = this.audioElements.get(remoteParticipants.identity);
+    const audioElement = audioByTrack?.get(track.sid);
     if (audioElement) {
       audioElement.remove();
-      this.audioElements.delete(remoteParticipants.identity);
+      audioByTrack.delete(track.sid);
+      if (audioByTrack.size === 0) this.audioElements.delete(remoteParticipants.identity);
     }
     track.detach(); // Clean up audio elements
   }
@@ -433,6 +487,7 @@ class LiveKitService {
 
   // cleanup
   async disconnectFromRoom() {
+    await this.stopWindowAudio();
     if (this._room) {
       try {
         await this._room.localParticipant.setCameraEnabled(false);
@@ -446,6 +501,24 @@ class LiveKitService {
         this.setIsLoading(false);
         this.setCurrentRoomName(null);
         this.audioManager.cleanup();
+        this.audioElements.forEach((audioByTrack) => {
+          if (audioByTrack instanceof Map) {
+            audioByTrack.forEach((audio) => {
+              audio.pause();
+              audio.srcObject = null;
+              audio.remove();
+            });
+          }
+        });
+        this.audioElements.clear();
+        this.positionalAudios.forEach((positionalByTrack) => {
+          if (positionalByTrack instanceof Map) {
+            positionalByTrack.forEach((audio) => {
+              audio.isPlaying = false;
+              audio.disconnect();
+            });
+          }
+        });
         this.mediaStreams.clear();
         this.positionalAudios.clear();
 
