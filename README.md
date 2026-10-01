@@ -175,17 +175,17 @@ The database schema consists of entities supporting users, meetings, tasks, mess
 
 ---- 
 
-### Custom Major Modules - 2 points --- TO BE UPDATED ---
+### Custom Major Modules - 4 points
 
 | No | Modules | Team | Why Chosen | Key Challenges | How it adds value | Why deserve 2 points | 
 | --- | --- | --- | --- | --- | --- | --- |
 | 1. | *Advanced Meeting System* | Natalie | Meetings are a core part of WorkFrom's virtual workspace. | Integrates LiveKit video/audio, Egress recording, Socket.IO chat, attendance tracking, Faster-Whisper transcription, and Gemini summarisation. | Enables real-time collaboration while preserving and transforming meetings into useful transcripts and summaries. | Combines multiple complex real-time, media-processing, speech-to-text, and AI components into an end-to-end meeting workflow, making it substantially more complex than a basic CRUD feature. | 
-| 2. | *Custom User Management* | Lyara | Provides secure authentication and allows users to manage their personal profiles and account information. | Implemented user authentication with JWT. Users can update their profile information, upload avatars with a default avatar fallback, and view their profile information. Socket.IO provides real-time online presence. |
+| 2. | *Custom User Management* | Lyara | Allows users to manage their account information and availability. | Integrating profile management, avatar handling, global status updates, and real-time presence for self and team members, with personalised timezone to reflect user's local time | Gives users control over their identity, account information, and availability. Timezone settings personalise the experience by displaying information according to the user's local time, while real-time presence helps team members see who is currently available. | Covers multiple interconnected user-management functions including profile and avatar management, global status updates, timezone settings, and real-time presence. |
 
 
 --- 
 
-### Custom Minor Modules - 1 points
+### Custom Minor Modules - 4 points
 *Each module is worth 1 points.*
 
 | No | Modules | Team | Why Chosen | Key Challenges | How it adds value | Why deserve 1 points | 
@@ -195,7 +195,7 @@ The database schema consists of entities supporting users, meetings, tasks, mess
 | 3. | *Global Call Notification* | Hoi Ling | Keep users connected to important audio & video calls even when they are not actively looking at the page. | Difficult in handling global toast notifications, ensure user action gets communicated globally to different UI components & livekit services. | Reduces missed calls, make sure user always get notified on direct, urgent calls. | Extends the call globally across pages, ensure users are aware when someone is trying to reach them. | 
 | 4. | *Rate Limiting* | Hoi Ling | Protect the virtual workspace from excessive requests, abuse, and sudden traffic spikes. | Choosing an appropriate limit range that protects the app and also supporting legit user access. | Maintaining a stable experience for legitimate users, prevent automated clients sending excessive requests that consume server resources. | Reduces the impact of spam, automated requests, prevent repeated brute-force login attempts. | 
 
-#### Total Points: 27 points
+#### Total Points: 30 points
 
 ---- 
 
@@ -242,7 +242,7 @@ dev
 | Team Member | Contributions |
 |-------------|---------------|
 | [Lyara](https://github.com/rplra) | Product Design, Prisma Schema, Authentication (JWT,  Google OAuth2), User (Dashboard, Settings, Messages UI), Admin (Dashboard, User Mgmt, Activity Feed), GDPR, Public pages, Shared UI Components, Documentations |
-| [Hoi Ling](https://github.com/holickka) | 3D Office Scene (Three.js/React Three Fiber), LiveKit Audio/Video integration, Socket.IO real-time layer (frontend/backend), Shared UI components, Meetings UI, Audio/Video Call feature, Docker/Build tooling, Prisma Schema, Documentations |
+| [Hoi Ling](https://github.com/holickka) | 3D Office Scene (Three.js/React Three Fiber), LiveKit Audio/Video integration, Socket.IO real-time layer (frontend/backend), Shared UI components, Meetings UI, Docker/Build tooling, Rate Limiting, Prisma Schema, Documentations |
 | [Yee Joo](https://github.com/Joophang) | Messaging feature (frontend/backend), Attachment upload and validation, Socket.IO message handling, Task feature (frontend/backend), Prisma Schema |
 | [Natalie](https://github.com/hni-natalie) | Meetings feature (frontend/backend - Scheduling, Chat modal, Recording), LiveKit integration with Faster-Whisper, Recording transcription, AI summarisation, Shared UI Components, Prisma schema, PWA, README documentation |
 
