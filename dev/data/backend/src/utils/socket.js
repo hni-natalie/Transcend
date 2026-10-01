@@ -198,7 +198,7 @@ const getRoomObjs = async() => {
 }
 
 const getSpawnPosFromDpId = ( roomData, userDpId ) => {
-  const offset = randomPosition(2);
+  const offset = randomPosition(3);
 
   for (const [key, room] of Object.entries(roomData.positionData)) {
     if (room.accessLevel === 'department' && room.departmentId === userDpId) {
@@ -228,7 +228,7 @@ const initRoomComponents = async ( roomData ) => {
 
     const activeUsers = await apiClient.get('/users/status/online');
     const existingObjs = await getRoomObjs();
-    const roomParticles = await createDustParticles();
+    const roomParticles = await createDustParticles(300);
 
     const count = activeUsers.length;
     console.log('num of active users: ', count);
