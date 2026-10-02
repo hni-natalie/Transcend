@@ -6,6 +6,8 @@ const {
     validateId,
 } = require('./common.validator');
 
+const { ForbiddenError } = require('../utils/errors');
+
 const MAX_GROUP_NAME_LENGTH = 25;
 const MAX_MESSAGE_LENGTH = 2000;
 
@@ -69,6 +71,22 @@ function validateConversationId(conversationId) {
     return { conversationId: conversationId.trim() };
 }
 
+function validateConversationAuthorization(conversation, userId) {
+    if (conversation.createdByUserId !== userId)
+        throw new ForbiddenError();
+}
+
+function validateConversationMemberAuthorization(conversation, userId) {
+    const isMember = conversation.participants.some(
+        participant =>
+            participant.userId === userId 
+    );
+
+    if (!isMember) {
+        throw new ForbiddenError();
+    }
+}
+
 module.exports = {
     MAX_GROUP_NAME_LENGTH,
     MAX_MESSAGE_LENGTH,
@@ -77,4 +95,6 @@ module.exports = {
     validateCreateGroupConversation,
     validateSendMessage,
     validateConversationId,
+    validateConversationAuthorization,
+    validateConversationMemberAuthorization
 };

@@ -96,12 +96,17 @@ export function useMessages({ conversationId, kind}: UseMessagesOptions) {
   }, [socket, conversationId, addMessageToCache]);
 
   const { mutate: sendMessage } = useMutation({
-    mutationFn: (message: SendMessageInput) =>
-      messagesApi.sendMessage({
-        conversationId: conversationId!,
-        text: message.text,
-        attachments: message.attachments,
-      }),
+  mutationFn: (message: SendMessageInput) => {
+    if (!conversationId) {
+      throw new Error('No conversation selected');
+    }
+
+    return messagesApi.sendMessage({
+      conversationId,
+      text: message.text,
+      attachments: message.attachments,
+    });
+  },
     onSuccess: (message) => {
       addMessageToCache(message);
     },
