@@ -29,6 +29,7 @@ const taskService = {
 				createdAt: true,
 				updatedAt: true,
 				completedDate: true,
+				createdByUserId: true,
 				assignedTo: {
 					select: {
 						userId: true,

@@ -21,6 +21,7 @@ import { Task } from '@features/tasks/task.types';
 import { InputTextArea, InputDropdownChecklist, EmptyCard, getDisplayName, getDisplayAvatar } from '@/shared';
 import { DropdownChoice } from '@/shared/types/ui.types';
 import { useSocket, useToast } from "@/context";
+import { useAuth } from '@/features/auth/AuthContext';
 
 type TaskMember = {
   userId: string;
@@ -423,13 +424,23 @@ const TaskDetailModal = ({task, onClose, onUpdate, loading, error}: {
   );
 };
 
-const TaskCard = ({ task, onEdit, onDelete,}: {
+const TaskCard = ({
+  task,
+  onEdit,
+  onDelete,
+  currentUserId
+}: {
   task: Task;
   onEdit: () => void;
   onDelete: (task: Task) => void;
+  currentUserId?: string;
 }) => {
+
   const priority = task.assignedTo?.[0]?.taskPriority;
   const [showMenu, setShowMenu] = useState(false);
+
+  const isCreator =
+    task.createdByUserId === currentUserId;
   const displayDate = task.taskStatus === 'done' ? task.completedDate: task.dueDate;  
 
 //   const assignedUsersChips = (task.assignedTo ?? [])
@@ -456,10 +467,10 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
       // onClick={onClick}
       className="relative task-card hover:border-lime-300 transition-all"
     >
-      <div className="absolute right-4 top-6 cursor-pointer">
+      {isCreator && (
+    <div className="absolute right-4 top-6 cursor-pointer">
       <button
-        onClick={(e) => {
-          // e.stopPropagation();
+        onClick={() => {
           setShowMenu(!showMenu);
         }}
         className="cursor-pointer text-2xl text-gray-300 w-8 h-10 flex text-center justify-center rounded-md hover:bg-background-3"
@@ -469,31 +480,33 @@ const TaskCard = ({ task, onEdit, onDelete,}: {
 
       {showMenu && (
         <div className="absolute right-0 z-10 mt-2 w-24 rounded-xl bg-[#2a2a2a] p-2 shadow-xl">
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onEdit();
-                setShowMenu(false);
-              }}
-              className="w-full rounded-xl px-3 py-2 text-white-400 hover:bg-[#333]"
-            >
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit();
+              setShowMenu(false);
+            }}
+            className="w-full rounded-xl px-3 py-2 text-white-400 hover:bg-[#333]"
+          >
             Edit
           </button>
 
           <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onDelete(task);
-                setShowMenu(false);
-              }}
-              className="mt-2 w-full rounded-xl px-3 py-2 text-red-400 hover:bg-[#333]">
-              Delete
-            </button>
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(task);
+              setShowMenu(false);
+            }}
+            className="mt-2 w-full rounded-xl px-3 py-2 text-red-400 hover:bg-[#333]"
+          >
+            Delete
+          </button>
         </div>
       )}
     </div>
+  )}
 
       <h2 className="text-xl font-semibold mb-4 pr-8">
         {task.taskTitle}
@@ -556,12 +569,14 @@ const TaskColumn = ({
   title,
   tasks,
   onTaskClick,
-  onDelete
+  onDelete,
+  currentUserId
 }: {
   title: string;
   tasks: Task[];
   onTaskClick: (id: string) => void;
   onDelete: (task: Task) => void;
+  currentUserId?: string;
 }) => {
   return (
     <div>
@@ -585,6 +600,7 @@ const TaskColumn = ({
               task={task}
               onEdit={() => onTaskClick(task.taskId)}
               onDelete={onDelete}
+              currentUserId={currentUserId}
             />
           ))
         )}
@@ -594,6 +610,8 @@ const TaskColumn = ({
 };
 
 export const Tasks = () => {
+  const { user: currentUser } = useAuth();
+
   const { showToast } = useToast();
   const { socket } = useSocket();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -801,12 +819,15 @@ export const Tasks = () => {
             tasks={groupedTasks.backlog}
             onTaskClick={handleTaskClick}
             onDelete={setTaskPendingDeletion}
+            currentUserId={currentUser?.userId}
           />
+
           <TaskColumn
             title="Not Started"
             tasks={groupedTasks.notStarted}
             onTaskClick={handleTaskClick}
             onDelete={setTaskPendingDeletion}
+            currentUserId={currentUser?.userId}
           />
 
           <TaskColumn
@@ -814,6 +835,7 @@ export const Tasks = () => {
             tasks={groupedTasks.inProgress}
             onTaskClick={handleTaskClick}
             onDelete={setTaskPendingDeletion}
+            currentUserId={currentUser?.userId}
           />
 
           <TaskColumn
@@ -821,6 +843,7 @@ export const Tasks = () => {
             tasks={groupedTasks.done}
             onTaskClick={handleTaskClick}
             onDelete={setTaskPendingDeletion}
+            currentUserId={currentUser?.userId}
           />
         </div>
       </div>
