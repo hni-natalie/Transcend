@@ -50,17 +50,22 @@ const validateMeetingForm = (data: {
     description?: string;
     start: string;
     end: string;
+    mode: "create" | "edit";
+    originalStart?: string;
 }): string | null => {
     const trimmedTitle = data.title.trim();
     if (!trimmedTitle) {
         return "Meeting title is required.";
     }
+
     if (trimmedTitle.length > MEETING_TITLE_MAX_LENGTH) {
         return `Meeting title must be under ${MEETING_TITLE_MAX_LENGTH} characters.`;
     }
+    
     if (data.description && data.description.trim().length > MEETING_DESC_MAX_LENGTH) {
         return `Meeting description must be under ${MEETING_DESC_MAX_LENGTH} characters.`;
     }
+
     if (!data.start || !data.end) {
         return "Please select both start and end time.";
     }
@@ -72,8 +77,26 @@ const validateMeetingForm = (data: {
         return "Please enter valid meeting dates.";
     }
 
-    if (startDate < new Date()) {
-        return "Meeting start time cannot be in the past.";
+    const now = new Date();
+
+    if (data.mode === "create") {
+        if (startDate < now) {
+            return "Meeting start time cannot be in the past.";
+        }
+    }
+
+    if (data.mode === "edit") {
+        const originalStart = data.originalStart
+            ? new Date(data.originalStart)
+            : null;
+
+        const isStartTimeChanged =
+            originalStart &&
+            startDate.getTime() !== originalStart.getTime();
+
+        if (isStartTimeChanged && startDate < now) {
+            return "New meeting start time cannot be in the past.";
+        }
     }
 
     if (startDate >= endDate) {
@@ -304,37 +327,14 @@ export const ScheduleMeetingModal = ({
             description,
             start,
             end,
+            mode,
+            originalStart: meeting?.meetStart,
         });
 
 		if (validationError) {
             setErrorMessage(validationError);
             return;
 		}
-
-
-        // if (!title.trim()) {
-        //     setErrorMessage("Meeting title is required.");
-        // return;
-        // }
-
-        // if (!start || !end) {
-        //     setErrorMessage("Please select both start and end time.");
-        // return;
-        // }
-
-        // if (new Date(start) >= new Date(end)) {
-        //     setErrorMessage("Meeting start time must be before end time.");
-        //     return;
-        // } else if (
-        //     new Date(end).getTime() -
-        //     new Date(start).getTime()
-        //     < 5 * 60 * 1000
-        // ) {
-        //     setErrorMessage(
-        //         "Meeting duration too short and must be at least 5 minutes."
-        //     );
-        //     return;
-        // } 
 
         try {
             setLoading(true);
@@ -349,15 +349,6 @@ export const ScheduleMeetingModal = ({
                     meetEnd: new Date(end).toISOString(),
 					participantIds: selectedUserIds,
                 });
-
-                // await meetingApi.syncParticipants({
-                //     meetId: res.data.meetId,
-                //     participants: selectedUsers.map(user => ({
-                //         userId: user.userId,
-                //         role: user.role,
-                //         attendance: user.attendance,
-                //     }))
-                // });
 
 				showToast('success', 'Meeting scheduled successfully!');
                 onCreated?.();
