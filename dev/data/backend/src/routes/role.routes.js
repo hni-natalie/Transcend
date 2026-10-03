@@ -7,7 +7,8 @@ router.use(authMiddleware);
 router.get('/', roleController.getAllRoles);
 router.get('/:roleId', roleController.getRoleById);
 
-router.post('/', requireAdmin, roleController.createRole);
+// FOR FUTURE IMPLEMENTATION
+// router.post('/', requireAdmin, roleController.createRole); 
 // router.put('/:roleId', requireAdmin, roleController.updateRole);
 // router.delete('/:roleId', requireAdmin, roleController.deleteRole);
 

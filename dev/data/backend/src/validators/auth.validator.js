@@ -1,4 +1,4 @@
-const { isNonEmptyString, isValidEmail } = require('./common.validator');
+const { isNonEmptyString, isValidEmail, validateText } = require('./common.validator');
 
 // Validate email/password login payload
 function validateLogin({ userEmail, userPassword }) {
@@ -36,7 +36,28 @@ function validateGoogleLogin({ idToken }) {
     return { idToken };
 }
 
+// Validate Sign Up / access request payload
+function validateSignUp({ firstName, lastName, workEmail } = {}) {
+    if (!isNonEmptyString(firstName) || !isNonEmptyString(lastName) || !isNonEmptyString(workEmail)) {
+        throw new Error('All fields are required.');
+    }
+
+    const validFirstName = validateText(firstName, 'First Name', 100, true);
+    const validLastName = validateText(lastName, 'Last Name', 100, true);
+
+    if (!isValidEmail(workEmail)) {
+        throw new Error('Please enter a valid work email address.');
+    }
+
+    return {
+        firstName: validFirstName,
+        lastName: validLastName,
+        workEmail: workEmail.trim(),
+    };
+}
+
 module.exports = {
     validateLogin,
-    validateGoogleLogin
+    validateGoogleLogin,
+    validateSignUp,
 };

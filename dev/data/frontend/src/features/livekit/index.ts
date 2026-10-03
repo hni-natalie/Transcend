@@ -7,6 +7,7 @@ export { ControlBar } from './components/ControlBar'
 export { ParticipantTile } from './components/ParticipantTile'
 export { ParticipantAvatar } from './components/ParticipantAvatar'
 export { FocusLayout } from './components/FocusLayout'
+export { ModalShareAudio } from './components/ModalShareAudio'
 
 export { useLiveKit } from './hooks/useLiveKit'
 export { AudioManager, isAudioSupported } from './services/audioManager'

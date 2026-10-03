@@ -1,7 +1,16 @@
 const prisma = require('../../prisma/client');
 const { MeetingRole, AttendanceStatus } = require('@prisma/client');
-const { validateMeetingExists, validateMeetingAuthorization, validateMeetingRules, validateMeetingTime, validateParticipantConflicts } = require('../validators/meeting.validator');
+const { 
+    validateMeetingExists, 
+    validateMeetingAuthorization, 
+    validateMeetingTime, 
+    validateParticipantConflicts, 
+    validateMeetingParticipant,
+    validateMeetingNotEnded
+} = require('../validators/meeting.validator');
 const { logMeetingActivity } = require('../utils/activity');
+
+const ATTENDANCE_MIN_DURATION_MS = 5 * 60 * 1000;
 
 const normalizeDateTime = (date) => {
     if (!date) return date;
@@ -10,40 +19,25 @@ const normalizeDateTime = (date) => {
 };
 
 const meetingService = {
-    // Search for meeting that created and invited by the specific user
-    async getAllMeetings(userId) {
-        const meetings = await prisma.meeting.findMany({
-            include: {
-				space: {
-                    select: { spaceName: true }
-                },
-                _count: {
-                    select: {
-                        participants: true
+    async getMeetingById(meetingId, userId) {
+        return prisma.meeting.findFirst({
+            where: {
+                meetId: meetingId,
+                OR: [
+                    {
+                        createdByUserId: userId
+                    },
+                    {
+                        participants: {
+                            some: {
+                                userId
+                            }
+                        }
                     }
-                }
-            }
-        });
-
-        // fetch all pins for this user once
-        const pins = await prisma.meetingPin.findMany({
-            where: { userId },
-            select: { meetId: true }
-        });
-
-        const pinnedSet = new Set(pins.map(p => p.meetId));
-
-        return meetings.map(meeting => ({
-            ...meeting,
-            pinned: pinnedSet.has(meeting.meetId)
-        }));
-    },
-
-    async getMeetingById(meetingId) {
-        return prisma.meeting.findUnique({
-            where: { meetId: meetingId },
+                ]
+            },
             include: {
-				space: {
+                space: {
                     select: { spaceName: true }
                 },
                 participants: {
@@ -51,11 +45,13 @@ const meetingService = {
                         userId: true,
                         role: true,
                         attendance: true,
+                        meetingJoinAt: true,
+                        meetingLeaveAt: true,
                         user: {
                             select: {
                                 userName: true,
                                 userEmail: true,
-								deletedAt: true
+                                deletedAt: true
                             }
                         }
                     }
@@ -188,19 +184,6 @@ const meetingService = {
 			participantIds
         } = meetingData;
 
-        // validateRequiredStrings({
-        //     workspaceId,
-        //     spaceId,
-        //     userId,
-        //     meetTitle
-        // });
-
-        // if (containsSuspiciousMarkup(meetTitle) || containsSuspiciousMarkup(meetDesc)) {
-        //     throw new Error('Input contains suspicious markup');
-        // }
-
-        validateMeetingRules({ workspaceId, spaceId, userId });
-
         const normalizedStart = normalizeDateTime(meetStart);
         const normalizedEnd = normalizeDateTime(meetEnd);
 
@@ -209,14 +192,6 @@ const meetingService = {
             meetStart: normalizedStart,
             meetEnd: normalizedEnd
         });
-
-        // Validate creator has no meeting conflict
-        // await validateParticipantConflicts({
-        //     userId,
-        //     participantIds: [userId, ...participantIds],
-        //     meetStart: normalizedStart,
-        //     meetEnd: normalizedEnd
-        // });
 
 		// Validate participant conflicts
 		const allParticipantIds = [ ...new Set([userId, ...(participantIds || [])]) ];
@@ -251,7 +226,7 @@ const meetingService = {
                     meetId: newMeeting.meetId,
                     userId,
                     role: MeetingRole.organiser,
-                    attendance: AttendanceStatus.present
+                    attendance: AttendanceStatus.pending
                 }
             });
 
@@ -294,15 +269,6 @@ const meetingService = {
             meetEnd
         } = data;
 
-        // validateRequiredStrings({ meetTitle });
-
-        // if (containsSuspiciousMarkup(meetTitle) || containsSuspiciousMarkup(meetDesc)) {
-        //     throw new Error('Input contains suspicious markup');
-        // }
-
-        // const normalizedStart = normalizeDateTime(meetStart);
-        // const normalizedEnd = normalizeDateTime(meetEnd);
-
         const meeting = await prisma.meeting.findUnique({
             where: { meetId },
             include: {
@@ -312,17 +278,13 @@ const meetingService = {
             }
         });
 
-        // if (!meeting) 
-        //     throw new Error("Meeting not found");
-
-        // if (meeting.createdByUserId !== userId)
-        //     throw new Error('Unauthorized to update this meeting');
-
         validateMeetingExists(meeting);
         validateMeetingAuthorization(meeting, userId);
+        validateMeetingNotEnded(meeting);
 
 		const normalizedStart = normalizeDateTime(meetStart);
         const normalizedEnd = normalizeDateTime(meetEnd);
+        const resetAttendanceTimes = meeting.meetStart < new Date();
 
         // Validate time if changed
         validateMeetingTime({
@@ -331,15 +293,27 @@ const meetingService = {
         });
 
         // Update meeting
-		const updatedMeeting = await prisma.meeting.update({
-        where: { meetId },
-        data: {
-            meetTitle,
-            meetDesc,
-            meetStart: normalizedStart,
-            meetEnd: normalizedEnd
-        }
-		});
+        const updatedMeeting = await prisma.$transaction(async (tx) => {
+            const updateMeeting = await prisma.meeting.update({
+            where: { meetId },
+            data: {
+                meetTitle,
+                meetDesc,
+                meetStart: normalizedStart,
+                meetEnd: normalizedEnd
+            }
+            });
+            if (resetAttendanceTimes) {
+                await tx.meetingParticipant.updateMany({
+                where: { meetId },
+                data: {
+                    meetingJoinAt: null,
+                    meetingLeaveAt: null,
+                },
+                });
+            }
+            return updateMeeting;
+        })
 
 		await logMeetingActivity({
 			workspaceId: meeting.workspaceId,
@@ -357,14 +331,6 @@ const meetingService = {
         const meeting = await prisma.meeting.findUnique({
             where: { meetId }
         });
-
-        // if (!meeting) {
-        //     throw new Error("Meeting not found");
-        // }
-
-        // if (meeting.createdByUserId !== userId) {
-        //     throw new Error("Unauthorized to update this meeting");
-        // }
 
         validateMeetingExists(meeting);
         validateMeetingAuthorization(meeting, userId);
@@ -397,30 +363,99 @@ const meetingService = {
 
         return prisma.$transaction(async (tx) => {
 
-            // Remove all current participants except organiser
+            const participantIds = participants.map(({ userId: participantId }) => participantId);
+
+            // Only remove users no longer invited. Deleting and recreating every
+            // participant would discard their latest attendance session.
             await tx.meetingParticipant.deleteMany({
                 where: {
                     meetId,
                     userId: {
-                        not: meeting.createdByUserId
+                        notIn: participantIds
                     }
                 }
             });
 
-            // Add participants except creator
-            return tx.meetingParticipant.createMany({
-                data: participants
-                    .filter(
-                        p => p.userId !== meeting.createdByUserId
-                    )
-                    .map(p => ({
+            await Promise.all(participants.map((participant) => tx.meetingParticipant.upsert({
+                where: {
+                    meetId_userId: {
                         meetId,
-                        userId: p.userId,
-                        role: p.role ?? MeetingRole.participant,
-                        attendance: p.attendance ?? AttendanceStatus.pending
-                    }))
-            });
+                        userId: participant.userId
+                    }
+                },
+                create: {
+                    meetId,
+                    userId: participant.userId,
+                    role: participant.role ?? MeetingRole.participant,
+                    attendance: participant.attendance ?? AttendanceStatus.pending
+                },
+                // Manual participant sync may change role/attendance, but must
+                // preserve latest join/leave timestamps for retained users.
+                update: {
+                    role: participant.role ?? MeetingRole.participant,
+                    attendance: participant.attendance ?? AttendanceStatus.pending
+                }
+            })));
+
+            return tx.meetingParticipant.findMany({ where: { meetId } });
         });
+    },
+
+    async recordParticipantJoin(meetId, userId) {
+        await validateMeetingParticipant(meetId, userId);
+
+        return prisma.meetingParticipant.update({
+            where: { meetId_userId: { meetId, userId } },
+            data: {
+                meetingJoinAt: new Date(),
+                meetingLeaveAt: null
+            }
+        });
+    },
+
+    async recordParticipantLeave(meetId, userId) {
+        await validateMeetingParticipant(meetId, userId);
+
+        const participant = await prisma.meetingParticipant.findUnique({
+            where: { meetId_userId: { meetId, userId } }
+        });
+
+        if (!participant?.meetingJoinAt) return participant;
+
+        const meetingLeaveAt = new Date();
+        const attendedLongEnough = meetingLeaveAt.getTime() - participant.meetingJoinAt.getTime()
+            > ATTENDANCE_MIN_DURATION_MS;
+
+        const isHost = participant.role?.toLowerCase() === 'organiser';
+
+        const updated = await prisma.$transaction(async (tx) => {
+            // Update the current participant
+            const participant = await tx.meetingParticipant.update({
+                where: { meetId_userId: { meetId, userId } },
+                data: {
+                meetingLeaveAt,
+                ...(attendedLongEnough && { attendance: AttendanceStatus.present }),
+                },
+            });
+
+            // If host, mark everyone who never joined as absent
+            if (isHost) {
+                await tx.meetingParticipant.updateMany({
+                where: {
+                    meetId,
+                    meetingJoinAt: null,     // never joined
+                    userId: { not: userId }, // skip self(host)
+                },
+                data: {
+                    attendance: AttendanceStatus.absent,
+                },
+                });
+            }
+
+            return participant;
+        });
+
+        return updated;
     },
 
     // Delete 
@@ -429,11 +464,6 @@ const meetingService = {
 			where: { meetId },
 			include: { space: { select: { spaceName: true } } }
 		});
-		// if (!meeting) 
-		// 	throw new Error('Meeting not found');
-
-		// if (meeting.createdByUserId !== userId) 
-		// 	throw new Error('Unauthorized to delete this meeting');
 
         validateMeetingExists(meeting);
         validateMeetingAuthorization(meeting, userId);
@@ -456,8 +486,8 @@ const meetingService = {
             where: { meetId }
         });
 
-        // if (!meeting) { throw new Error('Meeting not found'); }
 		validateMeetingExists(meeting);
+        validateMeetingAuthorization(meeting, userId);
 
         // Check if already pinned by THIS user
         const existingPin = await prisma.meetingPin.findUnique({
@@ -466,7 +496,7 @@ const meetingService = {
             }
         });
 
-        // 3. Toggle
+        // Toggle
         if (existingPin) {
             // Unpin
             await prisma.meetingPin.delete({
@@ -495,13 +525,6 @@ const meetingService = {
             where: { meetId }
         });
 
-        // if (!meeting) {
-        //     throw new Error('Meeting not found');
-        // }
-
-        // if (meeting.createdByUserId !== userId) {
-        //     throw new Error('Unauthorized to start this meeting');
-        // }
 		validateMeetingExists(meeting);
         validateMeetingAuthorization(meeting, userId);
 
@@ -515,14 +538,6 @@ const meetingService = {
         const meeting = await prisma.meeting.findUnique({
             where: { meetId }
         });
-        
-        // if (!meeting) {
-        //     throw new Error('Meeting not found');
-        // }
-
-        // if (meeting.createdByUserId !== userId) {
-        //     throw new Error('Unauthorized to end this meeting');
-        // }
 
 		validateMeetingExists(meeting);
         validateMeetingAuthorization(meeting, userId);
@@ -533,7 +548,6 @@ const meetingService = {
         });
     },
 
-    
 }
 
 module.exports = meetingService;

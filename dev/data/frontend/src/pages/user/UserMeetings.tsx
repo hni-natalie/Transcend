@@ -354,6 +354,8 @@ export const Meetings = () => {
 					meetings={grouped.today}
 					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
+					onViewRecording={handleViewRecording}
+					onViewChat={handleViewChat}	
 					onViewMore={handleViewMore}
 				/>
 
@@ -363,6 +365,8 @@ export const Meetings = () => {
 					meetings={grouped.upcoming}
 					userId={user?.userId ?? ""}
 					onTogglePin={handleTogglePin}
+					onViewRecording={handleViewRecording}
+					onViewChat={handleViewChat}	
 					onViewMore={handleViewMore}
 				/>
 

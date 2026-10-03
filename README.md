@@ -3,6 +3,8 @@
 <hr style="height:4px;border:none;color:#333;background-color:#333;">
 <p >
 
+# About
+
 ## Description 
 
 ### WorkFrom, The Virtual Workspace App.
@@ -139,14 +141,13 @@ The database schema consists of entities supporting users, meetings, tasks, mess
 
 
 ## Modules 
-*Each major module is worth 2 points. Each minor module is worth 2 points.*
+*Each major module is worth 2 points. Each minor module is worth 1 points.*
 
-### General Modules 
+### General Modules - 10 points
 | Module | Modules | Team | Justification | Implementation |
 | --- | --- | --- | --- | --- |
 | Major | *Framework for Frontend and Backend - React, Vite, Node.js, Express* | All | Provides a consistent and scalable foundation for developing the client-side interface and server-side API. | React and Vite are used for the frontend application, while Node.js and Express are used to implement the backend REST API. |
 | Major | *Real-time Features - Socket.IO, LiveKit* | All | Real-time communication is required across the virtual 3D office, meetings, messaging, and dashboard. | *Socket.IO*: Real-time updates for task changes, meeting scheduling, messages, dashboard data, and virtual 3D office. *LiveKit*: Real-time voice and video communication for the virtual office and meetings. |
-| Major | *Public API* | All | Provides a structured interface for the frontend and external clients to interact with the application's backend and database through RESTful HTTP endpoints. | Implemented using Node.js and Express, with RESTful endpoints exposed under `/api`. The API provides endpoints for users, authentication, roles, departments, spaces, tasks, meetings, recordings, messages, and activities. `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` methods are used for CRUD operations. |
 | Major | *Advanced Permissions* | Lyara | Provides role-based access control with different permissions and views for administrators and regular users. | Implemented role-based access control with admin and user roles. Admins can view organisation-wide activity logs and manage users, while regular users can access features such as creating tasks, scheduling meetings, and using chat. Protected routes enforce access based on the user's assigned role. |
 | Minor | *ORM* | All | Prisma ORM is used to interact with the PostgreSQL database, providing a type-safe and efficient way to manage data models and queries. | Prisma is integrated into the backend, allowing for easy database schema management and query execution. |
 | Minor | *Progressive Web App (PWA)* | Natalie | Enables an installable application with offline support. | Integrated `vite-plugin-pwa` into the Vite configuration and enabled automatic service-worker updates using `registerType: 'autoUpdate'`.| 
@@ -156,11 +157,11 @@ The database schema consists of entities supporting users, meetings, tasks, mess
 
 --- 
 
-### Feature Modules - 10 points 
-*Each module is worth 1 point.*
+### Feature Modules - 12 points 
+*Each major module is worth 2 points. Each minor module is worth 1 points.*
+
 | Module| Modules | Team | Justification | Implementation |
 | --- | --- | --- | --- | --- |
-| Major | *Standard User Management* | Lyara | Provides secure authentication and allows users to manage their personal profiles and account information. | Implemented user authentication with JWT. Users can update their profile information, upload avatars with a default avatar fallback, and view their profile information. Socket.IO provides real-time online presence. |
 | Major | *User Interaction (Chat, Profile)* | Yee Joo, Hoi Ling, Lyara | Provides communication and user identity features that allow users to interact and collaborate within the platform. | Chat: Socket.IO provides real-time message delivery, while conversation and message data are persisted in PostgreSQL using Prisma. Profile: User profiles are stored and managed through the backend, supporting personal information. |
 | Major | *Advanced 3D feature* | Hoi Ling | Provides an immersive 3D virtual office environment with real-time collaboration and communication features. | Implemented a 3D office scene using Three.js and React Three Fiber, allowing users to navigate the space, interact with objects, and communicate with others in real-time. Socket.IO synchronizes user presence and positions, while LiveKit provides proximity-based voice communication. |
 | Major | *Advanced Analytic Dashboard* | Lyara | Provides organisation-wide insights into user activity, attendance, and space utilisation through interactive data visualisations and activity analytics. | Implemented an admin analytics dashboard with graphs for user attendance and space usage, as well as activity logs covering user activity, meetings, tasks, and user entry and exit events. Administrators can filter activity logs by time range and export the filtered activity data for further analysis. |
@@ -174,23 +175,27 @@ The database schema consists of entities supporting users, meetings, tasks, mess
 
 ---- 
 
-### Custom Major Modules - 2 points
-
+### Custom Major Modules - 4 points
 
 | No | Modules | Team | Why Chosen | Key Challenges | How it adds value | Why deserve 2 points | 
 | --- | --- | --- | --- | --- | --- | --- |
 | 1. | *Advanced Meeting System* | Natalie | Meetings are a core part of WorkFrom's virtual workspace. | Integrates LiveKit video/audio, Egress recording, Socket.IO chat, attendance tracking, Faster-Whisper transcription, and Gemini summarisation. | Enables real-time collaboration while preserving and transforming meetings into useful transcripts and summaries. | Combines multiple complex real-time, media-processing, speech-to-text, and AI components into an end-to-end meeting workflow, making it substantially more complex than a basic CRUD feature. | 
+| 2. | *Custom User Management* | Lyara | Allows users to manage their account information and availability. | Integrating profile management, avatar handling, global status updates, and real-time presence for self and team members, with personalised timezone to reflect user's local time | Gives users control over their identity, account information, and availability. Timezone settings personalise the experience by displaying information according to the user's local time, while real-time presence helps team members see who is currently available. | Covers multiple interconnected user-management functions including profile and avatar management, global status updates, timezone settings, and real-time presence. |
+
 
 --- 
 
-### Custom Minor Modules - 1 points
+### Custom Minor Modules - 4 points
 *Each module is worth 1 points.*
 
 | No | Modules | Team | Why Chosen | Key Challenges | How it adds value | Why deserve 1 points | 
 | --- | --- | --- | --- | --- | --- | --- |
 | 1. | *Task Management* | Yee Joo | Provides a structured way for users to assign and manage work within the virtual workspace. | Supports task assignment, priority levels, due dates, status tracking, and validation across the frontend and backend. | Helps teams organise responsibilities, monitor progress, and keep track of deadlines. | It provides straightforward task management capabilities designed for ease of use. | 
+| 2. | *3D Spatial Audio* | Hoi Ling |  Transforms the 3D social space from a visual experience into a more immersive social environment. | Difficulties in managing multiple positionalAudio object handling for local & remote players, managing different browser behaviours on giving media track & audio access. | Helps team organise responsibilities, monitor progress, and keep track of deadlines. | Users can hear conversations based on where people are located, making interactions feel more natural and spatially meaningful. | 
+| 3. | *Global Call Notification* | Hoi Ling | Keep users connected to important audio & video calls even when they are not actively looking at the page. | Difficult in handling global toast notifications, ensure user action gets communicated globally to different UI components & livekit services. | Reduces missed calls, make sure user always get notified on direct, urgent calls. | Extends the call globally across pages, ensure users are aware when someone is trying to reach them. | 
+| 4. | *Rate Limiting* | Hoi Ling | Protect the virtual workspace from excessive requests, abuse, and sudden traffic spikes. | Choosing an appropriate limit range that protects the app and also supporting legit user access. | Maintaining a stable experience for legitimate users, prevent automated clients sending excessive requests that consume server resources. | Reduces the impact of spam, automated requests, prevent repeated brute-force login attempts. | 
 
-#### Total Points: 29 points
+#### Total Points: 30 points
 
 ---- 
 
@@ -237,7 +242,7 @@ dev
 | Team Member | Contributions |
 |-------------|---------------|
 | [Lyara](https://github.com/rplra) | Product Design, Prisma Schema, Authentication (JWT,  Google OAuth2), User (Dashboard, Settings, Messages UI), Admin (Dashboard, User Mgmt, Activity Feed), GDPR, Public pages, Shared UI Components, Documentations |
-| [Hoi Ling](https://github.com/holickka) | 3D Office Scene (Three.js/React Three Fiber), LiveKit Audio/Video integration, Socket.IO real-time layer (frontend/backend), Shared UI components, Meetings UI, Audio/Video Call feature, Docker/Build tooling, Prisma Schema, Documentations |
+| [Hoi Ling](https://github.com/holickka) | 3D Office Scene (Three.js/React Three Fiber), LiveKit Audio/Video integration, Socket.IO real-time layer (frontend/backend), Shared UI components, Meetings UI, Docker/Build tooling, Rate Limiting, Prisma Schema, Documentations |
 | [Yee Joo](https://github.com/Joophang) | Messaging feature (frontend/backend), Attachment upload and validation, Socket.IO message handling, Task feature (frontend/backend), Prisma Schema |
 | [Natalie](https://github.com/hni-natalie) | Meetings feature (frontend/backend - Scheduling, Chat modal, Recording), LiveKit integration with Faster-Whisper, Recording transcription, AI summarisation, Shared UI Components, Prisma schema, PWA, README documentation |
 
@@ -246,6 +251,10 @@ dev
 - **[Flaticon](https://www.flaticon.com/)** - Magnific
 - **[mont gomery](https://www.figma.com/@designproduct?fuid=1180451303293992827)** - [Stratis UI Icons](https://www.figma.com/community/file/1177180791780461401/stratis-ui-icons-1000-free-figma-icons?q_id=4bb3bea7-7efd-40ec-82e3-9fb5fb21e6b7&fuid=1180451303293992827)
 - **[Adobe Firefly](https://firefly.adobe.com/)** - AI-generated visual asset (WorkFrom Landing Page Illustration)
+
+## AI usage
+
+AI was used in this project as a tool to aid learning, debugging, drafting documentations & support certain aspects of its development and functionality. All code was reviewed, understood, written and adapted manually.
 
 ## References 
 - [Real-time communication with Socket.io](https://videosdk.live/developer-hub/socketio/expressjs-socketio)

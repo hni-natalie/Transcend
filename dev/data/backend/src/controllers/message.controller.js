@@ -9,6 +9,7 @@ const {
     validateRemoveParticipant,
     validateConversationId,
     validateAttachmentId,
+    validateRenameGroup,
 } = require('../validators/message.validator');
 
 const { validateAttachment, validateAvatar } = require('../validators/file.validator');
@@ -208,6 +209,32 @@ const messageController = {
 				error,
 				'Failed to delete conversation'
 			);
+		}
+	},
+
+	// Rename group
+	async renameGroup(req, res) {
+		try {
+			const { id } = req.params;
+			const { userId } = req.user;
+
+			let validated;
+			try {
+				validated = validateRenameGroup(req.body);
+			} catch (validationErr) {
+				return res.status(400).json({ error: validationErr.message });
+			}
+
+			await messageService.updateGroupName(id, userId, validated.groupName);
+			console.log('group.renamed:', id);
+			getIO().emit('messageUpdated');
+			return res.json({ success: true, groupName: validated.groupName });
+		} catch (error) {
+			if (error.message.includes('not found') || error.message.includes('not the group creator')) {
+				return res.status(403).json({ error: error.message });
+			}
+			console.error('Error renaming group:', error);
+			return res.status(500).json({ error: 'Failed to rename group' });
 		}
 	},
 

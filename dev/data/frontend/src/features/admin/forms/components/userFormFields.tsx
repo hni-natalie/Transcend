@@ -101,9 +101,10 @@ export function UserFormFields({
 
         <PasswordField
           title="Password"
-          placeholder={isEdit ? "Leave blank to keep current password" : "Leave blank to auto-generate"}
+          placeholder={isEdit ? "Leave blank to keep current password" : "Enter temporary password"}
           value={formData.password}
           onChange={onPasswordChange}
+          required={!isEdit}
           className="bg-background"
         />
 

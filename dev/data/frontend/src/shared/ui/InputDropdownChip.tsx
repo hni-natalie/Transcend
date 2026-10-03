@@ -214,7 +214,7 @@ export function InputDropdownChip({
                   />
                   <InputDropdown
                       choices={attendanceOptions}
-                      value={user.attendance}
+                      value={user.attendance.status}
                       onChange={(e) => handleAttendanceUpdate(user.userId, e.target.value as | "present" | "absent" | "pending")}
                       className="text-xs"
                   />

@@ -2,6 +2,7 @@ export const ROUTE_PATH = {
 	// public
 	HOME: '/',
 	LOGIN: '/login',
+	SIGNUP: '/signup',
 	TERMS: '/terms',
 	PRIVACY: '/privacy',
 

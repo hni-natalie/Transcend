@@ -43,6 +43,7 @@ Authorization: Bearer <your-token>
 |:---|:---|:---|:---|
 | `POST` | `/api/auth/login` | Login with email and password | Public |
 | `POST` | `/api/auth/google` | Login / authenticate with Google OAuth credential | Public |
+| `POST` | `/api/auth/signup` | Register a new user account | Public |
 | `GET` | `/api/auth/me` | Validate session and get current authenticated user profile | Authenticated |
 | `POST` | `/api/auth/logout` | Logout user, clear session and update presence | Authenticated |
 
@@ -51,7 +52,6 @@ Authorization: Bearer <your-token>
 ### 3. Users (`/api/users`)
 | Method | Endpoint | Description | Access |
 |:---|:---|:---|:---|
-| `GET` | `/api/users/me` | Get current user's profile | Authenticated |
 | `PATCH` | `/api/users/me` | Update current user's profile (name, title, timezone, city, etc.) | Authenticated |
 | `GET` | `/api/users/dashboard` | Get current user's personal dashboard summary and stats | Authenticated |
 | `PATCH` | `/api/users/status` | Update current user's presence status (`offline`, `online`, `focus`, `in_meeting`, `away`) | Authenticated |
@@ -61,8 +61,8 @@ Authorization: Bearer <your-token>
 | `POST` | `/api/users/avatar` | Upload and update profile avatar image (multipart form data) | Authenticated |
 | `GET` | `/api/users/me/data-export` | Request and download personal data export (GDPR) | Authenticated |
 | `POST` | `/api/users/me/deletion-request` | Request account deletion (GDPR compliance) | Authenticated |
-| `GET` | `/api/users` | List all active users in workspace | Authenticated |
-| `GET` | `/api/users/:id` | Get user details by ID | Authenticated |
+| `GET` | `/api/users/directory` | Get member directory list in workspace | Authenticated |
+| `GET` | `/api/users` | List all active users in workspace (admin user management) | Admin only |
 | `GET` | `/api/users/dashboard/metrics` | Get workspace admin dashboard metrics & analytics | Admin only |
 | `POST` | `/api/users` | Create a new user account | Admin only |
 | `PATCH` | `/api/users/:id` | Update user details, assigned role, or department | Admin only |
@@ -77,7 +77,6 @@ Authorization: Bearer <your-token>
 |:---|:---|:---|:---|
 | `GET` | `/api/roles` | List all roles | Authenticated |
 | `GET` | `/api/roles/:roleId` | Get role details by ID | Authenticated |
-| `POST` | `/api/roles` | Create a new role | Admin only |
 
 ---
 
@@ -87,7 +86,6 @@ Authorization: Bearer <your-token>
 | `GET` | `/api/departments` | List all departments with members and lead info | Authenticated |
 | `GET` | `/api/departments/dpName` | List all department names | Authenticated |
 | `GET` | `/api/departments/:dpId` | Get department details by ID | Authenticated |
-| `POST` | `/api/departments` | Create a new department | Admin only |
 
 ---
 
@@ -97,9 +95,6 @@ Authorization: Bearer <your-token>
 | `GET` | `/api/spaces` | List all virtual collaboration spaces | Authenticated |
 | `GET` | `/api/spaces/spaceName` | List all space names | Authenticated |
 | `GET` | `/api/spaces/:spaceId` | Get space details by ID | Authenticated |
-| `POST` | `/api/spaces` | Create a new space | Admin only |
-| `PUT` | `/api/spaces` | Update space information | Admin only |
-| `DELETE` | `/api/spaces/:spaceId` | Delete a space | Admin only |
 
 ---
 
@@ -117,7 +112,6 @@ Authorization: Bearer <your-token>
 ### 8. Meetings (`/api/meetings`)
 | Method | Endpoint | Description | Access |
 |:---|:---|:---|:---|
-| `GET` | `/api/meetings` | List all scheduled/active meetings | Authenticated |
 | `GET` | `/api/meetings/user/:userId` | Get meetings organized by/associated with a user | Authenticated |
 | `GET` | `/api/meetings/participant/:userId` | Get meetings where user is an invited participant | Authenticated |
 | `GET` | `/api/meetings/pin` | Get all pinned meetings for current user | Authenticated |
@@ -129,6 +123,8 @@ Authorization: Bearer <your-token>
 | `DELETE` | `/api/meetings/:meetId` | Delete a meeting | Authenticated |
 | `PATCH` | `/api/meetings/:meetId/start` | Start meeting (marks status as `started`) | Authenticated |
 | `PATCH` | `/api/meetings/:meetId/end` | End active meeting | Authenticated |
+| `PATCH` | `/api/meetings/:meetId/attendance/join` | Record participant join time and update attendance | Authenticated |
+| `PATCH` | `/api/meetings/:meetId/attendance/leave` | Record participant leave time | Authenticated |
 | `GET` | `/api/meetings/:meetId/chat` | Get in-meeting chat message history | Authenticated |
 | `POST` | `/api/meetings/:meetId/chat` | Send a real-time message in meeting chat | Authenticated |
 
@@ -141,6 +137,7 @@ Authorization: Bearer <your-token>
 | `POST` | `/api/messages/direct` | Start or get existing 1:1 direct conversation | Authenticated |
 | `POST` | `/api/messages/group` | Create a new group chat conversation | Authenticated |
 | `POST` | `/api/messages/:id/avatar` | Upload avatar for a group conversation (multipart, `avatar`) | Authenticated |
+| `PATCH` | `/api/messages/:id/name` | Rename a group conversation | Authenticated |
 | `DELETE` | `/api/messages/:id` | Soft-delete a conversation | Authenticated |
 | `GET` | `/api/messages/:id/messages` | Get paginated message history for a conversation | Authenticated |
 | `POST` | `/api/messages/:id/messages` | Send message (text, callNote, linkUrl) in conversation | Authenticated |
@@ -148,7 +145,7 @@ Authorization: Bearer <your-token>
 | `DELETE` | `/api/messages/:id/participants/:userId` | Remove participant from group conversation | Authenticated |
 | `POST` | `/api/messages/:id/pin` | Pin conversation | Authenticated |
 | `DELETE` | `/api/messages/:id/pin` | Unpin conversation | Authenticated |
-| `POST` | `/api/messages/:id/attachments` | Upload file attachment to conversation (multipart) | Authenticated |
+| `POST` | `/api/messages/:id/attachments` | Upload file attachment to conversation (multipart, `file`) | Authenticated |
 | `DELETE` | `/api/messages/attachments/:id` | Delete attachment | Authenticated |
 | `POST` | `/api/messages/:id/read` | Mark conversation as read (updates `lastReadAt`) | Authenticated |
 
@@ -177,13 +174,11 @@ Authorization: Bearer <your-token>
 ### 12. LiveKit RTC Services (`/api/lk`)
 | Method | Endpoint | Description | Access |
 |:---|:---|:---|:---|
-| `GET` | `/api/lk/token?roomName=...&participantName=...` | Generate LiveKit JWT room connection token | Authenticated / Public |
+| `GET` | `/api/lk/token?roomName=...` | Generate LiveKit JWT room connection token | Authenticated |
 | `POST` | `/api/lk/mute-user` | Server-side mute participant track in LiveKit room | Authenticated |
 | `POST` | `/api/lk/create-room` | Create a room on LiveKit server with custom settings | Authenticated |
 
 ---
 
-### 13. Multiplayer Presence (`/api/player`)
-| Method | Endpoint | Description | Access |
-|:---|:---|:---|:---|
-| `GET` | `/api/player` | Debug endpoint to retrieve active socket player count and locations | Authenticated / Public |
+### 13. Multiplayer Real-time Services
+Real-time player synchronization, presence, and chat events are managed over WebSockets via **Socket.IO** (`/socket.io`).

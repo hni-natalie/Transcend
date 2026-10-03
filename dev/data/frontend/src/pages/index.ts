@@ -1,6 +1,7 @@
 // PUBLIC
 export { Landing } from './public/Landing'
 export { Login } from './public/Login'
+export { SignUp } from './public/SignUp'
 export { Terms } from './public/Terms'
 export { Privacy } from './public/Privacy'
 

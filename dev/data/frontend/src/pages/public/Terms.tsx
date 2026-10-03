@@ -1,7 +1,7 @@
 import { LegalLayout } from '@features/legal/LegalLayout';
 
 export const Terms = () => (
-    <LegalLayout title="Terms & Conditions" lastUpdated="September 23, 2026">
+    <LegalLayout title="Terms & Conditions" lastUpdated="October 3, 2026">
         <div className="space-y-8">
             
             <p className="text-xl text-foreground-3">
@@ -31,7 +31,7 @@ export const Terms = () => (
                     <li>Chat via direct or group messaging and share attachments (documents, images).</li>
                     <li>Conduct video/voice conferencing and record meetings (using LiveKit technology).</li>
                     <li>Assign tasks, manage departments, and upload organization documents.</li>
-                    <li>Manage personal data and exercise GDPR privacy controls (data export and deletion requests).</li>
+                    <li>Manage personal data and exercise GDPR privacy controls (data export with accessible media links and account deletion requests).</li>
                 </ul>
             </section>
 
@@ -39,7 +39,7 @@ export const Terms = () => (
                 <h2 className="text-3xl font-semibold text-white mb-4 font-mono">3. Accounts &amp; Security</h2>
                 <ul className="text-lg list-disc list-inside text-foreground-3 leading-relaxed space-y-3 ml-4">
                     <li>
-                        <strong>Registration:</strong> WorkFrom does not offer open self-registration. To use the Service, you must be invited or added to a workspace by an authorized workspace administrator. Once added, you will set up account access (either via Google Sign-In or with an email and password). You agree to provide accurate and complete account information.
+                        <strong>Registration &amp; Access Requests:</strong> To use the Service, you can request access by submitting our online Sign Up form (providing your first name, last name, and work email) or be directly invited/added to a workspace by an authorized workspace administrator. Once your access is approved and created, you will set up account authentication (either via Google Sign-In or with an email and password). You agree to provide accurate and complete account information.
                     </li>
                     <li>
                         <strong>Minimum Age:</strong> You must be at least 18 years old to create an account and use the Service. WorkFrom is designed for use by working professionals and businesses, and is not intended for individuals under the age of 18.

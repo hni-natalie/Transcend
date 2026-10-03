@@ -3,18 +3,13 @@ import { API_CONFIG } from '@api/api.config';
 import { MeetingDetails, RecordingStatusResponse } from '../meeting.types';
 
 const base = API_CONFIG.endpoints.meetings;
-const usersBase = API_CONFIG.endpoints.users.base;
+const userDirectory = API_CONFIG.endpoints.users.directory;
 const recordingsBase = API_CONFIG.endpoints.recordings;
 
 export const meetingApi = {
     // =====================
     // CORE MEETINGS
     // =====================
-
-    getAllMeetings() {
-    	return apiClient.get(`${base}`);
-    },
-
     getMeetingById(meetId: string) {
     	return apiClient.get<{ success: boolean; data: MeetingDetails }>(`${base}/${meetId}`);
     },
@@ -74,6 +69,14 @@ export const meetingApi = {
       	return apiClient.patch(`${base}/participants`, data);
     },
 
+    recordParticipantJoin(meetId: string) {
+      return apiClient.patch(`${base}/${meetId}/attendance/join`);
+    },
+
+    recordParticipantLeave(meetId: string) {
+      return apiClient.patch(`${base}/${meetId}/attendance/leave`);
+    },
+
     // =====================
     // FEATURES
     // =====================
@@ -86,7 +89,7 @@ export const meetingApi = {
     // USERS
     // =====================
     allUsers() {
-      	return apiClient.get(`${usersBase}`);
+      	return apiClient.get(`${userDirectory}`);
     },
 
     // =====================

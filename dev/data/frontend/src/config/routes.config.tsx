@@ -1,7 +1,7 @@
 import React from 'react';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
-import { Landing, Login, Terms, Privacy,
-		AdminDashboard, AdminUserManagement, SpaceManagement, AdminActivity,
+import { Landing, Login, SignUp, Terms, Privacy,
+		AdminDashboard, AdminUserManagement, AdminActivity,
 		UserDashboard, Office, OfficeRoom, Tasks, Meetings, Messages, UserSettings, UserMeetingRoom 
 		} from '@pages';
 import { IconMessages } from '@/shared';
@@ -40,6 +40,12 @@ export const routes: RouteConfig[] = [
 		path: R.LOGIN,
 		element: <Login />,
 		title: 'Login · WorkFrom,',
+		isGuestOnly: true,
+	},
+	{
+		path: R.SIGNUP,
+		element: <SignUp />,
+		title: 'Sign Up · WorkFrom,',
 		isGuestOnly: true,
 	},
 	{

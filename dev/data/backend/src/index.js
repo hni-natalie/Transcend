@@ -59,7 +59,7 @@ const routesInit		= require('./routes/init')
 const routesLivekit		= require('./routes/livekit').router
 const authRoutes		= require('./routes/auth.routes');
 const roleRoutes		= require('./routes/role.routes');
-const roomRoutes		= require('./routes/room.routes');
+const roomRoutes		= require('./routes/room.routes'); // To remove 
 const userRoutes		= require('./routes/user.routes');
 const departmentRoutes	= require('./routes/department.routes');
 // const uploadRoutes		= require('./routes/upload.routes');	// TO REMOVE
@@ -79,11 +79,10 @@ const limiter = limiterMiddleware(60 * 1000, 100, { error: '[api] Too many api r
 app.use('/api', limiter);
 app.use('/api', routesInit)
 app.use('/api/lk', routesLivekit)
-app.use('/api/player', roomRoutes)
+app.use('/api/player', roomRoutes) // To remove 
 app.use('/api/auth', authRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/users', userRoutes);
-// app.use('/api/uploads', uploadRoutes);		// TO REMOVE
 app.use('/api/departments', departmentRoutes);
 app.use('/api/spaces', spaceRoutes);
 app.use('/api/tasks', taskRoutes);

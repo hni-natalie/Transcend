@@ -5,6 +5,7 @@ const { OAuth2Client } = require('google-auth-library');
 const prisma = require('../../prisma/client');
 const { logPresenceActivity } = require('../utils/activity');
 const { uploadFile } = require('./supabase.service');
+const { sendAccessRequestEmail } = require('../utils/mailer');
 
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '1d';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -78,7 +79,7 @@ async function loginWithPassword(userEmail, userPassword) {
     include: USER_INCLUDE,
   });
 
-  if (!user) {
+  if (!user || user.deletedAt) {
     throw new AuthError(401, 'Invalid email or password');
   }
 
@@ -142,7 +143,7 @@ async function loginWithGoogle(idToken) {
     include: USER_INCLUDE,
   });
 
-  if (!user) {
+  if (!user || user.deletedAt) {
     throw new AuthError(401, 'No account found with this email. Please contact your administrator.');
   }
 
@@ -256,10 +257,19 @@ async function logout(userId, workspaceId) {
   getIO().emit('user-status-changed', { userId, status: 'offline' });
 }
 
+async function requestAccess({ firstName, lastName, workEmail }) {
+  const result = await sendAccessRequestEmail({ firstName, lastName, workEmail });
+  if (!result.sent) {
+    throw new AuthError(500, result.error || result.reason || 'Failed to send access request email. Please try again later.');
+  }
+  return { message: 'Access request submitted successfully' };
+}
+
 module.exports = {
   AuthError,
   loginWithPassword,
   loginWithGoogle,
   getCurrentUser,
   logout,
+  requestAccess,
 };

@@ -153,6 +153,8 @@ erDiagram
         string id PK
         string meetId FK
         string userId FK
+        datetime meetingJoinAt
+        datetime meetingLeaveAt
         string role
         string attendance
         datetime createdAt
@@ -319,7 +321,7 @@ erDiagram
 | Table | Purpose | Key Fields |
 | :--- | :--- | :--- |
 | **Meeting** | Event scheduling, virtual room association & statuses | `meetId`, `workspaceId`, `spaceId`, `createdByUserId`, `meetTitle`, `meetDesc`, `meetStart`, `meetEnd`, `status` (scheduled/started) |
-| **MeetingParticipant** | Junction table for meeting attendees, roles & attendance tracking | `id`, `meetId`, `userId`, `role` (organiser/participant), `attendance` (pending/absent/present) |
+| **MeetingParticipant** | Junction table for meeting attendees, roles & attendance tracking | `id`, `meetId`, `userId`, `meetingJoinAt`, `meetingLeaveAt`, `role` (organiser/participant), `attendance` (pending/absent/present) |
 | **MeetingPin** | User-specific pinned meetings for quick access | `pinId`, `userId`, `meetId` |
 | **Recording** | LiveKit egress recordings, status tracking & AI meeting summaries | `recordingId`, `meetId`, `egressId`, `filename`, `status` (starting/active/completed/failed/stopped), `fileUrl`, `summaryStatus` (pending/processing/completed/failed), `summary` |
 | **MeetingChatMessage** | Real-time chat messages during active meetings | `id`, `meetId`, `senderId`, `senderName`, `message` |
@@ -359,7 +361,7 @@ erDiagram
 ### Meetings, Recordings & Live Chat
 - **Space ↔ Meeting:** One-to-Many (`Meeting.spaceId` -> `Space.spaceId`).
 - **User ↔ Meeting (Creator):** One-to-Many (`Meeting.createdByUserId` -> `User.userId`).
-- **Meeting ↔ User (via MeetingParticipant):** Many-to-Many. Tracks role (`organiser`/`participant`) and attendance (`pending`/`absent`/`present`).
+- **Meeting ↔ User (via MeetingParticipant):** Many-to-Many. Tracks role (`organiser`/`participant`), attendance (`pending`/`absent`/`present`), and join/leave timestamps (`meetingJoinAt`, `meetingLeaveAt`).
 - **Meeting ↔ MeetingPin:** One-to-Many (`MeetingPin.meetId` -> `Meeting.meetId` with `onDelete: Cascade`).
 - **Meeting ↔ Recording:** One-to-Many (`Recording.meetId` -> `Meeting.meetId` with `onDelete: Cascade`).
 - **Meeting ↔ MeetingChatMessage:** One-to-Many (`MeetingChatMessage.meetId` -> `Meeting.meetId` with `onDelete: Cascade`).
@@ -483,4 +485,4 @@ The system utilizes a multi-layered permission and data lifecycle strategy:
 
 <br>
 
-*Last updated : September 7th, 2026*
+*Last updated : October 1st, 2026*
