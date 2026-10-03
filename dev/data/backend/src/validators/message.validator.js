@@ -63,6 +63,17 @@ function validateSendMessage( text ) {
     };
 }
 
+function validateRenameGroup({ groupName }) {
+    if (!isNonEmptyString(groupName))
+        throw new Error('Group name is required');
+
+    validateText(groupName, 'Group name', MAX_GROUP_NAME_LENGTH, true);
+
+    return {
+        groupName: groupName.trim(),
+    };
+}
+
 function validateConversationId(conversationId) {
     if (!isNonEmptyString(conversationId))
         throw new Error('Conversation ID is required');
@@ -95,6 +106,7 @@ module.exports = {
     validateCreateGroupConversation,
     validateSendMessage,
     validateConversationId,
+    validateRenameGroup,
     validateConversationAuthorization,
     validateConversationMemberAuthorization
 };
