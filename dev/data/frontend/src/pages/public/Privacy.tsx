@@ -1,7 +1,7 @@
 import { LegalLayout } from '@features/legal/LegalLayout';
 
 export const Privacy = () => (
-    <LegalLayout title="Privacy Policy" lastUpdated="September 23, 2026">
+    <LegalLayout title="Privacy Policy" lastUpdated="October 3, 2026">
         <div className="space-y-8">
             
             <p className="text-xl text-foreground-3">
@@ -21,7 +21,7 @@ export const Privacy = () => (
 					<h3 className="text-2xl font-semibold text-white mb-2 font-mono">a. Personal Information You Provide</h3>
 					<ul className="text-lg list-disc list-inside text-foreground-3 leading-relaxed space-y-1 ml-4 mb-4">
 						<li>
-							<strong>Account Data:</strong> WorkFrom does not offer open self-registration — you are added to a workspace by an authorized workspace administrator. When your account is created, we collect your <strong>email address</strong>, <strong>full name</strong>, <strong>user role</strong>, <strong>department</strong>, and <strong>hashed password</strong> (if using email/password authentication) or temporary credentials assigned during account creation or password recovery.
+							<strong>Account &amp; Registration Data:</strong> When you register or request access to WorkFrom via the Sign Up form, we collect your <strong>first name</strong>, <strong>last name</strong>, and <strong>work email address</strong>. When your workspace account is created or provisioned by an authorized administrator, we also collect your <strong>user role</strong>, <strong>department</strong>, and <strong>hashed password</strong> (if using email/password authentication) or temporary credentials assigned during account onboarding or password recovery.
 						</li>
 						<li>
 							<strong>Profile Information:</strong> You can customize your profile by providing an <strong>avatar image</strong>, <strong>city</strong>, <strong>country</strong>, and <strong>timezone</strong>.
@@ -78,6 +78,7 @@ export const Privacy = () => (
                     We process your data for the following purposes:
                 </p>
                 <ul className="text-lg list-disc list-inside text-foreground-3 leading-relaxed space-y-1 ml-4 mb-3">
+                    <li>To process account registration and workspace access requests submitted through our sign-up form.</li>
                     <li>To provide, operate, and maintain the virtual office collaboration features.</li>
                     <li>To manage user authentication, authorization, role privileges, and account security.</li>
                     <li>To handle password reset and recovery requests initiated by users through support.</li>
@@ -142,7 +143,7 @@ export const Privacy = () => (
                 </p>
                 <div className="ml-6 space-y-3 text-lg text-foreground-3 leading-relaxed">
                     <p>
-                        <strong>a. Right of Access &amp; Data Portability (Self-Service Data Export):</strong> You can request and download a complete, machine-readable JSON copy of your personal data at any time via <strong>Settings &gt; Privacy and Data</strong> (<em>"Request My Data"</em>). The export includes your profile details, workspace activity logs, created/assigned tasks, organized/attended meetings, sent messages, and attachments metadata. An email confirmation is also dispatched upon request generation.
+                        <strong>a. Right of Access &amp; Data Portability (Self-Service Data Export):</strong> You can request and download a complete, machine-readable JSON copy of your personal data at any time via <strong>Settings &gt; Privacy and Data</strong> (<em>"Request My Data"</em>). The export includes your profile details, workspace activity logs, created/assigned tasks, organized/attended meetings, sent messages, and attachments metadata. To ensure data exports remain lightweight, secure, and easily portable without bundling large files directly into the download archive, uploaded media files (such as chat attachments) are provided as secure resource links and URLs within the exported JSON file. Users can use these links to view and download their uploaded media files directly. An email confirmation is also dispatched upon request generation.
                     </p>
                     <p>
                         <strong>b. Right to Rectification (Correction):</strong> You can update and edit your personal information (name, city, country, timezone, avatar image) and update your password directly at any time in your account <strong>Settings</strong>.
