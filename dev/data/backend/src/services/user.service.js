@@ -68,9 +68,17 @@ const userService = {
     async getDashboardMetrics(workspaceId) {
 		if (!workspaceId) return [];
         try {
-            // pull the entire active user base with related department names
+            // pull active non-admin users with related department names
             const users = await prisma.user.findMany({
-				where: { deletedAt: null, workspaceId },
+				where: {
+					deletedAt: null,
+					workspaceId,
+					role: {
+						roleName: {
+							not: 'Admin',
+						},
+					},
+				},
                 select: {
                     userId: true,
                     userName: true,
@@ -124,9 +132,17 @@ const userService = {
 				throw new Error('User not found');
 			}
 			
-			// Get workspace teammates (for team presence)
+			// Get workspace teammates (for team presence, excluding Admin)
 			const allUsers = !currentUser.workspaceId ? [] : await prisma.user.findMany({
-				where: { deletedAt: null, workspaceId: currentUser.workspaceId },
+				where: {
+					deletedAt: null,
+					workspaceId: currentUser.workspaceId,
+					role: {
+						roleName: {
+							not: 'Admin',
+						},
+					},
+				},
 				select: {
 					userId: true,
 					userName: true,
@@ -203,7 +219,15 @@ const userService = {
     async getUserDirectory(workspaceId) {
         if (!workspaceId) return [];
         return await prisma.user.findMany({
-            where: { deletedAt: null, workspaceId },
+            where: {
+                deletedAt: null,
+                workspaceId,
+                role: {
+                    roleName: {
+                        not: 'Admin',
+                    },
+                },
+            },
             select: DIRECTORY_SELECT,
             orderBy: { userName: 'asc' },
         });
