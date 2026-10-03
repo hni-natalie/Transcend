@@ -1,6 +1,16 @@
 const prisma = require('../../prisma/client');
 const { uploadFile } = require('../services/supabase.service');
 
+const {
+    validateConversationAuthorization,
+	validateConversationMemberAuthorization
+} = require('../validators/message.validator');
+
+const {
+	ForbiddenError,
+	NotFoundError
+} = require('../utils/errors');
+
 
 function createDirectKey(userId1, userId2) {
   const sortedIds = [userId1, userId2].sort();
@@ -295,7 +305,7 @@ const messageService = {
 			where: {
 				directKey
 				},
-
+		
 			// Conversation already exists
 			update: {},
 
@@ -316,6 +326,19 @@ const messageService = {
 
 			select: conversationResponseSelect(userId)
 		});
+
+		// In messageService.createDirectConversation:
+		await prisma.conversationParticipant.updateMany({
+		where: {
+			conversation: { directKey },
+			userId: userId
+		},
+		data: {
+			removedAt: null
+		}
+		});
+
+
 
 		const currentParticipant = conversation.participants.find(
 			participant => participant.userId === userId
@@ -365,6 +388,8 @@ const messageService = {
 			select: conversationResponseSelect(userId)
 		});
 
+		
+
 		return {
 			...conversation,
 			unreadCount: 0
@@ -376,18 +401,27 @@ const messageService = {
 			throw new Error('No file uploaded');
 		}
 
-		const conversation = await prisma.conversation.findFirst({
-			where: {
-				conversationId,
-				type: 'group',
-				deletedAt: null,
-				createdByUserId: userId,
-			}
-		});
-
-		if (!conversation) {
-			throw new Error('Conversation not found or you are not the group creator');
+		const conversation = await prisma.conversation.findUnique({
+		where: {
+			conversationId
+		},
+		select: {
+			conversationId: true,
+			type: true,
+			deletedAt: true,
+			createdByUserId: true
 		}
+	});
+
+	if (!conversation || conversation.deletedAt) {
+		throw new NotFoundError('Conversation not found');
+	}
+
+	if (conversation.type !== 'group') {
+		throw new Error('Conversation is not a group');
+	}
+
+	validateConversationAuthorization(conversation, userId);
 
 		const fileExt = file.originalname.split('.').pop();
 		const fileName = `${conversationId}-${Date.now()}.${fileExt}`;
@@ -426,6 +460,29 @@ const messageService = {
 	},
 
 	async deleteConversation(conversationId, userId) {
+		const conversation = await prisma.conversation.findUnique({
+			where: {
+				conversationId
+			},
+			select: {
+				conversationId: true,
+				createdByUserId: true,
+				deletedAt: true,
+				participants: {
+					select: {
+						userId: true,
+						removedAt: true
+					}
+				}
+			}
+		});
+
+		if (!conversation || conversation.deletedAt) {
+			throw new NotFoundError('Conversation not found');
+		}
+
+		validateConversationMemberAuthorization(conversation, userId);
+
 		return prisma.$transaction(async (tx) => {
 			const participant = await tx.conversationParticipant.findUnique({
 				where: {
@@ -437,7 +494,7 @@ const messageService = {
 			});
 
 			if (!participant) {
-				throw new Error('Conversation not found');
+				throw new NotFoundError('Participant not found');
 			}
 
 			return tx.conversationParticipant.update({
@@ -456,32 +513,34 @@ const messageService = {
 
 	// Messages
 	async getMessages(conversationId, userId) {
-		console.log("Logged-in user ID:", userId);
-		const conversation = await prisma.conversation.findFirst({
+		const conversation = await prisma.conversation.findUnique({
 			where: {
-				conversationId: conversationId,
-				deletedAt: null,
-				participants: {
-					some: {
-						userId,
-					}
-				}
+				conversationId
 			},
 			select: {
 				conversationId: true,
+				deletedAt: true,
+				participants: {
+					select: {
+						userId: true,
+						removedAt: true
+					}
+				}
 			}
-			})
-		if (!conversation) {
-			throw new Error(
-				"Conversation not found or user is not a participant"
-			);
+		});
+
+		if (!conversation || conversation.deletedAt) {
+			throw new NotFoundError('Conversation not found');
 		}
+
+		validateConversationMemberAuthorization(conversation, userId);
+
 		return prisma.message.findMany({
 			where: {
 				conversationId
 			},
 			orderBy: {
-				createdAt: "asc"
+				createdAt: 'asc'
 			},
 			select: {
 				messageId: true,
@@ -493,25 +552,26 @@ const messageService = {
 				author: {
 					select: {
 						userId: true,
-						userName:  true,
-						avatarUrl:  true,
+						userName: true,
+						avatarUrl: true,
 						deletedAt: true
 					}
 				},
 				attachments: {
-					select : {
-						id:  true,
-						name:  true,
+					select: {
+						id: true,
+						name: true,
 						kind: true,
 						sizeInBytes: true,
-						url:  true,
+						url: true,
 						path: true,
-						createdAt:  true,
+						createdAt: true,
 						mimeType: true
 					}
 				}
-			}})
-		},
+			}
+		});
+	},
 
 	async sendMessage(conversationId, userId, text, attachments = []) {
 		const cleanText = typeof text === "string" ? text.trim() : "";
@@ -519,82 +579,99 @@ const messageService = {
 		if (!cleanText && attachments.length === 0) {
 			throw new Error("Message text or attachment is required");
 		}
-		return prisma.$transaction(async(tx) => {
-			const conversation = await tx.conversation.findFirst({
+
+		return prisma.$transaction(async (tx) => {
+
+			// Get conversation first without filtering by user
+			const conversation = await tx.conversation.findUnique({
 				where: {
-					conversationId: conversationId,
-					deletedAt: null,
-					participants: {
-						some: {
-							userId: userId,
-						}
-					}
+					conversationId
 				},
 				select: {
 					conversationId: true,
+					deletedAt: true,
+					participants: {
+						select: {
+							userId: true,
+							removedAt: true
+						}
+					}
 				}
-			})
-		if (!conversation) {
-			throw new Error('Conversation not found or user is not the creator');
+			});
+
+			// Conversation really does not exist
+			if (!conversation || conversation.deletedAt) {
+				throw new NotFoundError("Conversation not found");
 			}
 
-		const detectedLink = extractFirstUrl(cleanText);
-		const isPureLink = !!detectedLink && cleanText === detectedLink;
+			// Conversation exists, but user is not an active member
+			validateConversationMemberAuthorization(
+				conversation,
+				userId
+			);
 
-		const message = await tx.message.create({
-			data: {
-				conversationId,
-				authorId: userId,
-				text: isPureLink ? null : cleanText,
-				linkUrl: detectedLink,
-				attachments: {
-					create: attachments.map((attachment) => ({
-						name: attachment.name,
-						kind: attachment.kind,
-						sizeInBytes: attachment.sizeInBytes,
-						url: attachment.url,
-						path: attachment.path,
-						mimeType: attachment.mimeType
-					}))
-				}
-			},
-			select: {
-				messageId: true,
-				conversationId: true,
-				text: true,
-				linkUrl: true,
-				createdAt: true,
-				author: {
-					select: {
-						userId: true,
-						userName:  true,
-						avatarUrl:  true,
-						deletedAt: true
+			const detectedLink = extractFirstUrl(cleanText);
+			const isPureLink =
+				!!detectedLink && cleanText === detectedLink;
+
+			const message = await tx.message.create({
+				data: {
+					conversationId,
+					authorId: userId,
+					text: isPureLink ? null : cleanText,
+					linkUrl: detectedLink,
+					attachments: {
+						create: attachments.map((attachment) => ({
+							name: attachment.name,
+							kind: attachment.kind,
+							sizeInBytes: attachment.sizeInBytes,
+							url: attachment.url,
+							path: attachment.path,
+							mimeType: attachment.mimeType
+						}))
 					}
 				},
-				attachments: {
-					select: {
-						id:  true,
-						name:  true,
-						kind: true,
-						sizeInBytes: true,
-						url:  true,
-						path: true,
-						createdAt:  true,
-						mimeType: true
+				select: {
+					messageId: true,
+					conversationId: true,
+					text: true,
+					linkUrl: true,
+					createdAt: true,
+					author: {
+						select: {
+							userId: true,
+							userName: true,
+							avatarUrl: true,
+							deletedAt: true
+						}
+					},
+					attachments: {
+						select: {
+							id: true,
+							name: true,
+							kind: true,
+							sizeInBytes: true,
+							url: true,
+							path: true,
+							createdAt: true,
+							mimeType: true
+						}
 					}
 				}
-			}})
-		// update the conversation
-		await tx.conversation.update({
-			where: {
-				conversationId
-			},
-			data: {
-				updatedAt: new Date()
-			}})
-		return message;
-		})},
+			});
+
+			await tx.conversation.update({
+				where: {
+					conversationId
+				},
+				data: {
+					updatedAt: new Date()
+				}
+			});
+
+			return message;
+		});
+	},
 
 	// Participants
 	async addParticipant(conversationId, userId, participantIds) {
@@ -620,13 +697,12 @@ const messageService = {
 		})
 
 		if (!conversation || conversation.deletedAt)
-			throw new Error("Conversation not found");
+			throw new NotFoundError("Conversation not found");
 
 		if (conversation.type != "group")
 			throw new Error ('Participants can only be added to group conversations');
 
-		if (conversation.createdByUserId != userId)
-			throw new Error ('Only the group creater and create conversation');
+		validateConversationAuthorization(conversation, userId); //only creator can add participant
 
 		// get the existing group member
 		const existingParticipantIds = new Set(
@@ -700,19 +776,19 @@ const messageService = {
 				createdByUserId: true
 			}
 		})
+		
+		if (!conversation || conversation.deletedAt)
+			throw new NotFoundError("Conversation not found");
+
 		console.log("author id", conversation.createdByUserId);
 
-		if (!conversation || conversation.deletedAt)
-			throw new Error('Conversation not found');
-
 		if (conversation.type != "group")
-			throw new Error ('Participants can only be removed from group conversations');
+			throw new Error('Participants can only be removed from group conversations');
 
-		if (conversation.createdByUserId != userId)
-			throw new Error ('Only the group creater can remove participant');
+		validateConversationAuthorization(conversation, userId); //only creator can remove participant
 
 		if (participantId == conversation.createdByUserId)
-			throw new Error ('Group owner could not be removed')
+			throw new ForbiddenError('Group owner could not be removed')
 
 		return prisma.conversationParticipant.deleteMany({
 			where: {
@@ -725,18 +801,26 @@ const messageService = {
 	//Pin
 	async pinConversation(userId, conversationId) {
 		const conversation = await prisma.conversation.findUnique({
-			where: {
-				conversationId,
-				deletedAt: null,
-				participants: {
-					some: {
-						userId
-					}
+		where: {
+			conversationId
+		},
+		select: {
+			conversationId: true,
+			deletedAt: true,
+			participants: {
+				select: {
+					userId: true,
+					removedAt: true
 				}
 			}
-		})
-		if (!conversation)
-			throw new Error('Conversation not found or user is not a participant');
+		}
+	});
+
+	if (!conversation || conversation.deletedAt) {
+		throw new NotFoundError('Conversation not found');
+	}
+
+	validateConversationMemberAuthorization(conversation, userId);
 		
 		return prisma.conversationPin.upsert({
 			where: {
@@ -773,7 +857,9 @@ const messageService = {
 			}
 		})
 		if (!conversation)
-			throw new Error('Conversation not found or user is not a participant');
+			throw new NotFoundError('Conversation not found');
+
+		// validateConversationMemberAuthorization(conversation, userId);
 
 		// confirm the conversation is pinned
 		const pin = await prisma.conversationPin.findUnique({
@@ -785,7 +871,7 @@ const messageService = {
 			},
 		});
 		if (!pin) {
-			throw new Error('Conversation is not pinned');
+			throw new NotFoundError('Conversation pin not found');
 		}
 		
 		return prisma.conversationPin.delete({
@@ -806,24 +892,27 @@ const messageService = {
 
 	//attachment
 	async uploadAttachment(userId, conversationId, file) {
-		const conversation = await prisma.conversation.findFirst({
+		const conversation = await prisma.conversation.findUnique({
 			where: {
-				conversationId,
-				deletedAt: null,
-				participants: {
-					some: {
-					userId
-					}
-				}
+				conversationId
 			},
 			select: {
-				conversationId: true
+				conversationId: true,
+				deletedAt: true,
+				participants: {
+					select: {
+						userId: true,
+						removedAt: true
+					}
+				}
 			}
 		});
 
-		if (!conversation) {
-			throw new Error('Conversation not found or user cannot access this conversation');
+		if (!conversation || conversation.deletedAt) {
+			throw new NotFoundError('Conversation not found');
 		}
+
+		validateConversationMemberAuthorization(conversation, userId);
 
 		const fileExt = file.originalname.split('.').pop();
 		const fileName = `${userId}-${Date.now()}.${fileExt}`;
@@ -846,19 +935,35 @@ const messageService = {
 		};
 	},
 
-	async deleteAttachment(attachmentId) {
+	async deleteAttachment(attachmentId, userId) {
 		const attachment = await prisma.messageAttachment.findUnique({
 			where: {
 				id: attachmentId
+			},
+			select: {
+				id: true,
+				message: {
+					select: {
+						authorId: true
+					}
+				}
 			}
-		})
-		if (!attachment)
-			throw new Error ('Attachment not found');
-		await prisma.messageAttachment.delete({
+		});
+
+		if (!attachment) {
+			throw new NotFoundError('Attachment not found');
+		}
+
+		// Only the author of the message can delete the attachment
+		if (attachment.message.authorId !== userId) {
+			throw new ForbiddenError('Unauthorized to perform this action');
+		}
+
+		return prisma.messageAttachment.delete({
 			where: {
 				id: attachmentId
 			}
-		})
+		});
 	},
 
 	async logCallStart(directKey, authorId, mode) {
@@ -879,6 +984,23 @@ const messageService = {
 	},
 
 	async markConversationRead(conversationId, userId) {
+		const participant = await prisma.conversationParticipant.findUnique({
+			where: {
+				conversationId_userId: {
+					conversationId,
+					userId
+				}
+			}
+		});
+
+		if (!participant) {
+			throw new NotFoundError('Conversation participant not found');
+		}
+
+		// if (participant.removedAt) {
+		// 	throw new ForbiddenError('Unauthorized to perform this action');
+		// }
+
 		return prisma.conversationParticipant.update({
 			where: {
 				conversationId_userId: {
@@ -889,8 +1011,8 @@ const messageService = {
 			data: {
 				lastReadAt: new Date()
 			}
-		})
-	},
+		});
+	}
 }
 		
 

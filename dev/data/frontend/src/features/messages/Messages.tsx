@@ -320,18 +320,24 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
     setConversationPendingDeletion(conversation);
   };
 
-  const handleConfirmDeleteConversation = () => {
+  const handleConfirmDeleteConversation = async () => {
     if (!conversationPendingDeletion) {
       return;
     }
-    removeConversation(conversationPendingDeletion.conversationId);
-    // const deletedId = conversationPendingDeletion.conversationId;
-    // removeConversation(deletedId);
-    // if (selectedConversation.id === deletedId) {
-    //   setSelectedConversation({ id: '', type: 'direct' });
-    // }
+
+    const removedId = conversationPendingDeletion.conversationId;
+
+    await removeConversation(removedId);
+
+    if (selectedConversation.id === removedId) {
+      setSelectedConversation({
+        id: '',
+        type: 'direct'
+      });
+    }
+
     setConversationPendingDeletion(null);
-  };
+};
 
   const handleSendMessage = (text: string, attachments?: UploadedAttachment[]) => {
     console.log('DEBUGGING FE attachments before sending:', attachments);

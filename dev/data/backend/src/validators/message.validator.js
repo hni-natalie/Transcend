@@ -6,6 +6,8 @@ const {
     validateId,
 } = require('./common.validator');
 
+const { ForbiddenError } = require('../utils/errors');
+
 const MAX_GROUP_NAME_LENGTH = 25;
 const MAX_MESSAGE_LENGTH = 2000;
 
@@ -69,13 +71,20 @@ function validateConversationId(conversationId) {
     return { conversationId: conversationId.trim() };
 }
 
-function validateRenameGroup({ groupName }) {
-    if (!isNonEmptyString(groupName))
-        throw new Error('Group name is required');
+function validateConversationAuthorization(conversation, userId) {
+    if (conversation.createdByUserId !== userId)
+        throw new ForbiddenError();
+}
 
-    validateText(groupName, 'Group name', MAX_GROUP_NAME_LENGTH, true);
+function validateConversationMemberAuthorization(conversation, userId) {
+    const isMember = conversation.participants.some(
+        participant =>
+            participant.userId === userId 
+    );
 
-    return { groupName: groupName.trim() };
+    if (!isMember) {
+        throw new ForbiddenError();
+    }
 }
 
 module.exports = {
@@ -86,5 +95,6 @@ module.exports = {
     validateCreateGroupConversation,
     validateSendMessage,
     validateConversationId,
-    validateRenameGroup,
+    validateConversationAuthorization,
+    validateConversationMemberAuthorization
 };
