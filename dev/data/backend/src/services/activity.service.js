@@ -137,14 +137,14 @@ function formatDate(date) {
     return new Date(date).toISOString().slice(0, 10);
 }
 
-// function formatTime(date) {
-//     if (!date) return '--:--';
-//     return new Date(date).toLocaleTimeString('en-US', {
-//         hour: '2-digit',
-//         minute: '2-digit',
-//         hour12: true,
-//     });
-// }
+function formatTime(date) {
+    if (!date) return '--:--';
+    return new Date(date).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+    });
+}
 
 // function getRelativeTime(date) {
 //     if (!date) return 'Unknown';

@@ -50,17 +50,22 @@ const validateMeetingForm = (data: {
     description?: string;
     start: string;
     end: string;
+    mode: "create" | "edit";
+    originalStart?: string;
 }): string | null => {
     const trimmedTitle = data.title.trim();
     if (!trimmedTitle) {
         return "Meeting title is required.";
     }
+
     if (trimmedTitle.length > MEETING_TITLE_MAX_LENGTH) {
         return `Meeting title must be under ${MEETING_TITLE_MAX_LENGTH} characters.`;
     }
+    
     if (data.description && data.description.trim().length > MEETING_DESC_MAX_LENGTH) {
         return `Meeting description must be under ${MEETING_DESC_MAX_LENGTH} characters.`;
     }
+
     if (!data.start || !data.end) {
         return "Please select both start and end time.";
     }
@@ -72,8 +77,26 @@ const validateMeetingForm = (data: {
         return "Please enter valid meeting dates.";
     }
 
-    if (startDate < new Date()) {
-        return "Meeting start time cannot be in the past.";
+    const now = new Date();
+
+    if (data.mode === "create") {
+        if (startDate < now) {
+            return "Meeting start time cannot be in the past.";
+        }
+    }
+
+    if (data.mode === "edit") {
+        const originalStart = data.originalStart
+            ? new Date(data.originalStart)
+            : null;
+
+        const isStartTimeChanged =
+            originalStart &&
+            startDate.getTime() !== originalStart.getTime();
+
+        if (isStartTimeChanged && startDate < now) {
+            return "New meeting start time cannot be in the past.";
+        }
     }
 
     if (startDate >= endDate) {
@@ -159,7 +182,10 @@ export const ScheduleMeetingModal = ({
                 prevById.get(u.userId) ?? {
                   ...u,
                   role: "participant" as const,
-                  attendance: "pending" as const,
+                  attendance: {
+                    status: "pending" as const,
+                    updated: false
+                  }
                 }
               );
               // add if users non existent in list (?)
@@ -205,6 +231,7 @@ export const ScheduleMeetingModal = ({
 
             setStart(toDateTimeLocal(meeting.meetStart));
             setEnd(toDateTimeLocal(meeting.meetEnd));
+            const isPastMeeting = new Date(meeting.meetEnd).getTime() <= Date.now();
 
             // update with Users existing role status
             setUsers(prev => {
@@ -216,7 +243,10 @@ export const ScheduleMeetingModal = ({
                         userName: p.user.userName,
                         userEmail: p.user.userEmail,
                         role: p.role,
-                        attendance: p.attendance,
+                        attendance: {
+                            status: isPastMeeting && p.role !== 'organiser' ? 'pending' : p.attendance,
+                            updated: false
+                        },
 						deletedAt: p.user.deletedAt,
                     });
                 });
@@ -252,8 +282,11 @@ export const ScheduleMeetingModal = ({
     ) => {
         setUsers(prev =>
             prev.map(user =>
-                user.userId === userId
-                    ? { ...user, attendance }
+                user.userId === userId ?
+                    { 
+                        ...user,
+                        attendance: { status: attendance, updated: true}
+                    }
                     : user
             )
         );
@@ -294,37 +327,14 @@ export const ScheduleMeetingModal = ({
             description,
             start,
             end,
+            mode,
+            originalStart: meeting?.meetStart,
         });
 
 		if (validationError) {
             setErrorMessage(validationError);
             return;
 		}
-
-
-        // if (!title.trim()) {
-        //     setErrorMessage("Meeting title is required.");
-        // return;
-        // }
-
-        // if (!start || !end) {
-        //     setErrorMessage("Please select both start and end time.");
-        // return;
-        // }
-
-        // if (new Date(start) >= new Date(end)) {
-        //     setErrorMessage("Meeting start time must be before end time.");
-        //     return;
-        // } else if (
-        //     new Date(end).getTime() -
-        //     new Date(start).getTime()
-        //     < 5 * 60 * 1000
-        // ) {
-        //     setErrorMessage(
-        //         "Meeting duration too short and must be at least 5 minutes."
-        //     );
-        //     return;
-        // } 
 
         try {
             setLoading(true);
@@ -340,27 +350,24 @@ export const ScheduleMeetingModal = ({
 					participantIds: selectedUserIds,
                 });
 
-                // await meetingApi.syncParticipants({
-                //     meetId: res.data.meetId,
-                //     participants: selectedUsers.map(user => ({
-                //         userId: user.userId,
-                //         role: user.role,
-                //         attendance: user.attendance,
-                //     }))
-                // });
-
 				showToast('success', 'Meeting scheduled successfully!');
                 onCreated?.();
 
             } else if (mode === "edit" && meeting) {
+                const now = Date.now();
+                const isReschedulingPastMeeting =
+                    new Date(meeting.meetEnd).getTime() <= now &&
+                    new Date(start).getTime() > now;
+
+                const participantsForSubmit = selectedUsers.map(user => ({
+                    userId: user.userId,
+                    role: user.role,
+                    attendance: isReschedulingPastMeeting && !user.attendance.updated ? 'pending' : user.attendance.status,
+                }));
 
                 await meetingApi.syncParticipants({
                     meetId: meeting.meetId,
-                    participants: selectedUsers.map(user => ({
-                        userId: user.userId,
-                        role: user.role,
-                        attendance: user.attendance,
-                    })),
+                    participants: participantsForSubmit,
                     meetStart: new Date(start).toISOString(),
                     meetEnd: new Date(end).toISOString()
                 });
@@ -385,6 +392,10 @@ export const ScheduleMeetingModal = ({
             const message = err.message;
 
             if (message?.startsWith("Meeting conflict detected for:")) {
+                setErrorMessage(message);
+            } else if (message?.startsWith("You've reached the daily limit")) {
+                setErrorMessage(message);
+            } else if (message) {
                 setErrorMessage(message);
             } else {
                 const fallback = "Failed to schedule meeting. Please try again.";

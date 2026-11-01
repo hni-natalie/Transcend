@@ -9,11 +9,12 @@ const {
     validateChangePassword,
     validateResetPassword
 } = require('../validators/user.validator');
+const { validateAvatar } = require('../validators/file.validator');
 
 const userController = {
 	async getDashboardMetrics(req, res) {
         try {
-            const metrics = await userService.getDashboardMetrics();
+            const metrics = await userService.getDashboardMetrics(req.user.workspaceId);
             return res.json({ users: metrics });
         } catch (error) {
             return res.status(500).json({ error: error.message });
@@ -34,17 +35,17 @@ const userController = {
 		}
 	},
 
-    async getCurrentUser(req, res) {
-        try {
-            const user = await userService.getUserById(req.user.userId);
-            return res.json(user);
-        } catch (error) {
-            if (error.message === 'User not found')
-                return res.status(404).json({ error: error.message });
-            else
-                return res.status(500).json({ error: error.message });
-        }
-    },
+    // async getCurrentUser(req, res) {
+    //     try {
+    //         const user = await userService.getUserById(req.user.userId);
+    //         return res.json(user);
+    //     } catch (error) {
+    //         if (error.message === 'User not found')
+    //             return res.status(404).json({ error: error.message });
+    //         else
+    //             return res.status(500).json({ error: error.message });
+    //     }
+    // },
 
 	async updateCurrentUser(req, res) {
         try {
@@ -67,42 +68,6 @@ const userController = {
             return res.status(500).json({ error: error.message });
         }
     },
-
-    // async updateCurrentUser(req, res) {
-    //     try {
-    //         const allowedUpdates = ['userName', 'userEmail', 'avatarUrl', 'city', 'country', 'timezone'];
-    //         const updates = {};
-            
-    //         allowedUpdates.forEach(field => {
-    //             if (req.body[field] !== undefined) {
-    //                 updates[field] = req.body[field];
-    //             }
-    //         });
-            
-    //         if (Object.keys(updates).length === 0) {
-    //             return res.status(400).json({ 
-    //                 error: 'No valid fields to update. Allowed: name, email, city, country, timezone' 
-    //             });
-    //         }
-
-    //         try {
-    //             const validated = validateUpdateProfile(updates);
-    //             Object.keys(validated).forEach(key => {
-    //                 if (validated[key] !== undefined) updates[key] = validated[key];
-    //             });
-    //         } catch (validationErr) {
-    //             return res.status(400).json({ error: validationErr.message });
-    //         }
-            
-    //         const user = await userService.updateUserProfile(req.user.userId, updates);
-    //         return res.json(user);
-    //     } catch (error) {
-	// 		if (error.message === 'Email already in use by another account') {
-    //             return res.status(409).json({ error: error.message });
-    //         }
-    //         return res.status(500).json({ error: error.message });
-    //     }
-    // },
 
 	async updateUserStatus(req, res) {
 		try {
@@ -129,32 +94,41 @@ const userController = {
 		}
 	},
 
-    async getAllUsers(req, res) {
+    async getUserDirectory(req, res) {
         try {
-            const { search, roleId, workspaceId, status } = req.query;
-            const users = await userService.getAllUsers({ search, roleId, workspaceId, status });
+            const users = await userService.getUserDirectory(req.user.workspaceId);
             res.json(users);
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
     },
 
-    async getUserById(req, res) {
+    async getAllUsers(req, res) {
         try {
-            const id = req.params.id || req.user?.userId;
-            if (!id) {
-                return res.status(400).json({ error: 'User ID required' });
-            }
-            const user = await userService.getUserById(id);
-            return res.json(user);
+            const { search, roleId, status } = req.query;
+            const users = await userService.getAllUsers({ search, roleId, status }, req.user.workspaceId);
+            res.json(users);
         } catch (error) {
-            if (error.message === 'User not found') {
-                res.status(404).json({ error: error.message });
-            } else {
-                res.status(500).json({ error: error.message });
-            }
+            res.status(500).json({ error: error.message });
         }
     },
+
+    // async getUserById(req, res) {
+    //     try {
+    //         const id = req.params.id || req.user?.userId;
+    //         if (!id) {
+    //             return res.status(400).json({ error: 'User ID required' });
+    //         }
+    //         const user = await userService.getUserInWorkspace(id, req.user.workspaceId);
+    //         return res.json(user);
+    //     } catch (error) {
+    //         if (error.message === 'User not found') {
+    //             res.status(404).json({ error: error.message });
+    //         } else {
+    //             res.status(500).json({ error: error.message });
+    //         }
+    //     }
+    // },
 
     async getUsersByStatus(req, res) {
         try {
@@ -163,7 +137,7 @@ const userController = {
             if (!status) {
                 return res.status(400).json({ error: 'User status required' });
             }
-            const user = await userService.getUsersByStatus(status);
+            const user = await userService.getUsersByStatus(status, req.user.workspaceId);
             return res.json(user);
         } catch (error) {
                 res.status(500).json({ error: error.message });
@@ -205,13 +179,14 @@ const userController = {
 			
 			return res.status(201).json({
 				success: true,
-				message: password ? 'User created successfully' : 'User created with temporary password',
+				message: 'User created successfully',
 				data: result
 			});
 		} catch (error) {
-            if (error.message === 'Email already exists') {
+            if (error.message === 'Email already exists')
                 return res.status(409).json({ success: false, message: error.message });
-            }
+			if (error.message === 'Invalid department')
+                return res.status(400).json({ success: false, message: error.message });
             return res.status(500).json({ success: false, message: error.message });
         }
     },
@@ -285,6 +260,7 @@ const userController = {
 			if (!userId) {
 				return res.status(400).json({ success: false, message: 'User ID is required' });
 			}
+			await userService.assertUserInWorkspace(userId, req.user.workspaceId);
 
 			let newPassword;
 			try {
@@ -324,8 +300,9 @@ const userController = {
             if (!id) {
                 return res.status(400).json({ error: 'User ID is required' });
             }
-
-            let validated;
+			await userService.assertUserInWorkspace(id, req.user.workspaceId);
+            
+			let validated;
             try {
                 validated = validateUpdateUserByAdmin(req.body);
             } catch (validationErr) {
@@ -348,7 +325,8 @@ const userController = {
     async deleteUser(req, res) {
         try {
             const { id } = req.params;
-            await userService.deleteUser(id);
+            await userService.assertUserInWorkspace(id, req.user.workspaceId, { allowDeleted: true });
+			await userService.deleteUser(id);
             res.status(204).send();
         } catch (error) {
             if (error.message === 'User not found') {
@@ -362,10 +340,17 @@ const userController = {
 	async uploadAvatar(req, res) {
         try {
             const userId = req.user.userId;
+            validateAvatar(req.file);
             const result = await userService.uploadAvatar(userId, req.file, process.env.SUPABASE_ASSET_BUCKET);
             res.json({ success: true, ...result });
         } catch (error) {
-            if (error.message === 'No file uploaded') {
+            if (
+                error.message === 'No file uploaded' ||
+                error.message === 'Invalid file type' ||
+                error.message === 'Invalid file name' ||
+                error.message === 'File content does not match its extension' ||
+                error.message === 'File size exceeds the limit'
+            ) {
                 return res.status(400).json({ error: error.message });
             }
             console.error('Upload error:', error);
@@ -376,10 +361,18 @@ const userController = {
     async uploadAvatarForUser(req, res) {
         try {
             const userId = req.params.id;
+			await userService.assertUserInWorkspace(userId, req.user.workspaceId);
+            validateAvatar(req.file);
             const result = await userService.uploadAvatar(userId, req.file, process.env.SUPABASE_ASSET_BUCKET);
             res.json({ success: true, ...result });
         } catch (error) {
-            if (error.message === 'No file uploaded') {
+            if (
+                error.message === 'No file uploaded' ||
+                error.message === 'Invalid file type' ||
+                error.message === 'Invalid file name' ||
+                error.message === 'File content does not match its extension' ||
+                error.message === 'File size exceeds the limit'
+            ) {
                 return res.status(400).json({ error: error.message });
             }
             console.error('Admin upload error:', error);

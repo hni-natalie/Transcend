@@ -12,9 +12,9 @@ export interface CreateUserRequest {
     email: string;
     name: string;
     roleId: string;
+    password: string;
     dpId?: string;
 	userTitle?: string;
-    password?: string;
 }
 
 export interface UpdateUserRequest {
@@ -38,7 +38,6 @@ interface CreateUserResponse {
         userName: string;
         userStatus: string;
         createdAt: string;
-        temporaryPassword?: string;
     };
 }
 
@@ -58,15 +57,15 @@ export interface UpdateCurrentUserProfileRequest {
 export const userApi = {
     fetchAllUsers: async (): Promise<User[]> => {
         return apiClient.get<User[]>(
-            API_CONFIG.endpoints.users.base
+            API_CONFIG.endpoints.users.directory
         );
     },
 
-    fetchUserById: async (userId: string): Promise<User> => {
-        return apiClient.get<User>(
-            `${API_CONFIG.endpoints.users.base}/${userId}`
-        );
-    },
+    // fetchUserById: async (userId: string): Promise<User> => {
+    //     return apiClient.get<User>(
+    //         `${API_CONFIG.endpoints.users.base}/${userId}`
+    //     );
+    // },
 
     fetchRoles: async (): Promise<Role[]> => {
         const response = await apiClient.get<ApiResponse<Role[]>>(
@@ -127,11 +126,11 @@ export const userApi = {
         );
     },
 
-    getCurrentUser: async (): Promise<User> => {
-    	return apiClient.get<User>(
-			API_CONFIG.endpoints.users.me
-		);
-	},
+    // getCurrentUser: async (): Promise<User> => {
+    // 	return apiClient.get<User>(
+	// 		API_CONFIG.endpoints.users.me
+	// 	);
+	// },
 
     resetUserPassword: async (
         userId: string,

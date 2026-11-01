@@ -105,15 +105,19 @@ export function useLiveKit( roomName:string ) {
   const getAudioListener = () => {
     return livekitService.audioManager.listener;
   }
-  const getPositionalAudio = ( userId:string ) => {
-    const positionalAudio = livekitService.positionalAudios.get(userId);
-    if (positionalAudio instanceof THREE.PositionalAudio)
-      console.log('useLiveKit: Valid PositionalAudio! ', userId);
-    else
-      console.error('useLiveKit: Invalid PositionalAudio ', userId);
+  const getPositionalAudio = useCallback(( userId:string ): THREE.PositionalAudio[] => {
+    const positionalAudioMap = livekitService.positionalAudios.get(userId);
+    for (const [trackSid, positionalAudio] of positionalAudioMap) {
+      if (positionalAudio instanceof THREE.PositionalAudio) {
+        console.log('Valid PositionalAudio', userId, trackSid);
+      } else {
+        console.error('Invalid PositionalAudio', userId, trackSid, positionalAudio);
+      }
+    }
 
-    return livekitService.positionalAudios.get(userId);
-  }
+    return Array.from(livekitService.positionalAudios.get(userId)?.values() ?? []);
+  }, [state.readyStreams]);
+
   const getMediaStream = ( userId:string ) => {
     const mediaStream = livekitService.mediaStreams.get(userId);
     if (mediaStream instanceof MediaStream) {
@@ -126,6 +130,12 @@ export function useLiveKit( roomName:string ) {
   }
   const getLivekitRoom = () => {
     return livekitService.lkRoom;
+  }
+  const shareWindowAudio = () => {
+    return livekitService.shareWindowAudio();
+  }
+  const stopWindowAudio = () => {
+    return livekitService.stopWindowAudio();
   }
   const setActivePlane = useCallback(( index:number | null ) => {
       livekitService.setActivePlane(index);
@@ -156,10 +166,12 @@ export function useLiveKit( roomName:string ) {
           isConnectedRoom: state.isConnectedRoom,
           hasRemoteParticipant: state.hasRemoteParticipant,
           currentRoomName: state.currentRoomName,
+          readyStreams: state.readyStreams,
           isCurrentLoading,
           isBrowserSupported: livekitService.checkBrowserSupport(),
           isPlayerAudioReady,
           getMediaStream, getPositionalAudio, getAudioListener, getLivekitRoom,
+          shareWindowAudio, stopWindowAudio,
           error: state.error,
           locateOfficeUser,
         };

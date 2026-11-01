@@ -3,6 +3,7 @@ const { RecordingStatus, SummaryStatus } = require('@prisma/client');
 const { getIO } = require("../services/socket.service");
 const whisperService = require('./whisper.service');
 const googleAIService = require('./googleAI.service');
+const { validateMeetingAuthorization, validateMeetingExists, validateMeetingParticipant } = require('../validators/meeting.validator');
 
 const {
     LIVEKIT_API_KEY,
@@ -60,7 +61,14 @@ function mapEgressStatus(status) {
 
 const recordingService = {
 
-    async startRecording(meetId) {
+    async startRecording(meetId, userId) {
+        const meeting = await prisma.meeting.findUnique({
+            where: { meetId }
+        });
+
+        validateMeetingExists(meeting);
+        validateMeetingAuthorization(meeting, userId);
+
         const existing = await prisma.recording.findFirst({
             where: {
                 meetId,
@@ -116,7 +124,15 @@ const recordingService = {
     },
 
 
-    async stopRecording(meetId) {
+    async stopRecording(meetId, userId) {
+        const meeting = await prisma.meeting.findUnique({
+            where: { meetId }
+        });
+
+        validateMeetingExists(meeting);
+        validateMeetingAuthorization(meeting, userId);
+
+
         const recording =
             await prisma.recording.findFirst({
                 where: {
@@ -262,7 +278,9 @@ const recordingService = {
     },
 
  
-    async getRecordings(meetId) {
+    async getRecordings(meetId, userId) {
+        await validateMeetingParticipant(meetId, userId);
+
         return prisma.recording.findMany({
             where: {
                 meetId,
@@ -283,7 +301,9 @@ const recordingService = {
     },
 
 
-    async getRecordingStatus(meetId) {
+    async getRecordingStatus(meetId, userId) {
+        await validateMeetingParticipant(meetId, userId);
+
         const recording =
             await prisma.recording.findFirst({
                 where: { 

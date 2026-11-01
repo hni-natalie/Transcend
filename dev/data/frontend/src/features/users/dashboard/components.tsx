@@ -72,11 +72,11 @@ export const MemberRow = ({ member }: MemberRowProps) => {
   const displayStatus = getStatusDisplay(status);
 
   return (
-    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-background-2/30 transition-colors group">
+    <div className="flex items-center justify-between p-2 rounded-lg transition-colors group">
       <div className="flex items-center gap-3 min-w-0">
         <Avatar avatarUrl={member.avatarUrl} name={member.userName} />
         <div className="min-w-0 flex-1">
-          <h4 className="text-base font-medium text-foreground group-hover:text-accent-lime transition-colors truncate">
+          <h4 className="text-base font-medium text-foreground transition-colors truncate">
             {member.userName}
             {member.isCurrentUser && (
               <span className="text-accent-lime text-sm ml-2">(You)</span>

@@ -282,6 +282,8 @@ model MeetingParticipant {
   id        String @id @default(uuid())
   meetId    String
   userId    String
+  meetingJoinAt DateTime?
+  meetingLeaveAt DateTime?
 
   role       MeetingRole
   attendance AttendanceStatus @default(pending)

@@ -26,4 +26,9 @@ export const authApi = {
   getMe: async (): Promise<User> => {
     return apiClient.get<User>(API_CONFIG.endpoints.auth.me);
   },
+
+  // Sign up / Access request
+  signUp: async (data: { firstName: string; lastName: string; workEmail: string }): Promise<{ message: string }> => {
+    return apiClient.post<{ message: string }>(API_CONFIG.endpoints.auth.signUp, data);
+  },
 };

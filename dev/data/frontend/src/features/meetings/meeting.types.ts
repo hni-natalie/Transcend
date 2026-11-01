@@ -10,6 +10,8 @@ export type MeetingDetails = {
         userId: string;
         role: "organiser" | "participant";
         attendance: "present" | "absent" | "pending";
+        meetingJoinAt: string | null;
+        meetingLeaveAt: string | null;
 
         user: {
             userName: string;
@@ -23,13 +25,18 @@ export type MeetingDetails = {
     };
 };
 
+type Attendance = {
+  status: "present" | "absent" | "pending";
+  updated: boolean;
+};
+
 export type Participant = {
     userId: string;
     userName: string;
     userEmail: string;
 	deletedAt?: string | null;
     role: "organiser" | "participant";
-    attendance: "present" | "absent" | "pending";
+    attendance: Attendance;
 };
 
 

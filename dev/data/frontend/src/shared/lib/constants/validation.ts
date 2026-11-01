@@ -4,7 +4,7 @@ export const SUSPICIOUS_MARKUP_REGEX = /<\s*script|<\s*\/?\s*[a-z]|javascript:|o
 
 // Files & Uploads
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-export const MAX_AVATAR_SIZE = 10 * 1024 * 1024; // 10MB
+export const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
 export const ACCEPTED_FILE_EXTENSIONS = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg', '.gif'];
 export const ACCEPTED_FILE_TYPES = '.pdf,.doc,.docx,.png,.jpg,.jpeg,.gif';
 export const ACCEPTED_MIME_TYPES = [

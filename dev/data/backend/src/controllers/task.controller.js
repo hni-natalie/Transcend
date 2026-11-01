@@ -22,19 +22,25 @@ const taskController = {
 	async getTaskById(req, res) {
 		try {
 			const { id } = req.params;
+			const { userId } = req.user;
+
 			if (!id) {
-				return res.status(400).json({error: "Task ID required"});
+				return res.status(400).json({ error: 'Task ID required' });
 			}
-			const task = await taskService.getTaskById(id);
+
+			const task = await taskService.getTaskById(id, userId);
+
 			return res.json(task);
 
 		} catch (error) {
 			if (error.message === 'Task not found') {
-				res.status(404).json({ error: error.message });
-			} else {
-				console.error('Error fetching task:', error);
-        		res.status(500).json({ error: 'Failed to fetch task' });
+				return res.status(404).json({ error: error.message });
 			}
+			if (error.message === 'Unauthorized to perform this action') {
+				return res.status(403).json({ error: error.message });
+			}
+			console.error('Error fetching task:', error);
+			return res.status(500).json({ error: 'Failed to fetch task' });
 		}
 	},
 
@@ -79,18 +85,22 @@ const taskController = {
 	async updateTask(req, res) {
 		try {
 			const { id } = req.params;
-			// added check id
-			if (!id)
+
+			if (!id) {
 				return res.status(400).json({ error: 'Task ID is required' });
+			}
 
 			let validated;
+
 			try {
 				validated = validateUpdateTask(req.body);
 			} catch (validationErr) {
-				return res.status(400).json({ success: false, message: validationErr.message });
+				return res.status(400).json({
+					success: false,
+					message: validationErr.message
+				});
 			}
 
-			// added empty check
 			if (Object.keys(validated).length === 0) {
 				return res.status(400).json({
 					success: false,
@@ -99,15 +109,26 @@ const taskController = {
 			}
 
 			const userId = req.user.userId;
-			const updatedTask = await taskService.updateTaskWithLogging(id, userId, validated);
 
-			getIO().emit("taskUpdated");
+			const updatedTask = await taskService.updateTaskWithLogging(
+				id,
+				userId,
+				validated
+			);
+
+			getIO().emit('taskUpdated');
+
 			return res.json(updatedTask);
 
 		} catch (error) {
+			if (error.message === 'Unauthorized to perform this action') {
+				return res.status(403).json({ error: error.message });
+			}
+
 			if (error.message === 'Task not found') {
 				return res.status(404).json({ error: error.message });
 			}
+
 			console.error('Error updating task:', error);
 			return res.status(500).json({ error: 'Failed to update task' });
 		}
@@ -143,24 +164,32 @@ const taskController = {
 	async deleteTask(req, res) {
 		try {
 			const { id } = req.params;
-			// added check id
-			if (!id)
+
+			if (!id) {
 				return res.status(400).json({ error: 'Task ID is required' });
-			
-			const userId = req.user.userId;
-			
-			await taskService.deleteTask(id, userId);
-			getIO().emit("taskUpdated");
-			return res.json({ message: 'Task deleted successfully' });
-		} catch (error) {
-			if (error.message === 'Task not found') {
-				res.status(404).json({ error: error.message });
-			} else if (error.message === 'No permission to delete this task') {
-				res.status(403).json({ error: error.message });
-			} else {
-				console.error('Error deleting task:', error);
-				res.status(500).json({ error: 'Failed to delete task' });
 			}
+
+			const userId = req.user.userId;
+
+			await taskService.deleteTask(id, userId);
+
+			getIO().emit('taskUpdated');
+
+			return res.json({
+				message: 'Task deleted successfully'
+			});
+
+		} catch (error) {
+			if (error.message === 'Unauthorized to perform this action') {
+				return res.status(403).json({ error: error.message });
+			}
+
+			if (error.message === 'Task not found') {
+				return res.status(404).json({ error: error.message });
+			}
+
+			console.error('Error deleting task:', error);
+			return res.status(500).json({ error: 'Failed to delete task' });
 		}
 	}
 };

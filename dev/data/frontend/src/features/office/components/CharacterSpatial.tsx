@@ -16,13 +16,15 @@ import { useSocket, useKeyboard, usePosition } from '@/context';
 import { Player, Position, getInitials } from '@/shared';
 import { officeSceneConfig as conf } from '@/config/office.config';
 import { useTextWidth } from '@/features/office/hooks/useTextWidth';
+import { useLiveKit } from '@/features/livekit';
 
 interface CharacterProps extends Player {
 	isLocalPlayer: boolean;
 	isPlayerAudioReady: boolean;
   listenerRef: RefObject<THREE.AudioListener>;
 	lightTargetRef: RefObject<THREE.Object3D>;
-	getPositionalAudio: (userId: string) => THREE.PositionalAudio;
+	// getPositionalAudio: (userId: string) => THREE.PositionalAudio[];
+	getPositionalAudio: (userId: string) => THREE.PositionalAudio[];
 }
 
 // 2D Circle Character Component + Movement handling
@@ -31,6 +33,7 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 	ref) => {
 
 	const { lockSystem } = usePosition();
+	const { readyStreams } = useLiveKit(roomName)
 
   const [characterRef, api] = useBox(() => ({
     mass: 100,
@@ -56,7 +59,7 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 		}
 	}, [isLocalPlayer])
 
-	const positionalAudioRef = useRef<THREE.PositionalAudio | null>(null);
+	const positionalAudioRef = useRef<THREE.PositionalAudio[]>([]);
 	const [hovered, setHovered] = useState(false);
 	const { keys } = useKeyboard();
 	const { textRef, textWidth, getTextWidth } = useTextWidth();
@@ -109,29 +112,30 @@ export const Character = React.forwardRef<THREE.Object3D, CharacterProps>((
 
 	// add positional audio to remote player ONLY
   useEffect(() => {
-    if ( !characterRef.current || isLocalPlayer || !listenerRef || !positionalAudioRef || !isPlayerAudioReady ) return;
-		
+    if ( !characterRef.current || isLocalPlayer || !listenerRef.current || !positionalAudioRef.current || !isPlayerAudioReady ) return;
 		positionalAudioRef.current = getPositionalAudio(id);
-		characterRef.current.add(positionalAudioRef.current);
+
+  	for (const audio of positionalAudioRef.current) {
+			characterRef.current.add(audio);
+			console.log('[audio] characterRef:', characterRef.current);
+			console.log("✅ Positional audio attached to remote player mesh ", id, " ", audio.position);
+			console.warn('[audio] positionalAudio parent:', audio.parent?.name ?? 'NO PARENT — not in scene graph', '\nkey: ', id);
+		}
 
 		// debug --------------------------------
 		characterRef.current.name = `player-${id}`;
-		console.log('[audio] characterRef:', characterRef.current);
-		console.log("✅ Positional audio attached to remote player mesh ", id, " ", positionalAudioRef.current.position);
-		console.warn('[audio] positionalAudio parent:', positionalAudioRef.current.parent?.name ?? 'NO PARENT — not in scene graph', '\nkey: ', id);
-
-		// const worldPos = positionalAudioRef.current.getWorldPosition(new THREE.Vector3());
-		// console.log('World position:', worldPos);
 		// --------------------------------------
 
 		return () => {
 			if (listenerRef.current && characterRef.current && positionalAudioRef.current) {
 				console.warn('Cleanup positional audio')
-				characterRef.current.remove(positionalAudioRef.current);
-				positionalAudioRef.current = null;
+				positionalAudioRef.current.forEach((audio) => {
+					characterRef.current?.remove(audio);
+				});
+				positionalAudioRef.current = [];
 			}
 		};
-	}, [isPlayerAudioReady])
+	}, [isPlayerAudioReady, readyStreams])
 
 	// debug keep first
   // useFrame(() => {

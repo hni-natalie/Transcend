@@ -35,5 +35,7 @@ echo "✅ Frontend ready flag created at /tmp/frontend-ready"
 
 # exec with group user
 echo "> Starting frontend ..."
-# exec npm run dev -- --host 0.0.0.0 --strict-port
-exec su frontend -c "npm run dev -- --host 0.0.0.0 --strict-port"
+# exec su frontend -c "npm run dev -- --host 0.0.0.0 --strict-port"
+
+su frontend -c "npm run build"
+exec su frontend -c "npx serve -s dist -l 5173 --ssl-cert /etc/ssl/certs/app/$DOMAIN_NAME.crt --ssl-key /etc/ssl/certs/app/$DOMAIN_NAME.key"

@@ -1,10 +1,15 @@
 import { ModalHeader } from "@/shared";
 import { useMemo } from "react";
 
+type ActionItem = {
+  task: string;
+  responsiblePerson?: string;
+};
+
 type Summary = {
   mainDiscussionPoints: string[];
   decisionsMade: string[];
-  actionItems: string[];
+  actionItems: (string | ActionItem)[];
   importantDeadlines: string[];
 };
 
@@ -29,6 +34,34 @@ function SummarySection({
         <ul className="list-disc list-inside space-y-1 text-sm text-foreground-3">
           {items.map((item, index) => (
             <li key={index}>{item}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm italic text-gray-500">
+          No items.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ActionItemsSection({
+  items,
+}: {
+  items: (string | ActionItem)[];
+}) {
+  return (
+    <div className="flex flex-col gap-y-2 mb-2">
+      <h3 className="text-base font-semibold text-white">
+        Action Items
+      </h3>
+
+      {items.length > 0 ? (
+        <ul className="list-disc list-inside space-y-1 text-sm text-foreground-3">
+          {items.map((item, index) => (
+            <li key={index}>
+              {typeof item === "string" ? item : item.task}
+            </li>
           ))}
         </ul>
       ) : (
@@ -95,8 +128,7 @@ export function SummaryModal({
               items={parsedSummary.decisionsMade}
             />
 
-            <SummarySection
-              title="Action Items"
+            <ActionItemsSection
               items={parsedSummary.actionItems}
             />
 

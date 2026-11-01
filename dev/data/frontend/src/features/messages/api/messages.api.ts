@@ -68,6 +68,13 @@ export const messagesApi = {
   	return apiClient.delete(`${base}/${conversationId}/pin`);
   },
 
+  renameGroup(conversationId: string, groupName: string) {
+    return apiClient.patch<{ success: boolean; groupName: string }>(
+      `${base}/${conversationId}/name`,
+      { groupName }
+    );
+  },
+
   markConversationRead(conversationId: string) {
   	return apiClient.post(`${base}/${conversationId}/read`);
   },

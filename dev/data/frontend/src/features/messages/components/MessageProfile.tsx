@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { IconFile, IconImage, IconLink, IconMemberAdd, IconMembers, IconMessagePin, IconOffice } from '@shared';
+import { IconCamera, IconFile, IconImage, IconLink, IconMemberAdd, IconMembers, IconMessagePin, IconOffice, IconPencil} from '@shared';
 import type { IconProps } from '@shared';
 import type { Attachment, Link, Profile, InvitableGroup } from '../types';
 import { UserRow, SelectToggle, RemoveButton } from './UserRow';
 import { ChatAvatar } from './ChatAvatar';
 import { useLiveKit } from '@/features/livekit';
 import { useOfficeSpaceLayout } from '@/features/office/context/SpaceLayoutContext';
-import { useSocket } from '@/context';
+import { useSocket, useToast } from '@/context';
 import { ROUTE_PATH as R } from '@config/routes.manifest';
 import { Tooltip } from '@features/messages/components/MessageHeader';
 
@@ -22,6 +22,8 @@ interface MessageProfileProps {
   onInviteUsers?: (userIds: string[]) => void;
   onJoinGroup?: (groupId: string) => void;
   onRemoveMember?: (userId: string) => void;
+  onRenameGroup?: (groupName: string) => void;
+  onAvatarChange?: (file: File) => Promise<void>;
   onBack?: () => void;
   currentUserId?: string;
 }
@@ -46,17 +48,49 @@ export function MessageProfile({
   onInviteUsers,
   onJoinGroup,
   onRemoveMember,
+  onRenameGroup,
+  onAvatarChange,
   onBack,
   currentUserId,
 }: MessageProfileProps) {
+  const roomName = "Office"
   const [activeTab, setActiveTab] = useState<'attachments' | 'links'>('attachments');
   const [showMembers, setShowMembers] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const { connect, isConnectedRoom, locateOfficeUser } = useLiveKit("Office");
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const { connect, locateOfficeUser } = useLiveKit(roomName);
   const { positionedPlanes, loading: spaceLayoutLoading } = useOfficeSpaceLayout();
-  const { roomPlayers } = useSocket();
+  const { roomPlayers, setRoomPlayers, socket, fetchRoomPlayers } = useSocket();
+  const { showToast } = useToast();
+
+  const handleDownloadAttachment = async (attachment: Attachment) => {
+    try {
+      const response = await fetch(attachment.url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch attachment: ${response.statusText}`);
+      }
+      const blob = await response.blob();
+
+      const downloadUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = attachment.name;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Failed to download attachment:', error);
+      showToast('error', 'Failed to download attachment');
+    }
+  };
 
   const getDeptSpawnPos = (dpId?: string) => {
     const planes = positionedPlanes as { departmentId?: string; x: number; z: number }[] | undefined;
@@ -71,6 +105,29 @@ export function MessageProfile({
     // return livePlayer?.position ?? getDeptSpawnPos(targetContact.departmentId);
   };
 
+  const [targetPos, setTargetPos] = useState(null);
+  useEffect(() => {
+    setTargetPos(getTargetPos(contact));
+  }, [contact, roomPlayers]);
+
+  useEffect(() => {
+    if (!socket) return ;
+    const handleJoin = async () => {
+      // console.log('[join] roomPlayers updated! ', contact.name);
+      fetchRoomPlayers(roomName);
+    }
+    const handleLeave = (data) => {
+      // console.log('[leave] roomPlayers updated! ', contact.name);
+      setRoomPlayers(prev => prev.filter(p => p.id !== data.id));
+    }
+    socket.on('room-joined-messages', handleJoin);
+    socket.on('room-left-messages', handleLeave);
+
+    return () => {
+      socket.off('room-joined-messages', handleJoin);
+      socket.off('room-left-messages', handleLeave);
+    }
+  }, [socket, contact])
 
   // console.log('debugging group messages: ', groupMessages);
   useEffect(() => {
@@ -78,6 +135,8 @@ export function MessageProfile({
     setShowInvite(false);
     setSelectedUsers([]);
     setInviteSearch('');
+    setEditingName(false);
+    setNameInput('');
   }, [contact.id]);
 
   const toggleMembers = () => {
@@ -147,10 +206,21 @@ export function MessageProfile({
     setInviteSearch('');
   };
 
-  const targetPos = getTargetPos(contact);
-
   // only group creator can add/remove participants
   const isGroupCreator = contact.isGroup && !!currentUserId && contact.creatorId === currentUserId;
+
+  const handleSaveName = () => {
+    const trimmed = nameInput.trim();
+    if (trimmed && trimmed !== contact.name) {
+      onRenameGroup?.(trimmed);
+    }
+    setEditingName(false);
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSaveName();
+    if (e.key === 'Escape') setEditingName(false);
+  };
 
 //   const actionButtons: ActionButton[] = [
 //     { icon: IconMessagePin, label: isPinned ? 'Unpin' : 'Pin', onClick: onTogglePin, isActive: isPinned },
@@ -200,12 +270,12 @@ export function MessageProfile({
   const memberCount = contact.memberCount ?? contact.members?.length ?? 0;
 
   return (
-    <aside className="w-full md:w-[320px] shrink-0 p-6 pt-10 flex flex-col min-h-0 overflow-y-auto rounded-3xl">
+    <aside className="w-full lg:w-[320px] shrink-0 p-6 pt-10 flex flex-col min-h-0 overflow-y-auto rounded-3xl">
       {onBack && (
         <button
           aria-label="Back"
           onClick={onBack}
-          className="md:hidden flex items-center gap-1.5 text-foreground-3 hover:text-foreground mb-4 -mt-2 cursor-pointer"
+          className="lg:hidden flex items-center gap-1.5 text-foreground-3 hover:text-foreground mb-4 -mt-2 cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -216,10 +286,71 @@ export function MessageProfile({
 
       <div className="text-center mb-6 min-h-[190px]">
         <div className="flex justify-center mb-10">
-          <ChatAvatarProxy contact={contact} />
+          <div className="relative group shrink-0">
+            <ChatAvatarProxy contact={contact} />
+            {contact.isGroup && isGroupCreator && onAvatarChange && (
+              <label
+                className="absolute bottom-0 right-0 w-8 h-8 bg-accent-lime rounded-full flex items-center justify-center shadow-md cursor-pointer hover:bg-accent-lime/80 transition-colors"
+                title="Change group avatar"
+              >
+                {avatarUploading ? (
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <IconCamera className="w-5 h-5 text-background-3" />
+                )}
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  disabled={avatarUploading}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      setAvatarUploading(true);
+                      await onAvatarChange(file);
+                    } finally {
+                      setAvatarUploading(false);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+              </label>
+            )}
+          </div>
         </div>
 
-        <p className="text-[17px] text-foreground font-semibold mb-3">{contact.name}</p>
+        <p className="text-[17px] text-foreground font-semibold mb-3 flex items-center justify-center gap-1.5">
+          {contact.isGroup && isGroupCreator && editingName ? (
+            <input
+              autoFocus
+              value={nameInput}
+              maxLength={25}
+              onChange={(e) => setNameInput(e.target.value)}
+              onBlur={handleSaveName}
+              onKeyDown={handleNameKeyDown}
+              className="bg-background-2 border border-accent-lime/40 rounded-lg px-2 py-0.5 text-[15px] text-foreground text-center outline-none focus:border-accent-lime w-[160px]"
+            />
+          ) : (
+            <>
+              <span>{contact.name}</span>
+              {contact.isGroup && isGroupCreator && (
+				<Tooltip text="Edit Group Name">
+					<button
+						aria-label="Rename group"
+						onClick={() => {
+						setNameInput(contact.name);
+						setEditingName(true);
+						}}
+						className="text-foreground-3 hover:text-foreground transition-colors cursor-pointer"
+					>
+						<IconPencil className="w-8 h-8" />
+					</button>
+				</Tooltip>
+              )}
+            </>
+          )}
+        </p>
 
         {contact.isGroup ? (
           <p className="text-base text-foreground-2">{memberCount} members</p>
@@ -393,7 +524,7 @@ export function MessageProfile({
           <div className="flex bg-background-2 rounded-xl mb-4">
             <button
               onClick={() => setActiveTab('attachments')}
-              className={`flex-1 py-2 text-base font-medium transition-colors cursor-pointer rounded-lg ${
+              className={`flex-1 p-2 text-base font-medium transition-colors cursor-pointer rounded-lg ${
                 activeTab === 'attachments' ? 'bg-accent-lime-bg text-accent-lime' : 'text-foreground-3 hover:text-foreground'
               }`}
             >
@@ -419,7 +550,8 @@ export function MessageProfile({
                   attachments.map((attachment) => (
                     <div
                       key={attachment.id}
-                      className="flex items-center justify-between gap-3 bg-background-1 border border-border rounded-xl px-4 py-2.5"
+                      onClick={() => handleDownloadAttachment(attachment)}
+                      className="flex items-center justify-between gap-3 bg-background-1 border border-border rounded-xl px-4 py-2.5 cursor-pointer hover:bg-background-2 transition-colors"
                     >
                       <div className="flex items-center gap-4 min-w-0">
                         {attachment.kind === 'pdf' ? (
