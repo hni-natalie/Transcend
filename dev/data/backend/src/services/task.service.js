@@ -1,5 +1,10 @@
 const prisma = require('../../prisma/client');
 const { logTaskActivity } = require('../utils/activity'); 
+const {
+    validateTaskAuthorization
+} = require('../validators/task.validator');
+
+const { NotFoundError } = require('../utils/errors');
 
 const taskService = {
 	async getAllTasks(filters = {}) {
@@ -24,6 +29,7 @@ const taskService = {
 				createdAt: true,
 				updatedAt: true,
 				completedDate: true,
+				createdByUserId: true,
 				assignedTo: {
 					select: {
 						userId: true,
@@ -53,9 +59,11 @@ const taskService = {
 		});
 	},
 
-	async getTaskById(taskId) {
-		return await prisma.task.findUnique({
-			where: { taskId: taskId },
+	async getTaskById(taskId, userId) {
+		const task = await prisma.task.findUnique({
+			where: {
+				taskId
+			},
 			select: {
 				taskId: true,
 				taskTitle: true,
@@ -63,11 +71,24 @@ const taskService = {
 				taskStatus: true,
 				dueDate: true,
 				createdAt: true,
+				createdByUserId: true,
+
 				assignedTo: {
-					select: { taskPriority: true }
+					select: {
+						userId: true,
+						taskPriority: true
+					}
 				}
 			}
 		});
+
+		if (!task) {
+			throw new Error('Task not found');
+		}
+
+		validateTaskAuthorization(task, userId);
+
+		return task;
 	},
 
 	async createTask(taskData) {
@@ -132,7 +153,9 @@ const taskService = {
 		const task = await prisma.task.findUnique({ where: { taskId } });
 
 		if (!task) throw new Error('Task not found');
-		
+
+		validateTaskAuthorization(task, userId);
+
 		if (taskStatus == 'done')
 			updateData.completedDate = new Date();
 
@@ -177,8 +200,10 @@ const taskService = {
 
 	async deleteTask(taskId, userId) {
 		const task = await prisma.task.findUnique({ where: { taskId } });
-		if (!task) throw new Error('Task not found');
-		if (task.createdByUserId !== userId) throw new Error('No permission to delete this task');
+		if (!task) 
+			throw new Error('Task not found');
+
+		validateTaskAuthorization(task, userId);
 
 		await prisma.task.delete({ where: { taskId } });
 

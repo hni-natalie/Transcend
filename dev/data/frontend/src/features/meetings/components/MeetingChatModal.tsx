@@ -50,7 +50,7 @@ export const MeetingChatModal = ({
                                 </div>
 
 
-                                <p className="text-sm mt-1">
+                                <p className="text-sm mt-1 whitespace-normal wrap-break-word">
                                     {msg.message}
                                 </p>
 

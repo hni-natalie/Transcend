@@ -180,6 +180,9 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
     if (!formData.roleId) {
       return 'Please select a role.';
     }
+    if (!isEdit && !formData.password) {
+      return 'Password is required.';
+    }
     return null;
   };
 
@@ -192,7 +195,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
     return;
   }
 
-  // Validate password if provided
+  // Validate password if provided or when creating a user
   if (formData.password && formData.password.trim() !== '') {
     const validation = validatePassword(formData.password);
     if (!validation.isValid) {
@@ -206,15 +209,12 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
   try {
     if (isEdit && user) {
       // update user (without password update)
-    //   const updateData: any = {
 	  const updateData: Partial<UpdateUserRequest> = {
         name: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
         roleId: formData.roleId,
         dpId: formData.deptId || undefined,
 		userTitle: formData.userTitle || undefined,
-        // country: formData.location || undefined,
-        // avatarUrl: formData.photo || undefined,
       };
 
       await userApi.updateUser(user.userId, updateData);
@@ -242,14 +242,13 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
       onClose();
     } else {
 	  // create user
-    //   const userData: any = {
 	  const userData: CreateUserRequest = {
         email: formData.email,
         name: `${formData.firstName} ${formData.lastName}`.trim(),
         roleId: formData.roleId,
+        password: formData.password,
         dpId: formData.deptId || undefined,
 		userTitle: formData.userTitle || undefined,
-        password: formData.password || undefined,
       };
 
       const response = await userApi.createUser(userData);
@@ -259,11 +258,7 @@ export function UserForm({ mode, user, onClose, onSuccess, onDelete }: UserFormP
           await uploadPendingForUser(response.data.userId);
         }
 
-        if (response.data.temporaryPassword) {
-          showToast('success', `User created successfully!\nTemporary password: ${response.data.temporaryPassword}`);
-        } else {
-          showToast('success', 'User created successfully!');
-        }
+        showToast('success', 'User created successfully!');
         onSuccess();
         onClose();
       }

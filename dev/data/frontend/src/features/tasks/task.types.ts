@@ -9,6 +9,7 @@ export type Task = {
 	createdAt: string;
 	updatedAt: string;
 	completedDate?: string;
+	createdByUserId: string;
 
 	assignedTo: 
 	{

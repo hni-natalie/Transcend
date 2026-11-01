@@ -430,6 +430,7 @@ if [ -z "$ADMIN_TOKEN" ]; then
 
     skip_test "createUser: empty body"
     skip_test "createUser: missing name"
+    skip_test "createUser: missing password"
     skip_test "createUser: malformed email"
     skip_test "createUser: XSS in name"
     skip_test "createUser: oversized name"
@@ -451,6 +452,12 @@ else
         -H "$AUTH_HEADER" \
         -H "Content-Type: application/json" \
         -d '{"email":"newuser@test.com","roleId":"role123"}'
+
+    run_test "createUser: missing password" 400 \
+        -X POST "$BASE_URL$CREATE_USER_ROUTE" \
+        -H "$AUTH_HEADER" \
+        -H "Content-Type: application/json" \
+        -d '{"email":"newuser@test.com","name":"Test User","roleId":"role123"}'
 
     run_test "createUser: malformed email" 400 \
         -X POST "$BASE_URL$CREATE_USER_ROUTE" \

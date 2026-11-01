@@ -2,6 +2,8 @@
 *  INTERFACE
 *  **************************************************************/
 
+import { OfficeObjectAction } from "@/features/office/context/OfficeInteractionContext";
+
 export interface User {
     socketId: string,
     userId: string;
@@ -102,6 +104,7 @@ export type Player = {
 	speaking?: boolean;
     dpId?: string;
     ownership?: Ownership;
+    action?: OfficeObjectAction;
 }
 
 /* **************************************************************

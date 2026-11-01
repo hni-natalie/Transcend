@@ -19,6 +19,9 @@ structure.md
 # dev tool / scripts
 _bin
 dev/frontend/tmp_*
+dev/data/frontend/dist*
 ref.*
 initvm.sh
 test.sh
+
+dev/tests/meeting_input

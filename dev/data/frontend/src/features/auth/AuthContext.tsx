@@ -11,6 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   googleLogin: (idToken: string) => Promise<AuthUser>; 
   login: (email: string, password: string) => Promise<AuthUser>;
+  signUp: (data: { firstName: string; lastName: string; workEmail: string }) => Promise<void>;
   logout: () => Promise<void>;
   updateUserStatus: (status: UserBackendStatus) => Promise<void>;
 }
@@ -45,7 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     apiClient.registerSessionExpiredHandler(() => {
       removeToken();
       setUser(null);
-      const publicPaths = ['/login', '/', '/terms', '/privacy'];
+      const publicPaths = ['/login', '/signup', '/', '/terms', '/privacy'];
       if (!publicPaths.includes(window.location.pathname)) {
         window.location.href = '/login';
       }
@@ -93,6 +94,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return authUser; 
   };
 
+  const signUp = async (data: { firstName: string; lastName: string; workEmail: string }): Promise<void> => {
+    await authApi.signUp(data);
+  };
+
   const logout = async () => {
     try {
       await apiClient.post('/auth/logout');
@@ -117,6 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         googleLogin,
         login,
+        signUp,
         logout,
         updateUserStatus, 
       }}

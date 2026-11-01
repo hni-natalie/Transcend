@@ -78,7 +78,13 @@ function validateUpdateTask({
     return result;
 }
 
+function validateTaskAuthorization(task, userId) {
+    if (task.createdByUserId !== userId)
+        throw new Error('Unauthorized to perform this action');
+}
+
 module.exports = {
     validateCreateTask,
     validateUpdateTask,
+    validateTaskAuthorization
 };

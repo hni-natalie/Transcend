@@ -61,8 +61,16 @@ export function Chat({
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+
     if (inputRef.current && inputRef.current.value.trim() !== '') {
-      const message = inputRef.current.value;
+      const message = inputRef.current.value.trim();
+
+      // Clear input immediately
+      inputRef.current.value = '';
+      inputRef.current.style.height = 'auto';
+      inputRef.current.focus();
+
+      // Send through LiveKit
       await send(message);
 
       console.log("Saving chat message:", {
@@ -74,25 +82,16 @@ export function Chat({
         message,
       });
 
+      // Save to database
       if (meetId) {
-        await meetingApi.createChatMessage(
-          meetId,
-          {
-            senderId: room.localParticipant.identity,
-
-            senderName:
-              room.localParticipant.name ??
-              room.localParticipant.identity,
-
-            message,
-          }
-        );
-    }
-
-
-    inputRef.current.value = '';
-    inputRef.current.style.height = 'auto';
-    inputRef.current.focus();
+        await meetingApi.createChatMessage(meetId, {
+          senderId: room.localParticipant.identity,
+          senderName:
+            room.localParticipant.name ??
+            room.localParticipant.identity,
+          message,
+        });
+      }
     }
   }
 

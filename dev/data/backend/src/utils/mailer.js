@@ -128,11 +128,36 @@ async function sendAccountDeletionCompletedEmail({ to, userName, completedAt, au
   });
 }
 
+async function sendAccessRequestEmail({ firstName, lastName, workEmail }) {
+  return sendEmail({
+    to: SUPPORT_EMAIL,
+    subject: `WorkFrom Access Request — ${firstName} ${lastName}`,
+    text: `A new request to access WorkFrom has been submitted.
+
+Name: ${firstName} ${lastName}
+Work Email: ${workEmail}
+
+Please review this request and follow up with the user if appropriate.
+
+— WorkFrom`,
+    html: `
+      <p>A new request to access WorkFrom has been submitted.</p>
+      <p>
+        <strong>Name:</strong> ${firstName} ${lastName}<br>
+        <strong>Work Email:</strong> ${workEmail}
+      </p>
+      <p>Please review this request and follow up with the user if appropriate.</p>
+      <p>&mdash; WorkFrom</p>
+    `,
+  });
+}
+
 module.exports = {
   sendEmail,
   sendDataExportEmail,
   sendAccountDeletionRequestEmail,
   notifySupportOfDeletionRequest,
   sendAccountDeletionCompletedEmail,
+  sendAccessRequestEmail,
   SUPPORT_EMAIL,
 };

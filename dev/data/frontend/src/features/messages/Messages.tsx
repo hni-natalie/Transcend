@@ -39,6 +39,8 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
     addMembersToConversation,
     removeMemberFromConversation,
     removeConversation,
+    renameGroupConversation,
+    updateGroupAvatar,
     existingConversationUserIds,
     groupMessages,
   } = useConversations();
@@ -304,22 +306,38 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
     removeMemberFromConversation(selectedConversation.id, userId);
   };
 
+  const handleRenameGroup = (groupName: string) => {
+    if (!selectedConversation.id) return;
+    renameGroupConversation(selectedConversation.id, groupName);
+  };
+
+  const handleAvatarChange = (file: File) => {
+    if (!selectedConversation.id) return Promise.resolve();
+    return updateGroupAvatar(selectedConversation.id, file);
+  };
+
   const handleRequestDeleteConversation = (conversation: Conversation) => {
     setConversationPendingDeletion(conversation);
   };
 
-  const handleConfirmDeleteConversation = () => {
+  const handleConfirmDeleteConversation = async () => {
     if (!conversationPendingDeletion) {
       return;
     }
-    removeConversation(conversationPendingDeletion.conversationId);
-    // const deletedId = conversationPendingDeletion.conversationId;
-    // removeConversation(deletedId);
-    // if (selectedConversation.id === deletedId) {
-    //   setSelectedConversation({ id: '', type: 'direct' });
-    // }
+
+    const removedId = conversationPendingDeletion.conversationId;
+
+    await removeConversation(removedId);
+
+    if (selectedConversation.id === removedId) {
+      setSelectedConversation({
+        id: '',
+        type: 'direct'
+      });
+    }
+
     setConversationPendingDeletion(null);
-  };
+};
 
   const handleSendMessage = (text: string, attachments?: UploadedAttachment[]) => {
     console.log('DEBUGGING FE attachments before sending:', attachments);
@@ -387,7 +405,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
         />
 
         <main
-          className={`${mobileView === 'chat' ? 'flex' : 'hidden'} md:flex flex-col flex-1 min-w-0 w-full bg-background-1 rounded-3xl my-4 shadow-lg overflow-visible`}
+          className={`${mobileView === 'chat' ? 'flex' : 'hidden'} lg:flex flex-col flex-1 min-w-0 w-full bg-background-1 rounded-3xl my-4 shadow-lg overflow-visible`}
         >
           {currentChat ? (
             <>
@@ -417,7 +435,7 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
 
         {(isInfoOpen || mobileView === 'info') && currentChat && (
           <div
-            className={`${mobileView === 'info' ? 'flex' : 'hidden'} ${isInfoOpen ? 'md:flex' : 'md:hidden'} w-full md:w-auto bg-background-1 rounded-3xl my-4 shadow-lg md:ml-4 overflow-hidden self-stretch min-h-0`}
+            className={`${mobileView === 'info' ? 'flex' : 'hidden'} ${isInfoOpen ? 'lg:flex' : 'lg:hidden'} w-full lg:w-auto bg-background-1 rounded-3xl my-4 shadow-lg lg:ml-4 overflow-hidden self-stretch min-h-0`}
           >
             <MessageProfile
               contact={currentChat.profile}
@@ -428,6 +446,8 @@ export default function Messaging({ showAddForm, onCloseAddForm }: MessagingProp
               onInviteUsers={handleInviteUsersToGroup}
               onJoinGroup={handleJoinGroup}
               onRemoveMember={handleRemoveMember}
+              onRenameGroup={handleRenameGroup}
+              onAvatarChange={handleAvatarChange}
               isPinned={pinnedConversations.some((conversation) => conversation.conversationId === selectedConversation.id)}
               onTogglePin={() => togglePin(selectedConversation.id)}
               onBack={() => setMobileView('chat')}

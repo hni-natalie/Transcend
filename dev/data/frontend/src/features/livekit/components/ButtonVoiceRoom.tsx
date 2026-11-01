@@ -90,6 +90,7 @@ export function ButtonVoiceRoom({
       }),
     );
 
+    // roomName is same as meetId. but since use roomName, we unify
     if (isHost) {
       await meetingApi.startMeeting(roomName);
       console.log("Meeting status changed to started");
@@ -124,12 +125,21 @@ export function ButtonVoiceRoom({
 
     await connect(mode);
 
+    if (roomName) {
+      await meetingApi.recordParticipantJoin(roomName);
+    }
+
     console.log("Waiting for LiveKit connection...");
   };
 
   const handleLeave = async () => {
     isClicked.current = false;
     hasNavigated.current = false;
+
+    if (roomName) {
+      await meetingApi.recordParticipantLeave(roomName);
+      console.log("Participant left meeting!");
+    }
 
     if (isHost) {
       await meetingApi.endMeeting(roomName);
