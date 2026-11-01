@@ -5,6 +5,8 @@
 
 # About
 
+![alt text](assets/workfrom.gif)
+
 ## Description 
 
 ### WorkFrom, The Virtual Workspace App.

@@ -25,6 +25,7 @@ For development, we use `npx prisma db push` to update the database schema, this
 <br>
 
 **To update schema:**
+0. **Pull** : Preview existing schema, check if up to date `npx prisma db pull --print`
 1. **Edit** : Update the schema in `prisma/schema.prisma`
 2. **Push** : Run `npx prisma db push` to update the schema in the database (supabase)
 3. **Generate** : Run `npx prisma generate` to update the prisma client (so we can use the new attributes in backend)
